@@ -1,0 +1,27 @@
+abelfunctions
+=============
+
+abelfunctions is a library for computing with Abelian functions and solving 
+integrable partial differential equations.
+
+
+
+Installation
+------------
+
+Basic installation:
+
+  # python setup.py install
+
+Sage installation: 
+
+  $ make spkg
+  $ sage -i abelfunctions.spkg
+
+
+
+Authors
+-------
+
+Chris Swierczewski <cswiercz@gmail.com>
+

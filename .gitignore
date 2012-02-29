@@ -1,0 +1,18 @@
+# Compiled Source #
+###################
+*.o
+*.so
+*.pyc
+./build/*
+
+
+# OS Generated Files #
+######################
+*~
+.DS_Store*
+Icon?
+Thumbs.db
+
+# etc #
+#######
+*.ipynb
