@@ -209,7 +209,7 @@ if __name__ == "__main__":
          (x**3-2*x**2)*y + x**6
     f2 = y**2 - x**2*(x+1)
     f3 = 0
-    f  = f2
+    f  = f1
 
     print "Curve:"
     print 
@@ -225,19 +225,26 @@ if __name__ == "__main__":
     print "  newton  =", newton
     print
     
+
     # compute leading terms
     print "Leading terms in Puiseux series:"
     L = newton_puiseux(f,x,y)
     for G,P,Q in L:
         print "  P =", P.subs(x,T)
         print "  Q =", Q.subs(x,T)
-        print
+        print "     \\"
         L1 = newton_puiseux(G,x,y)
-        for G1,P1,Q1 in L1:
+        for G1,P1,Q1 in L1:            
             print "    P1 =", P1.subs(x,T)
             print "    Q1 =", Q1.subs(x,T)
-            print
-            
+            print "        \\"
+#             L2 = newton_puiseux(G1,x,y)
+#             for G2,P2,Q2 in L2:
+#                 print "      P2 =", P2.subs(x,T)
+#                 print "      Q2 =", Q2.subs(x,T)
+#                print
+
+"""
     # compute Puiseux series
     print "Puiseux series:"
     p = puiseux(f,x,y,0,2)
@@ -246,4 +253,4 @@ if __name__ == "__main__":
         print "\tP =", p1[0].expand()
         print "\tQ =", p1[1].expand()
         print
-
+"""
