@@ -117,17 +117,38 @@ def polygon(F,X,Y,I):
     # to compare back to the support. the convex hull will contain all
     # points. Those on the boundary are considered "outside" by sympy.
     hull = sympy.convex_hull(*support)
-    hull_with_bdry = [p for p in support if not hull.encloses(sympy.Point(p))]
+    if type(hull) == sympy.Segment:
+        hull_with_bdry = support       # colinear support is a newton polygon
+    else:
+        hull_with_bdry = [p for p in support if not hull.encloses(sympy.Point(p))]
     newton = []
 
     # find the start and end points (0,J) and (I,0)
     JJ = min([j for (i,j) in hull if i == 0])
-    if I==2: 
+    if I == 2: 
         II = min([i for (i,j) in hull if j == 0])
     else:    
         II = max([i for (i,j) in hull if j == 0])
     testslope = -float(JJ)/II
 
+    # determine largest slope with (0,JJ). If this is greater than the test
+    # slope then there exist points above the line connecting (0,JJ) with 
+    # (II,0) this fact is used to deal with certain borderline cases
+    include_borderline_colinear = (type(hull) == sympy.Segment)
+    for (i,j) in hull_with_bdry:
+        # when the point is on the j-axis, the onle one we want is the
+        # point (0,JJ)
+        if i == 0:
+            if j == JJ: slope = -sympy.oo
+            else:       slope = sympy.oo
+        else:           slope = float(j-JJ)/i     
+
+        if slope > testslope: 
+            include_borderline_colinear = True
+            break
+
+    # loop through all points on the boundary and determine if it's in the
+    # newton polygon using a testslope method
     for (i,j) in hull_with_bdry:
         # when the point is on the j-axis, the onle one we want is the
         # point (0,JJ)
@@ -138,11 +159,11 @@ def polygon(F,X,Y,I):
 
         if slope < testslope: 
             newton.append((i,j))
-        elif (slope == testslope):
-            # in the case of slope equality we only include the points on the
-            # i-axis. This eliminates the case of colinear points on the 
-            # outer face of the support from (0,JJ) to (II,0)
-            if j == 0: newton.append((i,j))
+        elif (slope == testslope) and include_borderline_colinear:
+            # borderline case is when there is only one segment
+            # from (0,JJ) to (II,0). When this is the case, include all
+            # points whose slope matches testslope
+            newton.append((i,j))
 
     newton.sort(key=itemgetter(1),reverse=True) # sort second in j-th coord
     newton.sort(key=itemgetter(0))              # sort first in i-th coord
@@ -160,18 +181,19 @@ def polygon(F,X,Y,I):
         # determine slope of current line
         side = [newton[n],newton[n+1]]
         sideslope = sympy.Rational(side[1][1]-side[0][1],side[1][0]-side[0][0])
-        k = 2
+
+        pdb.set_trace()
 
         # check against all following points for colinearity by comparing
         # slopes. append all colinear points to side
-        for kk in xrange(2,N-n-1):
+        for k in xrange(2,N-n):
             pt = newton[n+k]
             slope = float(pt[1]-side[0][1]) / (pt[0]-side[0][0])
             if abs(slope - sideslope) < eps:
                 side.append(pt)
             else:
-                k = kk
                 break
+
         n += k-1
 
         # compute q,m,l such that qj + mi = l and Phi
@@ -185,14 +207,63 @@ def polygon(F,X,Y,I):
     return params
 
     
-
-def newton(F,X,Y,H,version='rational'):
+def puiseux(f,x,y,a,n,T=True,version='rational'):
     """
+    Computes the first `n` terms of the Puiseux series expansions of 
+    `f = f(x,y)` at `x=a`.
 
+    INPUT:
+
+      -- ``f``: a plane algebraic curve
+
+      -- ``x``: variable
+
+      -- ``y``: variable
+
+      -- ``a``: `x`-point at which to compute the Puiseux series expansions
+
+      -- ``n``: truncation degree for the Puiseux series expansions
+
+      -- ``T``: (default: ``True``) If set to ``True``, returns parameterized 
+         form of the Puiseux series expansions. That is, each series is a pair
+         `x = x(T), y = y(T)`. If set to ``False``, returns unparameterized
+         Puiseux series expansions `y = y(x)`.
+
+      -- ``version``: (default: ``'rational'``) use 'rational' for rational
+         Puiseux series expansions. Use 'classical' for expansions containing
+         algebraic numbers
+
+    OUTPUT:
+
+      -- ``(list)``: a list of Puiseux series expansions up to `O(n)` of 
+         `f` at `x=a`
     """
-    K = None
     if version not in ['classical','rational']:
         raise AttributeError("'version' must be 'classical' or 'rational'")
+
+    # scale f accordingly
+    if a == sympy.oo: 
+        p = sympy.poly(f)
+        F = (f.subs(x,1/x) * x**p.deg(x)).expand()
+    else:
+        F = f.subs(x,x+a).expand()
+
+    # compute the K-terms of the expansions
+    pis = newton(F,x,y,n,version=version)
+
+    # combine the K-terms to obtain the parameterized form
+    series = []
+    for pi in pis:
+        e = 1
+        l = 1
+
+
+def newton(F,X,Y,H,version):
+    """
+    Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 
+    `\tau_h = (q_h,\mu_h,m_h,\beta_h)`.
+    """
+    K = None
     return regular(singular(F,X,Y,K,[],version),X,Y,H)
 
 
@@ -316,8 +387,11 @@ if __name__ == "__main__":
     f1 = -y**5 + (2*x-1)*y**4 - (3*x-x**2)*y**3 - (x-3*x**2)*y**2 + \
          (x**3-2*x**2)*y + x**6
     f2 = y**2 - x**2*(x+1)
-    f3 = y-x
-    f  = f2
+    f3 = y**8 + x*y**5 + x**4 - x**6
+    f4 = y**16 - 4*y**12*x**6 - 4*y**11*x**8 + y**10*x**10 + \
+         6*y**8*x**12 + 8*y**7*x**14 + 14*y**6*x**16 + 4*y**5*x**18 + \
+         y**4*(x**20-4*x**18) - 4*y**3*x**20 + y**2*x**22 + x**24
+    f  = f4
 
     print "Curve:"
     print 
