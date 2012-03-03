@@ -362,7 +362,6 @@ def singular_term(F,X,Y,L,I,version):
             for (xi, M) in sympy.roots(Psi).iteritems():
                 # the classical version returns the "raw" roots
                 if version == 'classical':
-                    pdb.set_trace()
                     P = sympy.poly(U**q-xi,U)
                     for beta in sympy.roots(P).keys():
                         tau = (q,1,m,beta)
