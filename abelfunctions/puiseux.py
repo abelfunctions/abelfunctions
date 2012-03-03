@@ -74,7 +74,7 @@ def _new_polynomial(F,X,Y,tau,l):
         \tilde{F} \in \mathbb{L}(\mu,\beta)[X,Y]
     """
     q,mu,m,beta = tau
-    Fnew = F.subs({X:(mu*X**q), Y:(X**m*(beta+Y))})
+    Fnew = F.subs([(X,mu*X**q), (Y,X**m*(beta+Y))])
     Fnew = (Fnew/(X**l)).expand()
     return Fnew
 
@@ -123,12 +123,12 @@ def polygon(F,X,Y,I):
         hull_with_bdry = [p for p in support if not hull.encloses(sympy.Point(p))]
     newton = []
 
-    # find the start and end points (0,J) and (I,0)
+    # find the start and end points (0,J) and (I,0). Include points along
+    # the i-axis if I==1. Otherwise, only include points with negative
+    # slope if I==2
     JJ = min([j for (i,j) in hull if i == 0])
-    if I == 2: 
-        II = min([i for (i,j) in hull if j == 0])
-    else:    
-        II = max([i for (i,j) in hull if j == 0])
+    if I == 2: II = min([i for (i,j) in hull if j == 0])
+    else:      II = max([i for (i,j) in hull if j == 0])
     testslope = -float(JJ)/II
 
     # determine largest slope with (0,JJ). If this is greater than the test
@@ -182,10 +182,9 @@ def polygon(F,X,Y,I):
         side = [newton[n],newton[n+1]]
         sideslope = sympy.Rational(side[1][1]-side[0][1],side[1][0]-side[0][0])
 
-        pdb.set_trace()
-
         # check against all following points for colinearity by comparing
         # slopes. append all colinear points to side
+        k=2
         for k in xrange(2,N-n):
             pt = newton[n+k]
             slope = float(pt[1]-side[0][1]) / (pt[0]-side[0][0])
@@ -194,7 +193,7 @@ def polygon(F,X,Y,I):
             else:
                 break
 
-        n += k-1
+        n += k
 
         # compute q,m,l such that qj + mi = l and Phi
         q = sideslope.q
@@ -355,7 +354,7 @@ def singular_term(F,X,Y,L,I,version):
     for (q,m,l,Phi) in polygon(F,X,Y,I):
         # the rational method
         if version == 'rational':
-            u,v = _bezout(q,m)
+            u,v = _bezout(q,m)      
 
         # each newton polygon side has a characteristic polynomial. For each
         # square-free factor, each root corresponds to a K-term
@@ -363,14 +362,16 @@ def singular_term(F,X,Y,L,I,version):
             for (xi, M) in sympy.roots(Psi).iteritems():
                 # the classical version returns the "raw" roots
                 if version == 'classical':
-                    for beta in sympy.roots(U**q-xi).keys():
+                    pdb.set_trace()
+                    P = sympy.poly(U**q-xi,U)
+                    for beta in sympy.roots(P).keys():
                         tau = (q,1,m,beta)
                         T.append((tau,l,r))
                 # the rational version rescales parameters so as to 
                 # include ony rational terms in the Puiseux expansions.
                 if version == 'rational':
-                    mu = xi**(-v); mu = sympy.Rational(str(mu))
-                    beta = xi**u;  beta = sympy.Rational(str(beta))
+                    mu = xi**(-v)
+                    beta = xi**u
                     tau = (q,mu,m,beta)
                     T.append((tau,l,r))
     return T
@@ -398,7 +399,7 @@ if __name__ == "__main__":
     print "\t", f
     print
 
-    pis = newton(f,x,y,4,version='rational')
+    pis = newton(f,x,y,3,version='classical')
     print "\nPuiseux Expansions:"
     for pi in pis:
         print "Expansion:"
