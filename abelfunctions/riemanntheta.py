@@ -181,11 +181,14 @@ TESTS:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+import pdb
+
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
 
-from abelfunctions.utilities import qflll
+#from abelfunctions.utilities import qflll
+from utilities import qflll
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import finite_sum
@@ -337,7 +340,7 @@ class RiemannTheta:
         True
     """
 
-    def __init__(self, dtype=np.complex128, uniform=True, deriv_accuracy_radius=5):
+    def __init__(self, uniform=True, deriv_accuracy_radius=5):
         """
         Defines parameters in constructed class instance.
 
@@ -355,38 +358,16 @@ class RiemannTheta:
             6.00000000000000
                 
         """
-        self.Omega                 = numpy.matrix(Omega)
-        self.deriv                 = deriv
         self.uniform               = uniform
         self.deriv_accuracy_radius = deriv_accuracy_radius
-        
-        self._max_points_in_one_evaluation = 32000
-        self._g = self.Omega.shape[0]
-        assert self._g == self.Omega.shape[1]
 
-        # store the base ring and a RealField of the same precision
-        self._dtype    = self.Omega.base_ring()
-        self._prec     = self._ring.prec()
-        self._realring = RealField(self._prec)
-
-        # require that Omega be symmetric and the imaginary part be positive
-        # positive definite. The check for positive definiteness is inherent
-        # in the computation of the Cholesky decomposition below
-        if (self.Omega - self.Omega.transpose()).norm() > 10**(-15):
-            raise ValueError("Riemann matrix is not symmetric.")
-        
-        # compute real and imaginary parts of the Riemann matrix as well as 
-        # the Cholesky decomposition of the imaginary part
-        self._X = self.Omega.apply_map(lambda t: t.real()).change_ring(self._realring)
-        self._Y = self.Omega.apply_map(lambda t: t.imag()).change_ring(self._realring)
-        self._T = self._Y.cholesky_decomposition().transpose()
-
-        # cache radii and inverses
+        # cache radii, intpoints, and inverses
         self._rad       = None
         self._intpoints = None
-        self._Xinv      = self._X.inverse()
-        self._Yinv      = self._Y.inverse()
-        self._Tinv      = self._T.inverse()
+        self._Omega     = None
+        self._Yinv      = None
+        self._T         = None
+        self._Tinv      = None
 
 
     def lattice(self):
@@ -440,7 +421,7 @@ class RiemannTheta:
         return NotImplementedError()
 
 
-    def integer_points(self, z, R):
+    def integer_points(self, Yinv, T, Tinv, z, g, R):
         r"""
         The set, `U_R`, of the integral points needed to compute Riemann 
         theta at the complex point $z$ to the numerical precision given
@@ -479,6 +460,12 @@ class RiemannTheta:
 
         INPUTS:
 
+        - ``Yinv`` -- the inverse of the imaginary part of the Riemann matrix
+          `\Omega`
+
+        - ``T`` -- the Cholesky decomposition of the imaginary part of the
+          Riemann matrix `\Omega`
+
         - ``z`` -- the point `z \in \CC` at which to compute `\theta(z|\Omega)`
          
         - ``R`` -- the first ellipsoid semi-axis length as computed by ``self.radius()``
@@ -514,20 +501,20 @@ class RiemannTheta:
             [[-1, -1], [0, -1], [1, -1], [-1, 0], [0, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
 
         """
+        g    = Yinv.shape[0]
         pi   = np.pi
+        z    = np.array(z)
         x    = z.real
         y    = z.imag
-        T    = self._T
-        Tinv = la.inv(T)
         
         # determine center of ellipsoid.
         if self.uniform:
-            c     = np.zeros(self._g)
-            intc  = np.zeros(self._g)
-            leftc = np.zeros(self._g)
+            c     = np.zeros(g)
+            intc  = np.zeros(g)
+            leftc = np.zeros(g)
         else:
-            c     = self._Yinv * y
-            intc  = c.apply_map(lambda t: ZZ(t.round()))
+            c     = Yinv * y
+            intc  = c.round()
             leftc = c - intc
 
 
@@ -537,22 +524,25 @@ class RiemannTheta:
             each coordinate direction.
 
             INPUT:
+
+            - ``T`` -- the Cholesky decomposition of the imaginary part of
+              the Riemann matrix, `\Omega`
             
-                - ``g`` -- the genus. recursively used to determine integer 
-                  poiints along each axis.
+            - ``g`` -- the genus. recursively used to determine integer 
+              points along each axis.
 
-                - ``c`` -- center of integer point computation. `0 \in \CC^g` 
-                  is used when using the uniform approximation.
+            - ``c`` -- center of integer point computation. `0 \in \CC^g` 
+              is used when using the uniform approximation.
 
-                - ``R`` -- the radius of the ellipsoid along the current axis.
+            - ``R`` -- the radius of the ellipsoid along the current axis.
 
-                - ``start`` -- the starting integer point for each recursion 
-                  along each axis.
+            - ``start`` -- the starting integer point for each recursion 
+              along each axis.
 
             OUTPUT:
 
-                - ``intpoints`` -- (list) a list of all of the integer points 
-                  inside the bounding ellipsoid
+            - ``intpoints`` -- (list) a list of all of the integer points 
+              inside the bounding ellipsoid
 
             ... todo::
 
@@ -560,13 +550,13 @@ class RiemannTheta:
                 this is a reasonable computation but can be sped up by 
                 writing a loop instead.
             """
-            a = np.ceil((c[g] - R/T[g,g]).real)
-            b = np.floot((c[g] + R/T[g,g]).real)
+            a = int(np.ceil((c[g] - R/T[g,g]).real))
+            b = int(np.floor((c[g] + R/T[g,g]).real))
 
             # check if we reached the edge of the ellipsoid
             if not a < b: return []
             # last dimension reached: append points
-            if g == 0: return [ [i] + start for i in xrange(a, b+1) ]
+            if g == 0: return [ [i] + start for i in range(a, b+1) ]
         
             #
             # compute new shifts, radii, start, and recurse
@@ -576,20 +566,21 @@ class RiemannTheta:
             newT    = T[:(newg+1),:(newg+1)]
             newTinv = la.inv(newT)
             pts     = []
+            pdb.set_trace()
             for n in xrange(a, b+1):
                 chat     = np.array(c[:newg+1])
-                that     = np.array(T.column(g)[:newg+1])
+                that     = np.array(T[:g][:newg+1])
                 newc     = chat - newTinv * that * (n - c[g])
                 newR     = np.sqrt(R**2/pi - (T[g,g] * (n - c[g]))**2)
                 newstart = [n] + start
-                pts     += find_integer_points(newg, newc, newR, newstart)
+                pts     += find_integer_points(newg,newc,newR,newstart)
 
             return pts
 
-        return find_integer_points(self._g-1, leftc, R, [])
+        return find_integer_points(g-1, leftc, R, [])
 
     
-    def radius(self, deriv=[]):
+    def radius(self, T, prec, deriv=[]):
         r"""
         Calculate the radius `R` to compute the value of the theta function
         to within `2^{-P + 1}` bits of precision where `P` is the 
@@ -599,8 +590,14 @@ class RiemannTheta:
         `R` is the radius of [CRTF] Theorems 2, 4, and 6.
 
         INPUT:
+        
+        - ``T`` -- the Cholesky decomposition of the imaginary part of the 
+          Riemann matrix `\Omega`
 
-            - ``deriv`` -- (list) (default=``[]``) the derivative, if given. Radius increases as order of derivative increases.
+        - ``prec`` -- the desired precision of the computation
+        
+        - ``deriv`` -- (list) (default=``[]``) the derivative, if given. 
+          Radius increases as order of derivative increases.
 
         EXAMPLES:
 
@@ -623,31 +620,31 @@ class RiemannTheta:
             
         """
         Pi = np.pi
-        I  = self._ring.gen()
-        g  = self._g
+        I  = 1.0j
+        g  = T.shape[0]
 
         # compute the length of the shortest lattice vector
-        U  = qflll(self._T)
-        v  = (U * self._T).column(0)
-        r  = RDF(v.norm())
-        normTinv = self._Tinv.norm()
+        U  = qflll(T)
+        v  = (U*T)[:,0]
+        r  = la.norm(v)
+        normTinv = la.norm(la.inv(T))
 
         # solve for the radius using:
         #   * Theorem 3 of [CRTF] (no derivative)
         #   * Theorem 5 of [CRTF] (first order derivative)
         #   * Theorem 7 of [CRTF] (second order derivative)
         if len(deriv) == 0:
-            eps  = RDF(2)**RDF(-(self._ring.prec()+2))
-            lhs  = RDF(eps * (2/g) * (r/2)**g * gamma(g/2))
-            ins  = RDF(gammainccinv(g/2,lhs))
-            R    = ins.sqrt() + r/2
-            rad  = max( R, ((2*g).sqrt()+r)/2 )
+            eps  = prec
+            lhs  = eps * (2.0/g) * (r/2.0)**g * gamma(g/2.0)
+            ins  = gammainccinv(g/2.0,lhs)
+            R    = np.sqrt(ins) + r/2.0
+            rad  = max( R, (np.sqrt(2*g)+r)/2.0 )
         elif len(deriv) == 1:
             # solve for left-hand side
             L         = self.deriv_accuracy_radius
-            normderiv = vector(self._ring, deriv[0]).norm()
-            eps  = RDF(2)**RDF(-(self._ring.prec()+2))
-            lhs  = RDF(eps *(r/2)**g) / (Pi.sqrt()*g*normderiv*normTinv)
+            normderiv = la.norm(np.array(deriv[0]))
+            eps  = prec
+            lhs  = (eps * (r/2.0)**g) / (np.sqrt(Pi)*g*normderiv*normTinv)
 
             # define right-hand-side function involving the incomplete gamma
             # function
@@ -656,53 +653,35 @@ class RiemannTheta:
                 Right-hand side function for computing the bounding ellipsoid
                 radius given a desired maximum error bound for the first
                 derivative of the Riemann theta function.
-
-                INPUT:
-
-                    - ``ins`` -- the quantity `(R-\rho)^2` where `R` is the radius we must solve for and `\rho` is the length of the shortest lattice vector in the integer lattice defined by `\Omega`.
-
-                EXAMPLES:
-
-                Since this function is used implicitly in 
-                ``RiemannTheta.radius()`` we use an example input from above::
-
-                    sage: R = ComplexField(40); I = R.gen()
-                    sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])
-                    sage: theta = RiemannTheta(Omega)
-                    sage: theta.radius([])
-                    6.02254252538
-                    sage: theta.radius([[1,0]])
-                    6.37024100817
                 """
-
-                return gamma((g+1)/2)*gammaincc((g+1)/2, ins) +             \
-                    Pi.sqrt()*normTinv*L * gamma(g/2)*gammaincc(g/2, ins) - \
+                return gamma((g+1)/2)*gammaincc((g+1)/2, ins) +               \
+                    np.sqrt(Pi)*normTinv*L * gamma(g/2)*gammaincc(g/2, ins) - \
                     float(lhs)
 
             #  define lower bound (guess) and attempt to solve for the radius
-            lbnd = (g+2 + (g**2+8).sqrt()).sqrt() + r
+            lbnd = np.sqrt(g+2 + np.sqrt(g**2+8)) + r
             try:
-                ins = RDF( fsolve(rhs, float(lbnd))[0] )
+                ins = fsolve(rhs, float(lbnd))[0]
             except RuntimeWarning:
                 # fsolve had trouble finding the solution. We try 
                 # a larger initial guess since the radius increases
                 # as desired precision increases
                 try:
-                    ins = RDF( fsolve(rhs, float(2*lbnd))[0] )
+                    ins = fsolve(rhs, float(2*lbnd))[0]
                 except RuntimeWarning:
                     raise ValueError, "Could not find an accurate bound for the radius. Consider using higher precision."
 
             # solve for radius
-            R   = ins.sqrt() + r/2
+            R   = np.sqrt(ins) + r/2.0
             rad = max(R,lbnd)
 
         elif len(deriv) == 2:
             # solve for left-hand side
             L             = self.deriv_accuracy_radius
-            prodnormderiv = prod([vector(self._ring, d).norm() for d in deriv])
+            prodnormderiv = prod([la.norm(d) for d in deriv])
 
-            eps  = RDF(2)**RDF(-(self._ring.prec()+2))
-            lhs  = RDF(eps*(r/2)**g) / (2*Pi*g*prodnormderiv*normTinv**2)
+            eps  = prec
+            lhs  = (eps*(r/2.0)**g) / (2*Pi*g*prodnormderiv*normTinv**2)
 
             # define right-hand-side function involving the incomplete gamma
             # function
@@ -730,37 +709,37 @@ class RiemannTheta:
                     6.37024100817
                 """
                 return gamma((g+2)/2)*gammaincc((g+2)/2, ins) + \
-                    2*Pi.sqrt()*normTinv*L *                    \
+                    2*np.sqrt(Pi)*normTinv*L *                  \
                     gamma((g+1)/2)*gammaincc((g+1)/2,ins) +     \
                     Pi*normTinv**2*L**2 *                       \
                     gamma(g/2)*gammaincc(g/2,ins) - float(lhs)
 
             #  define lower bound (guess) and attempt to solve for the radius
-            lbnd = (g+4 + (g**2+16).sqrt()).sqrt() + r
+            lbnd = np.sqrt(g+4 + np.sqrt(g**2+16)) + r
             try:
-                ins = RDF( fsolve(rhs, float(lbnd))[0] )
+                ins = fsolve(rhs, float(lbnd))[0]
             except RuntimeWarning:
                 # fsolve had trouble finding the solution. We try 
                 # a larger initial guess since the radius increases
                 # as desired precision increases
                 try:
-                    ins = RDF( fsolve(rhs, float(2*lbnd))[0] )
+                    ins = fsolve(rhs, float(2*lbnd))[0]
                 except RuntimeWarning:
                     raise ValueError, "Could not find an accurate bound for the radius. Consider using higher precision."
 
             # solve for radius
-            R   = np.sqrt(ins) + r/2
+            R   = np.sqrt(ins) + r/2.0
             rad = max(R,lbnd)
 
         else:
             # can't computer higher derivatives, yet
             raise NotImplementedError("Ellipsoid radius for first and second derivatives not yet implemented.")
 
-        return RDF(rad)
+        return rad
 
 
 
-    def exp_and_osc_at_point(self, z, Omega, deriv=[]):
+    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[]):
         r"""
         Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
         (Or a given directional derivative of `\theta`.) That is, compute 
@@ -806,8 +785,23 @@ class RiemannTheta:
             (0, 1.050286258 - 0.1663490011*I)
             
         """
+        g = Omega.shape[0]
         pi = np.pi
 
+        # perform some simple cacheing on the matrices
+        X = Omega.real
+        Y = Omega.imag
+        if (not self._Omega) or (self._Omega != Omega):
+            # reset rad and intpoints since they're dependent on Omega
+            self._rad       = None
+            self._intpoints = None
+
+            # define new matrix components
+            self._Omega = Omega    
+            self._Yinv  = la.inv(Y)
+            self._T     = la.cholesky(Y)
+            self._Tinv  = la.inv(self._T)
+            
         # extract real and imaginary parts of input z
         z = np.array(z)
         x = z.real
@@ -820,22 +814,23 @@ class RiemannTheta:
         if self.uniform:
             # check if we've already computed the uniform radius and intpoints
             if not self._rad:
-                self._rad = self.radius(deriv=deriv)
+                self._rad = self.radius(self._T, prec, deriv=deriv)
             if not self._intpoints:
                 # fudge factor for uniform radius
-                origin          = [0]*self._g
-                self._intpoints = self.integer_points(origin ,1.5*self._rad)
+                origin          = [0]*g
+                self._intpoints = self.integer_points(self._Yinv, self._T, 
+                                                      self._Tinv, origin, g, 
+                                                      self._rad)
             R = self._rad
             S = self._intpoints
         else:
-            R = self.radius(deriv=deriv)
-            S = self.integer_points(z, self._rad)
+            R = self.radius(self._T, prec, deriv=deriv)
+            S = self.integer_points(self._Yinv, self._T, self._Tinv,
+                                    z, g, self._rad)
 
         # compute oscillatory and exponential terms
-        Yinv = self._Yinv
-        Yinv = Yinv.change_ring(domain)
-        v    = finite_sum(X, Y, T, x, y, S, deriv, domain)
-        u    = pi*np.dot(y,Yinv * y)
+        v    = finite_sum(X, Y, self._T, x, y, S, deriv, domain)
+        u    = pi*np.dot(y,self._Yinv * y)
 
         return u,v
 
@@ -916,3 +911,22 @@ class RiemannTheta:
         """
         return self.value_at_point(*args, **kwds)
         
+
+
+
+if __name__=="__main__":
+    print "=== Riemann Theta ==="
+    theta = RiemannTheta()
+    z = np.array([0,0])
+    Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
+
+    print "Test #1:"
+    print theta(z,Omega)
+    print "1.1654 - 1.9522e-15*I"
+    print 
+
+    print "Test #2:"
+    z = np.array([1.0j,1.0j])
+    print theta(z)
+    print -438.94 + 0.00056160*I
+    print theta.exp_and_osc_at_point(z)
