@@ -569,7 +569,7 @@ class RiemannTheta:
             pdb.set_trace()
             for n in xrange(a, b+1):
                 chat     = np.array(c[:newg+1])
-                that     = np.array(T[:g][:newg+1])
+                that     = np.array(T[:g][:newg+1])             # XXX COMPARE TO SAGE
                 newc     = chat - newTinv * that * (n - c[g])
                 newR     = np.sqrt(R**2/pi - (T[g,g] * (n - c[g]))**2)
                 newstart = [n] + start
