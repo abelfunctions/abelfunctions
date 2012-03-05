@@ -15,14 +15,20 @@ custom directory <dir>, use
 """
 
 from distutils.core import setup
+
 import abelfunctions
 
 packages = [
     'abelfunctions',
+    'abelfunctions.utilities', 
+    ]
+
+modules = [
     'abelfunctions.puiseux',
     'abelfunctions.monodromy',
     'abelfunctions.homology',
     'abelfunctions.riemannsurface',
+    'abelfunctions.utilities.qflll',
     ]
 
 classifiers = [
@@ -40,6 +46,6 @@ setup(
     author_email = 'cswiercz@gmail.com',
     license = 'GPL v2+',
     packages = packages,
-    ext_modules = [],
+    py_modules = modules,
     classifiers = classifiers
     )

@@ -185,6 +185,7 @@ import numpy as np
 import scipy as sp
 import scipy.linalg as la
 
+from abelfunctions.utilities import qflll
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import finite_sum
@@ -626,7 +627,7 @@ class RiemannTheta:
         g  = self._g
 
         # compute the length of the shortest lattice vector
-        U  = self._T._pari_().qflll()._sage_()
+        U  = qflll(self._T)
         v  = (U * self._T).column(0)
         r  = RDF(v.norm())
         normTinv = self._Tinv.norm()
