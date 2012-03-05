@@ -1,6 +1,14 @@
 import numpy as np
 import scipy.linalg as la
+import warnings
 
+try:
+    import pyopencl as cl
+except ImportError:
+    warnings.warn("Could not find pyopencl package. Do not attempt to compute finite sum on GPU.")
+
+def finite_sum_opencl(self, X, Y, T, x, y, S):
+    pass
 
 
 def finite_sum(self, X, Y, T, x, y, S, deriv, domain):
