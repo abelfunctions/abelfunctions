@@ -203,58 +203,7 @@ def polygon(F,X,Y,I):
         Phi = sum(a[(i,j)]*Z**sympy.Rational(i-i0,q) for (i,j) in side)
         params.append((q,m,l,Phi))
 
-    return params
-
-    
-def puiseux(f,x,y,a,n,T=True,version='rational'):
-    """
-    Computes the first `n` terms of the Puiseux series expansions of 
-    `f = f(x,y)` at `x=a`.
-
-    INPUT:
-
-      -- ``f``: a plane algebraic curve
-
-      -- ``x``: variable
-
-      -- ``y``: variable
-
-      -- ``a``: `x`-point at which to compute the Puiseux series expansions
-
-      -- ``n``: truncation degree for the Puiseux series expansions
-
-      -- ``T``: (default: ``True``) If set to ``True``, returns parameterized 
-         form of the Puiseux series expansions. That is, each series is a pair
-         `x = x(T), y = y(T)`. If set to ``False``, returns unparameterized
-         Puiseux series expansions `y = y(x)`.
-
-      -- ``version``: (default: ``'rational'``) use 'rational' for rational
-         Puiseux series expansions. Use 'classical' for expansions containing
-         algebraic numbers
-
-    OUTPUT:
-
-      -- ``(list)``: a list of Puiseux series expansions up to `O(n)` of 
-         `f` at `x=a`
-    """
-    if version not in ['classical','rational']:
-        raise AttributeError("'version' must be 'classical' or 'rational'")
-
-    # scale f accordingly
-    if a == sympy.oo: 
-        p = sympy.poly(f)
-        F = (f.subs(x,1/x) * x**p.deg(x)).expand()
-    else:
-        F = f.subs(x,x+a).expand()
-
-    # compute the K-terms of the expansions
-    pis = newton(F,x,y,n,version=version)
-
-    # combine the K-terms to obtain the parameterized form
-    series = []
-    for pi in pis:
-        e = 1
-        l = 1
+    return params    
 
 
 def newton(F,X,Y,H,version):
@@ -286,7 +235,7 @@ def regular(S,X,Y,H):
     """
     R = []
     for (pi,F) in S:
-        P = sympy.poly(F.expand(),X,Y)
+        P = sympy.poly(F,X,Y)
         a = _coefficient(P)
         
         # grow each expansion to the number of desired terms
@@ -361,6 +310,7 @@ def singular_term(F,X,Y,L,I,version):
         for (Psi,r) in _square_free(Phi):
             for (xi, M) in sympy.roots(Psi).iteritems():
                 # the classical version returns the "raw" roots
+#                xi = sympy.simplify(xi)  # overkill???
                 if version == 'classical':
                     P = sympy.poly(U**q-xi,U)
                     for beta in sympy.roots(P).keys():
@@ -375,6 +325,80 @@ def singular_term(F,X,Y,L,I,version):
                     T.append((tau,l,r))
     return T
     
+
+def puiseux(f,x,y,a,n,T=True,version='rational'):
+    """
+    Computes the first `n` terms of the Puiseux series expansions of 
+    `f = f(x,y)` at `x=a`.
+
+    INPUT:
+
+      -- ``f``: a plane algebraic curve
+
+      -- ``x``: variable
+
+      -- ``y``: variable
+
+      -- ``a``: `x`-point at which to compute the Puiseux series expansions
+
+      -- ``n``: truncation degree for the Puiseux series expansions
+
+      -- ``T``: (default: ``True``) If set to ``True``, returns parameterized 
+         form of the Puiseux series expansions. That is, each series is a pair
+         `x = x(T), y = y(T)`. If set to ``False``, returns unparameterized
+         Puiseux series expansions `y = y(x)`.
+
+      -- ``version``: (default: ``'rational'``) use 'rational' for rational
+         Puiseux series expansions. Use 'classical' for expansions containing
+         algebraic numbers
+
+    OUTPUT:
+
+      -- ``(list)``: a list of Puiseux series expansions up to `O(n)` of 
+         `f` at `x=a`
+    """
+    if version not in ['classical','rational']:
+        raise AttributeError("'version' must be 'classical' or 'rational'")
+
+    # scale f accordingly
+    if a == sympy.oo: 
+        p = sympy.poly(f)
+        F = (f.subs(x,1/x) * x**p.deg(x)).expand()
+    else:
+        F = f.subs(x,x+a).expand()
+
+    # compute the K-terms of the expansions
+    pis = newton(F,x,y,n,version=version)
+
+    # combine the K-terms to obtain the parameterized form
+    series = []
+    T = sympy.Symbol('T')
+    for pi in pis:
+        # build the stack
+        stack = []
+        for (q,mu,m,beta) in pi:
+            P = mu*x**q
+            Q = (beta + y)*x**m
+            stack.append([P,Q])
+        print
+        
+        # reduce the stack by substituting the last expression into the second-
+        # to last expression
+        while len(stack) > 1:
+            x_h,y_h     = stack.pop()
+            x_hm1,y_hm1 = stack[-1]
+            stack[-1]   = [x_hm1.subs(x,x_h), y_hm1.subs([(x,x_h),(y,y_h)])]
+                           
+        # last element of stack is the desired puiseux series
+        X,Y = stack[0]
+        X = X.subs(x,T)
+        Y = Y.subs([(x,T),(y,1)])
+        series.append((X.expand(), Y.expand()))
+
+    return series
+        
+
+
 
 
 """
@@ -391,15 +415,15 @@ if __name__ == "__main__":
     f4 = y**16 - 4*y**12*x**6 - 4*y**11*x**8 + y**10*x**10 + \
          6*y**8*x**12 + 8*y**7*x**14 + 14*y**6*x**16 + 4*y**5*x**18 + \
          y**4*(x**20-4*x**18) - 4*y**3*x**20 + y**2*x**22 + x**24
-    f  = f4
+    f  = f2
 
     print "Curve:"
     print 
     print "\t", f
     print
 
-    pis = newton(f,x,y,3,version='classical')
-    print "\nPuiseux Expansions:"
+    pis = newton(f,x,y,4,version='rational')
+    print "\nExpansion Elements:"
     for pi in pis:
         print "Expansion:"
         for h in xrange(len(pi)):
@@ -408,5 +432,11 @@ if __name__ == "__main__":
             print "\t\tX_%d = %s*X_%d**%s" %(h,tau[1],h+1,tau[0])
             print "\t\tY_%d = (%s + Y_%d)X_%d**%s" %(h,tau[3],h+1,h+1,tau[2])
         print
+        
+    print "\nPuiseux Expansions:"
+    for X,Y in puiseux(f,x,y,0,5,version='rational'):
+        print "Expansion:"
+        print "\t X =", X
+        print "\t Y =", Y
     
 
