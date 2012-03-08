@@ -25,6 +25,14 @@ def _coefficient(F):
     OUTPUTS:
 
         -- ``dict``: a dictionary such that ``d[(i,j)] = a_ij``.
+
+    EXAMPLES:
+
+        >>> from sympy import Poly
+        >>> from sympy.abc import x,y
+        >>> f = Poly(y**2 + x**2*(x+1))
+        >>> _coefficient(f)
+        {(0, 2): -1, (0, 3): -1, (2, 0): 1}
     """
     # compute useful dictionary of coefficients indexed
     # by the support of the polynomial
@@ -398,34 +406,6 @@ def puiseux(f,x,y,a,n,T=True,version='rational'):
 
     return series
             
-
-"""
-    for pi in pis:
-        # build the stack
-        stack = []
-        for (q,mu,m,beta) in pi:
-            P = mu*x**q
-            Q = (beta + y)*x**m
-            stack.append([P,Q])
-        
-        # reduce the stack by substituting the last expression into the second-
-        # to last expression
-        while len(stack) > 1:
-            x_h,y_h     = stack.pop()
-            x_hm1,y_hm1 = stack[-1]
-            stack[-1]   = [x_hm1.subs(x,x_h), y_hm1.subs([(x,x_h),(y,y_h)])]
-                           
-        # last element of stack is the desired puiseux series
-        X,Y = stack[0]
-        X = X.subs(x,T)
-        Y = Y.subs([(x,T),(y,0)])
-        series.append((X.expand(), Y.expand()))
-
-    return series
-"""        
-
-
-
 
 """
 TESTS
