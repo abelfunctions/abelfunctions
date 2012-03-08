@@ -234,15 +234,20 @@ def regular(S,X,Y,H):
 
     """
     R = []
-    for (pi,F) in S:
-        P = sympy.poly(F,X,Y)
-        a = _coefficient(P)
-        
+    for (pi,F) in S:        
         # grow each expansion to the number of desired terms
         # TODO: at some point, change this to computing the degree
         while len(pi) < H:
-            m = min(j for (i,j) in a.keys() if i==0 and j!=0)
-            beta = -sympy.Rational(a[(0,m)], a[(1,0)])
+            P = sympy.poly(F,X,Y)
+            a = _coefficient(P)
+
+            # if the set of all (0,j), j!=0 is empty, then we've 
+            # encountered a finite puiseux expansion
+            ms = [j for (i,j) in a.keys() if i==0 and j!=0]
+            if ms == []: break
+            else:        m = min(ms)
+
+            beta = - a[(0,m)]/a[(1,0)]
             tau = (1,1,m,beta)
             pi.append(tau)
             F = _new_polynomial(F,X,Y,tau,m)
@@ -310,7 +315,6 @@ def singular_term(F,X,Y,L,I,version):
         for (Psi,r) in _square_free(Phi):
             for (xi, M) in sympy.roots(Psi).iteritems():
                 # the classical version returns the "raw" roots
-#                xi = sympy.simplify(xi)  # overkill???
                 if version == 'classical':
                     P = sympy.poly(U**q-xi,U)
                     for beta in sympy.roots(P).keys():
@@ -374,13 +378,35 @@ def puiseux(f,x,y,a,n,T=True,version='rational'):
     series = []
     T = sympy.Symbol('T')
     for pi in pis:
+        # get first elements
+        q,mu,m,beta = pi[0]
+        P = mu*x**q
+        Q = (beta + y)*x**m
+
+        # build rest of series
+        for h in xrange(1,len(pi)):
+            q,mu,m,beta = pi[h]
+            P1 = mu*x**q
+            Q1 = (beta + y)*x**m
+            
+            P = P.subs(x,P1)
+            Q = Q.subs([(x,P1),(y,Q1)])
+
+        P = P.subs([(x,T),(y,0)]).expand() + a
+        Q = Q.subs([(x,T),(y,0)]).expand()
+        series.append((P,Q))
+
+    return series
+            
+
+"""
+    for pi in pis:
         # build the stack
         stack = []
         for (q,mu,m,beta) in pi:
             P = mu*x**q
             Q = (beta + y)*x**m
             stack.append([P,Q])
-        print
         
         # reduce the stack by substituting the last expression into the second-
         # to last expression
@@ -392,11 +418,11 @@ def puiseux(f,x,y,a,n,T=True,version='rational'):
         # last element of stack is the desired puiseux series
         X,Y = stack[0]
         X = X.subs(x,T)
-        Y = Y.subs([(x,T),(y,1)])
+        Y = Y.subs([(x,T),(y,0)])
         series.append((X.expand(), Y.expand()))
 
     return series
-        
+"""        
 
 
 
@@ -415,14 +441,16 @@ if __name__ == "__main__":
     f4 = y**16 - 4*y**12*x**6 - 4*y**11*x**8 + y**10*x**10 + \
          6*y**8*x**12 + 8*y**7*x**14 + 14*y**6*x**16 + 4*y**5*x**18 + \
          y**4*(x**20-4*x**18) - 4*y**3*x**20 + y**2*x**22 + x**24
-    f  = f2
+    f  = f1
 
     print "Curve:"
     print 
     print "\t", f
     print
+    a = 0
+    N = 5
 
-    pis = newton(f,x,y,4,version='rational')
+    pis = newton(f,x,y,N,version='rational')
     print "\nExpansion Elements:"
     for pi in pis:
         print "Expansion:"
@@ -434,9 +462,12 @@ if __name__ == "__main__":
         print
         
     print "\nPuiseux Expansions:"
-    for X,Y in puiseux(f,x,y,0,5,version='rational'):
+    for X,Y in puiseux(f,x,y,a,N,version='rational'):
         print "Expansion:"
-        print "\t X =", X
-        print "\t Y =", Y
+        print "X ="
+        sympy.pretty_print(X)
+        print "\nY ="
+        sympy.pretty_print(Y)
+        print
     
 
