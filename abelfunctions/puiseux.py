@@ -375,34 +375,37 @@ def puiseux(f,x,y,a,n,T=True,version='rational'):
     # scale f accordingly
     if a == sympy.oo: 
         p = sympy.poly(f)
-        F = (f.subs(x,1/x) * x**p.deg(x)).expand()
+        f = (f.subs(x,1/x) * x**p.deg(x)).expand()
     else:
-        F = f.subs(x,x+a).expand()
-
-    # compute the K-terms of the expansions
-    pis = newton(F,x,y,n,version=version)
+        f = f.subs(x,x+a).expand()
 
     # combine the K-terms to obtain the parameterized form
     series = []
     T = sympy.Symbol('T')
-    for pi in pis:
-        # get first elements
-        q,mu,m,beta = pi[0]
-        P = mu*x**q
-        Q = (beta + y)*x**m
 
-        # build rest of series
-        for h in xrange(1,len(pi)):
-            q,mu,m,beta = pi[h]
-            P1 = mu*x**q
-            Q1 = (beta + y)*x**m
+    # loop over each y-root
+    for b,mult in sympy.roots(f.subs(x,0)).iteritems():
+        # compute the K-terms of the expansions
+        F = f.subs(y,y-b)
+        pis = newton(F,x,y,n,version=version)
+        for pi in pis:
+            # get first elements
+            q,mu,m,beta = pi[0]
+            P = mu*x**q
+            Q = (beta + y-b)*x**m
+
+            # build rest of series
+            for h in xrange(1,len(pi)):
+                q,mu,m,beta = pi[h]
+                P1 = mu*x**q
+                Q1 = (beta + y)*x**m
             
-            P = P.subs(x,P1)
-            Q = Q.subs([(x,P1),(y,Q1)])
+                P = P.subs(x,P1)
+                Q = Q.subs([(x,P1),(y,Q1)])
 
-        P = P.subs([(x,T),(y,0)]).expand() + a
-        Q = Q.subs([(x,T),(y,0)]).expand()
-        series.append((P,Q))
+            P = P.subs([(x,T),(y,0)]).expand() + a
+            Q = Q.subs([(x,T),(y,0)]).expand()
+            series.append((P,Q))
 
     return series
             
@@ -422,7 +425,7 @@ if __name__ == "__main__":
          6*y**8*x**12 + 8*y**7*x**14 + 14*y**6*x**16 + 4*y**5*x**18 + \
          y**4*(x**20-4*x**18) - 4*y**3*x**20 + y**2*x**22 + x**24
     f5 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    f  = f5
+    f  = f1
 
     print "Curve:"
     print 
@@ -430,17 +433,6 @@ if __name__ == "__main__":
     print
     a = 0
     N = 5
-
-    pis = newton(f,x,y,N,version='rational')
-    print "\nExpansion Elements:"
-    for pi in pis:
-        print "Expansion:"
-        for h in xrange(len(pi)):
-            tau = pi[h]
-            print "\ttau =", tau
-            print "\t\tX_%d = %s*X_%d**%s" %(h,tau[1],h+1,tau[0])
-            print "\t\tY_%d = (%s + Y_%d)X_%d**%s" %(h,tau[3],h+1,h+1,tau[2])
-        print
         
     print "\nPuiseux Expansions:"
     for X,Y in puiseux(f,x,y,a,N,version='rational'):
