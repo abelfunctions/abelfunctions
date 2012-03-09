@@ -503,15 +503,15 @@ class RiemannTheta:
         """
         g    = Yinv.shape[0]
         pi   = np.pi
-        z    = np.array(z)
+        z    = np.array(z).reshape((g,1))
         x    = z.real
         y    = z.imag
         
         # determine center of ellipsoid.
         if self.uniform:
-            c     = np.zeros(g)
-            intc  = np.zeros(g)
-            leftc = np.zeros(g)
+            c     = np.zeros((g,1))
+            intc  = np.zeros((g,1))
+            leftc = np.zeros((g,1))
         else:
             c     = Yinv * y
             intc  = c.round()
@@ -550,34 +550,36 @@ class RiemannTheta:
                 this is a reasonable computation but can be sped up by 
                 writing a loop instead.
             """
-            a = int(np.ceil((c[g] - R/T[g,g]).real))
-            b = int(np.floor((c[g] + R/T[g,g]).real))
+            pdb.set_trace()
+            a = int( np.ceil((c[g] - R/T[g,g]).real)  )
+            b = int( np.floor((c[g] + R/T[g,g]).real) )
 
             # check if we reached the edge of the ellipsoid
-            if not a < b: return []
+            if not a < b: return np.array([])
             # last dimension reached: append points
-            if g == 0: return [ [i] + start for i in range(a, b+1) ]
+            if g == 0:
+                return np.array([np.append([i],start) for i in xrange(a,b+1)])
         
             #
             # compute new shifts, radii, start, and recurse
             #
             newg    = g-1
-#            newT    = T.submatrix(nrows=newg+1, ncols=newg+1)
             newT    = T[:(newg+1),:(newg+1)]
             newTinv = la.inv(newT)
             pts     = []
-            pdb.set_trace()
+
             for n in xrange(a, b+1):
-                chat     = np.array(c[:newg+1])
-                that     = np.array(T[:g][:newg+1])             # XXX COMPARE TO SAGE
+                chat     = c[:newg+1]
+                that     = T[:newg+1,g]
                 newc     = chat - newTinv * that * (n - c[g])
                 newR     = np.sqrt(R**2/pi - (T[g,g] * (n - c[g]))**2)
-                newstart = [n] + start
-                pts     += find_integer_points(newg,newc,newR,newstart)
+                newstart = np.append([n],start)
+                newpts   = find_integer_points(newg,newc,newR,newstart)
+                pts      = np.append(pts,newpts)
 
             return pts
 
-        return find_integer_points(g-1, leftc, R, [])
+        return find_integer_points(g-1, leftc, R, np.array([]))
 
     
     def radius(self, T, prec, deriv=[]):
@@ -621,7 +623,7 @@ class RiemannTheta:
         """
         Pi = np.pi
         I  = 1.0j
-        g  = T.shape[0]
+        g  = np.float64(T.shape[0])
 
         # compute the length of the shortest lattice vector
         U  = qflll(T)
@@ -820,7 +822,7 @@ class RiemannTheta:
                 origin          = [0]*g
                 self._intpoints = self.integer_points(self._Yinv, self._T, 
                                                       self._Tinv, origin, g, 
-                                                      self._rad)
+                                                      1.5*self._rad)
             R = self._rad
             S = self._intpoints
         else:
