@@ -1,9 +1,11 @@
 import numpy as np
 import scipy.linalg as la
 
+import pdb
 
 
-def finite_sum(self, X, Y, T, x, y, S, deriv, domain):
+
+def finite_sum(X, Y, Yinv, T, x, y, S, g, deriv):
     """
     Computes the oscillatory part of the finite sum
     
@@ -59,16 +61,15 @@ def finite_sum(self, X, Y, T, x, y, S, deriv, domain):
         1.050286258 - 0.1663490011*I
     """    
     I     = 1.0j
-    Yinv  = la.inv(Y)         # FUTURE SPEEDUP
     pi    = np.pi
 
     # define shifted vectors
     shift     = Yinv * y
-    intshift  = shift.apply_map(lambda t: t.round())
+    intshift  = shift.round()
     fracshift = shift - intshift
 
     # helper functions
-    exppart  = lambda a: 2 * pi * np.dot(a-intshift, 0.5*X*(a-intshift)+x)
+    exppart  = lambda a: 2 * pi * np.dot((a-intshift).T, 0.5*X*(a-intshift)+x)
     normpart = lambda a: -pi*la.norm(T*(a+fracshift))**2
 
     if deriv:
@@ -77,10 +78,13 @@ def finite_sum(self, X, Y, T, x, y, S, deriv, domain):
         dd = [2*pi*I*np.dot(d,a-intshift) for d in deriv]
         derivprod = lambda a: np.prod(dd)
         
+#    pdb.set_trace()       
+
     # compute the finite sum
     fsum_real = 0
     fsum_imag = 0
-    for n in S:
+    for k in range(len(S)/g):
+        n     = np.array(S[k*g:(k+1)*g]).reshape((g,1))
         ept   = exppart(n)
         npt   = np.exp(normpart(n))
         cpart = npt * np.cos(ept)
@@ -96,5 +100,5 @@ def finite_sum(self, X, Y, T, x, y, S, deriv, domain):
             fsum_real += cpart
             fsum_imag += spart
 
-    return fsum_real + I * fsum_imag
+    return fsum_real + fsum_imag*1.0j
 

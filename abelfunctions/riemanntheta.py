@@ -550,7 +550,6 @@ class RiemannTheta:
                 this is a reasonable computation but can be sped up by 
                 writing a loop instead.
             """
-            pdb.set_trace()
             a = int( np.ceil((c[g] - R/T[g,g]).real)  )
             b = int( np.floor((c[g] + R/T[g,g]).real) )
 
@@ -572,7 +571,7 @@ class RiemannTheta:
                 chat     = c[:newg+1]
                 that     = T[:newg+1,g]
                 newc     = chat - newTinv * that * (n - c[g])
-                newR     = np.sqrt(R**2/pi - (T[g,g] * (n - c[g]))**2)
+                newR     = np.sqrt(R**2 - (T[g,g] * (n - c[g]))**2)  # XXX
                 newstart = np.append([n],start)
                 newpts   = find_integer_points(newg,newc,newR,newstart)
                 pts      = np.append(pts,newpts)
@@ -791,21 +790,14 @@ class RiemannTheta:
         pi = np.pi
 
         # perform some simple cacheing on the matrices
-        X = Omega.real
-        Y = Omega.imag
-        if (not self._Omega) or (self._Omega != Omega):
-            # reset rad and intpoints since they're dependent on Omega
-            self._rad       = None
-            self._intpoints = None
-
-            # define new matrix components
-            self._Omega = Omega    
-            self._Yinv  = la.inv(Y)
-            self._T     = la.cholesky(Y)
-            self._Tinv  = la.inv(self._T)
+        X = np.matrix(Omega.real)
+        Y = np.matrix(Omega.imag)
+        Yinv = np.matrix(la.inv(Y))
+        T = np.matrix(la.cholesky(Y))
+        Tinv = np.matrix(la.inv(T))
             
         # extract real and imaginary parts of input z
-        z = np.array(z)
+        z = np.array(z).reshape((g,1))
         x = z.real
         y = z.imag
 
@@ -815,24 +807,21 @@ class RiemannTheta:
         # compute integer points: check for uniform approximation
         if self.uniform:
             # check if we've already computed the uniform radius and intpoints
-            if not self._rad:
-                self._rad = self.radius(self._T, prec, deriv=deriv)
-            if not self._intpoints:
-                # fudge factor for uniform radius
+            if self._rad is None:
+                self._rad = self.radius(T, prec, deriv=deriv)
+            if self._intpoints is None:
                 origin          = [0]*g
-                self._intpoints = self.integer_points(self._Yinv, self._T, 
-                                                      self._Tinv, origin, g, 
-                                                      1.5*self._rad)
+                self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
+                                                      g, self._rad)
             R = self._rad
             S = self._intpoints
         else:
-            R = self.radius(self._T, prec, deriv=deriv)
-            S = self.integer_points(self._Yinv, self._T, self._Tinv,
-                                    z, g, self._rad)
+            R = self.radius(T, prec, deriv=deriv)
+            S = self.integer_points(Yinv, T, Tinv, z, g, R)
 
         # compute oscillatory and exponential terms
-        v    = finite_sum(X, Y, self._T, x, y, S, deriv, domain)
-        u    = pi*np.dot(y,self._Yinv * y)
+        v    = finite_sum(X, Y, Yinv, T, x, y, S, g, deriv).item(0,0)
+        u    = pi*np.dot(y.T,Yinv * y).item(0,0)
 
         return u,v
 
@@ -923,12 +912,14 @@ if __name__=="__main__":
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    print theta(z,Omega)
+    print theta.value_at_point(z,Omega)
     print "1.1654 - 1.9522e-15*I"
     print 
 
     print "Test #2:"
     z = np.array([1.0j,1.0j])
-    print theta(z)
-    print -438.94 + 0.00056160*I
-    print theta.exp_and_osc_at_point(z)
+    u,v = theta.exp_and_osc_at_point(z,Omega)
+    print theta.value_at_point(z,Omega)
+    print "-438.94 + 0.00056160*I"
+    print u
+    print v
