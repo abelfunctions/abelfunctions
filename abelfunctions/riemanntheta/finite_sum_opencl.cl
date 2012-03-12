@@ -10,21 +10,21 @@
  */
 #define PI 3.141592653589793
 
-float exppart(int, __constant float*, __constant float*, 
-	      __constant float*, int,  __constant float*);
+float exppart(int, __constant const float*, __constant const float*, 
+	      __constant const float*, const int,  __constant const float*);
 
-float normpart(int, __constant float*, __constant float*, int, 
-	       __constant float*);
+float normpart(int, __constant const float*, __constant const float*, const int, 
+	       __constant const float*);
 
 /*
   Given integer vector S[i], compte the exppart of the sum.
 */
 float exppart(int i,
-	      __constant float* X,
-	      __constant float* intshift, 
-	      __constant float* x,
-	      int g,
-	      __constant float* S)
+	      __constant const float* X,
+	      __constant const float* intshift, 
+	      __constant const float* x,
+	      const int g,
+	      __constant const float* S)
 {
   // perform dot product of matrix mult
   float sum = 0;
@@ -51,10 +51,10 @@ float exppart(int i,
   Given integer vector S[i], compte the exppart of the sum.
 */
 float normpart(int i, 
-	       __constant float* T,
-	       __constant float* fracshift,
-	       int g,
-	       __constant float* S)
+	       __constant const float* T,
+	       __constant const float* fracshift,
+	       const int g,
+	       __constant const float* S)
 {
   float sum = 0;
   float v_j;
@@ -76,13 +76,13 @@ float normpart(int i,
 
 
 __kernel void 
-finite_sum_without_derivs(__constant float* X,
-			  __constant float* T,
-			  __constant float* x,
-			  __constant float* intshift,
-			  __constant float* fracshift,
-			  int g,
-			  __constant float* S,
+finite_sum_without_derivs(__constant const float* X,
+			  __constant const float* T,
+			  __constant const float* x,
+			  __constant const float* intshift,
+			  __constant const float* fracshift,
+			  const int g,
+			  __constant const float* S,
 			  __global float* fsum_real,   // accum vectors
 			  __global float* fsum_imag)   // accum vectors
 {
