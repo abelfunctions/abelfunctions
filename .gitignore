@@ -3,7 +3,8 @@
 *.o
 *.so
 *.pyc
-./build/*
+build
+build/*
 
 
 # OS Generated Files #

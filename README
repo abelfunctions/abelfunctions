@@ -4,6 +4,21 @@ abelfunctions
 abelfunctions is a library for computing with Abelian functions and solving 
 integrable partial differential equations.
 
+Prerequisites
+-------------
+
+abelfunctions can be used either with the Enthought Python Distribution (EPD)
+or can be installed as a Sage spkg. If using EPD, abelfunctions needs the 
+following libraries / software installed:
+
+  * PARI/GP: to install, run
+
+    $ curl -O http://pari.math.u-bordeaux.fr/pub/pari/unix/pari.tgz
+    $ tar xzf pari.tgz
+    $ cd pari
+    $ ./Configure
+    $ make all
+    # make install
 
 Prerequisites
 -------------
