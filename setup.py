@@ -20,7 +20,8 @@ import abelfunctions
 
 packages = [
     'abelfunctions',
-    'abelfunctions.utilities', 
+    'abelfunctions.riemanntheta',
+    'abelfunctions.utilities',
     ]
 
 modules = [
@@ -28,6 +29,7 @@ modules = [
     'abelfunctions.monodromy',
     'abelfunctions.homology',
     'abelfunctions.riemannsurface',
+    'abelfunctions.riemanntheta.riemanntheta',
     'abelfunctions.utilities.qflll',
     ]
 
@@ -46,6 +48,6 @@ setup(
     author_email = 'cswiercz@gmail.com',
     license = 'GPL v2+',
     packages = packages,
-    py_modules = modules,
+#    py_modules = modules,
     classifiers = classifiers
     )

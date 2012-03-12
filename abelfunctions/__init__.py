@@ -11,6 +11,6 @@ The code is available as a git repository at
 __version__ = "indev"
 
 from puiseux import puiseux
-#from monodromy import monodromy
-#from riemann import RiemannSurface
+from riemanntheta import RiemannTheta
+
 

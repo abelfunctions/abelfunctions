@@ -181,31 +181,15 @@ TESTS:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-import pdb
-
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
 
-#from abelfunctions.utilities import qflll
-from utilities import qflll
+from abelfunctions.utilities import qflll
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import finite_sum
 
-"""
-from sage.calculus.var            import SR, var
-from sage.ext.fast_callable       import fast_callable 
-from sage.matrix.constructor      import matrix, identity_matrix
-from sage.modules.free_module_element import vector
-from sage.misc.misc_c             import prod
-from sage.plot.all                import implicit_plot
-from sage.rings.all               import CDF,RDF,RealField,ZZ,PolynomialRing
-from sage.symbolic.function       import BuiltinFunction
-from sage.symbolic.expression     import is_Expression
-from scipy.optimize               import fsolve
-from scipy.special                import gamma, gammaincc, gammainccinv
-"""
 
 class RiemannTheta:
     r"""
