@@ -7,7 +7,7 @@ try:
 except ImportError:
     warnings.warn("Could not find pyopencl package. Do not attempt to compute finite sum on GPU.")
 
-def finite_sum_opencl(self, X, Y, T, x, y, S):
+def finite_sum_opencl(self, X, Y, Yinv, T, x, y, S, g):
     pass
 
 
