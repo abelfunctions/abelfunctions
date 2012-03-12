@@ -923,3 +923,35 @@ if __name__=="__main__":
     print "-438.94 + 0.00056160*I"
     print u
     print v
+
+    print "Test #3"
+    import pylab as p
+    from mpl_toolkits.mplot3d import Axes3D
+    from matplotlib import cm
+    from matplotlib.ticker import LinearLocator, FormatStrFormatter
+    import matplotlib.pyplot as plt
+    
+    print "\tCalculating theta..."
+    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega)[1].imag
+    f = np.vectorize(f)
+    x = np.linspace(0,1,60)
+    y = np.linspace(0,5,60)
+    X,Y = p.meshgrid(x,y)
+    Z = f(X,Y)
+
+    print "\tPlotting..."
+    plt.contourf(X,Y,Z,7,antialiased=True)
+#    plt.figure()
+#    CS = plt.imshow(Z,cmap=cm.jet,interpolation='bilinear')
+#                    extent=(0,1,0,5))
+    
+#    fig=plt.figure()
+#    ax = fig.gca(projection='3d')
+#    ax.plot_surface(X,Y,Z,
+#                    rstride=1,cstride=1,cmap=cm.jet, linewidth=0,
+#                    antialiased=True)
+    
+    plt.show()
+
+    
+                       
