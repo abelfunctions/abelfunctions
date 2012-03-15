@@ -7,7 +7,6 @@ integral bases and with Riemann surfaces.
 """
 
 import sympy
-import pdb
 from operator import itemgetter
 
 
@@ -192,15 +191,17 @@ def polygon(F,X,Y,I):
 
         # check against all following points for colinearity by comparing
         # slopes. append all colinear points to side
-        k=2
         for k in xrange(2,N-n):
             pt = newton[n+k]
             slope = float(pt[1]-side[0][1]) / (pt[0]-side[0][0])
             if abs(slope - sideslope) < eps:
                 side.append(pt)
             else:
+                # when we reach the end of the newton polygon we need
+                # to shift the value of k a little bit so that the 
+                # last side is correctly captured
+                if k == N-n-1: k -= 1
                 break
-
         n += k
 
         # compute q,m,l such that qj + mi = l and Phi
@@ -425,7 +426,9 @@ if __name__ == "__main__":
          6*y**8*x**12 + 8*y**7*x**14 + 14*y**6*x**16 + 4*y**5*x**18 + \
          y**4*(x**20-4*x**18) - 4*y**3*x**20 + y**2*x**22 + x**24
     f5 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    f  = f1
+    f6 = -x**7 + 2*x**3*y + y**3
+
+    f  = f6
 
     print "Curve:"
     print 
@@ -433,7 +436,7 @@ if __name__ == "__main__":
     print
     a = 0
     N = 5
-        
+    
     print "\nPuiseux Expansions:"
     for X,Y in puiseux(f,x,y,a,N,version='rational'):
         print "Expansion:"
