@@ -339,7 +339,7 @@ def singular_term(F,X,Y,L,I,version):
     return T
     
 
-def puiseux(f,x,y,a,n,T=True,version='rational'):
+def puiseux(f,x,y,a,n,parametric=True,version='rational'):
     """
     Computes the first `n` terms of the Puiseux series expansions of 
     `f = f(x,y)` at `x=a`.
@@ -356,10 +356,10 @@ def puiseux(f,x,y,a,n,T=True,version='rational'):
 
       -- ``n``: truncation degree for the Puiseux series expansions
 
-      -- ``T``: (default: ``True``) If set to ``True``, returns parameterized 
-         form of the Puiseux series expansions. That is, each series is a pair
-         `x = x(T), y = y(T)`. If set to ``False``, returns unparameterized
-         Puiseux series expansions `y = y(x)`.
+      -- ``parametric``: (default: ``True``) If set to ``True``, returns 
+         parameterized form of the Puiseux series expansions. That is, each 
+         series is a pair `x = x(T), y = y(T)`. If set to ``False``, returns 
+         unparameterized Puiseux series expansions `y = y(x)`.
 
       -- ``version``: (default: ``'rational'``) use 'rational' for rational
          Puiseux series expansions. Use 'classical' for expansions containing
@@ -406,7 +406,14 @@ def puiseux(f,x,y,a,n,T=True,version='rational'):
 
             P = P.subs([(x,T),(y,0)]).expand() + a
             Q = Q.subs([(x,T),(y,0)]).expand()
-            series.append((P,Q))
+
+            # append parametric or non-parametric form
+            if parametric:
+                series.append((P,Q))
+            else:
+                TT = sympy.solve(x-P,T)[0]
+                Q  = Q.subs(T,TT)
+                series.append(Q)
 
     return series
             
@@ -438,10 +445,10 @@ if __name__ == "__main__":
     N = 5
     
     print "\nPuiseux Expansions:"
-    for X,Y in puiseux(f,x,y,a,N,version='rational'):
+    for Y in puiseux(f,x,y,a,N,parametric=False,version='rational'):
         print "Expansion:"
-        print "X ="
-        sympy.pretty_print(X)
+#        print "X ="
+#        sympy.pretty_print(X)
         print "\nY ="
         sympy.pretty_print(Y)
         print
