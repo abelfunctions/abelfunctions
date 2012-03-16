@@ -411,9 +411,9 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
             if parametric:
                 series.append((P,Q))
             else:
-                TT = sympy.solve(x-P,T)[0]
-                Q  = Q.subs(T,TT)
-                series.append(Q)
+                for TT in sympy.solve(x-P,T):
+                    Q = Q.subs(T,TT)
+                    series.append(Q)
 
     return series
             
