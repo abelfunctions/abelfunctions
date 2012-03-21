@@ -191,6 +191,7 @@ def polygon(F,X,Y,I):
 
         # check against all following points for colinearity by comparing
         # slopes. append all colinear points to side
+        k = 2
         for k in xrange(2,N-n):
             pt = newton[n+k]
             slope = float(pt[1]-side[0][1]) / (pt[0]-side[0][0])
@@ -380,14 +381,14 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
     else:
         f = f.subs(x,x+a).expand()
 
-    # combine the K-terms to obtain the parameterized form
+    # combine the K-terms to obtain the parameterized form.
     series = []
     T = sympy.Symbol('T')
 
     # loop over each y-root
     for b,mult in sympy.roots(f.subs(x,0)).iteritems():
         # compute the K-terms of the expansions
-        F = f.subs(y,y-b)
+        F = f.subs(y,y+b)
         pis = newton(F,x,y,n,version=version)
         for pi in pis:
             # get first elements
@@ -404,16 +405,17 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
                 P = P.subs(x,P1)
                 Q = Q.subs([(x,P1),(y,Q1)])
 
-            P = P.subs([(x,T),(y,0)]).expand() + a
+            P = P.subs([(x,T),(y,0)]).expand()
             Q = Q.subs([(x,T),(y,0)]).expand()
 
             # append parametric or non-parametric form
             if parametric:
-                series.append((P,Q))
+                if a == sympy.oo: series.append((1/P,Q))
+                else:             series.append((P+a,Q))
             else:
-                for TT in sympy.solve(x-P,T):
-                    Q = Q.subs(T,TT)
-                    series.append(Q)
+                if a == sympy.oo: solns = sympy.solve(1/x-P,T)
+                else:             solns = sympy.solve((x-a)-P,T)
+                for TT in solns:  series.append(Q.subs(T,TT))
 
     return series
             
