@@ -174,13 +174,6 @@ TESTS:
  
 """
 
-#*****************************************************************************
-#       Copyright (C) 2012 Chris Swierczewski <cswiercz@gmail.com>
-#
-#  Distributed under the terms of the GNU General Public License (GPL)
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
-
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
@@ -327,20 +320,6 @@ class RiemannTheta:
     def __init__(self, uniform=True, deriv_accuracy_radius=5):
         """
         Defines parameters in constructed class instance.
-
-        EXAMPLE:
-
-        An example doesn't really make sense, so we demonstrate the 
-        construction of a Riemann theta function::
-        
-            sage: R = ComplexField(20); I = R.gen()
-            sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])
-            sage: theta = RiemannTheta(Omega, deriv=[[1,0]], deriv_accuracy_radius=6.0)
-            sage: theta.deriv
-            [[1, 0]]
-            sage: theta.deriv_accuracy_radius
-            6.00000000000000
-                
         """
         self.uniform               = uniform
         self.deriv_accuracy_radius = deriv_accuracy_radius
@@ -362,17 +341,6 @@ class RiemannTheta:
         .. note::
 
             Not yet implemented.
-
-        EXAMPLES::
-        
-            sage: from sage.functions.riemann_theta import RiemannTheta
-            sage: R = ComplexField(20); I = R.gen()
-            sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])
-            sage: theta = RiemannTheta(Omega)
-            sage: theta.lattice() # optional: not implemented
-            Traceback (most recent call last)
-            ...
-            NotImplementedError
         """
         raise NotImplementedError()
 
@@ -387,20 +355,7 @@ class RiemannTheta:
 
             Block decomposablility detection is difficult and not yet 
             implemented. Currently, ``self.genus()`` just returns the size 
-            of the matrix.
-            
-        EXAMPLES:
-            
-        The following Riemann matrix is `2 \times 2` and is not block 
-        decomposable. So its genus should be two::
-
-            sage: from sage.functions.riemann_theta import RiemannTheta
-            sage: R = ComplexField(36); I = R.gen()
-            sage: Omega = matrix(R,2,2,[1.690983006 + 0.9510565162*I, 1.5 + 0.363271264*I, 1.5 + 0.363271264*I, 1.309016994+ 0.9510565162*I])
-            sage: theta = RiemannTheta(Omega)
-            sage: theta.genus()
-            2
-            
+            of the matrix.            
         """
         return NotImplementedError()
 
@@ -453,37 +408,6 @@ class RiemannTheta:
         - ``z`` -- the point `z \in \CC` at which to compute `\theta(z|\Omega)`
          
         - ``R`` -- the first ellipsoid semi-axis length as computed by ``self.radius()``
-
-
-        OUTPUTS:
-
-        - (list) -- a list of integer points in `\ZZ^g` that fall within the pointwise approximation ellipsoid defined in [CRTF]
-
-
-        .. warning::
-
-            At times we work over ``RDF``, which have very low 
-            precision (53 bits). This could be a problem when given 
-            ill-conditioned input. The general computing theta functions with
-            such ill-conditioned input will not be possible, so
-            we do not concern outselves with this case. This can be resolved
-            by implementing the Siegel transformation discussed in [CRTF].
-
-
-        EXAMPLES:
-        ``integer_points()`` returns the points over which the finite sum
-        is computed given the first major axis of the bounding ellipsoid.
-        Here, we simply provide such a radius for testing purposes.::
-        
-            sage: from sage.functions.riemann_theta import RiemannTheta
-            sage: R = ComplexField(36); I = R.gen()
-            sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])
-            sage: theta = RiemannTheta(Omega)
-            sage: theta.integer_points([0,0],2)
-            [[-1, 0], [0, 0], [1, 0]]
-            sage: theta.integer_points([0,0],3)
-            [[-1, -1], [0, -1], [1, -1], [-1, 0], [0, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
-
         """
         g    = Yinv.shape[0]
         pi   = np.pi
@@ -508,9 +432,6 @@ class RiemannTheta:
             each coordinate direction.
 
             INPUT:
-
-            - ``T`` -- the Cholesky decomposition of the imaginary part of
-              the Riemann matrix, `\Omega`
             
             - ``g`` -- the genus. recursively used to determine integer 
               points along each axis.
@@ -526,7 +447,7 @@ class RiemannTheta:
             OUTPUT:
 
             - ``intpoints`` -- (list) a list of all of the integer points 
-              inside the bounding ellipsoid
+              inside the bounding ellipsoid along a single axis
 
             ... todo::
 
@@ -574,7 +495,8 @@ class RiemannTheta:
 
         `R` is the radius of [CRTF] Theorems 2, 4, and 6.
 
-        INPUT:
+        Input
+        -----
         
         - ``T`` -- the Cholesky decomposition of the imaginary part of the 
           Riemann matrix `\Omega`
@@ -582,27 +504,7 @@ class RiemannTheta:
         - ``prec`` -- the desired precision of the computation
         
         - ``deriv`` -- (list) (default=``[]``) the derivative, if given. 
-          Radius increases as order of derivative increases.
-
-        EXAMPLES:
-
-        Computing the radius. Note that the radius increases as a function of
-        the precision::
-
-            sage: R = ComplexField(10); I = R.gen()
-            sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])                  
-            sage: theta = RiemannTheta(Omega)
-            sage: theta.radius([])
-            3.61513411073
-
-            sage: R = ComplexField(40); I = R.gen()
-            sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])                  
-            sage: theta = RiemannTheta(Omega)
-            sage: theta.radius([])
-            6.02254252538
-            sage: theta.radius([[1,0]])
-            6.37024100817
-            
+          Radius increases as order of derivative increases.            
         """
         Pi = np.pi
         I  = 1.0j
@@ -675,23 +577,6 @@ class RiemannTheta:
                 Right-hand side function for computing the bounding ellipsoid
                 radius given a desired maximum error bound for the second
                 derivative of the Riemann theta function.
-
-                INPUT:
-
-                    - ``ins`` -- the quantity `(R-\rho)^2` where `R` is the radius we must solve for and `\rho` is the length of the shortest lattice vector in the integer lattice defined by `\Omega`.
-
-                EXAMPLES:
-
-                Since this function is used implicitly in 
-                ``RiemannTheta.radius()`` we use an example input from above::
-
-                    sage: R = ComplexField(40); I = R.gen()
-                    sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])
-                    sage: theta = RiemannTheta(Omega)
-                    sage: theta.radius([])
-                    6.02254252538
-                    sage: theta.radius([[1,0]])
-                    6.37024100817
                 """
                 return gamma((g+2)/2)*gammaincc((g+2)/2, ins) + \
                     2*np.sqrt(Pi)*normTinv*L *                  \
@@ -729,46 +614,7 @@ class RiemannTheta:
         Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
         (Or a given directional derivative of `\theta`.) That is, compute 
         complex numbers `u,v \in \CC` such that `\theta(z,\Omega) = e^u v` 
-        where the value of `v` is oscillatory as a function of `z`.
-
-        INPUT:
-
-        - ``z`` -- a list or tuple representing the complex `\CC^g` point at which to evaluate `\theta(z | \Omega)`
-
-        - ``deriv`` -- (default: ``[]``) list representing the directional derivative of `\theta(z | \Omega)` you wish to compute
-
-        OUTPUT:
-
-        - ``(u,v)`` -- data pair such that `\theta(z,\Omega) = e^u v`.
-            
-
-        EXAMPLES:
-        
-        First, define a Riemann matrix and Riemann theta function::
-
-            sage: from sage.functions.riemann_theta import RiemannTheta
-            sage: R = ComplexField(36); I = R.gen()
-            sage: Omega = matrix(R,2,2,[1.690983006 + 0.9510565162*I, 1.5 + 0.363271264*I, 1.5 + 0.363271264*I, 1.309016994+ 0.9510565162*I])
-            sage: theta = RiemannTheta(Omega)
-
-        Some example evaluations::
-
-            sage: theta.exp_and_osc_at_point([0,0])
-            (0, 1.050286258 - 0.1663490011*I)
-            sage: theta.exp_and_osc_at_point([0.3+0.5*I,0.9+1.2*I])
-            (4.763409165, 0.1568397231 - 1.078369835*I)
-            sage: theta.exp_and_osc_at_point([0.3+0.5*I,0.9+1.2*I], deriv=[[1,0]])
-            (4.763409165, -0.5864936847 + 0.04570614011*I)
-
-
-        Defining a Riemann theta function, we demonstrate that the oscillatory
-        part is periodic in each component with period 1::
-
-            sage: theta.exp_and_osc_at_point([0,0])
-            (0, 1.050286258 - 0.1663490011*I)
-            sage: theta.exp_and_osc_at_point([1,3])
-            (0, 1.050286258 - 0.1663490011*I)
-            
+        where the value of `v` is oscillatory as a function of `z`.            
         """
         g = Omega.shape[0]
         pi = np.pi
@@ -811,80 +657,20 @@ class RiemannTheta:
 
 
 
-    def value_at_point(self, z, Omega, deriv=[]):
+    def value_at_point(self, z, Omega, prec=1e-8, deriv=[]):
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z`.
-        
-        INPUT:
-
-        - ``z`` -- the complex `\CC^g` point at which to evaluate 
-          `\theta(z,\Omega)`
-
-        - ``deriv`` -- (default: ``[]``) list representing the directional 
-          derivative of `\theta(z | \Omega)` you wish to compute
-
-
-        OUTPUT:
-
-            - `\theta(z | \Omega)` -- value of `\theta` at `z`
-
-
-        EXAMPLES:
-        
-        Computing the value of a genus 2 Riemann theta function at the origin::
-
-            sage: from sage.functions.riemann_theta import RiemannTheta
-            sage: R = ComplexField(36); I = R.gen()
-            sage: Omega = matrix(R,2,2,[1.690983006 + 0.9510565162*I, 1.5 + 0.363271264*I, 1.5 + 0.363271264*I, 1.309016994+ 0.9510565162*I])
-            sage: theta = RiemannTheta(Omega)
-            sage: theta.value_at_point([0,0])
-            1.050286258 - 0.1663490011*I
-            sage: theta([0,0])
-            1.050286258 - 0.1663490011*I
-
         """
-        exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, deriv=deriv)
+        exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, prec=prec,
+                                                       deriv=deriv)
         return np.exp(exp_part) * osc_part
 
-    def __call__(self, *args, **kwds):
+    def __call__(self, z, Omega, prec=1e-8, deriv=[]):
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z`. Lazy evaluation
-        is done if the input contains symbolic variables.
-        
-        INPUT:
-
-        - ``z`` -- the complex `\CC^g` point at which to evaluate `\theta(z,\Omega)`
-
-        - ``deriv`` -- (default: ``[]``) list representing the directional derivative of `\theta(z | \Omega)` you wish to compute
-
-
-        OUTPUT:
-
-            - `\theta(z | \Omega)` -- value of `\theta` at `z`
-
-
-        EXAMPLES:
-        
-        Computing the value of a genus 2 Riemann theta function at the origin::
-
-            sage: from sage.functions.riemann_theta import RiemannTheta
-            sage: R = ComplexField(36); I = R.gen()
-            sage: Omega = matrix(R,2,2,[1.690983006 + 0.9510565162*I, 1.5 + 0.363271264*I, 1.5 + 0.363271264*I, 1.309016994+ 0.9510565162*I])
-            sage: theta = RiemannTheta(Omega)
-            sage: theta([0,0])
-            1.050286258 - 0.1663490011*I
-
-        Performs lazy evaluation of symbolic input::
-
-            sage: var('x')
-            x
-            sage: f = theta([x^2,sin(x)]); f
-            theta(x^2, sin(x))
-            sage: f(x=1.0*I)
-            -94.35488925 - 59.48498251*I
-            
+        is done if the input contains symbolic variables.            
         """
-        return self.value_at_point(*args, **kwds)
+        return self.value_at_point(z, Omega, prec=prec, deriv=deriv)
         
 
 
