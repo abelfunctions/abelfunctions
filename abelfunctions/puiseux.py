@@ -9,6 +9,8 @@ integral bases and with Riemann surfaces.
 import sympy
 from operator import itemgetter
 
+import pdb
+
 
 def _coefficient(F):
     """
@@ -19,19 +21,19 @@ def _coefficient(F):
 
     INPUTS:
     
-        -- ``F``: a sympy polynomial
+    -- ``F``: a sympy polynomial
 
     OUTPUTS:
 
-        -- ``dict``: a dictionary such that ``d[(i,j)] = a_ij``.
+    -- ``dict``: a dictionary such that ``d[(i,j)] = a_ij``.
 
     EXAMPLES:
 
         >>> from sympy import Poly
         >>> from sympy.abc import x,y
         >>> f = Poly(y**2 + x**2*(x+1))
-        >>> _coefficient(f)
-        {(0, 2): -1, (0, 3): -1, (2, 0): 1}
+        >>> _coefficient(f) == {(0, 2): -1, (0, 3): -1, (2, 0): 1}
+        True
     """
     # compute useful dictionary of coefficients indexed
     # by the support of the polynomial
@@ -163,8 +165,11 @@ def polygon(F,X,Y,I):
             if j == JJ: slope = -sympy.oo
             else:       slope = sympy.oo
         else:           slope = float(j-JJ)/i     
-
-        if slope < testslope: 
+        
+        # if the slope is less than the test slope or if we're in the case
+        # where we include points along the j=0 line then add the point
+        # to the newton polygon
+        if (slope < testslope) or (I==1 and j==0): 
             newton.append((i,j))
         elif (slope == testslope) and include_borderline_colinear:
             # borderline case is when there is only one segment
@@ -191,17 +196,17 @@ def polygon(F,X,Y,I):
 
         # check against all following points for colinearity by comparing
         # slopes. append all colinear points to side
-        k = 2
-        for k in xrange(2,N-n):
-            pt = newton[n+k]
+        k = 1
+        for pt in newton[n+2:]:
             slope = float(pt[1]-side[0][1]) / (pt[0]-side[0][0])
             if abs(slope - sideslope) < eps:
                 side.append(pt)
+                k += 1
             else:
                 # when we reach the end of the newton polygon we need
                 # to shift the value of k a little bit so that the 
                 # last side is correctly captured
-                if k == N-n-1: k -= 1
+#                if k == N-n-1: k -= 1
                 break
         n += k
 
@@ -216,13 +221,14 @@ def polygon(F,X,Y,I):
     return params    
 
 
-def newton(F,X,Y,H,version):
+def newton(F,X,Y,H,version,was_singular=False):
     """
     Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 
     `\tau_h = (q_h,\mu_h,m_h,\beta_h)`.
     """
     K = None
-    return regular(singular(F,X,Y,K,[],version),X,Y,H)
+    return regular(singular(F,X,Y,K,[],version,was_singular=was_singular),
+                   X,Y,H)
 
 
 def regular(S,X,Y,H):
@@ -248,7 +254,7 @@ def regular(S,X,Y,H):
         # grow each expansion to the number of desired terms
         # TODO: at some point, change this to computing the degree
         while len(pi) < H:
-            P = sympy.poly(F,X,Y)
+            P = sympy.Poly(F,X,Y)
             a = _coefficient(P)
 
             # if the set of all (0,j), j!=0 is empty, then we've 
@@ -268,7 +274,7 @@ def regular(S,X,Y,H):
         
 
 
-def singular(F,X,Y,L,pi,version):
+def singular(F,X,Y,L,pi,version,was_singular=False):
     """
     Computes a collection of pairs `(\pi_1,F_1)` where `\pi_1` is a finite
     `\mathbb{K}`-expansion beginning by `\pi` and `F_1 \in\mathbb{L}_1[X,Y]`
@@ -292,6 +298,7 @@ def singular(F,X,Y,L,pi,version):
     S = []
     if pi == []: I = 1
     else:        I = 2
+    if was_singular: I = 2
 
     for (tau,l,r) in singular_term(F,X,Y,L,I,version):
         pi1 = pi + [tau]
@@ -326,7 +333,7 @@ def singular_term(F,X,Y,L,I,version):
             for (xi, M) in sympy.roots(Psi).iteritems():
                 # the classical version returns the "raw" roots
                 if version == 'classical':
-                    P = sympy.poly(U**q-xi,U)
+                    P = sympy.Poly(U**q-xi,U)
                     for beta in sympy.roots(P).keys():
                         tau = (q,1,m,beta)
                         T.append((tau,l,r))
@@ -338,6 +345,101 @@ def singular_term(F,X,Y,L,I,version):
                     tau = (q,mu,m,beta)
                     T.append((tau,l,r))
     return T
+
+
+def is_singular(f,x,y):
+    """
+    Determines if `f` is singular at the `x`-point `x=0`.
+
+    Inputs:
+
+    - ``f``: a plane algebraic curve
+    - ``x,y``: variables
+
+    Outputs:
+
+    - (bool): ``True`` if `f` is singular
+
+    Examples:
+
+        >>> 1+1
+        2
+    """
+    p = sympy.Poly(f,x,y)
+    coeffs = _coefficient(p)
+    deg = p.degree(y)
+
+    # the expansion is singular if there is no "c y**deg" where c is constant
+    # and if there is a constant term
+    sing_coeffs = [(i,j) for (i,j),a in coeffs.iteritems() if i==deg]
+    if (0,0) in coeffs.keys() and (deg,0) not in sing_coeffs:
+        return True
+    else:
+        return False
+
+    
+    
+def desingularize(f,x,y):
+    """
+    If f is singular, it is desginularized. Outputs new f and Puiseux 
+    series expansion data.
+
+    Inputs:
+
+    - ``f``: a plane algebraic curve
+    - ``x,y``: variables
+
+    Outputs:
+
+    - ``f``: the desingularized curve
+    - ``pi_singular``: Puiseux series data `\pi=(\tau_1,\ldots,\tau_n)`
+
+    Examples:
+    
+        >>> 1+1
+        2
+    """        
+    pi = []
+    while is_singular(f,x,y):
+        p = sympy.Poly(f,x,y)
+        coeffs = _coefficient(p)
+        c = coeffs.pop((0,0))
+
+        # for each monomial c x**j y**i find the dominant term: that is
+        # the one that cancels out the constant term alpha. This is done
+        # by substituting x = mu T**q, y = T**m giving the monomial 
+        # c mu**jT**(qj+mi). To balance the equation (kill the constant term) 
+        # we need qj+mi=0. q = i, m = -j satisfies this equation.
+        #
+        # Finally, we need to check that this choice of q,m doesn't introduce 
+        # terms with negative exponent in the curve.
+        q,m = (1,1)
+        for (i,j),aij in coeffs.iteritems():
+            # compute q,m
+            g = sympy.gcd(i,j)
+            q = sympy.Rational(i,g)
+            m = -sympy.Rational(j,g)
+
+            # check if the other terms remain positive. If so, solve for 
+            #
+            if all(q*jj+m*ii>=0 for ii,jj in coeffs.keys()):
+                break
+
+        if (q,m) == (1,1):
+            raise ValueError("Unable to compute singular term.")            
+        
+        # now that we have the desired degree terms we need to compute the
+        # constant coefficient, mu. We have to balance c + aij mu**q = 0.
+        mu = sympy.Rational(-c,aij)**sympy.Rational(1,q)
+
+        # compute the transformation data that we will prepend to the
+        # series construction process below and transform the polynomial.
+        tau_singular = (q,mu,m,1)
+        f = _new_polynomial(f,x,y,tau_singular,0)
+        pi.append(tau_singular)
+
+    return f, pi
+
     
 
 def puiseux(f,x,y,a,n,parametric=True,version='rational'):
@@ -353,7 +455,7 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
 
       -- ``y``: variable
 
-      -- ``a``: `x`-point at which to compute the Puiseux series expansions
+      -- ``a``: `x`-value at which to compute the Puiseux series expansions
 
       -- ``n``: truncation degree for the Puiseux series expansions
 
@@ -376,20 +478,36 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
 
     # scale f accordingly
     if a == sympy.oo: 
-        p = sympy.poly(f)
+        p = sympy.Poly(f)
         f = (f.subs(x,1/x) * x**p.deg(x)).expand()
     else:
         f = f.subs(x,x+a).expand()
+        
+    # desingularize if necessary
+    was_singular = False
+    if is_singular(f,x,y):
+        f, pi_singular = desingularize(f,x,y)
+        was_singular = True
 
-    # combine the K-terms to obtain the parameterized form.
+    # loop over each y-root of the original shifted polynomial (if we has to
+    # desingularize, for instance
     series = []
     T = sympy.Symbol('T')
-
-    # loop over each y-root
     for b,mult in sympy.roots(f.subs(x,0)).iteritems():
-        # compute the K-terms of the expansions
-        F = f.subs(y,y+b)
-        pis = newton(F,x,y,n,version=version)
+        # compute the K-terms of the expansions. if the input curve is 
+        # singular, we prepent tau_singular to each of the pis in the above 
+        # expansion
+        if was_singular:
+            # we don't expand about nonzero transformed y in the desingular 
+            # case since the original y was infinity
+            if b != 0: continue
+            pis = newton(f,x,y,n,version=version,was_singular=True)
+            for k in range(len(pis)):
+                pis[k] = pi_singular + pis[k]
+        else:
+            F = f.subs(y,y+b)
+            pis = newton(F,x,y,n,version=version)
+
         for pi in pis:
             # get first elements
             q,mu,m,beta = pi[0]
@@ -419,32 +537,21 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
 
     return series
             
-
 """
 TESTS
 """
 if __name__ == "__main__":
-    print "==== Test Suite: puiseux.py ==="
-    # example algebraic curve
-    x,y,T = sympy.symbols('x,y,T')
-    f1 = -y**5 + (2*x-1)*y**4 - (3*x-x**2)*y**3 - (x-3*x**2)*y**2 + \
-         (x**3-2*x**2)*y + x**6
-    f2 = y**2 - x**2*(x+1)
-    f3 = y**8 + x*y**5 + x**4 - x**6
-    f4 = y**16 - 4*y**12*x**6 - 4*y**11*x**8 + y**10*x**10 + \
-         6*y**8*x**12 + 8*y**7*x**14 + 14*y**6*x**16 + 4*y**5*x**18 + \
-         y**4*(x**20-4*x**18) - 4*y**3*x**20 + y**2*x**22 + x**24
-    f5 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    f6 = -x**7 + 2*x**3*y + y**3
+    print "==== Module Test: puiseux.py ==="
+    from sympy.abc import x,y,T
 
-    f  = f6
-
-    print "Curve:"
-    print 
-    print "\t", f
-    print
+#    f = y**2 - x**2*(x+1)
+#    f = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    f = (x**6)*y**3 + 2*x**3*y - 1
     a = 0
     N = 5
+
+    print "Curve:\n"
+    sympy.pretty_print(f)
     
     print "\nPuiseux Expansions:"
     for Y in puiseux(f,x,y,a,N,parametric=False,version='rational'):
