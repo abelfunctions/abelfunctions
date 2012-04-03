@@ -73,8 +73,8 @@ Installation
 
 **Sage Installation**. Enter the main directory, abelfunctions, and run:
 
-    $ make spkg
-    $ sage -i abelfunctions.spkg
+    $ sage -sh
+    $ python setup.py install
 
 
 
