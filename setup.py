@@ -92,15 +92,15 @@ class test_abelfunctions(Command):
         
 
 
-modules = [
-    'abelfunctions.puiseux',
-    'abelfunctions.monodromy',
-    'abelfunctions.homology',
-    'abelfunctions.riemannsurface',
+packages = [
+#    'abelfunctions.puiseux',
+#    'abelfunctions.monodromy',
+#    'abelfunctions.homology',
+#    'abelfunctions.riemannsurface',
     'abelfunctions.riemanntheta',
-    'abelfunctions.riemanntheta.riemanntheta',
+#    'abelfunctions.riemanntheta.riemanntheta',
     'abelfunctions.utilities',
-    'abelfunctions.utilities.qflll',
+#    'abelfunctions.utilities.qflll',
     ]
 
 tests = [
@@ -135,7 +135,7 @@ setup(
     author_email = 'cswiercz@gmail.com',
     url = 'https://github.com/cswiercz/abelfunctions',
     license = 'GPL v2+',
-    packages = ['abelfunctions'] + modules + tests,
+    packages = ['abelfunctions'] + packages + tests,
     ext_modules = [],
     data_files = [],
     cmdclass = {'test': test_abelfunctions,
