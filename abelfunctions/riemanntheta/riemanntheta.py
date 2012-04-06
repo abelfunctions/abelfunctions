@@ -700,7 +700,7 @@ if __name__=="__main__":
     from matplotlib import cm
     from matplotlib.ticker import LinearLocator, FormatStrFormatter
     import matplotlib.pyplot as plt
-    
+
     print "\tCalculating theta..."
     f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega)[1].imag
     f = np.vectorize(f)
@@ -711,17 +711,6 @@ if __name__=="__main__":
 
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
-#    plt.figure()
-#    CS = plt.imshow(Z,cmap=cm.jet,interpolation='bilinear')
-#                    extent=(0,1,0,5))
-    
-#    fig=plt.figure()
-#    ax = fig.gca(projection='3d')
-#    ax.plot_surface(X,Y,Z,
-#                    rstride=1,cstride=1,cmap=cm.jet, linewidth=0,
-#                    antialiased=True)
-    
     plt.show()
-
     
                        
