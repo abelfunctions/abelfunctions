@@ -608,8 +608,7 @@ class RiemannTheta:
         return rad
 
 
-
-    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[]):
+    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False):
         r"""
         Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
         (Or a given directional derivative of `\theta`.) That is, compute 
@@ -650,27 +649,30 @@ class RiemannTheta:
             S = self.integer_points(Yinv, T, Tinv, z, g, R)
 
         # compute oscillatory and exponential terms
-        v    = finite_sum(X, Y, Yinv, T, x, y, S, g, deriv).item(0,0)
+        if gpu:
+            from riemanntheta_misc import finite_sum_opencl
+            v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
+        else:
+            v = finite_sum(X, Yinv, T, x, y, S, g, deriv).item(0,0)
         u    = pi*np.dot(y.T,Yinv * y).item(0,0)
 
         return u,v
 
-
-
-    def value_at_point(self, z, Omega, prec=1e-8, deriv=[]):
+    def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False):
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z`.
         """
+
         exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, prec=prec,
-                                                       deriv=deriv)
+                                                       deriv=deriv, gpu=gpu)
         return np.exp(exp_part) * osc_part
 
-    def __call__(self, z, Omega, prec=1e-8, deriv=[]):
+    def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=False):
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z`. Lazy evaluation
         is done if the input contains symbolic variables.            
         """
-        return self.value_at_point(z, Omega, prec=prec, deriv=deriv)
+        return self.value_at_point(z, Omega, prec=prec, deriv=deriv, gpu=gpu)
         
 
 
@@ -682,14 +684,14 @@ if __name__=="__main__":
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    print theta.value_at_point(z,Omega)
+    print theta.value_at_point(z,Omega,gpu=True)
     print "1.1654 - 1.9522e-15*I"
     print 
 
     print "Test #2:"
     z = np.array([1.0j,1.0j])
-    u,v = theta.exp_and_osc_at_point(z,Omega)
-    print theta.value_at_point(z,Omega)
+    u,v = theta.exp_and_osc_at_point(z,Omega,gpu=True)
+    print theta.value_at_point(z,Omega,gpu=True)
     print "-438.94 + 0.00056160*I"
     print u
     print v
@@ -702,7 +704,7 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
 
     print "\tCalculating theta..."
-    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega)[1].imag
+    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=True)[1].imag
     f = np.vectorize(f)
     x = np.linspace(0,1,60)
     y = np.linspace(0,5,60)

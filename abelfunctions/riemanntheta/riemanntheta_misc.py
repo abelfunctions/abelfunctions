@@ -1,11 +1,95 @@
 import numpy as np
 import scipy.linalg as la
+import warnings
 
-import pdb
+try:
+    import pyopencl as cl
+
+    # build context once. Use function below in finite_sum_opencl
+    _platform = cl.get_platforms()[0]
+    _device = [d for d in _platform.get_devices() if d.type==4][0]
+    _context = cl.Context([_device])
+    _queue = cl.CommandQueue(_context,
+                             properties=cl.command_queue_properties.PROFILING_ENABLE)
+
+    # load and build program
+    f = open("finite_sum_opencl.cl")
+    fstr = "".join(f.readlines())
+    f.close()
+    _program = cl.Program(_context,fstr).build()
+except ImportError:
+    warnings.warn("Could not find pyopencl package. Do not attempt to compute finite sum on GPU.")
 
 
 
-def finite_sum(X, Y, Yinv, T, x, y, S, g, deriv):
+def finite_sum_opencl(X, Yinv, T, x, y, S, g):
+    shift = Yinv*y
+    intshift = shift.round().astype(np.float32)
+    fracshift = (shift-intshift).astype(np.float32)
+
+    # reshape data
+    L = len(S)
+    X = X.reshape((1,g*g)).astype(np.float32)
+    T = T.reshape((1,g*g)).astype(np.float32)
+    x = x.reshape((1,g)).astype(np.float32)
+    S = S.reshape((1,L)).astype(np.float32)
+    intshift = intshift.reshape((1,g))
+    fracshift = fracshift.reshape((1,g))
+
+    # create repository vectors
+    fsum_real = np.empty((1,L/g)).astype(np.float32)
+    fsum_imag = np.empty((1,L/g)).astype(np.float32)
+
+    # create device memory buffers
+    buf_X = cl.Buffer(_context,
+                      cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
+                      hostbuf = X)
+    buf_T = cl.Buffer(_context,
+                      cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
+                      hostbuf = T)
+    buf_x = cl.Buffer(_context,
+                      cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
+                      hostbuf = x)
+    buf_intshift = cl.Buffer(_context,
+                      cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
+                      hostbuf = intshift)
+    buf_fracshift = cl.Buffer(_context,
+                      cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
+                      hostbuf = fracshift)
+    buf_S = cl.Buffer(_context,
+                      cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
+                      hostbuf = S)
+
+    buf_fsum_real = cl.Buffer(_context,
+                              cl.mem_flags.WRITE_ONLY,
+                              fsum_real.nbytes)
+    buf_fsum_imag = cl.Buffer(_context,
+                              cl.mem_flags.WRITE_ONLY,
+                              fsum_imag.nbytes)
+
+    # call kernel and read output
+    GLOBAL_SIZE = (L/g,)
+    LOCAL_SIZE  = None
+    event = _program.finite_sum_without_derivs(_queue, GLOBAL_SIZE, LOCAL_SIZE,
+                                               buf_X,
+                                               buf_T,
+                                               buf_x,
+                                               buf_intshift,
+                                               buf_fracshift,
+                                               np.int32(g),
+                                               buf_S,
+                                               buf_fsum_real,
+                                               buf_fsum_imag)
+
+    
+    cl.enqueue_copy(_queue,fsum_real,buf_fsum_real)
+    cl.enqueue_copy(_queue,fsum_imag,buf_fsum_imag)
+
+    # compute finite sum
+    return np.sum(fsum_real) + 1.0j*np.sum(fsum_imag)
+
+
+def finite_sum(X, Yinv, T, x, y, S, g, deriv):
     """
     Computes the oscillatory part of the finite sum
     
