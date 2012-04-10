@@ -181,7 +181,7 @@ import scipy.linalg as la
 from abelfunctions.utilities import qflll
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
-from riemanntheta_misc import finite_sum
+from riemanntheta_misc import finite_sum, finite_sum_opencl
 
 
 class RiemannTheta:

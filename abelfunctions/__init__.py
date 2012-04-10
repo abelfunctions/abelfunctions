@@ -8,7 +8,7 @@ The code is available as a git repository at
 
 """
 
-__version__ = "indev"
+__version__ = "0.2"
 
 from puiseux import puiseux
 from riemanntheta import RiemannTheta

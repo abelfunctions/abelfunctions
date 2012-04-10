@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.linalg as la
 import warnings
+import os.path
 
 try:
     import pyopencl as cl
@@ -13,7 +14,9 @@ try:
                              properties=cl.command_queue_properties.PROFILING_ENABLE)
 
     # load and build program
-    f = open("finite_sum_opencl.cl")
+    basepath = os.path.dirname(__file__)
+    filepath = os.path.abspath(os.path.join(basepath,'finite_sum_opencl.cl'))
+    f = open(filepath,'r')
     fstr = "".join(f.readlines())
     f.close()
     _program = cl.Program(_context,fstr).build()

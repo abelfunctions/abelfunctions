@@ -136,8 +136,9 @@ setup(
     url = 'https://github.com/cswiercz/abelfunctions',
     license = 'GPL v2+',
     packages = ['abelfunctions'] + packages + tests,
+    package_data = {'abelfunctions.riemanntheta':
+                   ['finite_sum_opencl.cl']},
     ext_modules = [],
-    data_files = [],
     cmdclass = {'test': test_abelfunctions,
                 'clean': clean,
                 },
