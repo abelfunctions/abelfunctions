@@ -216,6 +216,8 @@ def polygon(F,X,Y,I):
         l = q*side[0][1] + m*side[0][0]
         i0 = min(side, key=itemgetter(0))[0]
         Phi = sum(a[(i,j)]*Z**sympy.Rational(i-i0,q) for (i,j) in side)
+        Phi = sympy.Poly(Phi,Z)
+
         params.append((q,m,l,Phi))
 
     return params    
@@ -329,7 +331,9 @@ def singular_term(F,X,Y,L,I,version):
 
         # each newton polygon side has a characteristic polynomial. For each
         # square-free factor, each root corresponds to a K-term
+        Z = Phi.gen
         for (Psi,r) in _square_free(Phi):
+            Psi = sympy.Poly(Psi,Z)
             for (xi, M) in sympy.roots(Psi).iteritems():
                 # the classical version returns the "raw" roots
                 if version == 'classical':
@@ -481,7 +485,7 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
         p = sympy.Poly(f)
         f = (f.subs(x,1/x) * x**p.deg(x)).expand()
     else:
-        f = f.subs(x,x+a).expand()
+        f = f.subs(x,x+a)
         
     # desingularize if necessary
     was_singular = False
@@ -493,47 +497,45 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
     # desingularize, for instance
     series = []
     T = sympy.Symbol('T')
-    for b,mult in sympy.roots(f.subs(x,0)).iteritems():
-        # compute the K-terms of the expansions. if the input curve is 
-        # singular, we prepent tau_singular to each of the pis in the above 
-        # expansion
-        if was_singular:
-            # we don't expand about nonzero transformed y in the desingular 
-            # case since the original y was infinity
-            if b != 0: continue
-            pis = newton(f,x,y,n,version=version,was_singular=True)
-            for k in range(len(pis)):
-                pis[k] = pi_singular + pis[k]
-        else:
-            F = f.subs(y,y+b)
-            pis = newton(F,x,y,n,version=version)
 
-        for pi in pis:
-            # get first elements
-            q,mu,m,beta = pi[0]
-            P = mu*x**q
-            Q = (beta + y-b)*x**m
+    # compute the K-terms of the expansions. if the input curve is 
+    # singular, we prepent tau_singular to each of the pis in the above 
+    # expansion
+    if was_singular:
+        # we don't expand about nonzero transformed y in the desingular 
+        # case since the original y was infinity
+        pis = newton(f,x,y,n,version=version,was_singular=True)
+        for k in range(len(pis)):
+            pis[k] = pi_singular + pis[k]
+    else:
+        pis = newton(f,x,y,n,version=version)
 
-            # build rest of series
-            for h in xrange(1,len(pi)):
-                q,mu,m,beta = pi[h]
-                P1 = mu*x**q
-                Q1 = (beta + y)*x**m
+    for pi in pis:
+        # get first elements
+        q,mu,m,beta = pi[0]
+        P = mu*x**q
+        Q = (beta + y)*x**m
+        
+        # build rest of series
+        for h in xrange(1,len(pi)):
+            q,mu,m,beta = pi[h]
+            P1 = mu*x**q
+            Q1 = (beta + y)*x**m
             
-                P = P.subs(x,P1)
-                Q = Q.subs([(x,P1),(y,Q1)])
+            P = P.subs(x,P1)
+            Q = Q.subs([(x,P1),(y,Q1)])
 
-            P = P.subs([(x,T),(y,0)]).expand()
-            Q = Q.subs([(x,T),(y,0)]).expand()
+        P = P.subs([(x,T),(y,0)]).expand()
+        Q = Q.subs([(x,T),(y,0)]).expand()
 
-            # append parametric or non-parametric form
-            if parametric:
-                if a == sympy.oo: series.append((1/P,Q))
-                else:             series.append((P+a,Q))
-            else:
-                if a == sympy.oo: solns = sympy.solve(1/x-P,T)
-                else:             solns = sympy.solve((x-a)-P,T)
-                for TT in solns:  series.append(Q.subs(T,TT))
+        # append parametric or non-parametric form
+        if parametric:
+            if a == sympy.oo: series.append((1/P,Q))
+            else:             series.append((P+a,Q))
+        else:
+            if a == sympy.oo: solns = sympy.solve(1/x-P,T)
+            else:             solns = sympy.solve((x-a)-P,T)
+            for TT in solns:  series.append(Q.subs(T,TT))
 
     return series
             
@@ -544,16 +546,26 @@ if __name__ == "__main__":
     print "==== Module Test: puiseux.py ==="
     from sympy.abc import x,y,T
 
-#    f = y**2 - x**2*(x+1)
-#    f = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    f = (x**6)*y**3 + 2*x**3*y - 1
-    a = 0
-    N = 5
+    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4                   # check
+    f2 = -x**7 + 2*x**3*y + y**3                                 # check
+    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2        # check
+    f4 = y**2 + x**3 - x**2                                      # check
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3                      # check
+    f6 = y**4 - y**2*x + x**2                                    # check
+    f7 = y**3 - (x**3 + y)**2 + 1
+
+    f8 = (x**6)*y**3 + 2*x**3*y - 1
+    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+
+    f  = f1
+    a  = 0
+    N  = 3
 
     print "Curve:\n"
     sympy.pretty_print(f)
     
-    print "\nPuiseux Expansions:"
+    print "\nPuiseux Expansions at x =", a
     for Y in puiseux(f,x,y,a,N,parametric=False,version='rational'):
         print "Expansion:"
 #        print "X ="

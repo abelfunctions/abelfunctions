@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import ctypes
 import ctypes.util
@@ -10,7 +11,7 @@ try:
     pari.qflll0.restype = ctypes.POINTER(ctypes.c_int)
     pari.GENtostr.restype = ctypes.POINTER(ctypes.c_char)
 except OSError:
-    print "Could not import PARI/GP library."
+    print "Could not import PARI/GP library. Please install and try again."
     sys.exit(0)
 
 
