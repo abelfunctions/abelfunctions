@@ -35,8 +35,8 @@ def _coefficient(F):
         >>> _coefficient(f) == {(0, 2): -1, (0, 3): -1, (2, 0): 1}
         True
     """
-    # compute useful dictionary of coefficients indexed
-    # by the support of the polynomial
+    # compute useful dictionary of coefficients indexed by the support of 
+    # the polynomial
     d = {}
     monoms = F.monoms()
     coeffs = F.coeffs()
@@ -82,9 +82,9 @@ def _new_polynomial(F,X,Y,tau,l):
 
         \tilde{F} \in \mathbb{L}(\mu,\beta)[X,Y]
     """
-    q,mu,m,beta = tau
+    q,mu,m,beta,eta = tau
     Xnew = sympy.Poly(mu*X**q,X)
-    Ynew = sympy.Poly(X**m*(beta+Y),X,Y)
+    Ynew = X**m*(beta+eta*Y)
     Fnew = sympy.Poly( sympy.compose(sympy.compose(F,Xnew),Ynew,Y), X,Y)
     Fnew = sympy.polytools.pquo(Fnew, sympy.Poly(X**l,X), domain=Fnew.domain)
     return Fnew
@@ -225,14 +225,13 @@ def polygon(F,X,Y,I):
     return params    
 
 
-def newton(F,X,Y,H,version,was_singular=False):
+def newton(F,X,Y,H,version):
     """
     Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 
     `\tau_h = (q_h,\mu_h,m_h,\beta_h)`.
     """
     K = sympy.QQ
-    return regular(singular(F,X,Y,K,[],version,was_singular=was_singular),
-                   X,Y,H)
+    return regular(singular(F,X,Y,K,[],version),X,Y,H)
 
 
 def regular(S,X,Y,H):
@@ -265,7 +264,7 @@ def regular(S,X,Y,H):
             if ms == []: break
             else:        m = min(ms)
             beta = - a[(m,0)]/a[(0,1)]
-            tau = (1,1,m,beta)
+            tau = (1,1,m,beta,1)
             pi.append(tau)
             F = _new_polynomial(F,X,Y,tau,m)
 
@@ -275,31 +274,16 @@ def regular(S,X,Y,H):
         
 
 
-def singular(F,X,Y,L,pi,version,was_singular=False):
+def singular(F,X,Y,L,pi,version):
     """
     Computes a collection of pairs `(\pi_1,F_1)` where `\pi_1` is a finite
     `\mathbb{K}`-expansion beginning by `\pi` and `F_1 \in\mathbb{L}_1[X,Y]`
     for some extension `\mathbb{L}_1` of `\mathbb{L}`.
 
-    INPUT:
-
-      -- ``F``:
-
-      -- ``L``:
-      
-      -- ``pi``:
-
-      -- ``version``:
-
-    OUTPUT:
-
-      -- ``(list)``: 
-
     """
     S = []
     if pi == []: I = 1
     else:        I = 2
-    if was_singular: I = 2
 
     for (tau,l,r) in singular_term(F,X,Y,L,I,version):
         pi1 = pi + [tau]
@@ -332,21 +316,22 @@ def singular_term(F,X,Y,L,I,version):
         Z = Phi.gen
         for (Psi,r) in _square_free(Phi):
             Psi = sympy.Poly(Psi,Z)
+            
+            for xi,M in sympy.roots(Psi).iteritems():
+                # the classical version returns the "raw" roots
+                if version == 'classical':
+                    P = sympy.Poly(U**q-xi,U)
+                    beta = RootOf(P,0,radicals=False)
+                    tau = (q,1,m,beta,1)
+                    T.append((tau,l,r))
+                # the rational version rescales parameters so as to 
+                # include ony rational terms in the Puiseux expansions.
+                if version == 'rational':
+                    mu = xi**(-v)
+                    beta = xi**u
+                    tau = (q,mu,m,beta,1)
+                    T.append((tau,l,r))
 
-            xi = sympy.RootOf(Psi,0,radicals=False)
-            # the classical version returns the "raw" roots
-            if version == 'classical':
-                P = sympy.Poly(U**q-xi,U)
-                beta = RootOf(P,0,radicals=False)
-                tau = (q,1,m,beta)
-                T.append((tau,l,r))
-            # the rational version rescales parameters so as to 
-            # include ony rational terms in the Puiseux expansions.
-            if version == 'rational':
-                mu = xi**(-v)
-                beta = xi**u
-                tau = (q,mu,m,beta)
-                T.append((tau,l,r))
     return T
 
 
@@ -382,7 +367,7 @@ def is_singular(f,x,y):
 
     
     
-def desingularize(f,x,y):
+def desingularize(f,x,y,version=version):
     """
     If f is singular, it is desginularized. Outputs new f and Puiseux 
     series expansion data.
@@ -401,17 +386,16 @@ def desingularize(f,x,y):
     
         >>> 1+1
         2
-    """        
-    pi = []
-    while is_singular(f,x,y):
-#        p = sympy.Poly(f,x,y)
+    """
+    pis = []
+    if is_singular(f,x,y):
         coeffs = _coefficient(f)
         c = coeffs.pop((0,0))
 
         # for each monomial c x**j y**i find the dominant term: that is
-        # the one that cancels out the constant term alpha. This is done
-        # by substituting x = mu T**q, y = T**m giving the monomial 
-        # c mu**jT**(qj+mi). To balance the equation (kill the constant term) 
+        # the one that cancels out the constant term c. This is done
+        # by substituting x = T**q, y = eta T**m giving the monomial 
+        # c eta**iT**(qj+mi). To balance the equation (kill the constant term) 
         # we need qj+mi=0. q = i, m = -j satisfies this equation.
         #
         # Finally, we need to check that this choice of q,m doesn't introduce 
@@ -423,106 +407,49 @@ def desingularize(f,x,y):
             q = sympy.Rational(i,g)
             m = -sympy.Rational(j,g)
 
-            # check if the other terms remain positive. If so, solve for 
-            #
+            # check if the other terms remain positive.
             if all(q*jj+m*ii>=0 for ii,jj in coeffs.keys()):
                 break
 
         if (q,m) == (1,1):
             raise ValueError("Unable to compute singular term.")            
         
-        # now that we have the desired degree terms we need to compute the
-        # constant coefficient, mu. We have to balance c + aij mu**q = 0.
-        mu = sympy.Rational(-c,aij)**sympy.Rational(1,q)
+        # now compute the values of eta that cancel the constant term c
+        p = [aij*x**i for (i,j) in coeffs.keys() if q*j+m*i == 0]
+        p = sympy.Poly(sum(p) + c, x)
 
+        pdb.set_trace()
+        
         # compute the transformation data that we will prepend to the
         # series construction process below and transform the polynomial.
-        tau_singular = (q,mu,m,1)
-        f = _new_polynomial(f,x,y,tau_singular,0)
-        pi.append(tau_singular)
+        for eta,M in sympy.roots(p).iteritems():
+            tau_singular = (q,1,m,1,eta)
+            pi = [tau_singular]
+            f = _new_polynomial(f,x,y,tau_singular,0)
+            pi.
+#            ff, ppis = desingularize(f,x,y)
+#            pis.extend(ppis)
 
-    return f, pi
+    return f, pis
 
-    
 
-def puiseux(f,x,y,a,n,parametric=True,version='rational'):
+def build_series(pis,x,y,T,a,parametric):
     """
-    Computes the first `n` terms of the Puiseux series expansions of 
-    `f = f(x,y)` at `x=a`.
+    Builds all Puiseux series from pi data.
 
-    INPUT:
-
-      -- ``f``: a plane algebraic curve
-
-      -- ``x``: variable
-
-      -- ``y``: variable
-
-      -- ``a``: `x`-value at which to compute the Puiseux series expansions
-
-      -- ``n``: truncation degree for the Puiseux series expansions
-
-      -- ``parametric``: (default: ``True``) If set to ``True``, returns 
-         parameterized form of the Puiseux series expansions. That is, each 
-         series is a pair `x = x(T), y = y(T)`. If set to ``False``, returns 
-         unparameterized Puiseux series expansions `y = y(x)`.
-
-      -- ``version``: (default: ``'rational'``) use 'rational' for rational
-         Puiseux series expansions. Use 'classical' for expansions containing
-         algebraic numbers
-
-    OUTPUT:
-
-      -- ``(list)``: a list of Puiseux series expansions up to `O(n)` of 
-         `f` at `x=a`
+    `\pi_i=(q,\mu,m,\beta,\eta), X \mapsto\mu X^q,Y \mapsto X^m(\beta+\eta Y)`
     """
-    if version not in ['classical','rational']:
-        raise AttributeError("'version' must be 'classical' or 'rational'")
-
-    f = sympy.Poly(f,x,y)
-
-    # scale f accordingly
-    if a == sympy.oo: 
-#        p = sympy.Poly(f)
-        f = (f.subs(x,1/x) * x**f.deg(x)).expand()
-    else:
-        f = f.subs(x,x+a)
-        
-    # desingularize if necessary
-    was_singular = False
-    if is_singular(f,x,y):
-        f, pi_singular = desingularize(f,x,y)
-        was_singular = True
-
-    # loop over each y-root of the original shifted polynomial (if we has to
-    # desingularize, for instance
     series = []
-    T = sympy.Symbol('T')
-
-    # compute the K-terms of the expansions. if the input curve is 
-    # singular, we prepent tau_singular to each of the pis in the above 
-    # expansion
-    if was_singular:
-        # we don't expand about nonzero transformed y in the desingular 
-        # case since the original y was infinity
-        pis = newton(f,x,y,n,version=version,was_singular=True)
-        for k in range(len(pis)):
-            pis[k] = pi_singular + pis[k]
-    else:
-        pis = newton(f,x,y,n,version=version)
-
-    print "==========="
-    print pis
-
+    # build singular part of expansion series
     for pi in pis:
         # get first elements
-        q,mu,m,beta = pi[0]
+        q,mu,m,beta,eta = pi[0]
         P = mu*x**q
         Q = (beta + y)*x**m
         
         # build rest of series
         for h in xrange(1,len(pi)):
-            q,mu,m,beta = pi[h]
+            q,mu,m,beta,eta = pi[h]
             P1 = mu*x**q
             Q1 = (beta + y)*x**m
             
@@ -542,6 +469,48 @@ def puiseux(f,x,y,a,n,parametric=True,version='rational'):
                 solns = sympy.solve((x-a)-P,T)
                 for TT in solns:  series.append(Q.subs(T,TT))
 
+    return series
+
+
+
+
+def puiseux(f, x, y, a, n, parametric=True, version='rational'):
+    """
+    Computes the first `n` terms of the Puiseux series expansions of 
+    `f = f(x,y)` at `x=a`.
+
+    INPUT:
+
+    -- ``parametric``: (default: ``True``) If set to ``True``, returns 
+       parameterized form of the Puiseux series expansions. That is, each 
+       series is a pair `x = x(T), y = y(T)`. If set to ``False``, returns 
+       unparameterized Puiseux series expansions `y = y(x)`.
+
+    -- ``version``: (default: ``'rational'``) use 'rational' for rational
+       Puiseux series expansions. Use 'classical' for expansions containing
+       algebraic numbers
+    """
+    if version not in ['classical','rational']:
+        raise AttributeError("'version' must be 'classical' or 'rational'")
+
+    f = sympy.Poly(f,x,y)
+
+    # scale f accordingly
+    if a == sympy.oo: 
+        f = (f.subs(x,1/x) * x**f.deg(x)).expand()
+    else:
+        f = f.subs(x,x+a)
+        
+    # desingularize if necessary
+    if is_singular(f,x,y):
+        pis = desingularize(f,x,y,version=version)
+    else:
+        pis = newton(f,x,y,n,version=version)
+
+    # compute the puiseux series
+    T = sympy.Symbol('T')
+    series = build_series(pis,x,y,T,a,parametric)
+    
     return series
             
 """
@@ -564,18 +533,20 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f3
+    f  = f8
     a  = 0
     N  = 2
 
     print "Curve:\n"
     sympy.pretty_print(f)
     
-    cProfile.run("P = puiseux(f,x,y,a,N,parametric=True,version='rational')",'puiseux.profile')
-    p = pstats.Stats('puiseux.profile')
-    p.sort_stats('time').print_stats(10)
-    p.sort_stats('cumulative').print_stats(10)
-    p.sort_stats('calls').print_stats(10)
+#     cProfile.run("P = puiseux(f,x,y,a,N,parametric=True,version='rational')",'puiseux.profile')
+#     p = pstats.Stats('puiseux.profile')
+#     p.sort_stats('time').print_stats(10)
+#     p.sort_stats('cumulative').print_stats(10)
+#     p.sort_stats('calls').print_stats(10)
+
+    P = puiseux(f,x,y,a,N,parametric=True,version='rational')
 
     print "\nPuiseux Expansions at x =", a
     for Y in P:
