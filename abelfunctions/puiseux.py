@@ -84,7 +84,7 @@ def _new_polynomial(F,X,Y,tau,l):
     """
     q,mu,m,beta,eta = tau
     Xnew = sympy.Poly(mu*X**q,X)
-    Ynew = X**m*(beta+eta*Y)
+    Ynew = eta*X**m*(beta+Y)
     Fnew = sympy.Poly( sympy.compose(sympy.compose(F,Xnew),Ynew,Y), X,Y)
     Fnew = sympy.polytools.pquo(Fnew, sympy.Poly(X**l,X), domain=Fnew.domain)
     return Fnew
@@ -305,32 +305,42 @@ def singular_term(F,X,Y,L,I,version):
     T = []
     U = sympy.Symbol('U')
 
-    # each side of the newton polygon corresponds to a K-term.
-    for (q,m,l,Phi) in polygon(F,X,Y,I):
-        # the rational method
-        if version == 'rational':
-            u,v = _bezout(q,m)      
+#    pdb.set_trace()
 
-        # each newton polygon side has a characteristic polynomial. For each
-        # square-free factor, each root corresponds to a K-term
-        Z = Phi.gen
-        for (Psi,r) in _square_free(Phi):
-            Psi = sympy.Poly(Psi,Z)
-            
-            for xi,M in sympy.roots(Psi).iteritems():
-                # the classical version returns the "raw" roots
-                if version == 'classical':
-                    P = sympy.Poly(U**q-xi,U)
-                    beta = RootOf(P,0,radicals=False)
-                    tau = (q,1,m,beta,1)
-                    T.append((tau,l,r))
-                # the rational version rescales parameters so as to 
-                # include ony rational terms in the Puiseux expansions.
-                if version == 'rational':
-                    mu = xi**(-v)
-                    beta = xi**u
-                    tau = (q,mu,m,beta,1)
-                    T.append((tau,l,r))
+    # if the curve is singular then compute the singular tuples
+    # otherwise, use the standard newton polygon method
+    if is_singular(F,X,Y):
+        for (q,m,l,Phi) in desingularize(F,X,Y):
+            for eta in Phi.all_roots(radicals=False):
+                tau = (q,1,m,1,eta)
+                T.append((tau,0,1))
+    else:
+        # each side of the newton polygon corresponds to a K-term.
+        for (q,m,l,Phi) in polygon(F,X,Y,I):
+            # the rational method
+            if version == 'rational':
+                u,v = _bezout(q,m)      
+
+            # each newton polygon side has a characteristic polynomial. For each
+            # square-free factor, each root corresponds to a K-term
+            Z = Phi.gen
+            for (Psi,r) in _square_free(Phi):
+                Psi = sympy.Poly(Psi,Z)
+
+                for xi in Psi.all_roots():
+            # the classical version returns the "raw" roots
+                    if version == 'classical':
+                        P = sympy.Poly(U**q-xi,U)
+                        beta = RootOf(P,0,radicals=False)
+                        tau = (q,1,m,beta,1)
+                        T.append((tau,l,r))
+                    # the rational version rescales parameters so as to 
+                    # include ony rational terms in the Puiseux expansions.
+                    if version == 'rational':
+                        mu = xi**(-v)
+                        beta = xi**u
+                        tau = (q,mu,m,beta,1)
+                        T.append((tau,l,r))
 
     return T
 
@@ -367,70 +377,42 @@ def is_singular(f,x,y):
 
     
     
-def desingularize(f,x,y,version=version):
+def desingularize(f,x,y):
     """
     If f is singular, it is desginularized. Outputs new f and Puiseux 
     series expansion data.
-
-    Inputs:
-
-    - ``f``: a plane algebraic curve
-    - ``x,y``: variables
-
-    Outputs:
-
-    - ``f``: the desingularized curve
-    - ``pi_singular``: Puiseux series data `\pi=(\tau_1,\ldots,\tau_n)`
-
-    Examples:
-    
-        >>> 1+1
-        2
     """
-    pis = []
-    if is_singular(f,x,y):
-        coeffs = _coefficient(f)
-        c = coeffs.pop((0,0))
+    Z = sympy.Symbol('Z')
+    coeffs = _coefficient(f)
+    c = coeffs.pop((0,0))
+    
+    # for each monomial c x**j y**i find the dominant term: that is
+    # the one that cancels out the constant term c. This is done
+    # by substituting x = T**q, y = eta T**m giving the monomial 
+    # c eta**iT**(qj+mi). To balance the equation (kill the constant term) 
+    # we need qj+mi=0. q = i, m = -j satisfies this equation.
+    #
+    # Finally, we need to check that this choice of q,m doesn't introduce 
+    # terms with negative exponent in the curve.
+    q,m = (1,1)
+    for (i,j),aij in coeffs.iteritems():
+        # compute q,m
+        g = sympy.gcd(i,j)
+        q = sympy.Rational(i,g)
+        m = -sympy.Rational(j,g)
 
-        # for each monomial c x**j y**i find the dominant term: that is
-        # the one that cancels out the constant term c. This is done
-        # by substituting x = T**q, y = eta T**m giving the monomial 
-        # c eta**iT**(qj+mi). To balance the equation (kill the constant term) 
-        # we need qj+mi=0. q = i, m = -j satisfies this equation.
-        #
-        # Finally, we need to check that this choice of q,m doesn't introduce 
-        # terms with negative exponent in the curve.
-        q,m = (1,1)
-        for (i,j),aij in coeffs.iteritems():
-            # compute q,m
-            g = sympy.gcd(i,j)
-            q = sympy.Rational(i,g)
-            m = -sympy.Rational(j,g)
+        # check if the other terms remain positive.
+        if all(q*jj+m*ii>=0 for ii,jj in coeffs.keys()):
+            break
 
-            # check if the other terms remain positive.
-            if all(q*jj+m*ii>=0 for ii,jj in coeffs.keys()):
-                break
-
-        if (q,m) == (1,1):
-            raise ValueError("Unable to compute singular term.")            
+    if (q,m) == (1,1):
+        raise ValueError("Unable to compute singular term.")            
         
-        # now compute the values of eta that cancel the constant term c
-        p = [aij*x**i for (i,j) in coeffs.keys() if q*j+m*i == 0]
-        p = sympy.Poly(sum(p) + c, x)
+    # now compute the values of eta that cancel the constant term c
+    Phi = [aij*Z**sympy.Rational(i,q) for (i,j) in coeffs.keys() if q*j+m*i == 0]
+    Phi = sympy.Poly(sum(Phi) + c, Z)
 
-        pdb.set_trace()
-        
-        # compute the transformation data that we will prepend to the
-        # series construction process below and transform the polynomial.
-        for eta,M in sympy.roots(p).iteritems():
-            tau_singular = (q,1,m,1,eta)
-            pi = [tau_singular]
-            f = _new_polynomial(f,x,y,tau_singular,0)
-            pi.
-#            ff, ppis = desingularize(f,x,y)
-#            pis.extend(ppis)
-
-    return f, pis
+    return [(q,m,0,Phi)]
 
 
 def build_series(pis,x,y,T,a,parametric):
@@ -445,13 +427,13 @@ def build_series(pis,x,y,T,a,parametric):
         # get first elements
         q,mu,m,beta,eta = pi[0]
         P = mu*x**q
-        Q = (beta + y)*x**m
+        Q = eta*(beta + y)*x**m
         
         # build rest of series
         for h in xrange(1,len(pi)):
             q,mu,m,beta,eta = pi[h]
             P1 = mu*x**q
-            Q1 = (beta + y)*x**m
+            Q1 = eta*(beta + y)*x**m
             
             P = P.subs(x,P1)
             Q = Q.subs([(x,P1),(y,Q1)])
@@ -500,15 +482,10 @@ def puiseux(f, x, y, a, n, parametric=True, version='rational'):
         f = (f.subs(x,1/x) * x**f.deg(x)).expand()
     else:
         f = f.subs(x,x+a)
-        
-    # desingularize if necessary
-    if is_singular(f,x,y):
-        pis = desingularize(f,x,y,version=version)
-    else:
-        pis = newton(f,x,y,n,version=version)
 
-    # compute the puiseux series
+    # compute the puiseux series data and build the series
     T = sympy.Symbol('T')
+    pis = newton(f,x,y,n,version=version)
     series = build_series(pis,x,y,T,a,parametric)
     
     return series
@@ -535,25 +512,16 @@ if __name__ == "__main__":
 
     f  = f8
     a  = 0
-    N  = 2
+    N  = 4
 
     print "Curve:\n"
     sympy.pretty_print(f)
     
-#     cProfile.run("P = puiseux(f,x,y,a,N,parametric=True,version='rational')",'puiseux.profile')
-#     p = pstats.Stats('puiseux.profile')
-#     p.sort_stats('time').print_stats(10)
-#     p.sort_stats('cumulative').print_stats(10)
-#     p.sort_stats('calls').print_stats(10)
-
     P = puiseux(f,x,y,a,N,parametric=True,version='rational')
 
     print "\nPuiseux Expansions at x =", a
     for Y in P:
         print "Expansion:"
-#        print "X ="
-#        sympy.pretty_print(X)
-        print "\nY ="
         sympy.pretty_print(Y)
         print
 
