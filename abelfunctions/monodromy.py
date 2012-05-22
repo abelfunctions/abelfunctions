@@ -2,6 +2,8 @@
 Monodromy
 """
 
+import functools
+
 import numpy as np
 import scipy as sp
 import sympy as sy
@@ -14,21 +16,32 @@ from matplotlib.collections import PatchCollection
 
 import pdb
 
+class cachedmethod(object):
+   """
+   Decorator. Caches a function's return value each time it is called.
+   If called later with the same arguments, the cached value is returned 
+   (not reevaluated).
+   """
+   def __init__(self, func):
+      self.func = func
+      self.cache = {}
+   def __call__(self, *args, **kwds):
+      try:
+         return self.cache[(args,kwds)]
+      except KeyError:
+         value = self.func(*args,**kwds)
+         self.cache[(args,kwds)] = value
+         return value
+      except TypeError:
+         # uncachable -- for instance, passing a list as an argument.
+         # Better to not cache than to blow up entirely.
+         return self.func(*args,**kwds)
+   def __repr__(self):
+      return self.func.__doc__
+   def __get__(self, obj, objtype):
+      return functools.partial(self.__call__, obj)
 
-class cachedmethod:
-    """
-    Decorator for cacheing class methods.
-    """
-    def __init__ (self, f):
-        self.f = f
-        self.mem = {}
-    def __call__ (self, *args, **kwargs):
-        if (args, str(kwargs)) in self.mem:
-            return self.mem[args, str(kwargs)]
-        else:
-            tmp = self.f(*args, **kwargs)
-            self.mem[args, str(kwargs)] = tmp
-            return tmp
+
 
 class Permutation:
     """
@@ -151,7 +164,7 @@ def matching_permutation(a, b):
         raise ValueError, "Lists must be of same length."
 
     perm = [-1]*N
-    eps  = 0.5*min([abs(a[i]-a[j]) for i in range(N) for j in range(yi)])
+    eps  = 0.5*min([abs(a[i]-a[j]) for i in range(N) for j in range(i)])
     
     for i in xrange(N):
         for j in xrange(N):
@@ -217,7 +230,7 @@ class Monodromy:
     
         
     @cachedmethod
-    def discriminant_points():
+    def discriminant_points(self):
         """
         Computes a list of the  discriminant points of a plane algebraic 
         curve `f = f(x,y)`
@@ -227,7 +240,7 @@ class Monodromy:
 
 
     @cachedmethod
-    def monodromy_radius(kappa=1/2.9):
+    def monodromy_radius(self, kappa=1/2.9):
         """
         Helper function for ``monodromy``.
 
@@ -442,7 +455,7 @@ class Monodromy:
 
 
 
-    def interpolate_circle(center, radius, start, orient, Npts=32):
+    def interpolate_circle(self, center, radius, start, orient, Npts=32):
         """
         Returns a list of uniformly interpolated points between the complex numbers
         ``start`` and ``end``. The end point is not included.
@@ -536,12 +549,14 @@ class Monodromy:
 
         
 
-"""
+
 if __name__=='__main__':
     from sympy.abc import x,y
 
     f = y**3 - 2*x**3*y - x**9
 
+
+"""
     print "Example curve..."
     sy.pprint(f)
 
