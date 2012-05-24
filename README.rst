@@ -54,7 +54,7 @@ Installation
 
 2) If you have git (http://git-scm.com/) installed, run::
 
-  $ git clone git://github.com/cswiercz/abelfunctions.git
+    $ git clone git://github.com/cswiercz/abelfunctions.git
 
 *EPD Installation*. Enter the main directory, abelfunctions, and run::
 
