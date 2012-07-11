@@ -86,8 +86,24 @@ def _new_polynomial(F,X,Y,tau,l):
     Xnew = sympy.Poly(mu*X**q,X)
     Ynew = eta*X**m*(beta+Y)
     Fnew = sympy.Poly( sympy.compose(sympy.compose(F,Xnew),Ynew,Y), X,Y)
-    Fnew = sympy.polytools.pquo(Fnew, sympy.Poly(X**l,X), domain=Fnew.domain)
+    Fnew = quickDiv(Fnew,l,X,Y)
     return Fnew
+
+def quickDiv(f,p,X,Y):
+    """
+    Takes a polynomial (f) in two variables, a number (p), and two sympy
+    symbols (X and Y) and returns a 2 variable polynomial k(X,Y) = f/(X^p).
+    The function assumes that f is a two variable polynomial.
+    """
+    monoms = f.monoms()
+    coeffs = f.coeffs()
+    newData = []
+    for i in range(len(monoms)):
+        newVals = (monoms[i][0] - p, monoms[i][1])
+        newData.append((newVals,coeffs[i]))
+    d = dict(newData)
+    #k(X,Y) = f/(X^p) = sympy.Poly(d,X,Y)
+    return sympy.Poly(d,X,Y, domain = f.domain)
 
 
 def polygon(F,X,Y,I):
