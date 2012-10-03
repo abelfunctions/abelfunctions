@@ -222,9 +222,9 @@ def polygon(F,X,Y,I):
                 k += 1
             else:
                 # when we reach the end of the newton polygon we need
-                # to shift the value of k a little bit so that the 
-                # last side is correctly captured
-#                if k == N-n-1: k -= 1
+                # to shift the value of k a little bit so that the
+                # last side is correctly captured 
+                # if k == N-n-1: k -= 1
                 break
         n += k
 
@@ -526,7 +526,7 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f8
+    f  = f10
     a  = 0
     N  = 4
 
