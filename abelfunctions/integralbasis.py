@@ -98,19 +98,25 @@ def integral_basis(f,x,y):
     Compute the integral basis of the polynomial `f` at the point `x=a`.
 
     """
-    # 0) If the curve is not monic
+    # If the curve is not monic then map y |-> y/lc(x) where lc(x)
+    # is the leading coefficient of f
     d  = sympy.degree(f,y)
     lc = sympy.LC(f,y)
-    f = sympy.ratsimp( f.subs(y,y/lc)*lc**(d-1) ) 
+    if x in lc:
+        f = sympy.ratsimp( f.subs(y,y/lc)*lc**(d-1) )
+    else:
+        f = f/lc;
     
-    # 1) 
+    # Compute the set of irreducible polynomials k(x) for which 
+    # k^2 | Res(f, df/dy)
     p = sympy.Poly(f,[x,y])
     n = p.degree(y)
     res = sympy.resultant(p,p.diff(y),y)
     factors = sympy.factor_list(res)[1]
     df = [k for k,deg in factors if (deg > 1) and (sympy.LC(k) == 1)]
 
-    # 2) Here, r_{k,i} = r[k][i]
+    # Here, r_{k,i} = r[k][i], the ith Puiseux series for the kth
+    # factor dividing the above resultant
     alpha = []
     r = []
     for l in range(len(df)):
@@ -121,7 +127,7 @@ def integral_basis(f,x,y):
         alpha.append(alphak)
         r.append(rk)
 
-    # 3)
+    # Main Loop
     b = [1]
     for d in range(1,n):
         # intiial guess for b_d
@@ -137,17 +143,16 @@ def integral_basis(f,x,y):
             found_something = True
             while found_something:
                 A = (sum(ak*bk for ak,bk in zip(a,b)) + bd) / (x - alphak)
-                A = A.subs(x,z+alphak)
+                #A = A.subs(x,z+alphak)
                 # construct system of equations consisting of the coefficients
                 # of negative powers of (x-alphak) in the substitutions
                 # A(r_{k,1}),...,A(r_{k,n})
                 equations = []
                 for rkl in rk:
                     # [[XXX]] THE FOLLOWING TERM LOOP IS REALY SLOW
-                    
-                    lser = A.subs(y,rkl.subs(x,z+alphak)).expand(mult=True,force=True).lseries(z,0)
+                    lser = A.subs(y,rkl).expand(mult=True,force=True).lseries(x,alphak)
                     for term in lser:
-                        coeff,deg = term.as_coeff_exponent(z)
+                        coeff,deg = term.as_coeff_exponent(x-alphak)
                         if deg < 0:
                             equations.append(coeff)
                         else:
@@ -166,7 +171,8 @@ def integral_basis(f,x,y):
                         bd = (bdm1 + bd) / k
 
         # after traversing V, append the resulting bd to the list of bs
-        b.append(sympy.together( lc*bd ))
+        # b.append( sy.simplify(bd*lc) )
+        b.append( sympy.simplify(bd.subs(y,y*lc)) )
     return b
 
 
@@ -214,5 +220,4 @@ if __name__=="__main__":
     for bk in b:
         sympy.pretty_print(bk)
         print
-    
     
