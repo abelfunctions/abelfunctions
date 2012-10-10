@@ -42,8 +42,8 @@ class TestIntegralBasis(unittest.TestCase):
 #         self.assertEqual(integral_basis(f5,x,y),
 #                          [])
 #         # long time
-         self.assertEqual(integral_basis(f6,x,y),
-                          [1, y, y**2/x, y**3/x])
+#        self.assertEqual(integral_basis(f6,x,y),
+#                          [1, y, y**2/x, y**3/x])
         self.assertEqual(integral_basis(f7,x,y),
                          [1, y, y**2])
 #        self.assertEqual(integral_basis(f8,x,y),
