@@ -8,9 +8,10 @@ The code is available as a git repository at
 
 """
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 from puiseux import puiseux
+from integralbasis import integral_basis
 from riemanntheta import RiemannTheta
 
 
