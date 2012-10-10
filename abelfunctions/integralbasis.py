@@ -24,6 +24,7 @@ import sympy
 
 from puiseux import puiseux
 
+
 def valuation(p,x):
     """
     Given a collection of Puiseux series, return the valuations. That
@@ -207,6 +208,7 @@ def integral_basis(f,x,y):
 
 if __name__=="__main__":
     from sympy.abc import x,y,T
+    import cProfile, pstats
 
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4                   # yes
     f2 = -x**7 + 2*x**3*y + y**3                                 # yes
@@ -220,14 +222,22 @@ if __name__=="__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y                 # yes
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1                # yes
 
-    f = f1
+    f = f6
         
     print "Plane curve..."
     sympy.pprint(f)
 
     print "\nComputing integral basis..."
-    b = integral_basis(f,x,y)
-    for bk in b:
-        sympy.pretty_print(bk)
-        print
+
+    cProfile.run("b = integral_basis(f,x,y)",'intbasis.profile')
+
+    print b
+
+    p = pstats.Stats('intbasis.profile')
+    p.strip_dirs()
+    p.sort_stats('time').print_stats(12)
+    p.sort_stats('cumulative').print_stats(12)
+    p.sort_stats('calls').print_stats(12)
+    
+
     
