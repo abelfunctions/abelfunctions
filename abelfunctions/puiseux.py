@@ -9,9 +9,6 @@ integral bases and with Riemann surfaces.
 import sympy
 from operator import itemgetter
 
-import pdb
-
-
 def _coefficient(F):
     """
     Helper function. Returns a dictionary of coefficients of the polynomial
@@ -321,8 +318,6 @@ def singular_term(F,X,Y,L,I,version):
     T = []
     U = sympy.Symbol('U')
 
-#    pdb.set_trace()
-
     # if the curve is singular then compute the singular tuples
     # otherwise, use the standard newton polygon method
     if is_singular(F,X,Y):
@@ -512,7 +507,6 @@ TESTS
 if __name__ == "__main__":
     print "==== Module Test: puiseux.py ==="
     from sympy.abc import x,y,T
-    import cProfile, pstats
 
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4                   # check
     f2 = -x**7 + 2*x**3*y + y**3                                 # check

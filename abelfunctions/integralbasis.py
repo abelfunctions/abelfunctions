@@ -31,7 +31,7 @@ def valuation(p,x):
     """
     return p.expand(mult=True,force=True).leadterm(x)[1]
 
-def Int(i,p):
+def Int(i,p,x):
     """
     The function .. math:
 
@@ -67,10 +67,10 @@ def compute_expansion_bounds(p,x):
     n = len(p)
     N = []
 
-    max_Int = max([Int(k,p) for k in xrange(n)])
+    max_Int = max([Int(k,p,x) for k in xrange(n)])
     for i in xrange(n):
         pairwise_diffs = [valuation(p[k]-p[i],x) for i in xrange(n) if k!=i]
-        N.append(max(pairwise_diffs) + max_Int - Int(i,p) + 2)
+        N.append(max(pairwise_diffs) + max_Int - Int(i,p,x) + 2)
 
     return N
 
