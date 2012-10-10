@@ -76,7 +76,7 @@ def compute_expansion_bounds(p,x):
     return N
 
 
-def compute_series_truncations(f,x,y,a):
+def compute_series_truncations(f,x,y,a,T):
     """
     Computes the Puiseux series expansions at the `x`-point `x=a` with
     the necessary number of terms in order to compute the integral
@@ -92,11 +92,7 @@ def compute_series_truncations(f,x,y,a):
     Nmax = max(N)
 
     # compute Puiseux series and truncate using the expansion bounds.
-    # [[[XXX]]] this needs to be drastically improved, probably by adding the
-    # option to compute Puiseux series up to a certain degree bound
-    # instead of by number of terms.
-    r = puiseux(f,x,y,a,Nmax,parametric=True)
-    T = iter(r[0][0].free_symbols).next()      # retrieving set elts is hard
+    r = puiseux(f,x,y,a,degree_bound=Nmax,parametric=T)
     n = len(r)
 
     for i in xrange(n):
@@ -105,7 +101,7 @@ def compute_series_truncations(f,x,y,a):
         ri_Y = ri_Y + sympy.O( T**(N[i]*ramification_index) )
         r[i] = (ri_X, ri_Y.removeO())
 
-    return T, list(set(r))
+    return list(set(r))
 
 
 def integral_basis(f,x,y):
@@ -113,6 +109,8 @@ def integral_basis(f,x,y):
     Compute the integral basis {b1, ..., bg} of the algebraic function
     field C[x,y] / (f).
     """
+    T = sympy.Symbol('T')
+
     # If the curve is not monic then map y |-> y/lc(x) where lc(x)
     # is the leading coefficient of f
     d  = sympy.degree(f,y)
@@ -137,17 +135,17 @@ def integral_basis(f,x,y):
     for l in range(len(df)):
         k = df[l]
         alphak = sympy.roots(k).keys()[0]         # pick a root of k
-        T, rk = compute_series_truncations(f,x,y,alphak)
+        rk = compute_series_truncations(f,x,y,alphak, T)
 
         alpha.append(alphak)
         r.append(rk)
 
     # Main Loop
+    a = sympy.symbols('a:%d'%n)
     b = [1]
     for d in range(1,n):
         # intiial guess for b_d. Uses the trick of 
         bd = y*b[-1]
-        a = sympy.symbols('a:%d'%d)
         for l in range(len(df)):
             # get k,alphak data
             k = df[l]
@@ -208,36 +206,38 @@ def integral_basis(f,x,y):
 
 if __name__=="__main__":
     from sympy.abc import x,y,T
-    import cProfile, pstats
+#    import cProfile, pstats
 
-    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4                   # yes
-    f2 = -x**7 + 2*x**3*y + y**3                                 # yes
-    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2        # yes
-    f4 = y**2 + x**3 - x**2                                      # yes
-    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3                      # yes
-    f6 = y**4 - y**2*x + x**2                                    # yes (long run time)
-    f7 = y**3 - (x**3 + y)**2 + 1                                # yes
+    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    f2 = -x**7 + 2*x**3*y + y**3
+    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    f4 = y**2 + x**3 - x**2
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+    f6 = y**4 - y**2*x + x**2
+    f7 = y**3 - (x**3 + y)**2 + 1
+    f8 = (x**6)*y**3 + 2*x**3*y - 1
+    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f8 = (x**6)*y**3 + 2*x**3*y - 1                              # yes
-    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y                 # yes
-    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1                # yes
-
-    f = f6
+    f = f5
         
-    print "Plane curve..."
+    print "Plane curve...\n"
     sympy.pprint(f)
 
-    print "\nComputing integral basis..."
+    print "\nComputing Puiseux series (for reference)\n"
+    r = compute_series_truncations(f,x,y,0,T)
+    for ri in r: sympy.pprint(ri)
 
-    cProfile.run("b = integral_basis(f,x,y)",'intbasis.profile')
+    print "\nComputing integral basis...\n"
+    b = integral_basis(f,x,y)
+    sympy.pprint(b)
 
-    print b
-
-    p = pstats.Stats('intbasis.profile')
-    p.strip_dirs()
-    p.sort_stats('time').print_stats(12)
-    p.sort_stats('cumulative').print_stats(12)
-    p.sort_stats('calls').print_stats(12)
+#    cProfile.run("b = integral_basis(f,x,y)",'intbasis.profile')
+#     p = pstats.Stats('intbasis.profile')
+#     p.strip_dirs()
+#     p.sort_stats('time').print_stats(12)
+#     p.sort_stats('cumulative').print_stats(12)
+#     p.sort_stats('calls').print_stats(12)
     
 
     
