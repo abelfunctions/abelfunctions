@@ -544,7 +544,7 @@ def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo,
 
     # scale f accordingly
     if a == sympy.oo: 
-        f = (f.subs(x,1/x) * x**f.deg(x)).expand()
+        f = (f.subs(x,1/x) * x**(f.degree(x))).expand()
     else:
         f = f.subs(x,x+a)
 

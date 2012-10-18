@@ -3,8 +3,8 @@ import sympy
 
 from sympy.abc import x,y
 
-from abelfunctions.differentials import (
-    singularities,)
+from abelfunctions.singularities import (
+    singular_points,)
 
 # === test curves ===
 # Example curves are from "Computing with Plane Algebraic Curves and Riemann 
@@ -28,7 +28,7 @@ class TestDifferentials(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_singularities(self):
+    def test_singular_points(self):
         S1 = singularities(f1,x,y)
         S2 = singularities(f2,x,y)
         S3 = singularities(f3,x,y)

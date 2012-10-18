@@ -1,9 +1,10 @@
 """
-Differentials
+Singularities
 =============
 
-A module for computing the holomorphic differentials defined the on the whole
-of the Riemann surface corrsponding to a complex plan algebraic curve.
+A module for computing the singular points of a complex plane algebraic curve
+including their multiplicities, branching numbers, multiplicities, and delta
+invariants.
 
 Authors
 -------
@@ -11,10 +12,11 @@ Authors
 - Chris Swierczewski (initial version, October 2012)
 
 """
-
-import sympy
 import pdb
 
+import sympy
+
+from puiseux import puiseux
 from integralbasis import integral_basis
 
 # temporary, hidden symbol to maintain clean Sympy cache
@@ -30,9 +32,9 @@ def homogenize(f,x,y,z):
     return F, d
 
 
-def _singularities_finite(f,x,y):
+def _singular_points_finite(f,x,y):
     """
-    Returns the finite singularities of f.
+    Returns the finite singular points of f.
     """
     S = []
 
@@ -53,9 +55,9 @@ def _singularities_finite(f,x,y):
     return S
 
 
-def _singularities_infinite(f,x,y):
+def _singular_points_infinite(f,x,y):
     """
-    Returns the singularities of f at infinity.
+    Returns the singular points of f at infinity.
     """
     S = []
 
@@ -79,23 +81,59 @@ def _singularities_infinite(f,x,y):
     return S
 
 
-def singularities(f,x,y):
+def singular_points(f,x,y):
     """
-    Compute the singularities of f.
+    Returns the points in P^2_C at which f = f(x,y) is singular.
 
     Returns a list [..., (xi,yi,zi),...] where P is the location of the
-    point in the projective plane P^2_C and mP is the multiplicity of
-    the singularity.
+    point in the projective plane P^2_C.
     """
-    S = _singularities_finite(f,x,y)
-    S_oo = _singularities_infinite(f,x,y)
+    S = _singular_points_finite(f,x,y)
+    S_oo = _singular_points_infinite(f,x,y)
     S.extend(S_oo)
 
     return S
 
+
+
+def branching_number(f,x,y,singular_pt):
+    """
+    Returns the branching number of a singular point on the 
+    complex plane curve f(x,y) = 0.
+    """
+    pdb.set_trace()
+
+    # compute the Puiseux series at the singular point
+    t = sympy.Symbol('t')
+    alpha, beta, finite = singular_pt
+    if finite:
+        P = puiseux(f,x,y,alpha,nterms=1,parametric=t)
+    else:
+        P = puiseux(f,x,y,sympy.oo,nterms=1,parametric=t)
+
+    # for each of the Pusieux series P = (X(t),Y(t)) pick out the ones
+    # with Y(0) == beta and sum the absolute values of the degrees of
+    # X(t) for each such series.
+    R = 0
+    for X,Y in P:
+        if Y.subs({t:0}) == beta:
+            R += abs(sympy.degree(X,t))
+            
+    return R
+
+
+def branching_numbers(f,x,t,singular_pts):
+    """
+    An efficient way of computing the branching number of multiple
+    singular points. Computes only one Puiseux series per x-coordinate
+    represented in the list of homogenous singular points.
+    """
+    return 0
+    
+
    
 if __name__ == '__main__':
-    print '=== Module Test: differentials.py ==='
+    print '=== Module Test: singularities.py ==='
     from sympy.abc import x,y
     
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
@@ -111,11 +149,13 @@ if __name__ == '__main__':
     
 
     fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
-    fs = [f5]
 
-    print '\nSingularities of curves:'
+    print '\nSingular points of curves:'
     for f in fs:
         print '\n\tCurve:'
         sympy.pprint(f)
-        print '\tSingularities:'
-        sympy.pprint(singularities(f,x,y))
+        print '\n[singular point, branching number]'
+        singular_pts = singular_points(f,x,y)
+        for singular_pt in singular_pts:
+            branching_num = branching_number(f,x,y,singular_pt)
+            sympy.pprint([singular_pt, branching_num])
