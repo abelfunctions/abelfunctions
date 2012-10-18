@@ -503,9 +503,8 @@ def build_series(pis,x,y,T,a,parametric):
             else:             series.append((P+a,Q))
         else:
             if a == sympy.oo: solns = sympy.solve(1/x-P,T)
-            else:  
-                solns = sympy.solve((x-a)-P,T)
-                for TT in solns:  series.append(Q.subs(T,TT))
+            else:             solns = sympy.solve((x-a)-P,T)
+            for TT in solns:  series.append(Q.subs(T,TT))
 
     return series
 
@@ -540,11 +539,12 @@ def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo,
     if (nterms == sympy.oo) and (degree_bound == sympy.oo):
         raise AttributeError("Either 'nterms' or 'degree_bound' must be specified")
 
-    f = sympy.Poly(f,x,y)
+    f = sympy.Poly(f,[x,y])
 
     # scale f accordingly
     if a == sympy.oo: 
-        f = (f.subs(x,1/x) * x**(f.degree(x))).expand()
+        f = (f.subs(x,1/x) * x**(f.degree(x)))
+        f = sympy.Poly(f.simplify(),[x,y])
     else:
         f = f.subs(x,x+a)
 
@@ -578,22 +578,24 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f5
-    a  = 0
+    f  = f1
+    a  = sympy.oo
     N  = 4
 
     print "Curve:\n"
     sympy.pretty_print(f)
 
-    import cProfile, pstats
-    cProfile.run(
-    "P = puiseux(f,x,y,a,degree_bound=N,parametric=True,version='rational')"
-    ,'puiseux.profile')
-    p = pstats.Stats('puiseux.profile')
-    p.strip_dirs()
-    p.sort_stats('time').print_stats(15)
-    p.sort_stats('cumulative').print_stats(15)
-    p.sort_stats('calls').print_stats(15)
+#     import cProfile, pstats
+#     cProfile.run(
+#     "P = puiseux(f,x,y,a,degree_bound=N,parametric=True,version='rational')"
+#     ,'puiseux.profile')
+#     p = pstats.Stats('puiseux.profile')
+#     p.strip_dirs()
+#     p.sort_stats('time').print_stats(15)
+#     p.sort_stats('cumulative').print_stats(15)
+#     p.sort_stats('calls').print_stats(15)
+
+    P = puiseux(f,x,y,a,nterms=N,parametric=True,version='rational')
    
     print "\nPuiseux Expansions at x =", a
     for Y in P:
