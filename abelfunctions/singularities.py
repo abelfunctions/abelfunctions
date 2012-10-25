@@ -20,6 +20,7 @@ from puiseux import puiseux
 from integralbasis import integral_basis
 
 # temporary, hidden symbol to maintain clean Sympy cache
+_t = sympy.Symbol('t')
 _z = sympy.Symbol('z')
 
 def homogenize(f,x,y,z):
@@ -92,44 +93,57 @@ def singular_points(f,x,y):
     S_oo = _singular_points_infinite(f,x,y)
     S.extend(S_oo)
 
-    return S
+    # obtain the multiplicity, delta invariant, and branching number
+    info = _compute_singularity_info(f,x,y,S)
 
+    return zip(S,info)
 
-
-def branching_number(f,x,y,singular_pt):
-    """
-    Returns the branching number of a singular point on the 
-    complex plane curve f(x,y) = 0.
-    """
-    pdb.set_trace()
-
-    # compute the Puiseux series at the singular point
-    t = sympy.Symbol('t')
-    alpha, beta, finite = singular_pt
-    if finite:
-        P = puiseux(f,x,y,alpha,nterms=1,parametric=t)
-    else:
-        P = puiseux(f,x,y,sympy.oo,nterms=1,parametric=t)
-
-    # for each of the Pusieux series P = (X(t),Y(t)) pick out the ones
-    # with Y(0) == beta and sum the absolute values of the degrees of
-    # X(t) for each such series.
-    R = 0
-    for X,Y in P:
-        if Y.subs({t:0}) == beta:
-            R += abs(sympy.degree(X,t))
-            
-    return R
-
-
-def branching_numbers(f,x,t,singular_pts):
-    """
-    An efficient way of computing the branching number of multiple
-    singular points. Computes only one Puiseux series per x-coordinate
-    represented in the list of homogenous singular points.
-    """
-    return 0
     
+
+
+def _compute_singularity_info(f,x,y,singular_pts):
+    """
+    For each singularity [alpha, beta, gamma], compute the
+    information [m, delta, r] where
+
+    * m = multiplicity
+    * delta = delta invariant
+    * r = branching number.
+    """
+    info = []
+
+    def puiseux_filter(P,beta):
+        if P[1].subs({_t:0}) == beta:
+            return True
+        return False
+
+    for alpha, beta, gamma in singular_pts:
+        # compute the Puiseux series at the projective point [alpha,
+        # beta, gamma]. If on the line at infinity, make the
+        # appropriate variable transformation.
+        if gamma:
+            # finite case
+            P = puiseux(f,x,y,alpha,nterms=1,parametric=_t)
+            P_beta = filter(lambda p: puiseux_filter(p,beta), P)
+        else:
+            # infinite case: z=0. Make the appropriate transformation. 
+            # puiseux(...) seems to be faster when expanding about zero
+            # than anything else so we first check if any of the other 
+            # coordinates are zero.
+            raise Warning("Branching info: Infinite case not yet implemented.")
+
+        r = len(P_beta)
+        m = 0
+        for X,Y in P_beta:
+            _,ri = abs(X.leadterm(_t))
+            _,si = abs(Y.leadterm(_t))
+            m += min(ri,si)
+
+        info.append( (m,0,r) )
+
+    return info
+
+                
 
    
 if __name__ == '__main__':
@@ -154,8 +168,11 @@ if __name__ == '__main__':
     for f in fs:
         print '\n\tCurve:'
         sympy.pprint(f)
-        print '\n[singular point, branching number]'
+        print '\nall singular points:'
         singular_pts = singular_points(f,x,y)
+        sympy.pprint(singular_pts)
+        print '\n[singular point, branching number]:'
         for singular_pt in singular_pts:
-            branching_num = branching_number(f,x,y,singular_pt)
-            sympy.pprint([singular_pt, branching_num])
+            if singular_pt[-1] == 1:
+                branching_num = branching_number(f,x,y,singular_pt)
+                sympy.pprint([singular_pt, branching_num])
