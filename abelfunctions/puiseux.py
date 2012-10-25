@@ -7,9 +7,16 @@ integral bases and with Riemann surfaces.
 """
 
 import sympy
+
 from operator import itemgetter
+from sympy.core.numbers import Zero
 
 import pdb
+
+# we use global symbols for Sympy caching performance
+_Z = sympy.Symbol('Z')
+_U = sympy.Symbol('U')
+
 
 
 def _coefficient(F):
@@ -55,56 +62,74 @@ def _bezout(q,m):
     if u*q+v*m != 1: raise ValueError("Bezout algorithm failed.")
     return u,v
 
+
+
 def _square_free(Phi):
     """
-    Given a polynomial `\Phi \in \mathbb{L}[Z]` returns a collection of pairs
-    `\{(\Psi,r)\}` with `\Psi \in \mathbb{L}[Z]` and `r` a positive integer
-    such that each `\Psi` is square-free and `\Phi = \prod \Psi^r` and the
-    `\Psi`'s are pairwise coprime.
+    Given a polynomial `\Phi \in \mathbb{L}[Z]` returns a collection
+    of pairs `\{(\Psi,r)\}` with `\Psi \in \mathbb{L}[Z]` and `r` a
+    positive integer such that each `\Psi` is square-free and `\Phi =
+    \prod \Psi^r` and the `\Psi`'s are pairwise coprime.
 
     ALGORITHM:
 
-    Such a decomposition can be obtained with derivations and gcd computations
-    without any factorization algorithm. It's implemented in sympy as 
-    ``sympy.sqf`` and ``sympy.sqf_list``
+    Such a decomposition can be obtained with derivations and gcd
+    computations without any factorization algorithm. It's implemented
+    in sympy as ``sympy.sqf`` and ``sympy.sqf_list``
     """
     return sympy.sqf_list(Phi)[1]
 
 
+
 def _new_polynomial(F,X,Y,tau,l):
     """
-    Computes the next iterate of the newton-puiseux algorithms. Given the 
-    Puiseux data `\tau = (q,\mu,m,\beta)` ``_new_polynomial`` returns .. math:
+    Computes the next iterate of the newton-puiseux algorithms. Given
+    the Puiseux data `\tau = (q,\mu,m,\beta)` ``_new_polynomial``
+    returns .. math:
     
         \tilde{F} = F(\mu X^q,X^m(\beta+Y))/X \in \mathbb{L}(\mu,\beta)(X)[Y]
 
-    In this algorithm, the choice of parameters will always result in .. math:
+    In this algorithm, the choice of parameters will always result in
+    .. math:
 
         \tilde{F} \in \mathbb{L}(\mu,\beta)[X,Y]
+
+    Algorithm:
+
+    Calling sympy.Poly() with new generators (i.e. [x,y]) takes a long
+    time.  Hence, the technique below.
     """
     q,mu,m,beta,eta = tau
-    Xnew = sympy.Poly(mu*X**q,X)
-    Ynew = eta*X**m*(beta+Y)
-    Fnew = sympy.Poly( sympy.compose(sympy.compose(F,Xnew),Ynew,Y), X,Y)
-    Fnew = quickDiv(Fnew,l,X,Y)
+    d = {}
+    
+    # for each monomial of the form
+    #
+    #     c * x**a * y**b
+    #
+    # compute the appropriate new terms after applying the
+    # transformation
+    #
+    #     x |--> mu * x**q
+    #     y |--> eta * x**m * (beta+y)
+    #
+    for (a,b),c in F.as_dict().iteritems():
+        binom = sympy.binomial_coefficients_list(b)
+        new_a = int(q*a + m*b)
+        for i in xrange(b+1):
+            # the coefficient of the x***(qa+mb) * y**i term
+            new_c = c * (mu**a) * (eta**b) * (binom[i]) * (beta**(b-i))
+            try:
+                d[(new_a,i)] += new_c
+            except KeyError:
+                d[(new_a,i)] = new_c
+
+    # now perform the polynomial division by x**l. In the case when
+    # the curve is singular there will be a cancellation resulting in
+    # a term of the form (0,0):0 . Creating a new polynomial
+    # containing such a term will result in the zero polynomial.
+    new_d = dict([((a-l,b),c) for (a,b),c in d.iteritems()])
+    Fnew = sympy.Poly.from_dict(new_d,[X,Y])
     return Fnew
-
-def quickDiv(f,p,X,Y):
-    """
-    Takes a polynomial (f) in two variables, a number (p), and two sympy
-    symbols (X and Y) and returns a 2 variable polynomial k(X,Y) = f/(X^p).
-    The function assumes that f is a two variable polynomial.
-    """
-    monoms = f.monoms()
-    coeffs = f.coeffs()
-    newData = []
-    for i in range(len(monoms)):
-        newVals = (monoms[i][0] - p, monoms[i][1])
-        newData.append((newVals,coeffs[i]))
-    d = dict(newData)
-    #k(X,Y) = f/(X^p) = sympy.Poly(d,X,Y)
-    return sympy.Poly(d,X,Y, domain = f.domain)
-
 
 def polygon(F,X,Y,I):
     """
@@ -123,15 +148,15 @@ def polygon(F,X,Y,I):
 
     INPUTS:
     
-        -- ``F``: a polynomial in `\mathbb{L}[X,Y]`
+    -- ``F``: a polynomial in `\mathbb{L}[X,Y]`
         
-        -- ``X,Y``: the variable defining ``F``
+    -- ``X,Y``: the variable defining ``F``
         
-        -- ``I``: a parameter 
+    -- ``I``: a parameter 
 
     OUTPUTS:
     
-        -- ``(list)``: a list of tuples `(q,m,l,\Phi)` where `q,m,l` are integers with `(q,m) = 1`, `q>0`, and `\Phi \in \mathbb{L}[Z]`.
+    -- ``(list)``: a list of tuples `(q,m,l,\Phi)` where `q,m,l` are integers with `(q,m) = 1`, `q>0`, and `\Phi \in \mathbb{L}[Z]`.
     """
     # compute the coefficients and support of F
     P = sympy.poly(F,X,Y)
@@ -150,17 +175,18 @@ def polygon(F,X,Y,I):
         hull_with_bdry = [p for p in support if not hull.encloses(sympy.Point(p))]
     newton = []
 
-    # find the start and end points (0,J) and (I,0). Include points along
-    # the i-axis if I==1. Otherwise, only include points with negative
-    # slope if I==2
+    # find the start and end points (0,J) and (I,0). Include points
+    # along the i-axis if I==1. Otherwise, only include points with
+    # negative slope if I==2
     JJ = min([j for (i,j) in hull if i == 0])
     if I == 2: II = min([i for (i,j) in hull if j == 0])
     else:      II = max([i for (i,j) in hull if j == 0])
     testslope = -float(JJ)/II
 
-    # determine largest slope with (0,JJ). If this is greater than the test
-    # slope then there exist points above the line connecting (0,JJ) with 
-    # (II,0) this fact is used to deal with certain borderline cases
+    # determine largest slope with (0,JJ). If this is greater than the
+    # test slope then there exist points above the line connecting
+    # (0,JJ) with (II,0) this fact is used to deal with certain
+    # borderline cases
     include_borderline_colinear = (type(hull) == sympy.Segment)
     for (i,j) in hull_with_bdry:
         # when the point is on the j-axis, the onle one we want is the
@@ -184,14 +210,14 @@ def polygon(F,X,Y,I):
             else:       slope = sympy.oo
         else:           slope = float(j-JJ)/i     
         
-        # if the slope is less than the test slope or if we're in the case
-        # where we include points along the j=0 line then add the point
-        # to the newton polygon
+        # if the slope is less than the test slope or if we're in the
+        # case where we include points along the j=0 line then add the
+        # point to the newton polygon
         if (slope < testslope) or (I==1 and j==0): 
             newton.append((i,j))
         elif (slope == testslope) and include_borderline_colinear:
-            # borderline case is when there is only one segment
-            # from (0,JJ) to (II,0). When this is the case, include all
+            # borderline case is when there is only one segment from
+            # (0,JJ) to (II,0). When this is the case, include all
             # points whose slope matches testslope
             newton.append((i,j))
 
@@ -202,7 +228,6 @@ def polygon(F,X,Y,I):
     # now that we have the newton polygon we compute the parameters
     # (q,m,l,Phi) for each side Delta on the polygon.
     #
-    Z = sympy.Symbol('Z')
     params = []
     eps = 1e-14
     N = len(newton)
@@ -212,8 +237,8 @@ def polygon(F,X,Y,I):
         side = [newton[n],newton[n+1]]
         sideslope = sympy.Rational(side[1][1]-side[0][1],side[1][0]-side[0][0])
 
-        # check against all following points for colinearity by comparing
-        # slopes. append all colinear points to side
+        # check against all following points for colinearity by
+        # comparing slopes. append all colinear points to side
         k = 1
         for pt in newton[n+2:]:
             slope = float(pt[1]-side[0][1]) / (pt[0]-side[0][0])
@@ -222,63 +247,75 @@ def polygon(F,X,Y,I):
                 k += 1
             else:
                 # when we reach the end of the newton polygon we need
-                # to shift the value of k a little bit so that the 
-                # last side is correctly captured
-#                if k == N-n-1: k -= 1
+                # to shift the value of k a little bit so that the
+                # last side is correctly captured if k == N-n-1: k -=
+                # 1
                 break
         n += k
 
         # compute q,m,l such that qj + mi = l and Phi
-        q = sideslope.q
-        m = -sideslope.p
-        l = q*side[0][1] + m*side[0][0]
-        i0 = min(side, key=itemgetter(0))[0]
-        Phi = sum(a[(i,j)]*Z**sympy.Rational(i-i0,q) for (i,j) in side)
-        Phi = sympy.Poly(Phi,Z)
+        q   = sideslope.q
+        m   = -sideslope.p
+        l   = q*side[0][1] + m*side[0][0]
+        i0  = min(side, key=itemgetter(0))[0]
+        Phi = sum(a[(i,j)]*_Z**sympy.Rational(i-i0,q) for (i,j) in side)
+        Phi = sympy.Poly(Phi,_Z)
 
         params.append((q,m,l,Phi))
 
     return params    
 
 
-def newton(F,X,Y,H,version):
+
+def newton(F,X,Y,nterms,degree_bound,version='rational'):
     """
     Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 
     `\tau_h = (q_h,\mu_h,m_h,\beta_h)`.
     """
     K = sympy.QQ
-    return regular(singular(F,X,Y,K,[],version),X,Y,H)
+    return regular(singular(F,X,Y,K,[],version),X,Y,nterms,degree_bound)
 
 
-def regular(S,X,Y,H):
+
+def regular(S,X,Y,nterms,degree_bound):
     """
     INPUT:
 
-      -- ``S``: a finite set of pairs `\{(\pi_k,F_k)\}_{1 \leq k \leq B}`
-         where `\pi_k` is a finite `\mathbb{K}`-expansion, 
-         `F_k \in \bar{\mathbb{K}}[X,Y]` with `F_k(0,0) = 0`, 
-         `\partial_Y F_k(0,0) \neq 0`, and `F_k(X,0) \neq 0`.
+    -- ``S``: a finite set of pairs `\{(\pi_k,F_k)\}_{1 \leq k \leq B}` 
+         where `\pi_k` is a finite `\mathbb{K}`-expansion, `F_k
+         \in \bar{\mathbb{K}}[X,Y]` with `F_k(0,0) = 0`, `\partial_Y
+         F_k(0,0) \neq 0`, and `F_k(X,0) \neq 0`.
 
-      -- ``H``: a positive integer 
+    -- ``H``: a positive integer
 
     OUTPUT:
     
-      -- ``(list)``: a set `\{ \pi_k' \}_{1 \leq k \leq B}` of finite 
-         `\mathbb{K}` expansions such that `\pi_k'` begins with `\pi_k`
-         and contains at least `H` `\mathbb{K}`-terms.
+    -- ``(list)``: a set `\{ \pi_k' \}_{1 \leq k \leq B}` of finite
+         `\mathbb{K}` expansions such that `\pi_k'` begins with
+         `\pi_k` and contains at least `H` `\mathbb{K}`-terms.
 
     """
     R = []
     for (pi,F) in S:        
         # grow each expansion to the number of desired terms
-        # TODO: at some point, change this to computing the degree
-        while len(pi) < H:
+
+        # if a degree bound is specified, get the degree of the
+        # singular part of the Puiseux series
+        q,mu,m,beta,eta = pi[-1]
+        deg = sympy.Rational(m,q)
+
+        while (len(pi) < nterms) and (deg < degree_bound):
             # if the set of all (0,j), j!=0 is empty, then we've 
             # encountered a finite puiseux expansion
             a = dict(F.terms())
             ms = [j for (j,i) in a.keys() if i==0 and j!=0]
             if ms == []: break
             else:        m = min(ms)
+
+            # if a degree bound is specified, break pi-series
+            # construction once we break the bound.
+            deg += m
+                
             beta = - a[(m,0)]/a[(0,1)]
             tau = (1,1,m,beta,1)
             pi.append(tau)
@@ -310,6 +347,8 @@ def singular(F,X,Y,L,pi,version):
 
     return S
 
+
+
 def singular_term(F,X,Y,L,I,version):
     """
     Computes a single set of singular terms of the Puiseux expansions.
@@ -319,9 +358,6 @@ def singular_term(F,X,Y,L,I,version):
     expansion.
     """
     T = []
-    U = sympy.Symbol('U')
-
-#    pdb.set_trace()
 
     # if the curve is singular then compute the singular tuples
     # otherwise, use the standard newton polygon method
@@ -337,28 +373,29 @@ def singular_term(F,X,Y,L,I,version):
             if version == 'rational':
                 u,v = _bezout(q,m)      
 
-            # each newton polygon side has a characteristic polynomial. For each
-            # square-free factor, each root corresponds to a K-term
-            Z = Phi.gen
+            # each newton polygon side has a characteristic
+            # polynomial. For each square-free factor, each root
+            # corresponds to a K-term
             for (Psi,r) in _square_free(Phi):
-                Psi = sympy.Poly(Psi,Z)
+                Psi = sympy.Poly(Psi,_Z)
 
-                for xi in Psi.all_roots():
-            # the classical version returns the "raw" roots
+                for xi in Psi.all_roots(radicals=False):
+                    # the classical version returns the "raw" roots
                     if version == 'classical':
-                        P = sympy.Poly(U**q-xi,U)
+                        P = sympy.Poly(_U**q-xi,_U)
                         beta = RootOf(P,0,radicals=False)
                         tau = (q,1,m,beta,1)
                         T.append((tau,l,r))
-                    # the rational version rescales parameters so as to 
-                    # include ony rational terms in the Puiseux expansions.
+                    # the rational version rescales parameters so as
+                    # to include ony rational terms in the Puiseux
+                    # expansions.
                     if version == 'rational':
                         mu = xi**(-v)
                         beta = xi**u
                         tau = (q,mu,m,beta,1)
                         T.append((tau,l,r))
-
     return T
+
 
 
 def is_singular(f,x,y):
@@ -398,7 +435,7 @@ def desingularize(f,x,y):
     If f is singular, it is desginularized. Outputs new f and Puiseux 
     series expansion data.
     """
-    Z = sympy.Symbol('Z')
+
     coeffs = _coefficient(f)
     c = coeffs.pop((0,0))
     
@@ -425,10 +462,11 @@ def desingularize(f,x,y):
         raise ValueError("Unable to compute singular term.")            
         
     # now compute the values of eta that cancel the constant term c
-    Phi = [aij*Z**sympy.Rational(i,q) for (i,j) in coeffs.keys() if q*j+m*i == 0]
-    Phi = sympy.Poly(sum(Phi) + c, Z)
+    Phi = [aij*_Z**sympy.Rational(i,q) for (i,j) in coeffs.keys() if q*j+m*i == 0]
+    Phi = sympy.Poly(sum(Phi) + c, _Z)
 
     return [(q,m,0,Phi)]
+
 
 
 def build_series(pis,x,y,T,a,parametric):
@@ -454,8 +492,8 @@ def build_series(pis,x,y,T,a,parametric):
             P = P.subs(x,P1)
             Q = Q.subs([(x,P1),(y,Q1)])
 
-        P = P.subs([(x,T),(y,0)]).expand()
-        Q = Q.subs([(x,T),(y,0)]).expand()
+        P = P.subs([(x,T),(y,0)]).expand(mul=True)#, force=True)
+        Q = Q.subs([(x,T),(y,0)]).expand(mul=True)#, force=True)
 
         # append parametric or non-parametric form
         if parametric:
@@ -463,21 +501,26 @@ def build_series(pis,x,y,T,a,parametric):
             else:             series.append((P+a,Q))
         else:
             if a == sympy.oo: solns = sympy.solve(1/x-P,T)
-            else:  
-                solns = sympy.solve((x-a)-P,T)
-                for TT in solns:  series.append(Q.subs(T,TT))
+            else:             solns = sympy.solve((x-a)-P,T)
+            for TT in solns:  series.append(Q.subs(T,TT))
 
     return series
 
 
 
-
-def puiseux(f, x, y, a, n, parametric=True, version='rational'):
+def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo, 
+            parametric=None, version='rational'):
     """
     Computes the first `n` terms of the Puiseux series expansions of 
     `f = f(x,y)` at `x=a`.
 
     INPUT:
+
+    -- ``nterms``: (default: ``None``) the maximum number of nonzero
+       terms to compute
+
+    -- ``degree_bound``: (default: ``None``) the degree bound to the Puiseux
+       series
 
     -- ``parametric``: (default: ``True``) If set to ``True``, returns 
        parameterized form of the Puiseux series expansions. That is, each 
@@ -491,20 +534,29 @@ def puiseux(f, x, y, a, n, parametric=True, version='rational'):
     if version not in ['classical','rational']:
         raise AttributeError("'version' must be 'classical' or 'rational'")
 
-    f = sympy.Poly(f,x,y)
+    if (nterms == sympy.oo) and (degree_bound == sympy.oo):
+        raise AttributeError("Either 'nterms' or 'degree_bound' must be specified")
+
+    f = sympy.Poly(f,[x,y])
 
     # scale f accordingly
     if a == sympy.oo: 
-        f = (f.subs(x,1/x) * x**f.deg(x)).expand()
+        f = (f.subs(x,1/x) * x**(f.degree(x)))
+        f = sympy.Poly(f.simplify(),[x,y])
     else:
         f = f.subs(x,x+a)
 
-    # compute the puiseux series data and build the series
-    T = sympy.Symbol('T')
-    pis = newton(f,x,y,n,version=version)
+    # if parametric represenation is requested then use variable
+    # specified, if any. Otherwise, create a dummy variable.
+    if isinstance(parametric,sympy.Symbol): T = parametric
+    else: T = sympy.Symbol('T')
+
+    # compute the puiseux series data and build the series. If a parametric
+    pis = newton(f,x,y,nterms,degree_bound,version=version)
     series = build_series(pis,x,y,T,a,parametric)
     
     return series
+
             
 """
 TESTS
@@ -512,29 +564,37 @@ TESTS
 if __name__ == "__main__":
     print "==== Module Test: puiseux.py ==="
     from sympy.abc import x,y,T
-    import cProfile, pstats
 
-    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4                   # check
-    f2 = -x**7 + 2*x**3*y + y**3                                 # check
-    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2        # check
-    f4 = y**2 + x**3 - x**2                                      # check
-    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3                      # check
-    f6 = y**4 - y**2*x + x**2                                    # check
+    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    f2 = -x**7 + 2*x**3*y + y**3
+    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    f4 = y**2 + x**3 - x**2
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+    f6 = y**4 - y**2*x + x**2
     f7 = y**3 - (x**3 + y)**2 + 1
-
     f8 = (x**6)*y**3 + 2*x**3*y - 1
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f8
-    a  = 0
+    f  = f1
+    a  = sympy.oo
     N  = 4
 
     print "Curve:\n"
     sympy.pretty_print(f)
-    
-    P = puiseux(f,x,y,a,N,parametric=True,version='rational')
 
+#     import cProfile, pstats
+#     cProfile.run(
+#     "P = puiseux(f,x,y,a,degree_bound=N,parametric=True,version='rational')"
+#     ,'puiseux.profile')
+#     p = pstats.Stats('puiseux.profile')
+#     p.strip_dirs()
+#     p.sort_stats('time').print_stats(15)
+#     p.sort_stats('cumulative').print_stats(15)
+#     p.sort_stats('calls').print_stats(15)
+
+    P = puiseux(f,x,y,a,nterms=N,parametric=True,version='rational')
+   
     print "\nPuiseux Expansions at x =", a
     for Y in P:
         print "Expansion:"
