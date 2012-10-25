@@ -1,150 +1,75 @@
 r"""
 Computing Riemann Theta Functions
 
-This module implements the algorithms for computing Riemann theta functions
-and their derivatives featured in the paper *"Computing Riemann Theta 
-Functions"* by Deconinck, Heil, Bobenko, van Hoeij, and Schmies [CRTF].
+This module implements the algorithms for computing Riemann theta
+functions and their derivatives featured in the paper *"Computing
+Riemann Theta Functions"* by Deconinck, Heil, Bobenko, van Hoeij, and
+Schmies [CRTF].
 
 
 **DEFINITION OF THE RIEMANN THETA FUNCTION:**
 
 
 Let `g` be a positive integer, the *genus* of the Riemann theta
-function.  Let `H_g` denote the Siegel upper half space of dimension 
-`g(g+1)/2` over `\CC` , that is the space of symmetric complex matrices whose
-imaginary parts are positive definite.  When `g = 1`, this is just the complex 
-upper half plane.
+function.  Let `H_g` denote the Siegel upper half space of dimension
+`g(g+1)/2` over `\CC` , that is the space of symmetric complex
+matrices whose imaginary parts are positive definite.  When `g = 1`,
+this is just the complex upper half plane.
 
-The Riemann theta function `\theta : \CC^g \times H_g \to \CC`
-is defined by the infinite series
+The Riemann theta function `\theta : \CC^g \times H_g \to \CC` is
+defined by the infinite series
 
 .. math::
 
     \theta( z | \Omega ) = \sum_{ n \in \ZZ^g } e^{ 2 \pi i \left( \tfrac{1}{2} n \cdot \Omega n + n \cdot z \right) }
 
-It is holomorphic in both `z` and `\Omega`. It is quasiperiodic in `z` with
-respect to the lattice `\{ M + \Omega N | M,N \in \ZZ^g \}`, meaning that
-`\theta(z|\Omega)` is periodic upon translation of `z` by vectors in `\ZZ^g`
-and periodic up to a multiplicative exponential factor upon translation of `z`
-by vectors in `\Omega \ZZ^g`. As a consequence, `\theta(z | \Omega)` has
-exponential growth in the imaginary parts of `z`.
+It is holomorphic in both `z` and `\Omega`. It is quasiperiodic in `z`
+with respect to the lattice `\{ M + \Omega N | M,N \in \ZZ^g \}`,
+meaning that `\theta(z|\Omega)` is periodic upon translation of `z` by
+vectors in `\ZZ^g` and periodic up to a multiplicative exponential
+factor upon translation of `z` by vectors in `\Omega \ZZ^g`. As a
+consequence, `\theta(z | \Omega)` has exponential growth in the
+imaginary parts of `z`.
 
-When `g=1`, the Riemann theta function is the third Jacobi theta function.
+When `g=1`, the Riemann theta function is the third Jacobi theta
+function.
 
 .. math::
 
     \theta( z | \Omega) = \theta_3(\pi z | \Omega) = 1 + 2 \sum_{n=1}^\infty e^{i \pi \Omega n^2} \cos(2 \pi n z)
 
-Riemann theta functions are the fundamental building blocks for Abelian 
-functions, which generalize the classical elliptic functions to multiple 
-variables. Like elliptic functions, Abelian functions and consequently 
-Riemann theta functions arise in many applications such as integrable
-partial differential equations, algebraic geometry, and optimization.
+Riemann theta functions are the fundamental building blocks for
+Abelian functions, which generalize the classical elliptic functions
+to multiple variables. Like elliptic functions, Abelian functions and
+consequently Riemann theta functions arise in many applications such
+as integrable partial differential equations, algebraic geometry, and
+optimization.
 
-For more information about the basic facts of and definitions associated with
-Riemann theta funtions, see the Digital Library of Mathematics Functions
-``http://dlmf.nist.gov/21``.
+For more information about the basic facts of and definitions
+associated with Riemann theta funtions, see the Digital Library of
+Mathematics Functions ``http://dlmf.nist.gov/21``.
 
 
 **ALGORITHM:**
 
 
-The algorithm in [CRTF] is based on the observation that the exponential
-growth of `\theta` can be factored out of the sum. Thus, we only need to
-find an approximation for the oscillatory part. The derivation is 
-omitted here but the key observation is to write `z = x + i y` and
-`\Omega = X + i Y` where `x`, `y`, `X`, and `Y` are real vectors and matrices.
-With the exponential growth part factored out of the sum, the goal is to find 
-the integral points `n \in \ZZ^g` such that the sum over these points is
-within `O(\epsilon)` accuracy of the infinite sum, for a given `z \in \CC^g`
-and numerical accuracy `\epsilon`.
+The algorithm in [CRTF] is based on the observation that the
+exponential growth of `\theta` can be factored out of the sum. Thus,
+we only need to find an approximation for the oscillatory part. The
+derivation is omitted here but the key observation is to write `z = x
++ i y` and `\Omega = X + i Y` where `x`, `y`, `X`, and `Y` are real
+vectors and matrices.  With the exponential growth part factored out
+of the sum, the goal is to find the integral points `n \in \ZZ^g` such
+that the sum over these points is within `O(\epsilon)` accuracy of the
+infinite sum, for a given `z \in \CC^g` and numerical accuracy
+`\epsilon`.
 
-By default we use the uniform approximation formulas which use the same integral points for all `z` for a fixed `\Omega`. This can be 
+By default we use the uniform approximation formulas which use the
+same integral points for all `z` for a fixed `\Omega`. This can be
 changed by setting ``uniform=False``. This is ill-advised if you need
-to compute the Riemann theta function for a fixed `\Omega` for many different `z`.
+to compute the Riemann theta function for a fixed `\Omega` for many
+different `z`.
 
-
-**EXAMPLES:**
-
-
-We start by creating a genus 2 Riemann theta function from a Riemann matrix::
-
-    sage: R = ComplexField(20); I = R.gen()
-    sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])
-    sage: theta = RiemannTheta(Omega)
-    sage: theta
-    Riemann theta function with defining Riemann matrix
-    [1.0000*I -0.50000]
-    [-0.50000 1.0000*I]
-    over the base ring Complex Field with 20 bits of precision
-
-Since ``Omega`` above is defined over the complex field with 20 bits of 
-precision, ``RiemannTheta`` can be evaluated at any point in `\CC^2` with 
-the same precision. (These values are checked against the Maple
-implementation of Riemann theta written by Bernard Deconinck and Mark van 
-Hoeij; two of the authors of [CRTF].)::
-
-    sage: theta([0,0])
-    1.1654 - 1.9522e-15*I
-    sage: theta([I,I])
-    -438.94 + 0.00056160*I
-
-One can also compute the exponential and oscillatory parts of the Riemann
-theta function separately::
-
-    sage: u,v = theta.exp_and_osc_at_point([I,I])
-    sage: (u,v)
-    (6.2832, -0.81969 + 1.0488e-6*I)
-    sage: e^u*v
-    -438.94 + 0.00056160*I
-
-Directional derivatives of theta can also be computed. The directional 
-derivative can be specified in the construction of the Riemann theta function
-or as input to evaluation::
-
-    sage: theta10 = RiemannTheta(Omega, deriv=[[1,0]])
-    sage: z = [I,I]
-    sage: theta10(z)
-    0.0031244 + 2757.9*I
-    sage: theta = RiemannTheta(Omega)
-    sage: theta(z,[[1,0]])
-    0.0031244 + 2757.9*I
-
-Symbolic evaluation and differentiation work::
-
-    sage: f = theta([x^2,pi*sin(x)]); f
-    theta(x^2, pi*sin(x))
-    sage: fx = f.derivative(x,1); fx
-    pi*cos(x)*theta_01(x^2, pi*sin(x)) + 2*x*theta_10(x^2, pi*sin(x))
-    sage: w = fx(x=I); w
-    -(1.0631e7 + 1.4805e20*I)*pi - 6.2625e11 - 7.0256e12*I
-    sage: CC(w)
-    -6.26279686008491e11 - 4.65101957990761e20*I
-
-It is important to note that the absolute value of the "oscillatory" part 
-of the Riemann theta function grows polynomially with degree equal to the
-number of derivatives taken. (e.g. the absolute value of the oscillatory part
-of the first directional derivative of the function grows linearly) Therefore,
-a radius of accuracy (Default: 5) must be specified to ensure that the value
-of the derivative(s) of the Riemann theta function for `z` in a sphere of this
-radius in `\ZZ^g` are accurate to within the desired numerical accuracy
-specified by the base field of the Riemann matrix.
-
-This radius of accuracy for values of the derivatives of the Riemann theta
-function can be adjusted::
-
-    sage: theta01 = RiemannTheta(Omega, deriv=[[0,1]], deriv_accuracy_radius=2)
-    sage: theta01([0.3,0.4*I])   # guaranteed accurate to 20 bits
-    2.6608e-8 - 3.4254*I
-    sage: z = [1.7+2.3*I,3.9+1.7*I]
-    sage: theta01(z)             # not guaranteed accurate to 20 bits
-    -9.5887e11 - 4.7112e11*I
-
-TESTS:
-
-    sage: loads(dumps(RiemannTheta)) == RiemannTheta
-    True
-    
 
 **REFERENCES:**
 
@@ -156,10 +81,6 @@ TESTS:
   Accompanying Maple code is available at 
   http://www.math.fsu.edu/~hoeij/RiemannTheta/
 
-- http://en.wikipedia.org/wiki/Theta_function
-
-- http://mathworld.wolfram.com/JacobiThetaFunctions.html
-
 - Digital Library of Mathematics Functions - Riemann Theta Functions ( http://dlmf.nist.gov/21 ).
  
 
@@ -167,9 +88,9 @@ TESTS:
 **AUTHORS:**
 
 
-- Nick Alexander (2009-03): initial version
-
-- Chris Swierczewski (2011-11): major overhaul to match notation of [CRTF], numerous bug fixes, documentation, doctests, symbolic evaluation
+- Chris Swierczewski (2011-11): major overhaul to match notation of
+  [CRTF], numerous bug fixes, documentation, doctests, symbolic
+  evaluation
 
  
 """
@@ -184,7 +105,7 @@ from scipy.optimize import fsolve
 from riemanntheta_misc import finite_sum, finite_sum_opencl
 
 
-class RiemannTheta:
+class RiemannTheta_Function:
     r"""
     Creates an instance of the Riemann theta function parameterized by a
     Riemann matrix ``Omega``, directional derivative ``derivs``, and
@@ -233,88 +154,6 @@ class RiemannTheta:
         generalize these formulas. In most applications, second order
         derivatives are suficient.
 
-
-    EXAMPLES:
-
-    We start by creating a genus 2 Riemann theta function from a Riemann matrix.::
-
-        sage: R = ComplexField(20); I = R.gen()
-        sage: Omega = matrix(R,2,2,[I,-1/2,-1/2,I])
-        sage: theta = RiemannTheta(Omega)
-        sage: theta
-        Riemann theta function with defining Riemann matrix
-        [1.0000*I -0.50000]
-        [-0.50000 1.0000*I]
-        over the base ring Complex Field with 20 bits of precision
-
-    Since ``Omega`` above is defined over the complex field with 20 bits of 
-    precision, ``RiemannTheta`` can be evaluated at any point in `\CC^2` with 
-    the same precision. (These values are checked against the Maple
-    implementation of Riemann theta written by Bernard Deconinck and Mark van 
-    Hoeij; two of the authors of [CRTF].)::
-    
-        sage: theta([0,0])
-        1.1654 - 1.9522e-15*I
-        sage: theta([I,I])
-        -438.94 + 0.00056160*I
-
-    One can also compute the exponential and oscillatory parts of the Riemann
-    theta function separately::
-
-        sage: u,v = theta.exp_and_osc_at_point([I,I])
-        sage: (u,v)
-        (6.2832, -0.81969 + 1.0488e-6*I)
-        sage: e^u*v
-        -438.94 + 0.00056160*I
-        
-    Directional derivatives of theta can also be computed. The directional 
-    derivative can be specified in the construction of the Riemann theta 
-    function or as input to evaluation.::
-    
-        sage: theta10 = RiemannTheta(Omega, deriv=[[1,0]])
-        sage: z = [I,I]
-        sage: theta10(z)
-        0.0031244 + 2757.9*I
-        sage: theta = RiemannTheta(Omega)
-        sage: theta(z,[[1,0]])
-        0.0031244 + 2757.9*I
-
-    Symbolic evaluation and differentiation works::
-
-        sage: f = theta([x^2,pi*sin(x)]); f
-        theta(x^2, pi*sin(x))
-        sage: fx = f.derivative(x,1); fx
-        pi*cos(x)*theta_01(x^2, pi*sin(x)) + 2*x*theta_10(x^2, pi*sin(x))
-        sage: w = fx(x=I); w
-        -(1.0631e7 + 1.4805e20*I)*pi - 6.2625e11 - 7.0256e12*I
-        sage: CC(w)
-        -6.26279686008491e11 - 4.65101957990761e20*I
-
-    It it important to note that the "oscillatory" part 
-    of Riemann theta grows polynomially in absolute value where the degree of 
-    the polynomial is equal to the degree of the directional derivative. (e.g. 
-    the oscillatory part of the first directional derivative of theta grows 
-    linearly in absolute value.) A radius of accuracy must therefore be 
-    specified to ensure that the value of the derivative(s) of the Riemann 
-    theta function are accurate. (Default: 5) This is the radius of the complex
-    `g`-sphere where accuracy of the directional derivative of Riemann theta is
-    guaranteed to be within the desired numerical accuracy specified by the 
-    base field of the Riemann matrix.
-    
-    This radius of accuracy for the derivatives of the Riemann theta function 
-    can be adjusted::
-
-        sage: theta01 = RiemannTheta(Omega, deriv=[[0,1]], deriv_accuracy_radius=2)
-        sage: theta01([0.3,0.4*I])   # guaranteed accurate to 20 bits
-        2.6608e-8 - 3.4254*I
-        sage: z = [1.7+2.3*I,3.9+1.7*I]
-        sage: theta10(z)             # not guaranteed accurate to 20 bits
-        -1.0103e12 - 4.6132e11*I
-
-    TESTS:
-
-        sage: sage.functions.riemann_theta.RiemannTheta_Constructor == RiemannTheta
-        True
     """
 
     def __init__(self, uniform=True, deriv_accuracy_radius=5):
@@ -335,8 +174,7 @@ class RiemannTheta:
 
     def lattice(self):
         r"""
-        Compute the complex lattice corresponding to the Riemann matix. Uses 
-        the :module:sage.functions.complex_lattice module.
+        Compute the complex lattice corresponding to the Riemann matix.
 
         .. note::
 
@@ -673,25 +511,29 @@ class RiemannTheta:
         is done if the input contains symbolic variables.            
         """
         return self.value_at_point(z, Omega, prec=prec, deriv=deriv, gpu=gpu)
+
+
+# declaration of Riemann theta
+RiemannTheta = RiemannTheta_Function()
         
 
 
 
 if __name__=="__main__":
     print "=== Riemann Theta ==="
-    theta = RiemannTheta()
+    theta = RiemannTheta
     z = np.array([0,0])
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    print theta.value_at_point(z,Omega,gpu=True)
+    print theta.value_at_point(z,Omega,gpu=False)
     print "1.1654 - 1.9522e-15*I"
     print 
 
     print "Test #2:"
     z = np.array([1.0j,1.0j])
-    u,v = theta.exp_and_osc_at_point(z,Omega,gpu=True)
-    print theta.value_at_point(z,Omega,gpu=True)
+    u,v = theta.exp_and_osc_at_point(z,Omega,gpu=False)
+    print theta.value_at_point(z,Omega,gpu=False)
     print "-438.94 + 0.00056160*I"
     print u
     print v
@@ -704,7 +546,7 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
 
     print "\tCalculating theta..."
-    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=True)[1].imag
+    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=False)[1].imag
     f = np.vectorize(f)
     x = np.linspace(0,1,60)
     y = np.linspace(0,5,60)
@@ -716,3 +558,4 @@ if __name__=="__main__":
     plt.show()
     
                        
+
