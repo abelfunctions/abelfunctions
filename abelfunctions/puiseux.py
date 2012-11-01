@@ -380,8 +380,16 @@ def singular_term(F,X,Y,L,I,version):
             # corresponds to a K-term
             for (Psi,r) in _square_free(Phi):
                 Psi = sympy.Poly(Psi,_Z)
+                
+                # compute the roots of Psi. Use the RootOf construct if 
+                # possible. In the case when Psi is over EX (i.e. when
+                # RootOf doesn't work) then compute symbolic roots.
+                try:
+                    roots = Psi.all_roots(radicals=False)
+                except NotImplementedError:
+                    roots = [rt for rt,mult in sympy.roots(Psi,_Z).iteritems()]
 
-                for xi in Psi.all_roots(radicals=False):
+                for xi in roots:
                     # the classical version returns the "raw" roots
                     if version == 'classical':
                         P = sympy.Poly(_U**q-xi,_U)
