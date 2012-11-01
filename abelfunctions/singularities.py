@@ -17,7 +17,7 @@ import pdb
 import sympy
 
 from puiseux import puiseux
-from integralbasis import integral_basis
+from integralbasis import Int
 
 # temporary, hidden symbol to maintain clean Sympy cache
 _t = sympy.Symbol('t')
@@ -98,7 +98,20 @@ def singular_points(f,x,y):
 
     return zip(S,info)
 
-    
+
+
+def _compute_singularity_info_finte(f,x,y,singular_pt):
+    """
+    Returns the singularity info in the finite case
+    """
+    return 0
+
+
+def _compute_singularity_info_infinite(f,x,y,singular_pt):
+    """    
+    Returns the singularity info in the finite case
+    """
+    return 0
 
 
 def _compute_singularity_info(f,x,y,singular_pts):
@@ -111,12 +124,13 @@ def _compute_singularity_info(f,x,y,singular_pts):
     * r = branching number.
     """
     info = []
-
+    
     def puiseux_filter(P,beta):
         if P[1].subs({_t:0}) == beta:
             return True
         return False
-
+    
+    F,_ = homogenize(f,x,y,_z)
     for alpha, beta, gamma in singular_pts:
         # compute the Puiseux series at the projective point [alpha,
         # beta, gamma]. If on the line at infinity, make the
@@ -125,21 +139,54 @@ def _compute_singularity_info(f,x,y,singular_pts):
             # finite case
             P = puiseux(f,x,y,alpha,nterms=1,parametric=_t)
             P_beta = filter(lambda p: puiseux_filter(p,beta), P)
+            
+            # build non-parametric versions, too
+            P_beta_x = []
+            for X,Y in P_beta:
+                solns = sympy.solve(x-X,_t)
+                for TT in solns:
+                    P_beta_x.append(Y.subs(_t,TT))
+
         else:
             # infinite case: z=0. Make the appropriate transformation. 
             # puiseux(...) seems to be faster when expanding about zero
             # than anything else so we first check if any of the other 
             # coordinates are zero.
-            raise Warning("Branching info: Infinite case not yet implemented.")
+#            pdb.set_trace()
+            
+            if beta: 
+                var = x; var0 = alpha
+                g = F.subs(y,beta)
+            else:
+                var = y; var0 = beta
+                g = F.subs(x,alpha)
+            
+            alpha = var0
+            beta  = 0
+            P = puiseux(g,var,_z,alpha,nterms=1,parametric=_t)
+            P_beta = filter(lambda p: puiseux_filter(p,beta), P)
+            
 
-        r = len(P_beta)
+        # multiplicity
         m = 0
         for X,Y in P_beta:
-            _,ri = abs(X.leadterm(_t))
-            _,si = abs(Y.leadterm(_t))
+            X = X - alpha
+            Y = Y - beta
+            ri = abs( X.leadterm(_t)[1] )
+            si = abs( Y.leadterm(_t)[1] )
             m += min(ri,si)
 
-        info.append( (m,0,r) )
+        # branching number
+        r = len(P_beta)
+        
+        # delta invariant
+        delta = 0
+        for j in range(len(P_beta_x)):
+            rj     = r
+            IntPj  = Int(j,P_beta_x,x)
+            delta += sympy.Rational(rj * IntPj - rj + 1, 2)
+
+        info.append( (m,delta,r) )
 
     return info
 
@@ -170,9 +217,8 @@ if __name__ == '__main__':
         sympy.pprint(f)
         print '\nall singular points:'
         singular_pts = singular_points(f,x,y)
-        sympy.pprint(singular_pts)
-        print '\n[singular point, branching number]:'
+#        sympy.pprint(singular_pts)
         for singular_pt in singular_pts:
-            if singular_pt[-1] == 1:
-                branching_num = branching_number(f,x,y,singular_pt)
-                sympy.pprint([singular_pt, branching_num])
+            print "Point:"
+            sympy.pprint(singular_pt[0])
+            sympy.pprint(singular_pt[1])
