@@ -1,4 +1,4 @@
-r"""
+"""
 Computing Riemann Theta Functions
 
 This module implements the algorithms for computing Riemann theta
@@ -94,16 +94,17 @@ different `z`.
 
  
 """
-
+from time import clock
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
+import RIEMANN
 #Need to fix problems with qflll
 #from qflll import qflll
 
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
-from riemanntheta_misc import finite_sum, finite_sum_opencl
+from riemanntheta_misc import finite_sum_opencl
 
 
 class RiemannTheta_Function:
@@ -352,8 +353,8 @@ class RiemannTheta_Function:
         # compute the length of the shortest lattice vector
         #U  = qflll(T)
 	U = T
-        v  = (U*T)[:,0]
-        r  = la.norm(v)
+        A  = U*T
+        r  = min(la.norm(A[:,i]) for i in range(int(g)))
         normTinv = la.norm(la.inv(T))
 
         # solve for the radius using:
@@ -493,9 +494,8 @@ class RiemannTheta_Function:
             from riemanntheta_misc import finite_sum_opencl
             v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
         else:
-            v = finite_sum(X, Yinv, T, x, y, S, g, deriv).item(0,0)
-	    print(v)
-            u = pi*np.dot(y.T,Yinv * y).item(0,0)
+            v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
+        u = pi*np.dot(y.T,Yinv * y).item(0,0)
 
         return u,v
 
@@ -520,8 +520,6 @@ class RiemannTheta_Function:
 RiemannTheta = RiemannTheta_Function()
         
 
-
-
 if __name__=="__main__":
     print "=== Riemann Theta ==="
     theta = RiemannTheta
@@ -533,7 +531,6 @@ if __name__=="__main__":
     print "1.1654 - 1.9522e-15*I"
     print 
 
-"""
     print "Test #2:"
     z = np.array([1.0j,1.0j])
     u,v = theta.exp_and_osc_at_point(z,Omega,gpu=False)
@@ -541,7 +538,7 @@ if __name__=="__main__":
     print "-438.94 + 0.00056160*I"
     print u
     print v
-
+            
     print "Test #3"
     import pylab as p
     from mpl_toolkits.mplot3d import Axes3D
@@ -550,17 +547,20 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
 
     print "\tCalculating theta..."
-    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=False)[1].imag
+    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=False)[1]
     f = np.vectorize(f)
     x = np.linspace(0,1,60)
     y = np.linspace(0,5,60)
     X,Y = p.meshgrid(x,y)
-    Z = f(X,Y)
+    start = clock()
+    Z = np.real(f(X,Y))
+    print(clock() - start)
 
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
-    
-"""
+ 
+
+
                        
 
