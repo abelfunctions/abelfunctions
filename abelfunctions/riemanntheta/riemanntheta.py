@@ -98,8 +98,9 @@ different `z`.
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
+#Need to fix problems with qflll
+#from qflll import qflll
 
-from abelfunctions.utilities import qflll
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import finite_sum, finite_sum_opencl
@@ -349,7 +350,8 @@ class RiemannTheta_Function:
         g  = np.float64(T.shape[0])
 
         # compute the length of the shortest lattice vector
-        U  = qflll(T)
+        #U  = qflll(T)
+	U = T
         v  = (U*T)[:,0]
         r  = la.norm(v)
         normTinv = la.norm(la.inv(T))
@@ -492,7 +494,8 @@ class RiemannTheta_Function:
             v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
         else:
             v = finite_sum(X, Yinv, T, x, y, S, g, deriv).item(0,0)
-        u    = pi*np.dot(y.T,Yinv * y).item(0,0)
+	    print(v)
+            u = pi*np.dot(y.T,Yinv * y).item(0,0)
 
         return u,v
 
@@ -530,6 +533,7 @@ if __name__=="__main__":
     print "1.1654 - 1.9522e-15*I"
     print 
 
+"""
     print "Test #2:"
     z = np.array([1.0j,1.0j])
     u,v = theta.exp_and_osc_at_point(z,Omega,gpu=False)
@@ -557,5 +561,6 @@ if __name__=="__main__":
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
     
+"""
                        
 
