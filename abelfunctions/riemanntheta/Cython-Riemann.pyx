@@ -7,7 +7,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-cdef extern from 'riemanntheta2.h':
+cdef extern from 'riemanntheta.h':
         double finite_sum_without_derivatives(double *, double *, double *,
 					      double *, double *, double *,
 					      double *, double *, int, int)
