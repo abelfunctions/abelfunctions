@@ -35,30 +35,29 @@ exppart(double* n, double* X, double* x, double* intshift, int g)
 
     //tmp1 = n - intshift
     for (i = 0; i < g; i++) {
-	    tmp1[i] = n[i] - intshift[i];
+         tmp1[i] = n[i] - intshift[i];
     }	
 
     // tmp2 = (1/2)X*(n-intshift)
-	double sum;
-	for (i = 0; i < g; i++) {
-		sum = 0;
-		for (j = 0; j < g; j++) {
-			sum += X[i*g + j] * tmp1[j];
-		}
-		tmp2[i] = sum/2;
-	}
+    double sum;
+    for (i = 0; i < g; i++) {
+    	sum = 0;
+    	for (j = 0; j < g; j++) {
+    		sum += X[i*g + j] * tmp1[j];
+    	}
+    	tmp2[i] = sum/2;
+    }
 	
     //tmp2 = (1/2)*X(n-intshift) + x
     for (i = 0; i < g; i++){
-		tmp2[i] = tmp2[i] + x[i];
-	}
-
-	//ept = <tmp1,tmp2>
-	double dot = 0;
-	for (i = 0; i < g; i++){
-		dot += tmp1[i]*tmp2[i];
-	}
-	double ept = 2* M_PI * dot; 
+    	tmp2[i] = tmp2[i] + x[i];
+    }
+    //ept = <tmp1,tmp2>
+    double dot = 0;
+    for (i = 0; i < g; i++){
+    	dot += tmp1[i]*tmp2[i];
+    }
+    double ept = 2* M_PI * dot; 
     return ept;
 }
 
@@ -80,26 +79,26 @@ normpart(double* n, double* T, double* fracshift, int g)
     double tmp2[g];
     int i,j;
 
-	//tmp1 = n + fracshift
-	for (i = 0; i < g; i++) {
-		tmp1[i] = n[i] + fracshift[i];
-	}
+    //tmp1 = n + fracshift
+    for (i = 0; i < g; i++) {
+    	tmp1[i] = n[i] + fracshift[i];
+    }
 	
-	//tmp2 = T*(n+fracshift)
-	double sum;
-	for (i = 0; i < g; i++) {
-		sum = 0;
-		for (j = 0; j < g; j++) {
-			sum += T[i*g + j] * tmp1[j];
-		}
-		tmp2[i] = sum;
-	}
+    //tmp2 = T*(n+fracshift)
+    double sum;
+    for (i = 0; i < g; i++) {
+    	sum = 0;
+    	for (j = 0; j < g; j++) {
+    		sum += T[i*g + j] * tmp1[j];
+    	}
+    	tmp2[i] = sum;
+    }
  
-	//norm = || T*(n + fracshift) || ^ 2
-	double norm = 0;
-	for (i = 0; i < g; i++) {
-		norm += tmp2[i] * tmp2[i];
-	}
+    //norm = || T*(n + fracshift) || ^ 2
+    double norm = 0;
+    for (i = 0; i < g; i++) {
+    	norm += tmp2[i] * tmp2[i];
+    }
     return -M_PI * norm;
 }
 
@@ -192,7 +191,6 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
     free(fracshift);
 }
 
-
 /******************************************************************************
   deriv_prod
   ----------
@@ -283,6 +281,7 @@ deriv_prod(double* dp_real, double* dp_imag,
   * N: the number of points in ZZ^g over which to compute the sum
        (= total number of elements in S / g)
 ******************************************************************************/
+/*
 void
 finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
 			                double* X, double* Yinv, double* T,
@@ -291,17 +290,16 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
                             int nderivs, int g, int N)
 {
 
-    /* 
-    compute the shifted vectors: shift = Yinv*y and its 
-    integer and fractional parts 
-    */
+     
+    //compute the shifted vectors: shift = Yinv*y and its 
+    //integer and fractional parts 
+    
     int k,j;
     double shift[g], intshift[g], fracshift[g];
-    /*
+   
     shift     = (double*)malloc(g*sizeof(double));
     intshift  = (double*)malloc(g*sizeof(double));
-    fracshift = (double*)malloc(g*sizeof(double));
-    */
+    fracshift = (double*)malloc(g*sizeof(double)); 
 
     // shift = Yinv*y;
     // intshift = round(shift)   // SHOULD THIS BE FLOOR INSTEAD?
@@ -351,7 +349,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     free(fracshift);
 }
 
-
+*/
 /******************************************************************************
   integer_points
 

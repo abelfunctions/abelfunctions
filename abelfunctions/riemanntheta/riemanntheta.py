@@ -94,14 +94,10 @@ different `z`.
 
  
 """
-from time import clock
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
 import RIEMANN
-#Need to fix problems with qflll
-#from qflll import qflll
-
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import finite_sum_opencl
@@ -552,9 +548,7 @@ if __name__=="__main__":
     x = np.linspace(0,1,60)
     y = np.linspace(0,5,60)
     X,Y = p.meshgrid(x,y)
-    start = clock()
     Z = np.real(f(X,Y))
-    print(clock() - start)
 
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
