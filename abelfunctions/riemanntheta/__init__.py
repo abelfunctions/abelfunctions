@@ -1,1 +1,0 @@
-from riemanntheta import RiemannTheta
