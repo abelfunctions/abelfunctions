@@ -8,10 +8,18 @@
   Authors:
   -------
 
-  Chris Swierczewski (cswiercz@uw.edu) - September 2012
-  Grady Williams (gradyrw@uw.edu) - October 2012
+  *Chris Swierczewski (cswiercz@uw.edu) - September 2012
+  *Grady Williams (gradyrw@uw.edu) - October 2012
 
 =============================================================================*/
+
+#ifndef __RIEMANNTHETA_H__
+#define __RIEMANNTHETA_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -287,7 +295,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
 			                double* X, double* Yinv, double* T,
 			                double* x, double* y, double* S,
 			                double* deriv_real, double* deriv_imag, 
-                                        int nderivs, int g, int N)
+                            int nderivs, int g, int N)
 {
      
     //compute the shifted vectors: shift = Yinv*y and its 
@@ -449,3 +457,10 @@ find_integer_points(double* intpoints,
   
 }
 */
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+
+#endif /* __RIEMANNTHETA_H__ */

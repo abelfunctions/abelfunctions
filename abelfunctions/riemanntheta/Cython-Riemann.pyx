@@ -1,6 +1,6 @@
 #Grady Williams (gradyrw@uw.edu) - October 2012
 
-#This Cython program provides a 
+#This Cython program provides a wrapper for C-functions which compute the finitesum of the Riemann Theta finite sum approximation
 
 cimport cython
 import numpy as np
