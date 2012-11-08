@@ -211,16 +211,16 @@ deriv_prod(double* dp_real, double* dp_imag,
 {
 
     double nmintshift[g];
-  	double term_real = 0;
+    double term_real = 0;
     double term_imag = 0;
-  	double total_real = 0;
+    double total_real = 0;
     double total_imag = 0;
-  	int i,j;
+    int i,j;
 
     // compute n-intshift
     for (i = 0; i < g; i++) {
-		nmintshift[i] = n[i] - intshift[i];
-	}	
+    	nmintshift[i] = n[i] - intshift[i];
+    }	
                      
     // compute the product || 2 pi <d, n-mintshift>. We determine
     // sign and real / imaginary parts later based on number of derivs
@@ -281,49 +281,47 @@ deriv_prod(double* dp_real, double* dp_imag,
   * N: the number of points in ZZ^g over which to compute the sum
        (= total number of elements in S / g)
 ******************************************************************************/
-/*
+
 void
 finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
 			                double* X, double* Yinv, double* T,
 			                double* x, double* y, double* S,
 			                double* deriv_real, double* deriv_imag, 
-                            int nderivs, int g, int N)
+                                        int nderivs, int g, int N)
 {
-
      
     //compute the shifted vectors: shift = Yinv*y and its 
     //integer and fractional parts 
-    
     int k,j;
-    double shift[g], intshift[g], fracshift[g];
-   
-    shift     = (double*)malloc(g*sizeof(double));
-    intshift  = (double*)malloc(g*sizeof(double));
-    fracshift = (double*)malloc(g*sizeof(double)); 
 
+    double* shift;
+    double* intshift;
+    double* fracshift;
+    shift  = (double*)malloc(g*sizeof(double));
+    intshift  = (double*)malloc(g*sizeof(double));
+    fracshift = (double*)malloc(g*sizeof(double));
     // shift = Yinv*y;
     // intshift = round(shift)   // SHOULD THIS BE FLOOR INSTEAD?
     // fracshift = shift - intshift
- 	double sum;
-	for (k = 0; k < g; j++) {
-		sum = 0;
-		for (j = 0; j < g; j++) {
-			sum += Yinv[k*g + j] + y[j];
-		}
-		shift[k] = sum;
-	}
+    double sum;
+    for (k = 0; k < g; k++) {
+        sum = 0;
+       	for (j = 0; j < g; j++) {
+            sum += Yinv[k*g + j] *  y[j];
+        }
+	shift[k] = sum;
+    }
 
-    for(k=0;k<g;k++) {
+    for(k = 0; k < g; k++) {
         intshift[k] = round(shift[k]);
         fracshift[k] = shift[k] - intshift[k];
     }
 
     //compute the finite sum
     double real_total = 0, imag_total = 0;
-    double ept, npt, cpt, spt, dpr;
-    double dpi = 0;
+    double ept, npt, cpt, spt, dpr, dpi;
     double* n;
-    for(k=0; k<N; k++) {
+    for(k = 0; k < N; k++) {
         // the current point in S \subset ZZ^g
         n = S+k*g;
 
@@ -333,7 +331,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
         cpt = npt * cos(ept);
         spt = npt * sin(ept);
 
-        deriv_prod(&dpr, &dpr, n, intshift, deriv_real, deriv_imag, nderivs, g);
+        deriv_prod(&dpr, &dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
 
         real_total += dpr*cpt - dpi*spt;
         imag_total += dpi*cpt + dpr*spt;
@@ -349,7 +347,6 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     free(fracshift);
 }
 
-*/
 /******************************************************************************
   integer_points
 
