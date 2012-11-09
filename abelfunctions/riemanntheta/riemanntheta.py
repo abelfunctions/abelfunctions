@@ -100,7 +100,7 @@ import scipy.linalg as la
 import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
-from riemanntheta_misc import finite_sum_opencl
+from riemanntheta_misc import *
 
 
 class RiemannTheta_Function:
@@ -489,6 +489,8 @@ class RiemannTheta_Function:
         if gpu:
             from riemanntheta_misc import finite_sum_opencl
             v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
+        elif (len(deriv) > 0):
+            v = finite_sum(X, Yinv, T, x, y, S, g, deriv)
         else:
             v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
         u = pi*np.dot(y.T,Yinv * y).item(0,0)
@@ -517,16 +519,24 @@ RiemannTheta = RiemannTheta_Function()
         
 
 if __name__=="__main__":
+    print("HELLLOOOO!!!!") 
     print "=== Riemann Theta ==="
     theta = RiemannTheta
     z = np.array([0,0])
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    print theta.value_at_point(z,Omega,gpu=False)
-    print "1.1654 - 1.9522e-15*I"
-    print 
-
+    y = [1.0j, 0]
+    print theta.value_at_point(y,Omega,gpu=False)
+    #print "1.1654 - 1.9522e-15*I"
+    #print 
+    print "Calculating derivatives:"
+    print "For [0,1]: "
+    print theta.value_at_point(y, Omega, deriv = [[1,0]], gpu = False)
+    print "For [1,0]:"
+    print theta.value_at_point(y, Omega, deriv = [[0,1]], gpu = False)
+    print
+'''
     print "Test #2:"
     z = np.array([1.0j,1.0j])
     u,v = theta.exp_and_osc_at_point(z,Omega,gpu=False)
@@ -553,7 +563,7 @@ if __name__=="__main__":
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
- 
+''' 
 
 
                        

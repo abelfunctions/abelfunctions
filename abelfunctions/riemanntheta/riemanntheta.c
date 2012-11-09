@@ -83,8 +83,7 @@ double
 normpart(double* n, double* T, double* fracshift, int g)
 {
 
-    double tmp1[g]; 
-    double tmp2[g];
+    double tmp1[g], tmp2[g];
     int i,j;
 
     //tmp1 = n + fracshift
@@ -135,9 +134,9 @@ normpart(double* n, double* T, double* fracshift, int g)
 
 void
 finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
-			       double* X, double* Yinv, double* T,
-			       double* x, double* y, double* S,
-			       int g, int N)
+			                   double* X, double* Yinv, double* T,
+			                   double* x, double* y, double* S,
+			                   int g, int N)
 {
     /* 
      compute the shifted vectors: shift = Yinv*y and its 
@@ -227,33 +226,33 @@ deriv_prod(double* dp_real, double* dp_imag,
 
     // compute n-intshift
     for (i = 0; i < g; i++) {
-    	nmintshift[i] = n[i] - intshift[i];
+        nmintshift[i] = n[i] - intshift[i];
     }	
                      
     // compute the product || 2 pi <d, n-mintshift>. We determine
     // sign and real / imaginary parts later based on number of derivs
-    for(i=0;i<nderivs;i++) {
+    for(i = 0; i < nderivs; i++) {
         // compute the real and imaginary parts of the dot product
         // <d, n-intshift>. The computation simplifies greatly since
         // n-intshift is always real.
-        for(j=0;j<g;j++) {
+        for(j = 0; j < g; j++) {
 	        term_real += deriv_real[j] * nmintshift[j];
 	        term_imag += deriv_imag[j] * nmintshift[j];
 	    }
-        total_real *= M_2_PI * term_real;
-        total_imag *= M_2_PI * term_imag;
+        total_real *= 2 * M_PI * term_real;
+        total_imag *= 2 * M_PI * term_imag;
     }
   
     // check nderivs % 4 to determine sign and swappage.
-    if (nderivs%4 == 0) {
+    if (nderivs % 4 == 0) {
         *deriv_real = total_real;
         *deriv_imag = total_imag;
     }
-    else if (nderivs%4 == 1) {
+    else if (nderivs % 4 == 1) {
         *deriv_real = total_imag;
         *deriv_imag = total_real;
     }
-    else if (nderivs%4 == 2) {
+    else if (nderivs % 4 == 2) {
         *deriv_real = -total_real;
         *deriv_imag = -total_imag;
     }
