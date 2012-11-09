@@ -2,6 +2,7 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 import os.path
+import RIEMANN
 
 try:
     import pyopencl as cl
@@ -90,7 +91,6 @@ def finite_sum_opencl(X, Yinv, T, x, y, S, g):
 
     # compute finite sum
     return np.sum(fsum_real) + 1.0j*np.sum(fsum_imag)
-
 
 def finite_sum(X, Yinv, T, x, y, S, g, deriv):
     """

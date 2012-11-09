@@ -131,8 +131,6 @@ def _new_polynomial(F,X,Y,tau,l):
     Fnew = sympy.Poly.from_dict(new_d,[X,Y])
     return Fnew
 
-
-
 def polygon(F,X,Y,I):
     """
     Computes a set of parameters and polynomials in one-to-one correspondence

@@ -1,4 +1,4 @@
-r"""
+"""
 Computing Riemann Theta Functions
 
 This module implements the algorithms for computing Riemann theta
@@ -94,15 +94,13 @@ different `z`.
 
  
 """
-
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
-
-from abelfunctions.utilities import qflll
+import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
-from riemanntheta_misc import finite_sum, finite_sum_opencl
+from riemanntheta_misc import finite_sum_opencl
 
 
 class RiemannTheta_Function:
@@ -349,9 +347,10 @@ class RiemannTheta_Function:
         g  = np.float64(T.shape[0])
 
         # compute the length of the shortest lattice vector
-        U  = qflll(T)
-        v  = (U*T)[:,0]
-        r  = la.norm(v)
+        #U  = qflll(T)
+	U = T
+        A  = U*T
+        r  = min(la.norm(A[:,i]) for i in range(int(g)))
         normTinv = la.norm(la.inv(T))
 
         # solve for the radius using:
@@ -491,8 +490,8 @@ class RiemannTheta_Function:
             from riemanntheta_misc import finite_sum_opencl
             v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
         else:
-            v = finite_sum(X, Yinv, T, x, y, S, g, deriv).item(0,0)
-        u    = pi*np.dot(y.T,Yinv * y).item(0,0)
+            v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
+        u = pi*np.dot(y.T,Yinv * y).item(0,0)
 
         return u,v
 
@@ -517,8 +516,6 @@ class RiemannTheta_Function:
 RiemannTheta = RiemannTheta_Function()
         
 
-
-
 if __name__=="__main__":
     print "=== Riemann Theta ==="
     theta = RiemannTheta
@@ -537,7 +534,7 @@ if __name__=="__main__":
     print "-438.94 + 0.00056160*I"
     print u
     print v
-
+            
     print "Test #3"
     import pylab as p
     from mpl_toolkits.mplot3d import Axes3D
@@ -546,16 +543,18 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
 
     print "\tCalculating theta..."
-    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=False)[1].imag
+    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=False)[1]
     f = np.vectorize(f)
     x = np.linspace(0,1,60)
     y = np.linspace(0,5,60)
     X,Y = p.meshgrid(x,y)
-    Z = f(X,Y)
+    Z = np.real(f(X,Y))
 
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
-    
+ 
+
+
                        
 
