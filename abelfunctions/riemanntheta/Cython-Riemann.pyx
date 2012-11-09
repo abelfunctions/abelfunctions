@@ -9,8 +9,8 @@ np.import_array()
 
 cdef extern from 'riemanntheta.h':
         void finite_sum_without_derivatives(double *, double *, double *,
-					                        double *, double *, double *,
-					                        double *, double *, int, int)
+					    double *, double *, double *,
+					    double *, double *, int, int)
 
         void finite_sum_with_derivatives(double*, double*, double*, double*, 
                                          double*, double*, double*, double*,
