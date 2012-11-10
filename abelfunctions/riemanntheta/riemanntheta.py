@@ -495,7 +495,7 @@ class RiemannTheta_Function:
             for vec in deriv: 
                 deriv_real.append(vec[0])
                 deriv_imag.append(vec[1])	
-            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, x, y, S, deriv_real, deriv_imag, 1, g)
+            v = finite_sum(X, Yinv, T, x, y, S, g, deriv)
         else:
             v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
         u = pi*np.dot(y.T,Yinv * y).item(0,0)
