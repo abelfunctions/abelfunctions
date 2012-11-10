@@ -180,6 +180,7 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
             dp         = derivprod(n)
             dpr        = dp.real
             dpi        = dp.imag
+            print(str(dpr) +" "+ str(dpi))
             fsum_real += dpr*cpart - dpi*spart
             fsum_imag += dpi*cpart + dpr*spart
         else:
