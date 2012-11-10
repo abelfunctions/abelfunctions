@@ -291,9 +291,9 @@ deriv_prod(double* dp_real, double* dp_imag,
 
 void
 finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
-			                double* X, double* Yinv, double* T,
-			                double* x, double* y, double* S,
-			                double* deriv_real, double* deriv_imag, 
+			    double* X, double* Yinv, double* T,
+			    double* x, double* y, double* S,
+		            double* deriv_real, double* deriv_imag, 
                             int nderivs, int g, int N)
 {
      
@@ -339,7 +339,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
         spt = npt * sin(ept);
 
         deriv_prod(&dpr, &dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
-
+	printf("%g %g\n", dpr, dpi);
         real_total += dpr*cpt - dpi*spt;
         imag_total += dpi*cpt + dpr*spt;
     }
