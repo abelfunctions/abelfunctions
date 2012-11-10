@@ -52,6 +52,8 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv_real,
     S = np.ascontiguousarray(S, dtype = 'double')
     deriv_real = np.ascontiguousarray(deriv_real, dtype = 'double')
     deriv_imag = np.ascontiguousarray(deriv_imag, dtype = 'double')
+    print(deriv_real)
+    print(deriv_imag)
     finite_sum_with_derivatives(real, imag,
                                 <double*> np.PyArray_DATA(X),
                                 <double*> np.PyArray_DATA(Yinv),

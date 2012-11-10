@@ -490,7 +490,12 @@ class RiemannTheta_Function:
             from riemanntheta_misc import finite_sum_opencl
             v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
         elif (len(deriv) > 0):
-            v = finite_sum(X, Yinv, T, x, y, S, g, deriv)
+            deriv_real = []
+            deriv_imag = []
+            for vec in deriv: 
+                deriv_real.append(vec[0])
+                deriv_imag.append(vec[1])	
+            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, x, y, S, deriv_real, deriv_imag, 1, g)
         else:
             v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
         u = pi*np.dot(y.T,Yinv * y).item(0,0)
@@ -518,8 +523,7 @@ class RiemannTheta_Function:
 RiemannTheta = RiemannTheta_Function()
         
 
-if __name__=="__main__":
-    print("HELLLOOOO!!!!") 
+if __name__=="__main__": 
     print "=== Riemann Theta ==="
     theta = RiemannTheta
     z = np.array([0,0])
