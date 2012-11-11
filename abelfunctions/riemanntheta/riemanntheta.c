@@ -231,8 +231,8 @@ deriv_prod(double* dp_real, double* dp_imag,
       term_real += deriv_real[i] * nmintshift[i];
       term_imag += deriv_imag[i] * nmintshift[i];
     }
-    dp_real[0] = 2*M_PI*term_real;
-    dp_imag[0] = 2*M_PI*term_imag;
+    dp_imag[0] = 2*M_PI*term_real;
+    dp_real[0] = -2*M_PI*term_imag;
 }
 
 
