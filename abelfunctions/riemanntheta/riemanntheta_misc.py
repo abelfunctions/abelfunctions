@@ -175,6 +175,9 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
         npt   = np.exp(normpart(n))
         cpart = npt * np.cos(ept)
         spart = npt * np.sin(ept)
+        print(cpart)
+        print(spart)
+        print()
             
         if (len(deriv) > 0):
             dp         = derivprod(n)
