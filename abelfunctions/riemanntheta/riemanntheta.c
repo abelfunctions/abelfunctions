@@ -233,6 +233,7 @@ deriv_prod(double* dp_real, double* dp_imag,
     }
     dp_imag[0] = 2*M_PI*term_real;
     dp_real[0] = -2*M_PI*term_imag;
+    printf("%g \n %g \n\n", dp_imag[0], dp_real[0]);
 }
 
 
