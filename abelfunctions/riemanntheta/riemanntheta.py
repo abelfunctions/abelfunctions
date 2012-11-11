@@ -490,12 +490,7 @@ class RiemannTheta_Function:
             from riemanntheta_misc import finite_sum_opencl
             v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
         elif (len(deriv) > 0):
-            deriv_real = []
-            deriv_imag = []
-            for vec in deriv: 
-                deriv_real.append(vec[0])
-                deriv_imag.append(vec[1])	
-            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, x, y, S, deriv_real, deriv_imag, 1, g)
+            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g)
         else:
             v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
         u = pi*np.dot(y.T,Yinv * y).item(0,0)
@@ -535,9 +530,9 @@ if __name__=="__main__":
     #print "1.1654 - 1.9522e-15*I"
     #print 
     print "Calculating derivatives:"
-    print "For [0,1]: "
+    print "For [1,0]: "
     print theta.value_at_point(y, Omega, deriv = [[1,0]], gpu = False)
-    print "For [1,0]:"
+    print "For [0,1]:"
     print theta.value_at_point(y, Omega, deriv = [[0,1]], gpu = False)
     print
 '''

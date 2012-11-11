@@ -134,9 +134,9 @@ normpart(double* n, double* T, double* fracshift, int g)
 
 void
 finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
-			                   double* X, double* Yinv, double* T,
-			                   double* x, double* y, double* S,
-			                   int g, int N)
+			       double* X, double* Yinv, double* T,
+		               double* x, double* y, double* S,
+	                       int g, int N)
 {
     /* 
      compute the shifted vectors: shift = Yinv*y and its 
@@ -156,14 +156,14 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
     // shift = Yinv*y;
     // intshift = round(shift)
     // fracshift = shift - intshift
-	double sum;
-	for (k = 0; k < g; k++) {
-		sum = 0;
-		for (j = 0; j < g; j++) {
-			sum += Yinv[k*g + j] * y[j];
-		}
-		shift[k] = sum;
+    double sum;
+    for (k = 0; k < g; k++) {
+        sum = 0;
+       	for (j = 0; j < g; j++) {
+	    sum += Yinv[k*g + j] * y[j];
 	}
+	shift[k] = sum;
+    }
 
     for(k = 0; k < g; k++) {
         intshift[k] = round(shift[k]);
@@ -212,54 +212,27 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
 ******************************************************************************/
 void
 deriv_prod(double* dp_real, double* dp_imag,
-	       double* n, double* intshift,
-	       double* deriv_real, double* deriv_imag, int nderivs,
-	       int g)
+           double* n, double* intshift,
+           double* deriv_real, double* deriv_imag, int nderivs,
+           int g)
 {
 
     double nmintshift[g];
     double term_real = 0;
     double term_imag = 0;
-    double total_real = 0;
-    double total_imag = 0;
     int i,j;
 
     // compute n-intshift
     for (i = 0; i < g; i++) {
         nmintshift[i] = n[i] - intshift[i];
-    }	
-                     
-    // compute the product || 2 pi <d, n-mintshift>. We determine
-    // sign and real / imaginary parts later based on number of derivs
-    for(i = 0; i < nderivs; i++) {
-        // compute the real and imaginary parts of the dot product
-        // <d, n-intshift>. The computation simplifies greatly since
-        // n-intshift is always real.
-        for(j = 0; j < g; j++) {
-	        term_real += deriv_real[j] * nmintshift[j];
-	        term_imag += deriv_imag[j] * nmintshift[j];
-	    }
-        total_real *= 2 * M_PI * term_real;
-        total_imag *= 2 * M_PI * term_imag;
     }
-  
-    // check nderivs % 4 to determine sign and swappage.
-    if (nderivs % 4 == 0) {
-        *deriv_real = total_real;
-        *deriv_imag = total_imag;
+    
+    for (i = 0; i < g; i++) {
+      term_real += deriv_real[i] * nmintshift[i];
+      term_imag += deriv_imag[i] * nmintshift[i];
     }
-    else if (nderivs % 4 == 1) {
-        *deriv_real = total_imag;
-        *deriv_imag = total_real;
-    }
-    else if (nderivs % 4 == 2) {
-        *deriv_real = -total_real;
-        *deriv_imag = -total_imag;
-    }
-    else {
-        *deriv_real = -total_imag;
-        *deriv_imag = -total_real;
-    }
+    dp_real[0] = 2*M_PI*term_real;
+    dp_imag[0] = 2*M_PI*term_imag;
 }
 
 
@@ -296,26 +269,30 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
 		            double* deriv_real, double* deriv_imag, 
                             int nderivs, int g, int N)
 {
-     
-    //compute the shifted vectors: shift = Yinv*y and its 
-    //integer and fractional parts 
-    int k,j;
+  /* 
+     compute the shifted vectors: shift = Yinv*y and its 
+     integer and fractional parts 
+    */
 
-    double* shift;
-    double* intshift;
-    double* fracshift;
-    shift  = (double*)malloc(g*sizeof(double));
-    intshift  = (double*)malloc(g*sizeof(double));
+    int k,j;
+    //double shift[g], intshift[g], fracshift[g];
+
+    double *intshift;
+    double *shift;
+    double *fracshift;
+    shift = (double*)malloc(g*sizeof(double));
+    intshift = (double*)malloc(g*sizeof(double));
     fracshift = (double*)malloc(g*sizeof(double));
+
     // shift = Yinv*y;
-    // intshift = round(shift)   // SHOULD THIS BE FLOOR INSTEAD?
+    // intshift = round(shift)
     // fracshift = shift - intshift
     double sum;
     for (k = 0; k < g; k++) {
         sum = 0;
        	for (j = 0; j < g; j++) {
-            sum += Yinv[k*g + j] *  y[j];
-        }
+	    sum += Yinv[k*g + j] * y[j];
+	}
 	shift[k] = sum;
     }
 
@@ -326,24 +303,26 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
 
     //compute the finite sum
     double real_total = 0, imag_total = 0;
-    double ept, npt, cpt, spt, dpr, dpi;
-    double* n;
-    for(k = 0; k < N; k++) {
+    double ept, npt, cpt, spt;
+    double dpr[0];
+    double dpi[0];
+    dpr[0] = 0;
+    dpi[0] = 0;
+    double *n;
+    for(k=0; k < N; k++) {
         // the current point in S \subset ZZ^g
-        n = S+k*g;
+        n = S + k*g;
 
         // compute the "cosine" and "sine" parts of the summand
         ept = exppart(n, X, x, intshift, g);
         npt = exp(normpart(n, T, fracshift, g));
         cpt = npt * cos(ept);
         spt = npt * sin(ept);
-
-        deriv_prod(&dpr, &dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
-	printf("%g %g\n", dpr, dpi);
-        real_total += dpr*cpt - dpi*spt;
-        imag_total += dpi*cpt + dpr*spt;
+	deriv_prod(dpr,dpi, n, intshift, deriv_real, deriv_imag,nderivs, g);
+        real_total += dpr[0] * cpt - dpi[0] * spt;
+        imag_total += dpi[0] * cpt + dpr[0] * spt;
     }
-
+ 
     //store values to poiners
     *fsum_real = real_total;
     *fsum_imag = imag_total;
@@ -351,7 +330,8 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     //free any allocated vectors
     free(shift);
     free(intshift);
-    free(fracshift);
+    free(fracshift);     
+
 }
 
 /******************************************************************************
