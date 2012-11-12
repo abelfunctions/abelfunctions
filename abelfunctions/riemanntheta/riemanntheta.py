@@ -100,7 +100,7 @@ import scipy.linalg as la
 import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
-from riemanntheta_misc import finite_sum_opencl
+from riemanntheta_misc import *
 
 
 class RiemannTheta_Function:
@@ -489,6 +489,8 @@ class RiemannTheta_Function:
         if gpu:
             from riemanntheta_misc import finite_sum_opencl
             v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
+        elif (len(deriv) > 0):
+            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g)
         else:
             v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
         u = pi*np.dot(y.T,Yinv * y).item(0,0)
@@ -516,7 +518,7 @@ class RiemannTheta_Function:
 RiemannTheta = RiemannTheta_Function()
         
 
-if __name__=="__main__":
+if __name__=="__main__": 
     print "=== Riemann Theta ==="
     theta = RiemannTheta
     z = np.array([0,0])
@@ -532,9 +534,33 @@ if __name__=="__main__":
     u,v = theta.exp_and_osc_at_point(z,Omega,gpu=False)
     print theta.value_at_point(z,Omega,gpu=False)
     print "-438.94 + 0.00056160*I"
-    print u
-    print v
-            
+    
+    print
+    print "Derivative Tests:"
+    print "Calculating directional derivatives at z = [i, 0]"
+    print
+    y = np.array([1.0j, 0])
+    print "For [[1,0]]:"
+    print theta.value_at_point(y, Omega, deriv = [[1,0]], gpu = False)
+    print "0 - 146.49i"
+    print
+    print "For [[1,0] , [1,0]]: "
+    print theta.value_at_point(y, Omega, deriv = [[1,0], [0,1]], gpu = False)
+    print "0 + 0i" 
+    print
+    print "For [[0,1], [1,0]]: "
+    print theta.value_at_point(y, Omega, deriv = [[0,1], [1,0]], gpu = False)
+    print "0 + 0i"
+    print
+    print "For [[1,0],[1,0],[1,1]]:"
+    print theta.value_at_point(y, Omega, deriv = [[1,0], [1,0], [1,1]], gpu = False)
+    print "0 + 7400.39i" 
+    print
+    print "For [[1,1],[1,1],[1,1],[1,1]]: "
+    print theta.value_at_point(y, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], gpu = False)
+    print "41743.92 + 0i" 
+    print
+   
     print "Test #3"
     import pylab as p
     from mpl_toolkits.mplot3d import Axes3D
