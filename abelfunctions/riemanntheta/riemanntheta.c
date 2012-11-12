@@ -219,6 +219,8 @@ deriv_prod(double* dpr, double* dpi,
 
     double nmintshift[g];
     double term_real, term_imag;
+
+    //Note that total_real + total_imag*i = 1 + 0i = 1
     double total_real = 1;
     double total_imag = 0;
     int i,j;
@@ -227,6 +229,9 @@ deriv_prod(double* dpr, double* dpi,
     for (i = 0; i < g; i++) {
         nmintshift[i] = n[i] - intshift[i];
     }
+    
+    /*Computes the dot product of each directional derivative and nmintshift
+      Then it computes the product of the resulting complex scalars*/
     for (i = 0; i < nderivs; i++) {
         term_real = 0;
         term_imag = 0;
@@ -234,11 +239,18 @@ deriv_prod(double* dpr, double* dpi,
             term_real += deriv_real[j + g*i] * nmintshift[j];
             term_imag += deriv_imag[j + g*i] * nmintshift[j];
         }
+
+	/*Multiplies the dot product that was just computed with the product of
+	all the previous terms. Total_real is the resulting real part of the 
+	sum, and total_imag is the resulting imaginary part.*/
         total_real  = total_real * term_real - total_imag * term_imag;
 	total_imag  = total_real * term_imag + total_imag * term_real;  
     }
     
+    //Computes: (2*pi*i)^(nderivs) * (total_real + total_imag*i)
     double pi_mult = pow(2*M_PI, nderivs);
+    /*Determines what the result of i^nderivs is, and performs the 
+      correct multiplication afterwards.*/
     if (nderivs % 4 == 0) {
         dpr[0] = pi_mult*total_real;
         dpi[0] = pi_mult*total_imag;
