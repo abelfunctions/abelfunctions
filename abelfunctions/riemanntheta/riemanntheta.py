@@ -531,9 +531,9 @@ if __name__=="__main__":
     #print 
     print "Calculating derivatives:"
     print "For [1,0]: "
-    print theta.value_at_point(y, Omega, deriv = [[1,0]], gpu = False)
+    print theta.value_at_point(y, Omega, deriv = [[1,1], [1,1]], gpu = False)
     print "For [0,1]:"
-    print theta.value_at_point(y, Omega, deriv = [[0,1]], gpu = False)
+    print theta.value_at_point(y, Omega, deriv = [[0,1], [1,1]], gpu = False)
     print
 '''
     print "Test #2:"
