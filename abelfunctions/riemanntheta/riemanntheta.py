@@ -525,25 +525,42 @@ if __name__=="__main__":
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    y = [1.0j, 0]
-    print theta.value_at_point(y,Omega,gpu=False)
-    #print "1.1654 - 1.9522e-15*I"
-    #print 
-    print "Calculating derivatives:"
-    print "For [1,0]: "
-    print theta.value_at_point(y, Omega, deriv = [[1,1], [1,1]], gpu = False)
-    print "For [0,1]:"
-    print theta.value_at_point(y, Omega, deriv = [[0,1], [1,1]], gpu = False)
-    print
-'''
+    print theta.value_at_point(z,Omega,gpu=False)
+    print "1.1654 - 1.9522e-15*I"
+    print 
+
     print "Test #2:"
     z = np.array([1.0j,1.0j])
     u,v = theta.exp_and_osc_at_point(z,Omega,gpu=False)
     print theta.value_at_point(z,Omega,gpu=False)
     print "-438.94 + 0.00056160*I"
-    print u
-    print v
-            
+    
+    print
+    print "Derivative Tests:"
+    print "Calculating directional derivatives at z = [i, 0]"
+    print
+    y = np.array([1.0j, 0])
+    print "For [[1,0]]:"
+    print theta.value_at_point(y, Omega, deriv = [[1,0]], gpu = False)
+    print "0 - 146.49i"
+    print
+    print "For [[1,0] , [1,0]]: "
+    print theta.value_at_point(y, Omega, deriv = [[1,0], [0,1]], gpu = False)
+    print "0 + 0i" 
+    print
+    print "For [[0,1], [1,0]]: "
+    print theta.value_at_point(y, Omega, deriv = [[0,1], [1,0]], gpu = False)
+    print "0 + 0i"
+    print
+    print "For [[1,0],[1,0],[1,1]]:"
+    print theta.value_at_point(y, Omega, deriv = [[1,0], [1,0], [1,1]], gpu = False)
+    print "0 + 7400.39i" 
+    print
+    print "For [[1,1],[1,1],[1,1],[1,1]]: "
+    print theta.value_at_point(y, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], gpu = False)
+    print "41743.92 + 0i" 
+    print
+   
     print "Test #3"
     import pylab as p
     from mpl_toolkits.mplot3d import Axes3D
@@ -562,7 +579,7 @@ if __name__=="__main__":
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
-''' 
+ 
 
 
                        
