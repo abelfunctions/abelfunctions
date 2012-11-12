@@ -9,8 +9,8 @@ np.import_array()
 
 cdef extern from 'riemanntheta.h':
         void finite_sum_without_derivatives(double *, double *, double *,
-					                        double *, double *, double *,
-					                        double *, double *, int, int)
+					    double *, double *, double *,
+					    double *, double *, int, int)
 
         void finite_sum_with_derivatives(double*, double*, double*, double*, 
                                          double*, double*, double*, double*,
@@ -40,18 +40,18 @@ def finite_sum(X, Yinv, T, x, y, S, g):
     return real[0] + imag[0]*1.0j
 
 @cython.boundscheck(False) #Turns off bounds checking
-def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv_real, 
-                                deriv_imag, nderivs, g):
+def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
     N = len(S)/g
+    nderivs = len(deriv)
     cdef double real[0]
     cdef double imag[0]
+    deriv_real = np.ascontiguousarray(deriv.real, dtype = 'double')
+    deriv_imag = np.ascontiguousarray(deriv.imag, dtype = 'double')
     X = np.ascontiguousarray(X, dtype = 'double')
     Yinv = np.ascontiguousarray(Yinv, dtype = 'double')
     x = np.ascontiguousarray(x, dtype = 'double')
     y = np.ascontiguousarray(y, dtype = 'double')
     S = np.ascontiguousarray(S, dtype = 'double')
-    deriv_real = np.ascontiguousarray(deriv_real, dtype = 'double')
-    deriv_imag = np.ascontiguousarray(deriv_imag, dtype = 'double')
     finite_sum_with_derivatives(real, imag,
                                 <double*> np.PyArray_DATA(X),
                                 <double*> np.PyArray_DATA(Yinv),
