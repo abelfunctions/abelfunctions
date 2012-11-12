@@ -211,29 +211,50 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
   for a given n in ZZ^g.
 ******************************************************************************/
 void
-deriv_prod(double* dp_real, double* dp_imag,
+deriv_prod(double* dpr, double* dpi,
            double* n, double* intshift,
            double* deriv_real, double* deriv_imag, int nderivs,
            int g)
 {
 
     double nmintshift[g];
-    double term_real = 0;
-    double term_imag = 0;
+    double term_real, term_imag;
+    double total_real = 1;
+    double total_imag = 0;
     int i,j;
 
     // compute n-intshift
     for (i = 0; i < g; i++) {
         nmintshift[i] = n[i] - intshift[i];
     }
-    
-    for (i = 0; i < g; i++) {
-      term_real += deriv_real[i] * nmintshift[i];
-      term_imag += deriv_imag[i] * nmintshift[i];
+    for (i = 0; i < nderivs; i++) {
+        term_real = 0;
+        term_imag = 0;
+        for (j = 0; j < g; j++) {
+            term_real += deriv_real[j + g*i] * nmintshift[j];
+            term_imag += deriv_imag[j + g*i] * nmintshift[j];
+        }
+        total_real  = total_real * term_real - total_imag * term_imag;
+	total_imag  = total_real * term_imag + total_imag * term_real;  
     }
-    dp_imag[0] = 2*M_PI*term_real;
-    dp_real[0] = -2*M_PI*term_imag;
-    printf("%g \n %g \n\n", dp_imag[0], dp_real[0]);
+    
+    double pi_mult = pow(2*M_PI, nderivs);
+    if (nderivs % 4 == 0) {
+        dpr[0] = pi_mult*total_real;
+        dpi[0] = pi_mult*total_imag;
+    }
+    else if (nderivs % 4 == 1) {
+        dpr[0] = -pi_mult * total_imag;
+        dpi[0] = pi_mult * total_real;
+    }
+    else if (nderivs % 4 == 2) {
+        dpr[0] = -pi_mult * total_real;
+	dpi[0] = -pi_mult * total_imag;
+    }
+    else if (nderivs % 4 == 3) {
+        dpr[0] = pi_mult * total_imag;
+        dpi[0] = -pi_mult * total_real;
+    }
 }
 
 
