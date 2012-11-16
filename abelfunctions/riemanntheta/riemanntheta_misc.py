@@ -159,11 +159,10 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
     exppart  = lambda a: 2 * pi * np.dot((a-intshift).T, 0.5*X*(a-intshift)+x)
     normpart = lambda a: -pi*la.norm(T*(a+fracshift))**2
 
-    if deriv:
+    if (len(deriv) > 0):
         # for ease of computation, we perform derivative product
         # computation in a complex ring
-        dd = [2*pi*I*np.dot(d,a-intshift) for d in deriv]
-        derivprod = lambda a: np.prod(dd)
+        derivprod = lambda a: np.prod([2*pi*I*np.dot(d,a-intshift) for d in deriv])
         
 #    pdb.set_trace()       
 
@@ -176,11 +175,15 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
         npt   = np.exp(normpart(n))
         cpart = npt * np.cos(ept)
         spart = npt * np.sin(ept)
+        print(cpart)
+        print(spart)
+        print()
             
-        if deriv:
+        if (len(deriv) > 0):
             dp         = derivprod(n)
             dpr        = dp.real
             dpi        = dp.imag
+            print(str(dpr) +" "+ str(dpi))
             fsum_real += dpr*cpart - dpi*spart
             fsum_imag += dpi*cpart + dpr*spart
         else:
