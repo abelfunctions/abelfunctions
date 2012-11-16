@@ -23,16 +23,18 @@ p. 353-363
 import sympy
 
 from puiseux import puiseux
+from utilities import cached_function
 
 
-def valuation(p,x):
+def valuation(p,x,alpha):
     """
     Given a collection of Puiseux series, return the valuations. That
     is, the exponents of the leading order term.
     """
+    p = p.subs(x,x+alpha)
     return p.expand(mult=True,force=True).leadterm(x)[1]
 
-def Int(i,p,x):
+def Int(i,p,x,alpha):
     """
     The function .. math:
 
@@ -45,7 +47,7 @@ def Int(i,p,x):
     val = 0
     for k in xrange(n):
         if k != i:
-            val += valuation(pi-p[k],x)
+            val += valuation(pi-p[k],x,alpha)
 
     return val
 
@@ -68,10 +70,10 @@ def compute_expansion_bounds(p,x):
     n = len(p)
     N = []
 
-    max_Int = max([Int(k,p,x) for k in xrange(n)])
+    max_Int = max([Int(k,p,x,alpha) for k in xrange(n)])
     for i in xrange(n):
         pairwise_diffs = [valuation(p[k]-p[i],x) for i in xrange(n) if k!=i]
-        N.append(max(pairwise_diffs) + max_Int - Int(i,p,x) + 2)
+        N.append(max(pairwise_diffs) + max_Int - Int(i,p,x,alpha) + 2)
 
     return N
 
@@ -104,6 +106,7 @@ def compute_series_truncations(f,x,y,a,T):
     return list(set(r))
 
 
+@cached_function
 def integral_basis(f,x,y):
     """
     Compute the integral basis {b1, ..., bg} of the algebraic function

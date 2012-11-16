@@ -12,17 +12,19 @@ Authors
 - Chris Swierczewski (initial version, October 2012)
 
 """
-import pdb
-
 import sympy
 
 from puiseux import puiseux
 from integralbasis import Int
+from utilities import cached_function
 
 # temporary, hidden symbol to maintain clean Sympy cache
 _t = sympy.Symbol('t')
 _z = sympy.Symbol('z')
+_Z = sympy.Dummy('Z')
 
+
+@cached_function
 def homogenize(f,x,y,z):
     """
     Returns the polynomial in homogenous coordinates.
@@ -45,7 +47,7 @@ def _singular_points_finite(f,x,y):
     res = sympy.Poly(sympy.resultant(p,p.diff(y),y),x)
     for xk,deg in res.all_roots(multiple=False,radicals=False):
         if deg > 1:
-            fxk = sympy.Poly(f.subs({x:xk}), y)
+            fxk = sympy.Poly(f.subs({x:xk,y:_Z}), _Z)
             for ykj,_ in fxk.all_roots(multiple=False,radicals=False):
                 fx = f.diff(x)
                 fy = f.diff(y)
@@ -68,8 +70,8 @@ def _singular_points_infinite(f,x,y):
     # find singular points at infinity
     F0 = sympy.Poly(F.subs([(_z,0)]),[x,y])
     domain = sympy.QQ[sympy.I]
-    solsX1 = F0.subs({x:1}).all_roots(multiple=False,radicals=False)
-    solsY1 = F0.subs({y:1}).all_roots(multiple=False,radicals=False)
+    solsX1 = F0.subs({x:1,y:_Z}).all_roots(multiple=False,radicals=False)
+    solsY1 = F0.subs({y:1,x:_Z}).all_roots(multiple=False,radicals=False)
 
     sols   = [ (1,yi,0) for yi,_ in solsX1 ]
     sols.extend( [ (xi,1,0) for xi,_ in solsY1 ] )
@@ -82,6 +84,7 @@ def _singular_points_infinite(f,x,y):
     return S
 
 
+@cached_function
 def singular_points(f,x,y):
     """
     Returns the points in P^2_C at which f = f(x,y) is singular.
@@ -93,104 +96,138 @@ def singular_points(f,x,y):
     S_oo = _singular_points_infinite(f,x,y)
     S.extend(S_oo)
 
-    # obtain the multiplicity, delta invariant, and branching number
-    info = _compute_singularity_info(f,x,y,S)
+    info = []
+    for singular_pt in S:
+        m     = _multiplicity(f,x,y,singular_pt)
+        delta = _delta_invariant(f,x,y,singular_pt)
+        r     = _branching_number(f,x,y,singular_pt)
+
+        info.append((m,delta,r))
 
     return zip(S,info)
 
 
-
-def _compute_singularity_info_finte(f,x,y,singular_pt):
+def _transform(f,x,y,singular_pt):
     """
-    Returns the singularity info in the finite case
-    """
-    return 0
+    If the singular point [alpha : beta : gamma] is on the 
+    line at infinity (i.e. gamma = 0) then make the appropriate
+    transformation to the curve f(x,y) = 0 so we can compute Puiseux
+    series at the point.
 
+    Returns (g,u,v,u0,v0) where g = g(u,v) is the transformed
+    polynomial and u0,v0 is the projection of [alpha : beta : gamma]
+    on the appropriate affine plane.
 
-def _compute_singularity_info_infinite(f,x,y,singular_pt):
-    """    
-    Returns the singularity info in the finite case
-    """
-    return 0
-
-
-def _compute_singularity_info(f,x,y,singular_pts):
-    """
-    For each singularity [alpha, beta, gamma], compute the
-    information [m, delta, r] where
-
-    * m = multiplicity
-    * delta = delta invariant
-    * r = branching number.
-    """
-    info = []
+    For example, let F(x,y,z) = 0 be the homogenized polynomial.
+    If beta != 0 then the transformation is
     
-    def puiseux_filter(P,beta):
-        if P[1].subs({_t:0}) == beta:
-            return True
-        return False
-    
-    F,_ = homogenize(f,x,y,_z)
-    for alpha, beta, gamma in singular_pts:
-        # compute the Puiseux series at the projective point [alpha,
-        # beta, gamma]. If on the line at infinity, make the
-        # appropriate variable transformation.
-        if gamma:
-            # finite case
-            P = puiseux(f,x,y,alpha,nterms=1,parametric=_t)
-            P_beta = filter(lambda p: puiseux_filter(p,beta), P)
-            
-            # build non-parametric versions, too
-            P_beta_x = []
-            for X,Y in P_beta:
-                solns = sympy.solve(x-X,_t)
-                for TT in solns:
-                    P_beta_x.append(Y.subs(_t,TT))
+        g(u,v) = F(u,beta,v), u0=alpha, v0=gamma.
 
+    """
+    alpha, beta, gamma = singular_pt
+    F, d = homogenize(f,x,y,_z)
+
+    if gamma == 1:
+        return f,x,y,alpha,beta
+    else:
+        if alpha == 0:
+            g = F.subs(y,beta)
+            return g,x,_z,alpha,gamma
         else:
-            # infinite case: z=0. Make the appropriate transformation. 
-            # puiseux(...) seems to be faster when expanding about zero
-            # than anything else so we first check if any of the other 
-            # coordinates are zero.
-#            pdb.set_trace()
-            
-            if beta: 
-                var = x; var0 = alpha
-                g = F.subs(y,beta)
-            else:
-                var = y; var0 = beta
-                g = F.subs(x,alpha)
-            
-            alpha = var0
-            beta  = 0
-            P = puiseux(g,var,_z,alpha,nterms=1,parametric=_t)
-            P_beta = filter(lambda p: puiseux_filter(p,beta), P)
-            
+            g = F.subs(x,alpha)
+            return g,y,_z,beta,gamma
 
-        # multiplicity
-        m = 0
-        for X,Y in P_beta:
-            X = X - alpha
-            Y = Y - beta
-            ri = abs( X.leadterm(_t)[1] )
-            si = abs( Y.leadterm(_t)[1] )
-            m += min(ri,si)
 
-        # branching number
-        r = len(P_beta)
+@cached_function
+def _multiplicity(f,x,y,singular_pt):
+    """
+    Returns the multiplicity of the place (alpha : beta : 1) from the
+    Puiseux series P at the place.
+
+    For each (parametric) Puiseux series
         
-        # delta invariant
-        delta = 0
-        for j in range(len(P_beta_x)):
-            rj     = r
-            IntPj  = Int(j,P_beta_x,x)
-            delta += sympy.Rational(rj * IntPj - rj + 1, 2)
+        Pj = { x = x(t)
+             { y = y(t) 
+    
+    at (alpha : beta : 1) the contribution from Pj to the multiplicity
+    is min( deg x(t), deg y(t) ).
+    """
+    # compute the Puiseux series at the projective point [alpha,
+    # beta, gamma]. If on the line at infinity, make the
+    # appropriate variable transformation.
+    g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
 
-        info.append( (m,delta,r) )
+    # compute Puiseux expansions at u=u0 and filter out
+    # only those with v(t=0) == v0
+    P = puiseux(g,u,v,u0,nterms=1,parametric=_t)
 
-    return info
+    m = 0
+    for X,Y in P:
+        X = X - u0                      # Shift so no constant
+        Y = Y - v0                      # term remains.
+        ri = abs( X.leadterm(_t)[1] )   # Get order of lead term
+        si = abs( Y.leadterm(_t)[1] )
+        m += min(ri,si)
 
-                
+    return m
+
+@cached_function
+def _branching_number(f,x,y,singular_pt):
+    """
+    Returns the branching number of the place [alpha : beta : 1]
+    from the Puiseux series P at the place.
+        
+    The braching number is simply the number of distinct branches
+    (i.e. non-interacting branches) at the place. In parametric form,
+    this is simply the number of Puiseux series at the place.
+    """
+    # compute the Puiseux series at the projective point [alpha,
+    # beta, gamma]. If on the line at infinity, make the
+    # appropriate variable transformation.
+    g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
+
+    # compute Puiseux expansions at u=u0 and filter out
+    # only those with v(t=0) == v0
+    P = puiseux(g,u,v,u0,nterms=1,parametric=_t)
+    P_v0 = [(X,Y) for X,Y in P if Y.subs(_t,0) == v0]
+
+    return len(P_v0)
+
+@cached_function
+def _delta_invariant(f,x,y,singular_pt):
+    """
+    Returns the delta invariant corresponding to the singular point
+    `singular_pt` = [alpha, beta, gamma] on the plane algebraic curve
+    f(x,y) = 0.
+    """
+
+    # compute the Puiseux series at the projective point [alpha,
+    # beta, gamma]. If on the line at infinity, make the
+    # appropriate variable transformation.
+    g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
+
+    # compute Puiseux expansions at u=u0 and filter out
+    # only those with v(t=0) == v0
+    P = puiseux(g,u,v,u0,nterms=1,parametric=_t)
+    P_v0 = [(X,Y) for X,Y in P if Y.subs(_t,0) == v0]
+    P_v0_x = []
+    for X,Y in P_v0:
+        solns = sympy.solve(u-X,_t)
+        P_v0_x.append(Y.subs(_t,solns[0]))
+    P_x = puiseux(g,u,v,u0,nterms=1,parametric=False)
+
+    # for each place compute its contribution to the delta invariant
+    delta = sympy.Rational(0,1)
+    for i in range(len(P_v0_x)):
+        yhat  = P_v0_x[i]
+        j     = P_x.index(yhat)
+        IntPj = Int(j,P_x,u,u0)
+        rj    = (P[i][0]-u0).leadterm(_t)[1]
+        delta += sympy.Rational(rj * IntPj - rj + 1, 2)
+
+    return delta
+    
+            
 
    
 if __name__ == '__main__':
@@ -204,7 +241,7 @@ if __name__ == '__main__':
     f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
     f6 = y**4 - y**2*x + x**2
     f7 = y**3 - (x**3 + y)**2 + 1
-    f8 = x**2*y**6 + 2*x**3*y**5 - 1
+    f8 = x**6*y**3 + 2*x**3*y - 1
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
@@ -217,7 +254,6 @@ if __name__ == '__main__':
         sympy.pprint(f)
         print '\nall singular points:'
         singular_pts = singular_points(f,x,y)
-#        sympy.pprint(singular_pts)
         for singular_pt in singular_pts:
             print "Point:"
             sympy.pprint(singular_pt[0])
