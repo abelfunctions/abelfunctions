@@ -10,12 +10,11 @@ import sympy
 
 from operator import itemgetter
 from sympy.core.numbers import Zero
-
-import pdb
+from utilities import cached_function
 
 # we use global symbols for Sympy caching performance
-_Z = sympy.Symbol('Z')
-_U = sympy.Symbol('U')
+_Z = sympy.Dummy('Z')
+_U = sympy.Dummy('U')
 
 
 
@@ -515,7 +514,7 @@ def build_series(pis,x,y,T,a,parametric):
     return series
 
 
-
+@cached_function
 def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo, 
             parametric=None, version='rational'):
     """
