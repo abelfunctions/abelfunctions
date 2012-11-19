@@ -14,11 +14,16 @@ custom directory <dir>, use
     python setup.py --prefix=<dir>
 """
 
-from distutils.core import setup, Command
+__version__ = '0.3'
+
+from distutils.core      import setup, Command
+from distutils.extension import Extension
+from Cython.Distutils    import build_ext
+
 import unittest
 import os
 import os.path
-import abelfunctions
+import numpy as np
 
 
 class clean(Command):
@@ -93,15 +98,18 @@ class test_abelfunctions(Command):
 
 
 packages = [
-#    'abelfunctions.puiseux',
-#    'abelfunctions.monodromy',
-#    'abelfunctions.homology',
-#    'abelfunctions.riemannsurface',
     'abelfunctions.riemanntheta',
-#    'abelfunctions.riemanntheta.riemanntheta',
     'abelfunctions.utilities',
-#    'abelfunctions.utilities.qflll',
     ]
+
+ext_modules = [
+    Extension('abelfunctions.riemanntheta.RIEMANN',
+              sources = ["abelfunctions/riemanntheta/Cython-Riemann.pyx",
+                         "abelfunctions/riemanntheta/riemanntheta.c"],
+              include_dirs = [np.get_include()]
+              )
+    ]
+    
 
 tests = [
     'abelfunctions.tests',
@@ -128,7 +136,7 @@ Department of Applied Mathematics at the University of Washington.'''
 
 setup(
     name = 'abelfunctions',
-    version = abelfunctions.__version__,
+    version = __version__,
     description = 'Python library for computing with Abelian functions',
     long_description = long_description,
     author = 'Chris Swierczewski',
@@ -138,9 +146,10 @@ setup(
     packages = ['abelfunctions'] + packages + tests,
     package_data = {'abelfunctions.riemanntheta':
                    ['finite_sum_opencl.cl']},
-    ext_modules = [],
+    ext_modules = ext_modules,
     cmdclass = {'test': test_abelfunctions,
                 'clean': clean,
+                'build_ext': build_ext
                 },
     platforms = ['Linux', 'Unix', 'Mac OS-X'],
     classifiers = classifiers,
