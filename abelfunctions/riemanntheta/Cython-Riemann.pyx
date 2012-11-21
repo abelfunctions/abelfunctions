@@ -26,6 +26,7 @@ def finite_sum(X, Yinv, T, x, y, S, g):
     cdef double imag[0]
     X = np.ascontiguousarray(X, dtype = 'double')
     Yinv = np.ascontiguousarray(Yinv, dtype = 'double')
+    T = np.ascontiguousarray(T, dtype = 'double')
     x = np.ascontiguousarray(x, dtype = 'double')
     y = np.ascontiguousarray(y, dtype = 'double')
     S = np.ascontiguousarray(S, dtype = 'double')
@@ -49,6 +50,7 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
     deriv_imag = np.ascontiguousarray(deriv.imag, dtype = 'double')
     X = np.ascontiguousarray(X, dtype = 'double')
     Yinv = np.ascontiguousarray(Yinv, dtype = 'double')
+    T = np.ascontiguousarray(T, dtype = 'double')
     x = np.ascontiguousarray(x, dtype = 'double')
     y = np.ascontiguousarray(y, dtype = 'double')
     S = np.ascontiguousarray(S, dtype = 'double')
