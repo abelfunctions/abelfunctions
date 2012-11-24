@@ -6,6 +6,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 np.import_array()
+import scipy.linalg as la
 
 cdef extern from 'riemanntheta.h':
         void finite_sum_without_derivatives(double *, double *, double *,
@@ -66,4 +67,40 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
                                 nderivs, g, N)
     return real[0] + imag[0]*1.0j
   
+def find_int_points(g, c, R, T):
+    Tinv = la.inv(T)
+    points = []
+    stack = []
+    stack.append([[], g, c, R])
+    FINISHED = False
+    while (not FINISHED):
+        N = stack.pop()
+        start = N[0]
+        g = N[1]
+        c = N[2]
+        R = N[3]
+        a = int( np.ceil((c[g] - R/T[g,g]).real) )
+        b = int( np.floor((c[g] + R/T[g,g]).real) )
+        #Check if reached the edge of the ellipsoid
+        if not a < b: continue
+        #Last dimension reached, append points
+        if g == 0:
+            for x in range(a, b+1):
+                s = start[:]
+                s.append(x)
+                s.reverse()
+                points.extend(s)
+        else:
+            for x in range(a, b+1):
+                chat = c[g]
+                that = T[:g,g]
+                newc = chat - Tinv[:g, :g] * that * (x - c[g])
+                newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
+                newStart = start[:]
+                newStart.append(x)
+                stack.append([newStart, g - 1, newc, newR[0]])
+        if (len(stack) == 0):
+            FINISHED = True
+    return points
+
                  
