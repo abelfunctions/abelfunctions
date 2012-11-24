@@ -481,8 +481,6 @@ class RiemannTheta_Function:
                 start = time.clock()
                 self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                       g, self._rad)
-                for i in self._intpoints:
-                    print i
                 print (time.clock() - start)
             R = self._rad
             S = self._intpoints
