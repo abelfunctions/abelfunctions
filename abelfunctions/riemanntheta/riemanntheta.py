@@ -101,13 +101,8 @@ import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import *
-<<<<<<< Updated upstream
 from int_points import *
 import time
-=======
-import time
-
->>>>>>> Stashed changes
 
 class RiemannTheta_Function:
     r"""
@@ -420,6 +415,7 @@ class RiemannTheta_Function:
         if self.uniform:
             # check if we've already computed the uniform radius and intpoints
             if self._rad is None:
+                
                 self._rad = self.radius(T, prec, deriv=deriv)
             if self._intpoints is None:
                 origin          = [0]*g
