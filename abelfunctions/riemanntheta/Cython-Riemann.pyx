@@ -1,6 +1,6 @@
 #Grady Williams (gradyrw@uw.edu) - October 2012
 
-#This Cython program provides a wrapper for C-functions which compute the finitesum of the Riemann Theta finite sum approximation
+#This Cython program provides a wrapper for C-functions which compute the finite-sum of the Riemann Theta approximation
 
 cimport cython
 import numpy as np
@@ -65,5 +65,5 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
                                 <double*> np.PyArray_DATA(deriv_imag),
                                 nderivs, g, N)
     return real[0] + imag[0]*1.0j
-  
+
                  
