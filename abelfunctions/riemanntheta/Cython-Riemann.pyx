@@ -1,6 +1,6 @@
 #Grady Williams (gradyrw@uw.edu) - October 2012
 
-#This Cython program provides a wrapper for C-functions which compute the finitesum of the Riemann Theta finite sum approximation
+#This Cython program provides a wrapper for C-functions which compute the finite-sum of the Riemann Theta approximation
 
 cimport cython
 import numpy as np
@@ -10,8 +10,8 @@ import scipy.linalg as la
 
 cdef extern from 'riemanntheta.h':
         void finite_sum_without_derivatives(double *, double *, double *,
-					    double *, double *, double *,
-					    double *, double *, int, int)
+                                            double *, double *, double *,
+                                            double *, double *, int, int)
 
         void finite_sum_with_derivatives(double*, double*, double*, double*, 
                                          double*, double*, double*, double*,
@@ -66,8 +66,12 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
                                 <double*> np.PyArray_DATA(deriv_imag),
                                 nderivs, g, N)
     return real[0] + imag[0]*1.0j
-  
+
+
 def find_int_points(g, c, R, T):
+    cdef int x
+    cdef int a
+    cdef int b
     Tinv = la.inv(T)
     points = []
     stack = []
@@ -84,23 +88,77 @@ def find_int_points(g, c, R, T):
         #Check if reached the edge of the ellipsoid
         if not a < b: continue
         #Last dimension reached, append points
-        if g == 0:
-            for x in range(a, b+1):
-                s = start[:]
-                s.append(x)
-                s.reverse()
-                points.extend(s)
+        if (a >= 0):
+            if g == 0:
+                for x in range(b - a + 1):
+                     x = x+a
+                     s = start[:]
+                     s.append(x)
+                     s.reverse()
+                     points.extend(s)
+            else:
+                for x in range(b - a + 1):
+                    x = x + a
+                    chat = c[:g]
+                    that = T[:g,g]
+                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
+                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
+                    newStart = start[:]
+                    newStart.append(x)
+                    stack.append([newStart, g - 1, newc, newR[0]])
+        elif (b <= 0):
+            if g == 0:
+                for x in range(-a + b+1):
+                    x = -(x - b)
+                    s = start[:]
+                    s.append(x)
+                    s.reverse()
+                    points.extend(s)
+            else:
+                for x in range(-a + b + 1):
+                    x = -(x - b)
+                    chat = c[:g]
+                    that = T[:g,g]
+                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
+                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
+                    newStart = start[:]
+                    newStart.append(x)
+                    stack.append([newStart, g - 1, newc, newR[0]])
         else:
-            for x in range(a, b+1):
-                chat = c[g]
-                that = T[:g,g]
-                newc = chat - Tinv[:g, :g] * that * (x - c[g])
-                newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
-                newStart = start[:]
-                newStart.append(x)
-                stack.append([newStart, g - 1, newc, newR[0]])
+            if g == 0:
+                for x in range(b):
+                    x = x+1
+                    s = start[:]
+                    s.append(x)
+                    s.reverse()
+                    points.extend(s)
+                for x in range(-a+1):
+                    x = -x
+                    s = start[:]
+                    s.append(x)
+                    s.reverse()
+                    points.extend(s)
+            else:
+                for x in range(b):
+                    x = x+1
+                    chat = c[:g]
+                    that = T[:g,g]
+                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
+                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
+                    newStart = start[:]
+                    newStart.append(x)
+                    stack.append([newStart, g - 1, newc, newR[0]])
+                for x in range(-a+1):
+                    x = -x
+                    chat = c[:g]
+                    that = T[:g,g]
+                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
+                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
+                    newStart = start[:]
+                    newStart.append(x)
+                    stack.append([newStart, g - 1, newc, newR[0]])
+            
         if (len(stack) == 0):
             FINISHED = True
     return points
-
                  
