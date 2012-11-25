@@ -101,8 +101,13 @@ import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import *
+<<<<<<< HEAD
 import time
 
+=======
+from int_points import *
+import time
+>>>>>>> integers
 
 class RiemannTheta_Function:
     r"""
@@ -198,7 +203,7 @@ class RiemannTheta_Function:
 
 
     def integer_points(self, Yinv, T, Tinv, z, g, R):
-        r"""
+        """
         The set, `U_R`, of the integral points needed to compute Riemann 
         theta at the complex point $z$ to the numerical precision given
         by the Riemann matirix base field precision.
@@ -246,7 +251,7 @@ class RiemannTheta_Function:
          
         - ``R`` -- the first ellipsoid semi-axis length as computed by ``self.radius()``
         """
-        g    = Yinv.shape[0]
+       # g    = Yinv.shape[0]
         pi   = np.pi
         z    = np.array(z).reshape((g,1))
         x    = z.real
@@ -261,68 +266,8 @@ class RiemannTheta_Function:
             c     = Yinv * y
             intc  = c.round()
             leftc = c - intc
+        return RIEMANN.find_int_points(g-1,leftc,R,T)
 
-
-        def find_integer_points(g, c, R, start):
-            r"""
-            Recursion function for computing the integer points needed in 
-            each coordinate direction.
-
-            INPUT:
-            
-            - ``g`` -- the genus. recursively used to determine integer 
-              points along each axis.
-
-            - ``c`` -- center of integer point computation. `0 \in \CC^g` 
-              is used when using the uniform approximation.
-
-            - ``R`` -- the radius of the ellipsoid along the current axis.
-
-            - ``start`` -- the starting integer point for each recursion 
-              along each axis.
-
-            OUTPUT:
-
-            - ``intpoints`` -- (list) a list of all of the integer points 
-              inside the bounding ellipsoid along a single axis
-
-            ... todo::
-
-                Recursion can be memory intensive in Python. For genus `g<30`
-                this is a reasonable computation but can be sped up by 
-                writing a loop instead.
-            """
-            a = int( np.ceil((c[g] - R/T[g,g]).real)  )
-            b = int( np.floor((c[g] + R/T[g,g]).real) )
-
-            # check if we reached the edge of the ellipsoid
-            if not a < b: return np.array([])
-            # last dimension reached: append points
-            if g == 0:
-                return np.array([np.append([i],start) for i in xrange(a,b+1)])
-        
-            #
-            # compute new shifts, radii, start, and recurse
-            #
-            newg    = g-1
-            newT    = T[:(newg+1),:(newg+1)]
-            newTinv = la.inv(newT)
-            pts     = []
-
-            for n in xrange(a, b+1):
-                chat     = c[:newg+1]
-                that     = T[:newg+1,g]
-                newc     = chat - newTinv * that * (n - c[g])
-                newR     = np.sqrt(R**2 - (T[g,g] * (n - c[g]))**2)  # XXX
-                newstart = np.append([n],start)
-                newpts   = find_integer_points(newg,newc,newR,newstart)
-                pts      = np.append(pts,newpts)
-
-            return pts
-
-        return find_integer_points(g-1, leftc, R, np.array([]))
-
-    
     def radius(self, T, prec, deriv=[]):
         r"""
         Calculate the radius `R` to compute the value of the theta function
@@ -475,13 +420,18 @@ class RiemannTheta_Function:
         if self.uniform:
             # check if we've already computed the uniform radius and intpoints
             if self._rad is None:
+                
                 self._rad = self.radius(T, prec, deriv=deriv)
             if self._intpoints is None:
                 origin          = [0]*g
                 start = time.clock()
                 self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                       g, self._rad)
+<<<<<<< HEAD
                 print (time.clock() - start)
+=======
+                print(time.clock() - start)
+>>>>>>> integers
             R = self._rad
             S = self._intpoints
         else:
