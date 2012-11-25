@@ -261,7 +261,7 @@ class RiemannTheta_Function:
             c     = Yinv * y
             intc  = c.round()
             leftc = c - intc
-        return find_int_points(g-1,leftc,R,T)
+        return RIEMANN.find_int_points(g-1,leftc,R,T)
 
     def radius(self, T, prec, deriv=[]):
         r"""
