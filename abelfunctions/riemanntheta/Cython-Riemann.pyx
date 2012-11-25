@@ -70,8 +70,6 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
 
 def find_int_points(g, c, R, T):
     cdef int x
-    cdef int a
-    cdef int b
     Tinv = la.inv(T)
     points = []
     stack = []
@@ -86,79 +84,28 @@ def find_int_points(g, c, R, T):
         a = int( np.ceil((c[g] - R/T[g,g]).real) )
         b = int( np.floor((c[g] + R/T[g,g]).real) )
         #Check if reached the edge of the ellipsoid
-        if not a < b: continue
+        if not a < b:
+            if (len(stack) == 0):
+                FINISHED = True 
+            continue
         #Last dimension reached, append points
-        if (a >= 0):
-            if g == 0:
-                for x in range(b - a + 1):
-                     x = x+a
-                     s = start[:]
-                     s.append(x)
-                     s.reverse()
-                     points.extend(s)
-            else:
-                for x in range(b - a + 1):
-                    x = x + a
-                    chat = c[:g]
-                    that = T[:g,g]
-                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
-                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
-                    newStart = start[:]
-                    newStart.append(x)
-                    stack.append([newStart, g - 1, newc, newR[0]])
-        elif (b <= 0):
-            if g == 0:
-                for x in range(-a + b+1):
-                    x = -(x - b)
-                    s = start[:]
-                    s.append(x)
-                    s.reverse()
-                    points.extend(s)
-            else:
-                for x in range(-a + b + 1):
-                    x = -(x - b)
-                    chat = c[:g]
-                    that = T[:g,g]
-                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
-                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
-                    newStart = start[:]
-                    newStart.append(x)
-                    stack.append([newStart, g - 1, newc, newR[0]])
+        if g == 0:
+            for x in range(a, b+1):
+                s = start[:]
+                s.append(x)
+                s.reverse()
+                points.extend(s)
         else:
-            if g == 0:
-                for x in range(b):
-                    x = x+1
-                    s = start[:]
-                    s.append(x)
-                    s.reverse()
-                    points.extend(s)
-                for x in range(-a+1):
-                    x = -x
-                    s = start[:]
-                    s.append(x)
-                    s.reverse()
-                    points.extend(s)
-            else:
-                for x in range(b):
-                    x = x+1
-                    chat = c[:g]
-                    that = T[:g,g]
-                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
-                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
-                    newStart = start[:]
-                    newStart.append(x)
-                    stack.append([newStart, g - 1, newc, newR[0]])
-                for x in range(-a+1):
-                    x = -x
-                    chat = c[:g]
-                    that = T[:g,g]
-                    newc = chat - Tinv[:g, :g] * that * (x - c[g])
-                    newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
-                    newStart = start[:]
-                    newStart.append(x)
-                    stack.append([newStart, g - 1, newc, newR[0]])
-            
+            for x in range(a, b+1):
+                chat = c[:g]
+                that = T[:g,g]
+                newc = chat - Tinv[:g, :g] * that * (x - c[g])
+                newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
+                newStart = start[:]
+                newStart.append(x)
+                stack.append([newStart, g - 1, newc, newR[0]])
         if (len(stack) == 0):
             FINISHED = True
+
     return points
                  
