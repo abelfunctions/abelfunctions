@@ -101,13 +101,7 @@ import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import *
-<<<<<<< HEAD
 import time
-
-=======
-from int_points import *
-import time
->>>>>>> integers
 
 class RiemannTheta_Function:
     r"""
@@ -427,11 +421,7 @@ class RiemannTheta_Function:
                 start = time.clock()
                 self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                       g, self._rad)
-<<<<<<< HEAD
                 print (time.clock() - start)
-=======
-                print(time.clock() - start)
->>>>>>> integers
             R = self._rad
             S = self._intpoints
         else:
