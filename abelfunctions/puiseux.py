@@ -127,7 +127,7 @@ def _new_polynomial(F,X,Y,tau,l):
     # a term of the form (0,0):0 . Creating a new polynomial
     # containing such a term will result in the zero polynomial.
     new_d = dict([((a-l,b),c) for (a,b),c in d.iteritems()])
-    Fnew = sympy.Poly.from_dict(new_d,[X,Y])
+    Fnew = sympy.Poly.from_dict(new_d, gens=[X,Y], domain=sympy.EX)
     return Fnew
 
 def polygon(F,X,Y,I):
@@ -265,7 +265,7 @@ def polygon(F,X,Y,I):
     return params    
 
 
-
+@cached_function
 def newton(F,X,Y,nterms,degree_bound,version='rational'):
     """
     Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 
@@ -381,10 +381,7 @@ def singular_term(F,X,Y,L,I,version):
                 # compute the roots of Psi. Use the RootOf construct if 
                 # possible. In the case when Psi is over EX (i.e. when
                 # RootOf doesn't work) then compute symbolic roots.
-                try:
-                    roots = Psi.all_roots(radicals=False)
-                except NotImplementedError:
-                    roots = [rt for rt,mult in sympy.roots(Psi,_Z).iteritems()]
+                roots = Psi.all_roots(radicals=False)
 
                 for xi in roots:
                     # the classical version returns the "raw" roots
@@ -489,9 +486,10 @@ def build_series(pis,x,y,T,a,parametric):
         q,mu,m,beta,eta = pi[0]
         P = mu*x**q
         Q = eta*(beta + y)*x**m
-        
+        n = len(pi)
+
         # build rest of series
-        for h in xrange(1,len(pi)):
+        for h in xrange(1,n):
             q,mu,m,beta,eta = pi[h]
             P1 = mu*x**q
             Q1 = eta*(beta + y)*x**m
@@ -499,22 +497,23 @@ def build_series(pis,x,y,T,a,parametric):
             P = P.subs(x,P1)
             Q = Q.subs([(x,P1),(y,Q1)])
 
-        P = P.subs([(x,T),(y,0)]).expand(mul=True)#, force=True)
-        Q = Q.subs([(x,T),(y,0)]).expand(mul=True)#, force=True)
+        P = P.subs([(x,T),(y,0)])
+        Q = Q.subs([(x,T),(y,0)])
 
         # append parametric or non-parametric form
         if parametric:
-            if a == sympy.oo: series.append((1/P,Q))
-            else:             series.append((P+a,Q))
+            if a == sympy.oo: series.append((1/P,Q.simplify()))
+            else:             series.append((P+a,Q.simplify()))
         else:
             if a == sympy.oo: solns = sympy.solve(1/x-P,T)
             else:             solns = sympy.solve((x-a)-P,T)
-            for TT in solns:  series.append(Q.subs(T,TT))
+            for TT in solns:  series.append(Q.subs(T,TT).simplify())
 
     return series
 
 
-@cached_function
+
+
 def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo, 
             parametric=None, version='rational'):
     """
@@ -547,11 +546,9 @@ def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo,
     f = sympy.Poly(f,[x,y])
 
     # scale f accordingly
-    if a == sympy.oo: 
-        f = (f.subs(x,1/x) * x**(f.degree(x)))
-        f = sympy.Poly(f.simplify(),[x,y])
-    else:
-        f = f.subs(x,x+a)
+    if a == sympy.oo: f = (f.subs(x,1/x) * x**(f.degree(x)))
+    else:             f = f.subs(x,x+a)
+    f = sympy.Poly(f.simplify(),[x,y])
 
     # if parametric represenation is requested then use variable
     # specified, if any. Otherwise, create a dummy variable.
@@ -583,24 +580,22 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f1
-    a  = sympy.oo
-    N  = 4
+    f  = f3
+    a  = 1
+    N  = 2
 
     print "Curve:\n"
     sympy.pretty_print(f)
 
-#     import cProfile, pstats
-#     cProfile.run(
-#     "P = puiseux(f,x,y,a,degree_bound=N,parametric=True,version='rational')"
-#     ,'puiseux.profile')
-#     p = pstats.Stats('puiseux.profile')
-#     p.strip_dirs()
-#     p.sort_stats('time').print_stats(15)
-#     p.sort_stats('cumulative').print_stats(15)
-#     p.sort_stats('calls').print_stats(15)
-
-    P = puiseux(f,x,y,a,nterms=N,parametric=True,version='rational')
+    import cProfile, pstats
+    cProfile.run(
+    "P = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')"
+    ,'puiseux.profile')
+    p = pstats.Stats('puiseux.profile')
+    p.strip_dirs()
+    p.sort_stats('time').print_stats(15)
+    p.sort_stats('cumulative').print_stats(15)
+    p.sort_stats('calls').print_stats(15)
    
     print "\nPuiseux Expansions at x =", a
     for Y in P:
