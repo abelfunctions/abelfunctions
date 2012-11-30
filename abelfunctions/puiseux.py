@@ -466,7 +466,8 @@ def desingularize(f,x,y):
         raise ValueError("Unable to compute singular term.")            
         
     # now compute the values of eta that cancel the constant term c
-    Phi = [aij*_Z**sympy.Rational(i,q) for (i,j) in coeffs.keys() if q*j+m*i == 0]
+    Phi = [aij*_Z**sympy.Rational(i,q) for (i,j) in coeffs.keys() 
+           if q*j+m*i == 0]
     Phi = sympy.Poly(sum(Phi) + c, _Z)
 
     return [(q,m,0,Phi)]
@@ -498,16 +499,16 @@ def build_series(pis,x,y,T,a,parametric):
             Q = Q.subs([(x,P1),(y,Q1)])
 
         P = P.subs([(x,T),(y,0)])
-        Q = Q.subs([(x,T),(y,0)])
+        Q = Q.subs([(x,T),(y,0)]).simplify().collect(T)
 
         # append parametric or non-parametric form
         if parametric:
-            if a == sympy.oo: series.append((1/P,Q.simplify()))
-            else:             series.append((P+a,Q.simplify()))
+            if a == sympy.oo: series.append((1/P,Q))
+            else:             series.append((P+a,Q))
         else:
             if a == sympy.oo: solns = sympy.solve(1/x-P,T)
             else:             solns = sympy.solve((x-a)-P,T)
-            for TT in solns:  series.append(Q.subs(T,TT).simplify())
+            for TT in solns:  series.append(Q.subs(T,TT).simplify().collect(x-a))
 
     return series
 
