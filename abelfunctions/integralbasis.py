@@ -25,14 +25,18 @@ import sympy
 from puiseux import puiseux
 from utilities import cached_function
 
+import pdb
+
 
 def valuation(p,x,alpha):
     """
     Given a collection of Puiseux series, return the valuations. That
     is, the exponents of the leading order term.
     """
-    p = p.subs(x,x+alpha)
-    return p.expand(mult=True,force=True).leadterm(x)[1]
+    terms = p.subs(x,x+alpha).expand().collect(x,evaluate=False).keys()
+    lead  = terms[0]
+    val   = lead.as_coeff_exponent(x)[1]
+    return val
 
 def Int(i,p,x,alpha):
     """
@@ -51,7 +55,7 @@ def Int(i,p,x,alpha):
 
     return val
 
-def compute_expansion_bounds(p,x):
+def compute_expansion_bounds(p,x,alpha):
     """
     Computes the expansion bounds `N_1,\ldots,N_n` such that for all
     polynomials `G \in L[x,y]` the truncation `r_i` of the Puiseux
@@ -72,13 +76,15 @@ def compute_expansion_bounds(p,x):
 
     max_Int = max([Int(k,p,x,alpha) for k in xrange(n)])
     for i in xrange(n):
-        pairwise_diffs = [valuation(p[k]-p[i],x) for i in xrange(n) if k!=i]
-        N.append(max(pairwise_diffs) + max_Int - Int(i,p,x,alpha) + 2)
+        pairwise_diffs = [valuation(p[k]-p[i],x,alpha) 
+                          for i in xrange(n) if k!=i]
+        Ni = max(pairwise_diffs) + max_Int - Int(i,p,x,alpha) + 1
+        N.append(Ni)
 
     return N
 
 
-def compute_series_truncations(f,x,y,a,T):
+def compute_series_truncations(f,x,y,alpha,T):
     """
     Computes the Puiseux series expansions at the `x`-point `x=a` with
     the necessary number of terms in order to compute the integral
@@ -87,23 +93,44 @@ def compute_series_truncations(f,x,y,a,T):
     efficiency. (Sympy doesn't do as well with fractional exponents.)
     """
     # compute the first terms of the Puiseux series expansions
-    p = puiseux(f,x,y,a,1,parametric=False)
+    p = puiseux(f,x,y,alpha,nterms=2,parametric=False)
     
     # compute the expansion bounds
-    N = compute_expansion_bounds(p,x)
+    N = compute_expansion_bounds(p,x,alpha)
     Nmax = max(N)
 
     # compute Puiseux series and truncate using the expansion bounds.
-    r = puiseux(f,x,y,a,degree_bound=Nmax,parametric=T)
+    r = puiseux(f,x,y,alpha,degree_bound=Nmax)
     n = len(r)
 
-    for i in xrange(n):
-        ri_X, ri_Y = r[i]
-        ramification_index = sympy.degree(ri_X, T)
-        ri_Y = ri_Y + sympy.O( T**(N[i]*ramification_index) )
-        r[i] = (ri_X, ri_Y.removeO())
 
-    return list(set(r))
+    for i in xrange(n):
+        ri = r[i].subs(x,x+alpha).expand().collect(x,evaluate=False)
+        ri_trunc = sum( [coeff*term for term,coeff in ri.iteritems()
+                         if term.as_coeff_exponent(x)[1] <= N[i]] )
+        r[i] = sympy.sympify(ri_trunc).subs(x,x-alpha)
+
+    return r
+
+
+
+def _negative_power_coeffs(expr, var, alpha):
+    """
+    Return a list of the (symbolic) coefficients of expr as an expression
+    in var. That is, if
+
+        expr = c1 (x-alpha)**n_1 + ... + cm (x-alpha)**n_m + O(1)
+
+    then the list [c_1, ..., c_m] is returned. That is, the coefficients of 
+    the negative powers of expr.
+
+    NOTE: This is written because sympy's built in functions don't seem to do
+    what I want it to do.
+    """
+    terms  = expr.subs(var,var+alpha).expand(force=True).collect(var,evaluate=False)
+    coeffs = [coeff.simplify() for term,coeff in terms.iteritems() 
+              if term.as_coeff_exponent(var)[1] < 0]
+    return coeffs
 
 
 @cached_function
@@ -112,8 +139,6 @@ def integral_basis(f,x,y):
     Compute the integral basis {b1, ..., bg} of the algebraic function
     field C[x,y] / (f).
     """
-    T = sympy.Symbol('T')
-
     # If the curve is not monic then map y |-> y/lc(x) where lc(x)
     # is the leading coefficient of f
     d  = sympy.degree(f,y)
@@ -121,86 +146,73 @@ def integral_basis(f,x,y):
     if x in lc:
         f = sympy.ratsimp( f.subs(y,y/lc)*lc**(d-1) )
     else:
-        f = f/lc;
-    
-    # Compute the set of irreducible polynomials k(x) for which 
-    # k^2 | Res(f, df/dy)
+        f = f/lc
+        lc = 1
+
+    #
+    # Compute df
+    #
     p = sympy.Poly(f,[x,y])
     n = p.degree(y)
     res = sympy.resultant(p,p.diff(y),y)
     factors = sympy.factor_list(res)[1]
     df = [k for k,deg in factors if (deg > 1) and (sympy.LC(k) == 1)]
 
-    # r[k][i] is the ith Puiseux series (in parametric form) for the
-    # kth factor dividing the above resultant
+    #
+    # Compute series truncations at appropriate x points
+    #
     alpha = []
     r = []
     for l in range(len(df)):
         k = df[l]
-        alphak = sympy.roots(k).keys()[0]         # pick a root of k
-        rk = compute_series_truncations(f,x,y,alphak, T)
-
+        alphak = sympy.roots(k).keys()[0]
+        rk = compute_series_truncations(f,x,y,alphak,T)
         alpha.append(alphak)
         r.append(rk)
 
+        
+    #
     # Main Loop
+    #
     a = sympy.symbols('a:%d'%n)
     b = [1]
     for d in range(1,n):
-        # intiial guess for b_d. Uses the trick of 
         bd = y*b[-1]
-        for l in range(len(df)):
-            # get k,alphak data
-            k = df[l]
-            alphak = alpha[l]
-            rk = r[l]
 
-            # create list of indeterminants and loop to compute bd
-            found_something = True
+        for l in range(len(df)):
+            k      = df[l]
+            alphak = alpha[l]
+            rk     = r[l]
+
+            found_something = True            
             while found_something:
-                A = (sum(ak*bk for ak,bk in zip(a,b)) + bd) / (x - alphak)
                 # construct system of equations consisting of the coefficients
                 # of negative powers of (x-alphak) in the substitutions
                 # A(r_{k,1}),...,A(r_{k,n})
-                equations = []
+                A  = (sum(ak*bk for ak,bk in zip(a,b)) + bd) / (x - alphak)
 
-                for rk_X, rk_Y in rk:
-                    # solve for T in terms of x to obtain the
-                    # coefficients for use in constucting the a_i
-                    # equations below
-                    #          alpha + mu T**q = x
-                    sols = sympy.solve((x-alphak)-rk_X,T)
-                    consts = map(lambda s: s.as_coeff_exponent(x-alphak)[0],
-                                 sols)
-                    
-                    # compute the series in T up to constant order (we
-                    # only need the coefficients of the T terms with
-                    # negative exponent
-                    ser = A.subs([(x,rk_X),(y,rk_Y)]).expand() + sympy.O(1)
-                    ser = ser.removeO()
-                        
-                    # use the constants computed above to generate the
-                    # equations that need to be solved.
-                    equations.extend([ser.subs(T,c) for c in consts])
-
-                # solve the equations for a0,...,a_{d-1}
-                sols = sympy.solve(equations,a)
+                coeffs = []
+                for rki in rk:
+                    # substitute and extract coefficients
+                    A_rki  = A.subs(y,rki)
+                    coeffs.extend(_negative_power_coeffs(A_rki, x, alphak))
+               
+                # solve the coefficient equations for a0,...,a_{d-1}
+                coeffs = set( [coeff.as_numer_denom()[0] for coeff in coeffs] )
+                sols = sympy.solve_poly_system(coeffs, a[:d])
                 if sols is None or sols == []:
                     found_something = False
                 else:
-                    # this is to check for any free variables
-                    if len(sols.keys()) < d:
-                        found_something = False
-                    else:
-                        bdm1 = sum( sols[a[i]]*bk for i,bk in zip(range(d),b) )
-                        bd = (bdm1 + bd) / k
+                    sol  = sols[0]
+                    bdm1 = sum( sol[i]*bk for i,bk in zip(range(d),b) )
+                    bd   = (bdm1 + bd) / k
                         
         # bd found. Append to list of basis elements
         b.append( bd )
 
     # finally, convert back to singularized curve if necessary
     for i in xrange(1,len(b)):
-        b[i] = b[i].subs(y,y*lc)
+        b[i] = b[i].subs(y,y*lc).simplify()
 
     return b
 
@@ -222,19 +234,16 @@ if __name__=="__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f = f5
-        
-    print "Plane curve...\n"
-    sympy.pprint(f)
+    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
+      
+    for f in fs:
+        print "Plane curve...\n"
+        sympy.pprint(f)
 
-    print "\nComputing Puiseux series (for reference)\n"
-    r = compute_series_truncations(f,x,y,0,T)
-    for ri in r: sympy.pprint(ri)
-
-    print "\nComputing integral basis...\n"
-    b = integral_basis(f,x,y)
-    sympy.pprint(b)
-
+        print "\nComputing integral basis...\n"
+        b = integral_basis(f,x,y)
+        sympy.pprint(b)
+    
 #    cProfile.run("b = integral_basis(f,x,y)",'intbasis.profile')
 #     p = pstats.Stats('intbasis.profile')
 #     p.strip_dirs()
