@@ -67,7 +67,7 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
                                 nderivs, g, N)
     return real[0] + imag[0]*1.0j
 
-def find_int_points(int g, c, R, T, Tinv):
+def find_int_points(int g, c, R, T):
     cdef int x
     cdef int a,b
     points = []
