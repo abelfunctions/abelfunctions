@@ -67,16 +67,17 @@ def finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g):
                                 nderivs, g, N)
     return real[0] + imag[0]*1.0j
 
-def find_int_points(g, c, R, T, Tinv):
+def find_int_points(int g, c, R, T, Tinv):
     cdef int x
+    cdef int a,b
     points = []
     stack = []
     stack.append(((), g, c, R))
     FINISHED = False
     while (not FINISHED):
         start, g, c, R = stack.pop()
-        a = int( np.ceil((c[g] - R/T[g,g]).real) )
-        b = int( np.floor((c[g] + R/T[g,g]).real) )
+        a = <int>np.ceil((c[g] - R/T[g,g]).real)
+        b = <int>np.floor((c[g] + R/T[g,g]).real)
         #Check if reached the edge of the ellipsoid
         if not a < b:
             if (len(stack) == 0):
@@ -88,10 +89,12 @@ def find_int_points(g, c, R, T, Tinv):
                 s = (x,) + start
                 points.extend(s)
         else:
+            newT = T[:g,:g]
+            newTinv = la.inv(newT)
             for x in range(a, b+1):
                 chat = c[:g]
                 that = T[:g,g]
-                newc = chat - Tinv[:g, :g] * that * (x - c[g])
+                newc = chat - newTinv * that * (x - c[g])
                 newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
                 newStart = (x,) + start
                 stack.append((newStart, g - 1, newc, newR[0]))
