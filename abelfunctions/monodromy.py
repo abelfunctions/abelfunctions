@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 
 from matplotlib.patches import Circle
 from matplotlib.lines import Line2D
+from matplotlib.cbook import flatten
 
 from utilities import cached_function, cached_property
 
@@ -421,6 +422,7 @@ class Monodromy(object):
             G.node[i]['type']   = 'simple'
             G.node[i]['root']   = bd_index
             G.node[i]['base point'] = b0
+            G.node[i]['string'] = []
 
 
         # compute additional graph data
@@ -477,6 +479,9 @@ class Monodromy(object):
 
         Note: requires that path indices are computed first.
         """
+        # XXX does not do proper 'v-point node' detection. should be a
+        # loop over all vertices with successor edge and edge indices
+        # checks
         edges = list(nx.dfs_edges(G,source=source))
         for j in range(len(edges)-1):
             e_left  = edges[j]
@@ -492,13 +497,23 @@ class Monodromy(object):
                     G.node[e_left[1]]['type'] = 'v-point'
             # check for 'node': a discriminant point where several
             # branches meet. i.e. where the number of successors is
-            # greater than 1
+            # greater than 1. v-points can be nodes as well.
             if len(G.successors(e_left[0])) > 1:
-                G.node[e_left[0]]['type'] = 'node'
+                if G.node[e_left[0]]['type'] == 'v-point':
+                    G.node[e_left[0]]['type'] = 'v-point node'
+                else:
+                    G.node[e_left[0]]['type'] = 'node'
 
         return G
 
-
+    @cached_function
+    def special_vertices(self):
+        """
+        Returns the nodes, v-points, and v-point nodes of the initial
+        monodromy graph.
+        """
+        G = self.monodromy_graph()
+        return [n for n,data in G.nodes(data=True) if data['type']!='simple']
 
     @cached_function
     def vpoints(self):
@@ -508,8 +523,6 @@ class Monodromy(object):
         G = self.monodromy_graph()
         return [n for n,data in G.nodes(data=True) if data['type']=='v-point']
 
-
-
     @cached_function
     def nodes(self):
         """
@@ -517,6 +530,22 @@ class Monodromy(object):
         """
         G = self.monodromy_graph()
         return [n for n,data in G.nodes(data=True) if data['type']=='node']
+
+    @cached_function
+    def vpoint_nodes(self):
+        """
+        Returns the v-points of the monodromy graph that are also nodes.
+        """
+        G = self.monodromy_graph()
+        return [n for n,data in G.nodes(data=True) if data['type']=='v-point node']
+
+    @cached_function
+    def endpoints(self):
+        """
+        Returns the endpoints of the monodromy graph.
+        """
+        G = self.monodromy_graph()
+        return [n for n,deg in G.out_degree_iter() if deg == 0]
 
 
 
@@ -674,7 +703,7 @@ class Monodromy(object):
         fig.show()
 
 
-
+    @cached_function
     def initial_monodromy(self, i, Npts=8, lift_paths=False, *args, **kwds):
         """
         Returns the initial monodromy corresponding to disciminant
@@ -693,7 +722,7 @@ class Monodromy(object):
 
         # lift function: for each x = xi compute the roots yi_j lying
         # above xi
-        lift  = lambda a: sympy.nroots(self.f.subs({self.x : a}), *args, **kwds)
+        lift  = lambda a: sympy.nroots(self.f.subs({self.x:a}), *args, **kwds)
 
         # obtain interpolating points in path
         path = self.initial_monodromy_path(i, Npts=Npts)
@@ -717,7 +746,14 @@ class Monodromy(object):
             yi_approx = [yim1[j] - dx * dfdx(xim1,yim1[j]) / dfdx(xim1,yim1[j])
                          for j in xrange(self.deg)]
 
-            rho = matching_permutation(yi, yi_approx)
+
+            # if a matching permutation cannot be found, double the number
+            # of interpolating points and try again
+            try:
+                rho = matching_permutation(yi, yi_approx)
+            except:
+                return self.initial_monodromy(i, Npts=2*Npts, *args, **kwds)
+                
             yi = rho.action(yi)
             
             # for plotting purposes, we optionally store the lift
@@ -756,9 +792,230 @@ class Monodromy(object):
             yi = lift[:,i]
             yi_re = numpy.real(yi)
             yi_im = numpy.imag(yi)
-            ax.plot(yi_re, yi_im, color=clrs[i], linewidth=3, alpha=0.6)
+            ax.plot(yi_re, yi_im, color=clrs[i], linewidth=3*(i+1), alpha=0.4)
 
         plt.show()
+
+
+
+    def _construct_position_tree(self):
+        """
+        Returns the "relative position tree", a list giving the relative
+        ordering of the branch points.
+
+        See Section 3 of [FCS].
+        """
+        G = self.monodromy_graph()
+
+        def angle(w, origin_vertex=None):
+            """
+            Compute the angle between vertex v and w using monodromy
+            graph indices.
+            """
+            if self._use_mpmath: arg = sympy.mpmath.arg
+            else:                arg = numpy.angle
+            
+            v = origin_vertex
+            
+            # compute "reference point": if v is a node then this is 
+            # just -Rx. Otherwise, it's the return point...[XXX hard
+            # to explain...]
+            x = G.node[v]['value']
+            Rv = G.node[v]['radius']
+            if G.node[v]['type'] == 'node':
+                z0 = -Rv
+            else:
+                u = G.predecessors(v)[0] # G is a tree so only one predecessor
+                Ru = G.node[u]['radius']
+                ind = G[u][v]['index']
+                z0 = (G.node[u]['value'] + Ru*ind[0]) - (x + Rv*ind[1])
+                
+
+            # return the angle made with the "reference angle" by
+            # rotating.  when v == w just return the smallest possible
+            # value (-pi) since this is used as reference [XXX
+            # again...hard to explain.
+            if v == w:
+                if G.node[v]['type'] == 'node':
+                    z = z0
+                else:
+                    u   = G.predecessors(v)[0]
+                    ind = G[u][v]['index']
+                    z   = -Rv*ind[1]
+            else:
+                y  = G.node[w]['value']
+                Rw = G.node[w]['radius']
+                try:
+                    ind = G[v][w]['index']
+                except:
+                    raise ValueError("Couldn't determine initial monodromy "+ \
+                                     "point ordering: %d is not a "%(v)     + \
+                                     "successor of %d."%(w))
+                z = (y + Rw*ind[1]) - (x + Rv*ind[0])            
+
+            return arg(-z/z0)
+
+
+        # 
+        # (0) Gather special nodes
+        # 
+        root = G.node[0]['root']
+        endpoints = self.endpoints()
+        vpoints = self.vpoints()
+        nodes = self.nodes()
+        vpoint_nodes = self.vpoint_nodes()
+        
+        #
+        # (1) Initialize strings using endpoints
+        #
+        # construct initial strings: these are the strings following
+        # the end points that stop at a node or vpoint
+        for v in endpoints:
+            string = [v]
+            # as long as the successors are simple, keep appending to
+            # the string. since graph is tree there should be only on
+            # predecessor per node
+            u = G.predecessors(v)[0]
+            while G.node[u]['type'] == 'simple':
+                v = u
+                u = G.predecessors(v)[0]
+                string.append(v)
+                
+            # add the string to the stack and attach data to graph
+            G.node[v]['string'] = string
+
+
+        #
+        # (2) create a stack of v-points, nodes, and v-point nodes
+        #     and exhaust to construct ordering tree
+        #
+        # in each iteration, we check the following 
+        # 1. find a node / v-point that can be resolved. This is possible
+        #    when all successors have a full string attached in the node 
+        #    data field 'string'. if none can be found then move to next
+        #    special point.
+        # 2. when a special vertex has enough filled strings, 
+        special_vertices = self.special_vertices()
+        N = len(special_vertices)
+        n = 0;
+        while N > 0:
+            # if n == N then we haven't found a node / v-point with
+            # all strings available. raise error
+            if n == N:
+                raise Error("Couldn't determine initial monodromy " + \
+                            "point ordering.")
+
+            # grab the current special point
+            v = special_vertices[n]
+
+            # check if all attached strings are available
+            has_strings = True
+            for w in G.successors(v):
+                if G.node[w]['string'] == []: has_strings = False
+                    
+            # if all strings are available, apply ordering based on
+            # special vertex type. otherwise, proceed to next special
+            # point and loop
+            if has_strings:
+                # HACK: some unclean programming is done in the vpoint node
+                # case. first, we need to resolve all of non-vee side
+                # nodes and treat them as
+                if G.node[v]['type'] == 'v-point node':
+                    G.node[v]['type'] = 'node'
+
+                    # get the "node side" successors of v: these are
+                    # the vertices that don't form a v-point.
+                    u = G.predecessors(v)[0]
+                    uv_ind = G[u][v]['index']
+                    succ = [w for w in G.successors(v) 
+                            if G[v][w]['index'][0] != uv_ind[1]]
+                    pts = succ + [v]
+
+                    # sort "node side points" (include v-point itself)
+                    key = lambda w: angle(w, origin_vertex=v)
+                    pts.sort(key=key)
+                    string = [G.node[pt]['string'] for pt in pts]
+                    G.node[v]['string'] = list(flatten(string))
+
+                    # now set v to a v-point type and get v-point side
+                    # point. Let rest of algorithm take care of
+                    # sorting
+                    G.node[v]['type'] = 'v-point'
+                    succ = [w for w in G.successors(v) 
+                            if G[v][w]['index'][0] != uv_ind[1]]
+                    pts = succ + [v]
+
+                else:
+                    G.node[v]['string'] = [v]
+                    succ = G.successors(v)
+                    pts  = succ + [v]
+
+
+                # sort and get strings
+                key = lambda w: angle(w, origin_vertex=v)
+                pts.sort(key=key)
+                string = [G.node[pt]['string'] for pt in pts]
+                
+                # extend string to next v-point or node (unless at root)
+                w = v
+                if v != root:
+                    u = G.predecessors(w)[0]
+                    while G.node[u]['type'] == 'simple':
+                        string.append(u)
+                        w = u
+                        u = G.predecessors(u)[0]
+                G.node[w]['string'] = list(flatten(string))
+
+                # reset to top of stack
+                n = 0
+                special_vertices.remove(v)
+                N -= 1
+            else:
+                n += 1
+
+        return G.node[root]['string']
+
+
+
+    def monodromy(self, Npts=8):
+        """
+        Returns the monodromy group.
+
+        Note: see page 541 of [F...
+        """
+        G = self.monodromy_graph()
+        N = len(self.discriminant_points())
+
+        monodromy = [self.initial_monodromy(i, Npts=Npts) for i in xrange(N)]
+        position_tree = self._construct_position_tree()
+        
+        while N > 0:
+            # grab the largest element in the tree
+            m = max(position_tree)
+            i = position_tree.index(m)
+            if i == (N-1):
+                position_tree.remove(m)
+                N -= 1
+            else:
+                # k is the element of the tree appearing to the right
+                # of the element m. conjugate phi_m by phi_k
+                k = position_tree[i+1]
+                phi_m = monodromy[m]
+                phi_k = monodromy[k]
+                monodromy[m] = phi_k * phi_m * phi_k.inv()
+                
+                # swap m and k in the position tree
+                position_tree[i+1] = m
+                position_tree[i] = k
+
+        return monodromy
+
+                
+            
+            
+        
+
+            
 
         
 
