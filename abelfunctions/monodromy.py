@@ -344,7 +344,6 @@ class Monodromy(object):
 
 
 
-    @cached_function
     def monodromy_graph(self):
         """
         Constructs a NetworkX graph describing the path connectedness of the
@@ -779,7 +778,7 @@ class Monodromy(object):
     def plot_initial_monodromy_lift(self, i, Npts=8, *args, **kwds):
         """
         Plots the lift [y1,...,yn] on the complex plane as x varies 
-        along an initial monodromy path.
+        Along an initial monodromy path.
         """
         lift = self.initial_monodromy(i, Npts=Npts, lift_paths=True,
                                       *args, **kwds)
@@ -797,7 +796,6 @@ class Monodromy(object):
         plt.show()
 
 
-
     def _construct_position_tree(self):
         """
         Returns the "relative position tree", a list giving the relative
@@ -807,17 +805,17 @@ class Monodromy(object):
         """
         G = self.monodromy_graph()
 
-        def angle(w, origin_vertex=None):
+          def angle(w, origin_vertex=None):
             """
             Compute the angle between vertex v and w using monodromy
             graph indices.
             """
             if self._use_mpmath: arg = sympy.mpmath.arg
             else:                arg = numpy.angle
-            
+
             v = origin_vertex
-            
-            # compute "reference point": if v is a node then this is 
+
+            # compute "reference point": if v is a node then this is
             # just -Rx. Otherwise, it's the return point...[XXX hard
             # to explain...]
             x = G.node[v]['value']
@@ -829,7 +827,7 @@ class Monodromy(object):
                 Ru = G.node[u]['radius']
                 ind = G[u][v]['index']
                 z0 = (G.node[u]['value'] + Ru*ind[0]) - (x + Rv*ind[1])
-                
+
 
             # return the angle made with the "reference angle" by
             # rotating.  when v == w just return the smallest possible
@@ -851,20 +849,20 @@ class Monodromy(object):
                     raise ValueError("Couldn't determine initial monodromy "+ \
                                      "point ordering: %d is not a "%(v)     + \
                                      "successor of %d."%(w))
-                z = (y + Rw*ind[1]) - (x + Rv*ind[0])            
+                z = (y + Rw*ind[1]) - (x + Rv*ind[0])
 
             return arg(-z/z0)
 
 
-        # 
+        #
         # (0) Gather special nodes
-        # 
+        #
         root = G.node[0]['root']
         endpoints = self.endpoints()
         vpoints = self.vpoints()
         nodes = self.nodes()
         vpoint_nodes = self.vpoint_nodes()
-        
+
         #
         # (1) Initialize strings using endpoints
         #
@@ -880,7 +878,7 @@ class Monodromy(object):
                 v = u
                 u = G.predecessors(v)[0]
                 string.append(v)
-                
+
             # add the string to the stack and attach data to graph
             G.node[v]['string'] = string
 
@@ -889,12 +887,12 @@ class Monodromy(object):
         # (2) create a stack of v-points, nodes, and v-point nodes
         #     and exhaust to construct ordering tree
         #
-        # in each iteration, we check the following 
+        # in each iteration, we check the following
         # 1. find a node / v-point that can be resolved. This is possible
-        #    when all successors have a full string attached in the node 
+        #    when all successors have a full string attached in the node
         #    data field 'string'. if none can be found then move to next
         #    special point.
-        # 2. when a special vertex has enough filled strings, 
+        # 2. when a special vertex has enough filled strings,
         special_vertices = self.special_vertices()
         N = len(special_vertices)
         n = 0;
@@ -912,7 +910,7 @@ class Monodromy(object):
             has_strings = True
             for w in G.successors(v):
                 if G.node[w]['string'] == []: has_strings = False
-                    
+
             # if all strings are available, apply ordering based on
             # special vertex type. otherwise, proceed to next special
             # point and loop
@@ -927,7 +925,7 @@ class Monodromy(object):
                     # the vertices that don't form a v-point.
                     u = G.predecessors(v)[0]
                     uv_ind = G[u][v]['index']
-                    succ = [w for w in G.successors(v) 
+                    succ = [w for w in G.successors(v)
                             if G[v][w]['index'][0] != uv_ind[1]]
                     pts = succ + [v]
 
@@ -955,7 +953,7 @@ class Monodromy(object):
                 key = lambda w: angle(w, origin_vertex=v)
                 pts.sort(key=key)
                 string = [G.node[pt]['string'] for pt in pts]
-                
+
                 # extend string to next v-point or node (unless at root)
                 w = v
                 if v != root:
@@ -986,9 +984,9 @@ class Monodromy(object):
         G = self.monodromy_graph()
         N = len(self.discriminant_points())
 
-        monodromy = [self.initial_monodromy(i, Npts=Npts) for i in xrange(N)]
+        monodromy = [self.initial_monodromy(i, Npts=Npts) for i in range(N)]
         position_tree = self._construct_position_tree()
-        
+
         while N > 0:
             # grab the largest element in the tree
             m = max(position_tree)
@@ -1008,16 +1006,7 @@ class Monodromy(object):
                 position_tree[i+1] = m
                 position_tree[i] = k
 
-        return monodromy
-
-                
-            
-            
-        
-
-            
-
-        
+        return monodromy        
 
 
 if __name__=='__main__':
