@@ -129,6 +129,7 @@ class Permutation(object):
         else:
             raise TypeError, "i (= %s) must be an integer between %s and %s" %(i,1,len(self))        
 
+
     def index(self, key):
         return self._list.index(key)
 
@@ -805,7 +806,7 @@ class Monodromy(object):
         """
         G = self.monodromy_graph()
 
-          def angle(w, origin_vertex=None):
+        def angle(w, origin_vertex=None):
             """
             Compute the angle between vertex v and w using monodromy
             graph indices.
