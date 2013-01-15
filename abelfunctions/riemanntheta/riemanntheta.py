@@ -385,7 +385,7 @@ class RiemannTheta_Function:
         return rad
 
 
-    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False):
+    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False, List=False):
         r"""
         Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
         (Or a given directional derivative of `\theta`.) That is, compute 
@@ -403,9 +403,10 @@ class RiemannTheta_Function:
         Tinv = np.matrix(la.inv(T))
             
         # extract real and imaginary parts of input z
-        z = np.array(z).reshape((g,1))
-        x = z.real
-        y = z.imag
+        length = 1
+        if List:
+            length = len(z)
+        z = np.array(z).reshape((length, g))
 
         # convert derivatives to vector type       
         deriv = np.array(deriv)
@@ -425,36 +426,51 @@ class RiemannTheta_Function:
             R = self._rad
             S = self._intpoints
         else:
-            R = self.radius(T, prec, deriv=deriv)
-            S = self.integer_points(Yinv, T, Tinv, z, g, R)
+            if(List):
+                raise Exception("Can't compute pointwise approximation for multiple points.\nUse uniform approximation or call the function seperately for each point.")
+            else:
+                R = self.radius(T, prec, deriv=deriv)
+                S = self.integer_points(Yinv, T, Tinv, z, g, R)
 
         # compute oscillatory and exponential terms
-        if gpu:
-            from riemanntheta_misc import finite_sum_opencl
-            v = finite_sum_opencl(X, Yinv, T, x, y, S, g)
+        if gpu and List:
+            """
+            parRiemann.compute(X, Yinv, T, z, S, g)
+            """
         elif (len(deriv) > 0):
-            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, x, y, S, deriv, g)
+            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, List)
         else:
-            v = RIEMANN.finite_sum(X, Yinv, T, x, y, S, g)
-        u = pi*np.dot(y.T,Yinv * y)
+            v = RIEMANN.finite_sum(X, Yinv, T, z, S, g, List)
+
+        if List:
+            u = []
+            for w in z:
+                w = np.array([w])
+                val = pi*np.dot(w.imag, Yinv*w.imag.T).item(0,0)
+                u.append(val)
+        else:
+            u = pi*np.dot(z.imag,Yinv * z.imag.T).item(0,0)
 
         return u,v
 
-    def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False):
+    def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False, List=False):
         r"""
-        Returns the value of `\theta(z,\Omega)` at a point `z`.
+        Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if List is True.
         """
 
         exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, prec=prec,
-                                                       deriv=deriv, gpu=gpu)
+                                                       deriv=deriv, gpu=gpu,List=List)
+
         return np.exp(exp_part) * osc_part
 
-    def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=False):
+    def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=False, List=False):
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z`. Lazy evaluation
-        is done if the input contains symbolic variables.            
+        is done if the input contains symbolic variables. If list is set to true
+        then the functions expects a list as input and returns a list as output
         """
-        return self.value_at_point(z, Omega, prec=prec, deriv=deriv, gpu=gpu)
+        return self.value_at_point(z, Omega, prec=prec, deriv=deriv, gpu=gpu, List=List)
+                
 
 
 # declaration of Riemann theta
@@ -474,9 +490,14 @@ if __name__=="__main__":
 
     print "Test #2:"
     z = np.array([1.0j,1.0j])
-    u,v = theta.exp_and_osc_at_point(z,Omega,gpu=False)
     print theta.value_at_point(z,Omega,gpu=False)
     print "-438.94 + 0.00056160*I"
+    print
+
+    print "Batch Test"
+    z0 = np.array([1.0j, 1.0j])
+    z1 = np.array([0,0])
+    print theta.value_at_point([z0,z1],Omega,gpu=False, List=True)
     
     print
     print "Derivative Tests:"
@@ -512,12 +533,15 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
 
     print "\tCalculating theta..."
+    SIZE = 60
     f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=False)[1]
     f = np.vectorize(f)
-    x = np.linspace(0,1,60)
-    y = np.linspace(0,5,60)
+    x = np.linspace(0,1,SIZE)
+    y = np.linspace(0,5,SIZE)
     X,Y = p.meshgrid(x,y)
-    Z = np.real(f(X,Y))
+    start = time.clock()
+    Z = (f(X,Y))
+    Z = np.real(Z)
 
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
