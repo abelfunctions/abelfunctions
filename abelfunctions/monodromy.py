@@ -206,6 +206,7 @@ def matching_permutation(a, b):
 
 
 
+
 def prim_fringe(G, weight_function=lambda e: 1, starting_vertex=None):
     """
     Computes a minimal spanning tree of the graph G. Variant of Prim's 
@@ -235,6 +236,8 @@ def prim_fringe(G, weight_function=lambda e: 1, starting_vertex=None):
             if neighbor not in fringe_list or fringe_list[neighbor][0] > w:
                 fringe_list[neighbor] = (w, u)
     return edges
+
+
 
 
 
@@ -268,6 +271,10 @@ class Monodromy(object):
         self._path_points         = None
         self._use_mpmath          = use_mpmath
         self._monodromy_graph     = self.monodromy_graph()
+
+        N = self._monodromy_graph.number_of_nodes()
+        self.conjugates = dict(zip(range(N), [[]]*N))
+        
 
 
 
@@ -394,7 +401,7 @@ class Monodromy(object):
                                     starting_vertex=bd_index)
         G = nx.DiGraph()
         G.add_edges_from(spanning_tree)
- 
+
         # compute path radii for each discriminant point and store
         # radii and position data to the graph
         min_rho = 2**(-numpy.nbytes[self.dtype]*4) # minimal bits of precision
@@ -703,7 +710,6 @@ class Monodromy(object):
         fig.show()
 
 
-    @cached_function
     def initial_monodromy(self, i, Npts=8, lift_paths=False, *args, **kwds):
         """
         Returns the initial monodromy corresponding to disciminant
@@ -743,7 +749,7 @@ class Monodromy(object):
             # interpolating points
             dx = xi - xim1
             yi = lift(xi)
-            yi_approx = [yim1[j] - dx * dfdx(xim1,yim1[j]) / dfdx(xim1,yim1[j])
+            yi_approx = [yim1[j] - dx * dfdx(xim1,yim1[j]) / dfdy(xim1,yim1[j])
                          for j in xrange(self.deg)]
 
 
@@ -792,7 +798,10 @@ class Monodromy(object):
             yi = lift[:,i]
             yi_re = numpy.real(yi)
             yi_im = numpy.imag(yi)
-            ax.plot(yi_re, yi_im, color=clrs[i], linewidth=3*(i+1), alpha=0.4)
+            ax.plot(yi_re, yi_im, color=clrs[i], 
+                    linestyle='--', linewidth=3*(i+1), alpha=0.4)
+            ax.plot(yi_re[-1], yi_im[-1], color=clrs[i],
+                    marker='o', markersize=3*(i+3), alpha=0.4)
 
         plt.show()
 
@@ -1007,11 +1016,25 @@ class Monodromy(object):
                 position_tree[i+1] = m
                 position_tree[i] = k
 
+                # store conjugation information in self
+                self.conjugates[m-1].append(k-1)
+
         return monodromy        
 
 
 if __name__=='__main__':
    from sympy.abc import x,y
 
-   f = y**3 - 2*x**3*y - x**9
+   f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+   f2 = -x**7 + 2*x**3*y + y**3
+   f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+   f4 = y**2 + x**3 - x**2
+   f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+   f6 = y**4 - y**2*x + x**2
+   f7 = y**3 - (x**3 + y)**2 + 1
+   f8 = (x**6)*y**3 + 2*x**3*y - 1
+   f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+   f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+   
+   f  = f3
    M = Monodromy(f,x,y)
