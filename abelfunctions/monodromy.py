@@ -2,10 +2,6 @@
 Monodromy
 """
 
-import pdb
-
-import functools
-
 import numpy
 import scipy
 import sympy
@@ -27,17 +23,17 @@ class Permutation(object):
     Examples::
     We create the permutation ``p = 1->1, 2->4, 3->2, 4->3``.
     
-        >>> p = Permutation([1,4,2,3])
+        >>> p = Permutation([0,3,1,2])
 
     We can multiply permutations together. Let ``q`` be the transposition
-    ``1->2, 2->1``. The product ``qp`` represents the permutation obtained
-    by applying ``p`` to the identity ``[1,2,3,4]`` first and then ``q``.
+    ``0->1, 1->0``. The product ``qp`` represents the permutation obtained
+    by applying ``p`` to the identity ``[0,1,2,3]`` first and then ``q``.
 
         >>> q = Permutation([2,1])
         >>> q*p
-        [2, 4, 1, 3]
+        [1, 3, 0, 2]
         >>> p*q
-        [4, 1, 2, 3]
+        [3, 0, 1, 2]
 
     Permutations can act on lists.
     
@@ -61,6 +57,7 @@ class Permutation(object):
 
         self._hash = None
 
+
     def _list_from_cycle(self,cycles):
         """
         Create a permutation list ``i \to l[i]`` from a cycle notation
@@ -68,23 +65,23 @@ class Permutation(object):
 
         Example:
 
-        >>> p = Permutation([[1,2],[3],[4]])
+        >>> p = Permutation([[0,1],[2],[3]])
         >>> p._list
-        [2, 1, 3]
+        [1, 0, 2]
 
         >>> q = Permutation([[2,4],[1,3]])
         >>> q._list
-        [3, 4, 1, 2]
+        [2, 3, 0, 1]
         """
-        degree = max([1] + [max(cycle + [1]) for cycle in cycles])
-        l = range(1,degree+1)
+        degree = max([0] + [max(cycle + [0]) for cycle in cycles]) + 1
+        l = range(degree)
         for cycle in cycles:
             if not cycle:
                 continue
             first = cycle[0]
             for i in range(len(cycle)-1):
-                l[cycle[i]-1] = cycle[i+1]
-            l[cycle[-1]-1] = first
+                l[cycle[i]] = cycle[i+1]
+            l[cycle[-1]] = first
 
         return l
 
@@ -124,10 +121,10 @@ class Permutation(object):
         """
         Returns the image of the integer i under this permutation.
         """
-        if isinstance(i,int) and 1 <= i <= len(self):
-            return self[i-1]
+        if isinstance(i,int) and 0 <= i < len(self):
+            return self[i]
         else:
-            raise TypeError, "i (= %s) must be an integer between %s and %s" %(i,1,len(self))        
+            raise TypeError, "i (= %s) must be an integer between %s and %s" %(i,0,len(self)-1)
 
 
     def index(self, key):
@@ -139,13 +136,14 @@ class Permutation(object):
 
         **Examples**
 
-            >>> p = Permutation([1,4,2,3])
+            >>> p = Permutation([0,3,1,2])
             >>> p.action(['a','b','c','d'])
             ['a', 'd', 'b', 'c']
         """
         if len(a) != len(self):
             raise ValueError, "len(a) must equal len(self)"
-        return map(lambda i: a[self[i]-1], range(len(a)))
+#        return map(lambda i: a[self[i]-1], range(len(a)))
+        return map(lambda i: a[self[i]], range(len(a)))
 
     def inv(self):
         """
@@ -153,7 +151,7 @@ class Permutation(object):
         """
         l = range(len(self))
         for i in range(len(self)):
-            l[self(i+1)-1] = i+1
+            l[self(i)] = i
 
         return Permutation(l)
         
@@ -196,7 +194,7 @@ def matching_permutation(a, b):
         for j in xrange(N):
             dist = abs(a[i] - b[j])
             if dist < eps:
-                perm[j] = i+1
+                perm[j] = i
                 break
 
     if -1 in perm:
@@ -246,8 +244,7 @@ class Monodromy(object):
     Class defining the monodromy group of a complex plane algebraic
     curve.
     """
-    def __init__(self, f, x, y, 
-                 dtype=numpy.complex, kappa=4.0/5.0, use_mpmath=False):
+    def __init__(self, f, x, y, kappa=3.0/5.0):
         """
         The monodromy group corresponding to the complex plane algebraic curve
         `f = f(x,y)`.
@@ -256,8 +253,10 @@ class Monodromy(object):
         
         -- f,x,y: a Sympy/Sage plane algebraic curve
 
-        -- dtype: (default: numpy.complex) a Numpy dtype where all numerical
-        computations are to take place
+        -- kappa: a relaxation factor used to determine the radius of the
+           monodromy path circles about the branch points. If `kappa = 1`
+           then the radius of the circles are 1/2 the distance to the 
+           nearest branch points.
         """
         self.f = f
         self.x = x
@@ -265,17 +264,13 @@ class Monodromy(object):
         self.deg = sympy.degree(f,y)
         
         self.kappa = kappa
-        self.dtype = dtype
 
+        self._base_point = None
+        self._base_lift  = None
         self._discriminant_points = None
-        self._path_points         = None
-        self._use_mpmath          = use_mpmath
-        self._monodromy_graph     = self.monodromy_graph()
-
-        N = self._monodromy_graph.number_of_nodes()
-        self.conjugates = dict(zip(range(N), [[]]*N))
-        
-
+        self._monodromy_graph = None
+        self._monodromy_graph = self.monodromy_graph()
+        self._monodromy = None
 
 
     def __repr__(self):
@@ -288,6 +283,23 @@ class Monodromy(object):
 
 
 
+    def base_point(self):
+        """
+        Returns the base point (b0) of the monodromy group.
+
+        This is a fixed point that lies to the left of all
+        discriminant points of the algebraic curve.
+        """    
+        return self._base_point
+
+    def base_lift(self):
+        """
+        Returns the ordered lift of the base point. That is, the first
+        element corresponds to sheet 0, the next sheet 1, etc.
+        """
+        return self._base_lift
+
+
     @cached_function
     def branch_points(self):
         """
@@ -297,21 +309,10 @@ class Monodromy(object):
         pass
 
 
-
-    @cached_function
-    def permutations(self):
-        """
-        Returns the monodromy group: a list of branch points and their 
-        corresponding permutations.
-        """
-        pass
-
-
-
     def discriminant_points(self):
         """
-        Computes a list of the  discriminant points of a plane algebraic 
-        curve `f = f(x,y)` with accuract
+        Returns the list of discriminant points of a plane algebraic
+        curve `f = f(x,y)` in order.
         """
         # self.monodromy_graph requires that we compute the discriminant
         # points, unordered, first. However, once we order the points
@@ -324,44 +325,48 @@ class Monodromy(object):
         res  = sympy.Poly(sympy.resultant(p,p.diff(y),y),x)
         rts  = res.all_roots(multiple=False,radicals=False)
 
-        # XXX
-        # the following is a strange hack since Add objects cannot be
-        # converted to MPF/MPCs for some reason
-        #
-        # also: precision needs to be explicity given
-        # XXX
-        if self._use_mpmath:
-            prec = sympy.mpmath.mp.dps
-            disc_pts = map(sympy.mpmath.mpmathify,
-                           [str(rt.n(prec)).replace('*I','j') for rt,_ in rts])
-        else:
-            disc_pts = [self.dtype(rt) for rt,_ in rts]
-
-        return disc_pts
-
-
-
-    def base_point(self):
-        """
-        Returns the base point (b0) of the monodromy group.
-
-        This is a fixed point that lies to the left of all
-        discriminant points of the algebraic curve.
-        """    
-        return self._monodromy_graph.node[0]['base point']
+        # XXX Is this really the right thing to do? Probably not.
+        prec = sympy.mpmath.mp.dps
+        disc_pts = map(sympy.mpmath.mpmathify,
+                       [str(rt.n(prec)).replace('*I','j') for rt,_ in rts])
+        return list(set(disc_pts))
 
 
 
     def monodromy_graph(self):
         """
         Constructs a NetworkX graph describing the path connectedness of the
-        monodromy paths. Call several subroutines to compute:
+        monodromy paths. Each node has the following data attached to it:
+        
+        * pos: a tuple (b_re, b_im) containing the real and imaginary
+               parts of the discriminant point.
 
-        * paths -- compute path indicators
-        * interpolating_points -- computes interpolating points along each
-          edge and at each node (both upper and lower points on circle)
-        * 
+        * value: the discriminant point (as a point in the complex plane)
+
+        * radius: the radius of the monodromy path circle about the 
+                  discriminant point
+
+        * type: the 'type' of the vertex ('simple', 'node', 'vpoint', 
+                'vpoint node') using the definitions of [FSK]
+
+        * root: the index of the root vertex. This is the vertex that is
+                closest to the base point
+
+        * base point: the base point of the monodromy group. Given to
+                      each node for ease of access / convenience
+
+        * string: a piece of data used to determine which vertices to 
+                  conjugate by when determining the monodromy from the 
+                  initial monodromy.
+                  
+        * conjugates: a list of vertices / discriminant points to conjugate
+                      by when constucting the monodromy path from the
+                      base point to the discriminant point and back
+
         """
+        if self._monodromy_graph:
+            return self._monodromy_graph
+
         disc_pts = self.discriminant_points()
         
         # sort the discriminant points by angle.
@@ -370,22 +375,20 @@ class Monodromy(object):
         #     - bd = discriminant point closest to base point
         #     - bd_index = index of bd. its ranking in the sorted
         #                  discriminant points
-        if self._use_mpmath:
-            key = lambda z: 100*sympy.mpmath.re(z) - sympy.mpmath.im(z)
-            cmp = lambda z: sympy.mpmath.arg(z-b0)
-        else:
-            key = lambda z: 100*numpy.real(z) - numpy.imag(z)
-            cmp = lambda z: numpy.angle(z-b0)
-
+        key = lambda z: 100*sympy.mpmath.re(z) - sympy.mpmath.im(z)
+        cmp = lambda z: sympy.mpmath.arg(z-b0)
         bd  = min(disc_pts, key=key)
         base_radius = min( [numpy.abs(bd - bi) for bi in disc_pts 
-                            if bi != bd] ) * self.kappa / 2.0
+                            if bi != bd] + [10] ) * self.kappa / 2.0
         b0 = bd - base_radius
         disc_pts = sorted(disc_pts, key=cmp)
         bd_index = disc_pts.index(bd)
 
-        # store sorted discriminant points
+        # store sorted discriminant points and base point data
         self._discriminant_points = disc_pts
+        self._base_point = b0
+        self._base_lift  = sympy.nroots(self.f.subs({self.x:b0}),
+                                        n=sympy.mpmath.mp.dps)
 
         # Compute minimal spanning tree. the weights are the distances
         # between the nodes. the spanning tree algorihtm is from a
@@ -393,103 +396,58 @@ class Monodromy(object):
         # since
         n = len(disc_pts)
         G = nx.complete_graph(n)
-        if self._use_mpmath:
-            weight_function = lambda e: sympy.mpmath.fabs(disc_pts[e[1]] - disc_pts[e[0]])
-        else:
-            weight_function = lambda e: numpy.abs(disc_pts[e[1]] - disc_pts[e[0]])
+        weight_function = lambda e: sympy.mpmath.fabs(disc_pts[e[1]]-disc_pts[e[0]])
         spanning_tree = prim_fringe(G, weight_function=weight_function, 
                                     starting_vertex=bd_index)
         G = nx.DiGraph()
         G.add_edges_from(spanning_tree)
 
-        # compute path radii for each discriminant point and store
-        # radii and position data to the graph
-        min_rho = 2**(-numpy.nbytes[self.dtype]*4) # minimal bits of precision
+        #
+        # Compute path radii for each discriminant point and store
+        # radii and position data to the graph along with other vertex data.
+        #
         for i in range(len(disc_pts)):
             disc_pt = disc_pts[i]
             rho  = min( [abs(disc_pt - disc_pts[j])
                          for j in range(len(disc_pts)) if j != i] )
             radius = rho * self.kappa / 2.0
-
-            # if mp_math is not being used then check if we're below
-            # the floating point calculating threshold
-            if not self._use_mpmath and rho < min_rho:
-                warnings.warn("Cannot accurately compute monodromy: "  + \
-                              "discriminant points are too close and " + \
-                              "may cause numerical errors.",
-                              RuntimeWarning)
             
             # store useful data to graph
-            if self._use_mpmath: 
-                G.node[i]['pos'] = (sympy.re(disc_pt), sympy.im(disc_pt))
-            else:
-                G.node[i]['pos'] = (disc_pt.real, disc_pt.imag)
-            G.node[i]['value']  = disc_pt
-            G.node[i]['radius'] = radius
-            G.node[i]['type']   = 'simple'
-            G.node[i]['root']   = bd_index
-            G.node[i]['base point'] = b0
-            G.node[i]['string'] = []
+            G.node[i]['pos']        = (sympy.re(disc_pt), sympy.im(disc_pt))
+            G.node[i]['value']      = disc_pt
+            G.node[i]['radius']     = radius
+            G.node[i]['type']       = 'simple'
+            G.node[i]['root']       = bd_index
+            G.node[i]['basepoint'] = b0
+            G.node[i]['string']     = []
+            G.node[i]['conjugates'] = []
 
-
-        # compute additional graph data
-        G = self._compute_path_indices(G)
-        G = self._compute_vertex_types(G,source=bd_index)
-        return G
-
-
-
-    def plot_monodromy_graph(self):
-        """
-        Plots the monodromy graph.
-        """
-        G = self.monodromy_graph()
-        nodes = G.nodes(data=True)
-        pos = [node_data['pos'] for node, node_data in nodes]
-        nx.draw(G,pos=pos)        
-
-
-
-    def _compute_path_indices(self, G):
-        """
-        Determine the "path indices" of the monodromy graph. For each
-        edge (i,k) assign a tuple (j,l) with values describing the 
-        paths connecting one discriminant point to another.
-        
-        For example, (j,l) = (1,-1) means that a path is followed from 
-        the right side of 
-        """
+        #
+        # Compute graph indices: these determine which sides of the
+        # monodromy circles the edges of the graph are connected to.
+        #
         for (i,k) in G.edges():
             bi = G.node[i]['value']
             bk = G.node[k]['value']
-            if self._use_mpmath: d = sympy.mpmath.re(bk-bi)
-            else:                d = numpy.real(bk-bi)
+            d = sympy.mpmath.re(bk-bi)
             R = max( [G.node[i]['radius'], G.node[k]['radius']] )
             if d > R:    G[i][k]['index'] = (1,-1)
             elif d < -R: G[i][k]['index'] = (-1,1)
             else:        G[i][k]['index'] = (-1,-1)
 
-        return G
 
-
-
-    def _compute_vertex_types(self, G, source):
-        """
-        Comptues the vertex types as defined in [FKS]:
+        # Comptues the vertex types as defined in [FKS]:
+        #
+        # * 'node'     -- a parent vertex of the graph with multiple children
+        # * 'v-point'  -- a vertex of special type described in Section 3 of 
+        #                 [FKS]. Travel to successor vertices don't necessarily
+        #                 require going "underneath" a v-point
+        # * 'endpoint' -- a childless vertex
         
-        * 'node' -- a parent vertex of the graph with multiple children
-        * 'v-point' -- a vertex of special type described in Section 3 of [FKS]
-        * 'endpoint' -- a childless vertex
-
-        Note: the "children" of a vertex are neighbors that are further away 
-        from the starting vertex.
-
-        Note: requires that path indices are computed first.
-        """
         # XXX does not do proper 'v-point node' detection. should be a
         # loop over all vertices with successor edge and edge indices
         # checks
-        edges = list(nx.dfs_edges(G,source=source))
+        edges = list(nx.dfs_edges(G,source=bd_index))
         for j in range(len(edges)-1):
             e_left  = edges[j]
             e_right = edges[j+1]
@@ -513,8 +471,10 @@ class Monodromy(object):
 
         return G
 
+
+
     @cached_function
-    def special_vertices(self):
+    def _special_vertices(self):
         """
         Returns the nodes, v-points, and v-point nodes of the initial
         monodromy graph.
@@ -523,7 +483,7 @@ class Monodromy(object):
         return [n for n,data in G.nodes(data=True) if data['type']!='simple']
 
     @cached_function
-    def vpoints(self):
+    def _vpoints(self):
         """
         Returns the v-points of the monodromy graph.
         """
@@ -531,7 +491,7 @@ class Monodromy(object):
         return [n for n,data in G.nodes(data=True) if data['type']=='v-point']
 
     @cached_function
-    def nodes(self):
+    def _nodes(self):
         """
         Returns the nodes of the monodromy graph.
         """
@@ -539,7 +499,7 @@ class Monodromy(object):
         return [n for n,data in G.nodes(data=True) if data['type']=='node']
 
     @cached_function
-    def vpoint_nodes(self):
+    def _vpoint_nodes(self):
         """
         Returns the v-points of the monodromy graph that are also nodes.
         """
@@ -547,7 +507,7 @@ class Monodromy(object):
         return [n for n,data in G.nodes(data=True) if data['type']=='v-point node']
 
     @cached_function
-    def endpoints(self):
+    def _endpoints(self):
         """
         Returns the endpoints of the monodromy graph.
         """
@@ -555,14 +515,18 @@ class Monodromy(object):
         return [n for n,deg in G.out_degree_iter() if deg == 0]
 
 
-
     def show_paths(self):
         """
-        Plot all paths of the mmonodromy group.
+        Plot all paths of the monodromy group.
         """
-        G = self.monodromy_graph()
+        G   = self.monodromy_graph()
         fig = plt.figure()
         ax  = fig.add_subplot(111)
+        
+        # plot the location of the base_point
+        a = self.base_point()
+        ax.plot(sympy.re(a), sympy.im(a), color='r', 
+                marker='o', markersize=10)
 
         for i in G.nodes():
             # plot the circle about the discriminant point
@@ -591,26 +555,26 @@ class Monodromy(object):
 
             
         
-    def initial_monodromy_path(self, i, Npts=8):
+    def _initial_monodromy_path(self, i, Npts=4):
         """
-        Returns a list of points on the initial monodromy path.
+        Returns a list of interpolating points on the initial monodromy
+        path encircling the 'i'th discriminant point. 'Npts' is the number
+        of interpolating points per "section" of the path where the path
+        is divided into semi-circle and line segment sections.
         """
-        # choose interpolating functions based on underlying type
-        if self._use_mpmath:
-            t_pts = sympy.mpmath.linspace(0, 1, Npts, endpoint=False)
-            circle = lambda R, z0, arg: [R*sympy.mpmath.exp(sympy.mpmath.j*(sympy.mpmath.pi*t + arg)) + z0 for t in t_pts]
-            line = lambda start, end: [start*(1-t) + end*t for t in t_pts]
-        else:
-            t_pts = numpy.linspace(0, 1, Npts, endpoint=False).tolist()
-            circle = lambda R, z0, arg: [R*numpy.exp(1.0j*(numpy.pi*t + arg)) + z0 for t in t_pts]
-            line = lambda start, end: [start*(1-t) + end*t for t in t_pts]
-
+        # Functions for computing interpolating points on semi-circles
+        # and line segments.
+        t_pts = sympy.mpmath.linspace(0, 1, Npts, endpoint=False)
+        circle = lambda R, z0, arg: \
+            [R*sympy.mpmath.exp(sympy.mpmath.j*(sympy.mpmath.pi*t + arg)) + z0
+             for t in t_pts]
+        line = lambda start, end: [start*(1-t) + end*t for t in t_pts]
 
         G    = self.monodromy_graph()
         root = G.node[i]['root']
         path_points = []
 
-        # compute interpolating points for circle / line pairs.  that
+        # Compute interpolating points for circle / line pairs. That
         # is, for each node in the shortest path to the target node
         # determine the interpolating points on the circle and the
         # interpolating points on the line connecting to the next
@@ -637,7 +601,7 @@ class Monodromy(object):
             if prev_edge_index[1] != curr_edge_index[0]:
                 # add semicircle going in positive direction
                 z0  = curr_pos[0] + 1.0j*curr_pos[1]
-                arg = numpy.pi if prev_edge_index[1] == -1 else 0
+                arg = sympy.mpmath.pi if prev_edge_index[1] == -1 else 0
                 circ_pts = circle(curr_radius, z0, arg)
                 path_points.extend(circ_pts)
 
@@ -663,9 +627,9 @@ class Monodromy(object):
             curr_edge_index = (-1,-1)
 
         z0  = next_pos[0] + 1.0j*next_pos[1]
-        arg = numpy.pi if curr_edge_index[1] == -1 else 0
+        arg = sympy.mpmath.pi if curr_edge_index[1] == -1 else 0
         circ_pts = circle(next_radius, z0, arg) + \
-            circle(next_radius, z0, arg + numpy.pi)
+            circle(next_radius, z0, arg + sympy.mpmath.pi)
         circ_pts.append(circ_pts[0])
 
         # combine the path to the circle, the final circle points, 
@@ -687,14 +651,11 @@ class Monodromy(object):
         ax  = fig.gca()
 
         # compute the path points
-        path_points = self.initial_monodromy_path(i, Npts=Npts)
+        path_points = self._initial_monodromy_path(i, Npts=Npts)
         N = len(path_points)
 
         # plot forward path
-        if self._use_mpmath:
-            topos = lambda pp: (sympy.re(pp), sympy.im(pp))
-        else:
-            topos = lambda pp: (numpy.real(pp), numpy.imag(pp))
+        topos = lambda pp: (sympy.re(pp), sympy.im(pp))
         for n in xrange(N/2):
             pos = topos(path_points[n])
             ax.text(pos[0], pos[1], '%d'%n, size='x-small',
@@ -710,7 +671,7 @@ class Monodromy(object):
         fig.show()
 
 
-    def initial_monodromy(self, i, Npts=8, lift_paths=False, *args, **kwds):
+    def initial_monodromy(self, i, Npts=4, lift_paths=False):
         """
         Returns the initial monodromy corresponding to disciminant
         point `i`.  That is, the permutation of sheets as we go around
@@ -719,23 +680,21 @@ class Monodromy(object):
         # compute derivatives. optimize for return type
         dfdx = sympy.diff(self.f, self.x)
         dfdy = sympy.diff(self.f, self.y)
-        if self._use_mpmath:
-            dfdx = sympy.lambdify([x,y], dfdx, "mpmath")
-            dfdy = sympy.lambdify([x,y], dfdy, "mpmath")
-        else:
-            dfdx = sympy.lambdify([x,y], dfdx, "numpy")
-            dfdy = sympy.lambdify([x,y], dfdy, "numpy")
+        dfdx = sympy.lambdify([x,y], dfdx, "mpmath")
+        dfdy = sympy.lambdify([x,y], dfdy, "mpmath")
 
         # lift function: for each x = xi compute the roots yi_j lying
         # above xi
-        lift  = lambda a: sympy.nroots(self.f.subs({self.x:a}), *args, **kwds)
+        lift  = lambda a: sympy.nroots(self.f.subs({self.x:a}),
+                                       n=sympy.mpmath.mp.dps)
 
         # obtain interpolating points in path
-        path = self.initial_monodromy_path(i, Npts=Npts)
+        path = self._initial_monodromy_path(i, Npts=Npts)
 
-        # rewrite this part so it's computed at creation of monodromy
+        # note that the order of base_lift is fixed at creation of the
+        # class / monodromy group.
         base_point = self.base_point()
-        base_lift  = lift(base_point)
+        base_lift  = self.base_lift()
         prev_rts   = [yi for yi in base_lift]
 
         if lift_paths:
@@ -752,13 +711,13 @@ class Monodromy(object):
             yi_approx = [yim1[j] - dx * dfdx(xim1,yim1[j]) / dfdy(xim1,yim1[j])
                          for j in xrange(self.deg)]
 
-
             # if a matching permutation cannot be found, double the number
             # of interpolating points and try again
             try:
                 rho = matching_permutation(yi, yi_approx)
             except:
-                return self.initial_monodromy(i, Npts=2*Npts, *args, **kwds)
+                return self.initial_monodromy(i, Npts=2*Npts, 
+                                              lift_paths=lift_paths)
                 
             yi = rho.action(yi)
             
@@ -769,35 +728,28 @@ class Monodromy(object):
             yim1 = yi
             xim1 = xi
 
-
         # return the lift points, if requested. Otherwise, just return
         # the initial monodromy permutation.
-        if lift_paths:
-            if self._use_mpmath:
-                return lift_points
-            else:
-                return numpy.array(lift_points, dtype=self.dtype)
-        else:
-            return matching_permutation(base_lift, yi)
+        if lift_paths: return lift_points
+        else:          return matching_permutation(base_lift, yi)
 
 
     
-    def plot_initial_monodromy_lift(self, i, Npts=8, *args, **kwds):
+    def plot_initial_monodromy_lift(self, i, Npts=4):
         """
         Plots the lift [y1,...,yn] on the complex plane as x varies 
         Along an initial monodromy path.
         """
-        lift = self.initial_monodromy(i, Npts=Npts, lift_paths=True,
-                                      *args, **kwds)
+        lift = self.initial_monodromy(i, Npts=Npts, lift_paths=True)
         clrs = ['b','g','r','k','c','m','y']*int(self.deg/7+1)
 
         fig = plt.figure()
         ax  = fig.add_subplot(111)
 
         for i in xrange(self.deg):
-            yi = lift[:,i]
-            yi_re = numpy.real(yi)
-            yi_im = numpy.imag(yi)
+            yi = [lift[n][i] for n in xrange(len(lift))]
+            yi_re = [sympy.re(yij) for yij in yi]
+            yi_im = [sympy.im(yij) for yij in yi]
             ax.plot(yi_re, yi_im, color=clrs[i], 
                     linestyle='--', linewidth=3*(i+1), alpha=0.4)
             ax.plot(yi_re[-1], yi_im[-1], color=clrs[i],
@@ -820,9 +772,7 @@ class Monodromy(object):
             Compute the angle between vertex v and w using monodromy
             graph indices.
             """
-            if self._use_mpmath: arg = sympy.mpmath.arg
-            else:                arg = numpy.angle
-
+            arg = sympy.mpmath.arg
             v = origin_vertex
 
             # compute "reference point": if v is a node then this is
@@ -868,10 +818,14 @@ class Monodromy(object):
         # (0) Gather special nodes
         #
         root = G.node[0]['root']
-        endpoints = self.endpoints()
-        vpoints = self.vpoints()
-        nodes = self.nodes()
-        vpoint_nodes = self.vpoint_nodes()
+        endpoints = self._endpoints()
+        vpoints = self._vpoints()
+        nodes = self._nodes()
+        vpoint_nodes = self._vpoint_nodes()
+
+        # caching...
+        if len(G.node[root]['string']) == len(self.discriminant_points()):
+            return G.node[root]['string']
 
         #
         # (1) Initialize strings using endpoints
@@ -903,7 +857,7 @@ class Monodromy(object):
         #    data field 'string'. if none can be found then move to next
         #    special point.
         # 2. when a special vertex has enough filled strings,
-        special_vertices = self.special_vertices()
+        special_vertices = self._special_vertices()
         N = len(special_vertices)
         n = 0;
         while N > 0:
@@ -965,10 +919,11 @@ class Monodromy(object):
                 string = [G.node[pt]['string'] for pt in pts]
 
                 # extend string to next v-point or node (unless at root)
+                # XXX
                 w = v
                 if v != root:
                     u = G.predecessors(w)[0]
-                    while G.node[u]['type'] == 'simple':
+                    while (G.node[u]['type'] == 'simple'):
                         string.append(u)
                         w = u
                         u = G.predecessors(u)[0]
@@ -984,13 +939,15 @@ class Monodromy(object):
         return G.node[root]['string']
 
 
-
-    def monodromy(self, Npts=8):
+    def monodromy(self, Npts=4):
         """
         Returns the monodromy group.
 
         Note: see page 541 of [F...
         """
+        if self._monodromy:
+            return self._monodromy
+
         G = self.monodromy_graph()
         N = len(self.discriminant_points())
 
@@ -1017,7 +974,10 @@ class Monodromy(object):
                 position_tree[i] = k
 
                 # store conjugation information in self
-                self.conjugates[m-1].append(k-1)
+                G.node[m]['conjugates'].append(k)
+
+        # cache results
+        self._monodromy = monodromy
 
         return monodromy        
 
@@ -1025,16 +985,17 @@ class Monodromy(object):
 if __name__=='__main__':
    from sympy.abc import x,y
 
+   f0 = y**3 - 2*x**3*y - x**8  # Klein curve
    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
    f2 = -x**7 + 2*x**3*y + y**3
    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
    f4 = y**2 + x**3 - x**2
    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-   f6 = y**4 - y**2*x + x**2
+   f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
    f7 = y**3 - (x**3 + y)**2 + 1
    f8 = (x**6)*y**3 + 2*x**3*y - 1
    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
    
-   f  = f3
+   f  = f0
    M = Monodromy(f,x,y)
