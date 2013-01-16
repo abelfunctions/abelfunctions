@@ -300,13 +300,12 @@ class Monodromy(object):
         return self._base_lift
 
 
-    @cached_function
     def branch_points(self):
         """
         Returns the branch points of the algebraic curve. These are the
         discriminant points that have non-identity monodromy elements.
         """
-        pass
+        return self.discriminant_points()
 
 
     def discriminant_points(self):
@@ -980,6 +979,25 @@ class Monodromy(object):
         self._monodromy = monodromy
 
         return monodromy        
+
+    def hurwitz_system(self):
+        """
+        Returns the Hurwitz system:
+
+            [base_point, base_sheets, branch_points, monodromy]
+
+        where
+        
+        * base_point: the base point of the monodromy group in the
+                      complex x-plane
+        * base_sheets: the ordered sheets lying above the base point
+        * branch_points: the locations of the ordered branch points in 
+                         the complex x-plane
+        * monodromy: the corresponding monodromy group permutation elts
+        """
+        mon = self.monodromy()
+        return self.base_point(), self.base_sheets, self.branch_points(), mon
+
 
 
 if __name__=='__main__':
