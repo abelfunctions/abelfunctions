@@ -31,6 +31,7 @@ def find_cycle(pi, j):
 
     return cycle
 
+
 def smallest(l):
     """
     The cycles of the homology are written with their smallest sheet
