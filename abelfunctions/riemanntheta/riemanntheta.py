@@ -102,6 +102,7 @@ from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import *
 import time
+from parRiemann import compute as parRiemann
 
 class RiemannTheta_Function:
     r"""
@@ -434,9 +435,7 @@ class RiemannTheta_Function:
 
         # compute oscillatory and exponential terms
         if gpu and List:
-            """
-            parRiemann.compute(X, Yinv, T, z, S, g)
-            """
+            v = parRiemann(X, Yinv, T, z, S, g)
         elif (len(deriv) > 0):
             v = RIEMANN.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, List)
         else:
@@ -487,18 +486,33 @@ if __name__=="__main__":
     print theta.value_at_point(z,Omega,gpu=False)
     print "1.1654 - 1.9522e-15*I"
     print 
-
+    
     print "Test #2:"
-    z = np.array([1.0j,1.0j])
-    print theta.value_at_point(z,Omega,gpu=False)
+    z1 = np.array([1.0j,1.0j])
+    print theta.value_at_point(z1,Omega,gpu=False)
     print "-438.94 + 0.00056160*I"
     print
 
+
     print "Batch Test"
-    z0 = np.array([1.0j, 1.0j])
-    z1 = np.array([0,0])
-    print theta.value_at_point([z0,z1],Omega,gpu=False, List=True)
-    
+    z0 = np.array([0, 0])
+    z1 = np.array([1.0j,1.0j])
+    z2 = np.array([.5 + .5j, .5 + .5j])
+    z3 = np.array([0 + .5j, .33 + .8j])
+    z4 = np.array([.345 + .768j, -44 - .76j])
+    print theta.value_at_point([z0,z1,z2,z3,z4],Omega,gpu=False, List=True)
+    print
+
+    print "GPU TEST"
+    a = []
+    for x in range(10000):
+        a.append(z0)
+        a.append(z1)
+        a.append(z2)
+        a.append(z3)
+        a.append(z4)
+    print theta.value_at_point(a, Omega, gpu=True, List=True)[1730:1735]
+
     print
     print "Derivative Tests:"
     print "Calculating directional derivatives at z = [i, 0]"
@@ -546,7 +560,6 @@ if __name__=="__main__":
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
- 
 
 
                        
