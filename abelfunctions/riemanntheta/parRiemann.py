@@ -17,14 +17,13 @@ S = List of integer points to sum over
 g = genus
 """
 
+import time
 import numpy as np
 import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
-import time
 
 def compute(X, Yinv, T, Z, S, g):
-    start = time.clock()
     S = np.array(S)
     #Flatten all matrices
     X = X.flatten()
@@ -124,12 +123,7 @@ def compute(X, Yinv, T, Z, S, g):
     cuda.memcpy_dtoh(fsum_real, fsum_reald)
     cuda.memcpy_dtoh(fsum_imag, fsum_imagd)
     
-    fsums = []
-    for i in range(K):
-        fsums.append(fsum_real[i*stride] + fsum_imag[i*stride]*1.0j)
-    
-    print("GPU Computation Time: " + str(time.clock() - start))
-        
+    fsums = fsum_real[:K] + fsum_imag[:K]*1.0j
     return fsums
 
 def func1():
@@ -293,6 +287,10 @@ __global__ void reduction_kernel(double *A_d, double *A_outd, int num_elements, 
 
   if (tdx == 0) {
     A_outd[bdx + row] = data[0];
+  }
+
+  if (gridDim.x == 1) {
+    A_outd[bdy] = data[0];
   }
 }
 

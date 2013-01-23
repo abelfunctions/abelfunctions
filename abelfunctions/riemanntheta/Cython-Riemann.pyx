@@ -27,7 +27,6 @@ def finite_sum(X, Yinv, T, Z, S, g, List):
     N = len(S)/g
     cdef double real[0]
     cdef double imag[0]
-    start = time.clock()
     for z in Z:
         x = z.real
         y = z.imag
@@ -50,7 +49,6 @@ def finite_sum(X, Yinv, T, Z, S, g, List):
            vals.append(real[0] + imag[0] * 1.0j)
         else:
            return real[0] + imag[0] * 1.0j
-    print time.clock() - start
     return vals
                 
 

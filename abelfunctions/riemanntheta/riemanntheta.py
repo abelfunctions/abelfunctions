@@ -420,10 +420,8 @@ class RiemannTheta_Function:
                 self._rad = self.radius(T, prec, deriv=deriv)
             if self._intpoints is None:
                 origin          = [0]*g
-                start = time.clock()
                 self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                       g, self._rad)
-                print (time.clock() - start)
             R = self._rad
             S = self._intpoints
         else:
@@ -505,13 +503,18 @@ if __name__=="__main__":
 
     print "GPU TEST"
     a = []
-    for x in range(10000):
+    for x in range(12000):
         a.append(z0)
         a.append(z1)
         a.append(z2)
         a.append(z3)
         a.append(z4)
+    start1 = time.clock()
     print theta.value_at_point(a, Omega, gpu=True, List=True)[1730:1735]
+    print("GPU time to perform calculation: " + str(time.clock() - start1))
+    start2 = time.clock()
+    print theta.value_at_point(a, Omega, gpu=False, List=True)[1730:1735]
+    print("CPU time to do same calculation: " + str(time.clock() - start2))
 
     print
     print "Derivative Tests:"
