@@ -745,7 +745,6 @@ class Monodromy(object):
             try:
                 rho = matching_permutation(yi, yi_approx)
             except:
-                print "FUCK!!!"
                 return self.initial_monodromy(i, Npts=2*Npts, 
                                               lift_paths=lift_paths)
                 
