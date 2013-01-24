@@ -15,6 +15,7 @@ from matplotlib.cbook import flatten
 from utilities import cached_function, cached_property
 
 
+import pdb
 
 class Permutation(object):
     """
@@ -292,12 +293,20 @@ class Monodromy(object):
         """    
         return self._base_point
 
+
     def base_lift(self):
         """
         Returns the ordered lift of the base point. That is, the first
         element corresponds to sheet 0, the next sheet 1, etc.
         """
         return self._base_lift
+
+
+    def base_sheets(self):
+        """
+        Same as Monodromy.base_lift(). 
+        """
+        return self.base_lift()
 
 
     def branch_points(self):
@@ -322,12 +331,13 @@ class Monodromy(object):
         x, y = self.x, self.y
         p    = sympy.Poly(self.f,[x,y])
         res  = sympy.Poly(sympy.resultant(p,p.diff(y),y),x)
-        rts  = res.all_roots(multiple=False,radicals=False)
-
-        # XXX Is this really the right thing to do? Probably not.
+    
+        # compute the numerical roots
         prec = sympy.mpmath.mp.dps
-        disc_pts = map(sympy.mpmath.mpmathify,
-                       [str(rt.n(prec)).replace('*I','j') for rt,_ in rts])
+        rts = sympy.nroots(res,n=sympy.mpmath.mp.dps)
+        disc_pts = map(sympy.mpmath.mpmathify,                                
+                       [str(rt.n(prec)).replace('*I','j') for rt in rts])
+
         return list(set(disc_pts))
 
 
@@ -417,7 +427,7 @@ class Monodromy(object):
             G.node[i]['radius']     = radius
             G.node[i]['type']       = 'simple'
             G.node[i]['root']       = bd_index
-            G.node[i]['basepoint'] = b0
+            G.node[i]['basepoint']  = b0
             G.node[i]['string']     = []
             G.node[i]['conjugates'] = []
 
@@ -442,31 +452,51 @@ class Monodromy(object):
         #                 [FKS]. Travel to successor vertices don't necessarily
         #                 require going "underneath" a v-point
         # * 'endpoint' -- a childless vertex
-        
-        # XXX does not do proper 'v-point node' detection. should be a
-        # loop over all vertices with successor edge and edge indices
-        # checks
-        edges = list(nx.dfs_edges(G,source=bd_index))
-        for j in range(len(edges)-1):
-            e_left  = edges[j]
-            e_right = edges[j+1]
+        for vertex in G.nodes():
+            path = nx.shortest_path(G, source=bd_index, target=vertex)
+            for j in range(len(path)-2):
+                e_left  = [path[j],path[j+1]]
+                e_right = [path[j+1],path[j+2]]
 
-            # check for 'v-point': when a path contains a sequence of
-            # edges of the form [..., bj^(I)], [bj^(I), ...] where I
-            # is a matching index.
-            if e_left[1] == e_right[0]:                
-                left_index  = G.edge[e_left[0]][e_left[1]]['index']
-                right_index = G.edge[e_right[0]][e_right[1]]['index']
-                if left_index[1] == right_index[0]:
-                    G.node[e_left[1]]['type'] = 'v-point'
-            # check for 'node': a discriminant point where several
-            # branches meet. i.e. where the number of successors is
-            # greater than 1. v-points can be nodes as well.
-            if len(G.successors(e_left[0])) > 1:
-                if G.node[e_left[0]]['type'] == 'v-point':
-                    G.node[e_left[0]]['type'] = 'v-point node'
-                else:
-                    G.node[e_left[0]]['type'] = 'node'
+
+                # The vertex in question is the one joining the two
+                # edges of the path.
+                v = e_left[1]
+
+                # check for 'v-point': when a path contains a sequence of
+                # edges of the form [..., bj^(I)], [bj^(I), ...] where I
+                # is a matching index.
+                if e_left[1] == e_right[0]:                
+                    left_index  = G.edge[e_left[0]][e_left[1]]['index']
+                    right_index = G.edge[e_right[0]][e_right[1]]['index']
+
+                    # the middle vertex is a v-point. Mark it as such.
+                    # If it has previously been marked as a node or a
+                    # v-point node then mark it as a v-point node.
+                    if left_index[1] == right_index[0]:
+                        if G.node[v]['type'] in ['node','v-point node']:
+                            G.node[v]['type'] = 'v-point node'
+                        else:
+                            G.node[v]['type'] = 'v-point'
+
+                # check for 'node': a discriminant point where several
+                # branches meet. i.e. where the number of successors is
+                # greater than 1. v-points can be nodes as well.
+                n_succ = len(G.successors(v))
+                if n_succ > 1:
+                    # if the vertex is already a v-point and if it has more
+                    # successors than the v-point and a string then
+                    # label it as a v-point node
+                    if G.node[v]['type'] in ['v-point', 'v-point node']:
+                        G.node[v]['type'] = 'v-point node'
+                    else:
+                        G.node[v]['type'] = 'node'
+
+        # treat the root vertex as a node type
+        if G.node[bd_index]['type'] == 'v-point':
+            G.node[bd_index]['type'] = 'v-point node'
+        else:
+            G.node[bd_index]['type'] = 'node'
 
         return G
 
@@ -554,7 +584,7 @@ class Monodromy(object):
 
             
         
-    def _initial_monodromy_path(self, i, Npts=4):
+    def _initial_monodromy_path(self, i, Npts=3):
         """
         Returns a list of interpolating points on the initial monodromy
         path encircling the 'i'th discriminant point. 'Npts' is the number
@@ -639,7 +669,7 @@ class Monodromy(object):
 
 
 
-    def plot_initial_monodromy_path(self, i, Npts=4, eps=0.1):
+    def plot_initial_monodromy_path(self, i, Npts=3, eps=0.1):
         """
         Plots the initial monodromy path. Used for testing and
         debugging purposes.
@@ -670,7 +700,7 @@ class Monodromy(object):
         fig.show()
 
 
-    def initial_monodromy(self, i, Npts=4, lift_paths=False):
+    def initial_monodromy(self, i, Npts=2, lift_paths=False):
         """
         Returns the initial monodromy corresponding to disciminant
         point `i`.  That is, the permutation of sheets as we go around
@@ -679,8 +709,8 @@ class Monodromy(object):
         # compute derivatives. optimize for return type
         dfdx = sympy.diff(self.f, self.x)
         dfdy = sympy.diff(self.f, self.y)
-        dfdx = sympy.lambdify([x,y], dfdx, "mpmath")
-        dfdy = sympy.lambdify([x,y], dfdy, "mpmath")
+        dfdx = sympy.lambdify([self.x,self.y], dfdx, "mpmath")
+        dfdy = sympy.lambdify([self.x,self.y], dfdy, "mpmath")
 
         # lift function: for each x = xi compute the roots yi_j lying
         # above xi
@@ -715,6 +745,7 @@ class Monodromy(object):
             try:
                 rho = matching_permutation(yi, yi_approx)
             except:
+                print "FUCK!!!"
                 return self.initial_monodromy(i, Npts=2*Npts, 
                                               lift_paths=lift_paths)
                 
@@ -734,7 +765,7 @@ class Monodromy(object):
 
 
     
-    def plot_initial_monodromy_lift(self, i, Npts=4):
+    def plot_initial_monodromy_lift(self, i, Npts=3):
         """
         Plots the lift [y1,...,yn] on the complex plane as x varies 
         Along an initial monodromy path.
@@ -822,6 +853,7 @@ class Monodromy(object):
         nodes = self._nodes()
         vpoint_nodes = self._vpoint_nodes()
 
+
         # caching...
         if len(G.node[root]['string']) == len(self.discriminant_points()):
             return G.node[root]['string']
@@ -884,6 +916,10 @@ class Monodromy(object):
                 if G.node[v]['type'] == 'v-point node':
                     G.node[v]['type'] = 'node'
 
+                    # XXX probably don't need the conditional. need to make sure that v is included in the string since if we need to conjugate by v then we need to also conjugate 
+                    if G.node[v]['string'] == []:
+                        G.node[v]['string'] = [v]
+
                     # get the "node side" successors of v: these are
                     # the vertices that don't form a v-point.
                     u = G.predecessors(v)[0]
@@ -903,7 +939,7 @@ class Monodromy(object):
                     # sorting
                     G.node[v]['type'] = 'v-point'
                     succ = [w for w in G.successors(v) 
-                            if G[v][w]['index'][0] != uv_ind[1]]
+                            if G[v][w]['index'][0] == uv_ind[1]]
                     pts = succ + [v]
 
                 else:
@@ -938,7 +974,7 @@ class Monodromy(object):
         return G.node[root]['string']
 
 
-    def monodromy(self, Npts=4):
+    def monodromy(self, Npts=2):
         """
         Returns the monodromy group.
 
@@ -996,7 +1032,7 @@ class Monodromy(object):
         * monodromy: the corresponding monodromy group permutation elts
         """
         mon = self.monodromy()
-        return self.base_point(), self.base_sheets, self.branch_points(), mon
+        return self.base_point(), self.base_sheets(), self.branch_points(), mon
 
 
 
@@ -1015,5 +1051,5 @@ if __name__=='__main__':
    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
    
-   f  = f0
+   f  = f7
    M = Monodromy(f,x,y)
