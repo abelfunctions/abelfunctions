@@ -5,20 +5,24 @@ Homology
 import numpy
 import scipy
 import sympy
+import networkx as nx
 
-from monodromy import Permutation
+from monodromy import Permutation, Monodromy
 
 import pdb
 
-# TODO:
-# 
-#
+
 
 
 def find_cycle(pi, j):
     """
     Returns the cycle (as a list) of the permutation pi
     containing j.
+
+    Note: The ordering of a cycle is important for the homology functions
+    since cycles are used to index dictionaries. For example, although
+    "(0 7 4)" and "(7 4 0)" are the same cycle, this function outputs
+    the cycles sith the smallest element of the cycle first.
     """
     if isinstance(pi, list):
         pi = Permutation(pi)
@@ -29,18 +33,23 @@ def find_cycle(pi, j):
         cycle.append(k) # update the cycle
         k = pi(k)       # iterate
 
-    return cycle
+    return reorder_cycle(tuple(cycle), min(cycle))
 
 
 def smallest(l):
     """
     The cycles of the homology are written with their smallest sheet
-    number first.
+    number first. This function finds the smallest sheet number in the
+    cycle l = (sheet, branch point, sheet, branch point, ...)
     """
     a = l[:]
+
+    # If the first element of the cycle is a branch point then just shift
+    # the cycle by one.
     if not isinstance(a[0], int):
         a = a[1:] + [a[0]]
 
+    # Return the smallest sheet number appearing in the cycle
     return min([a[2*i] for i in xrange(len(a)/2)])
 
 
@@ -51,16 +60,19 @@ def reorder_cycle(c, j=None):
     """
     n = len(c)
     try:
-        if j: i = c.index(j)
-        else: i = smallest(c)
+        if j != None: 
+            i = c.index(j)
+        else:         
+            sheet = smallest(c)
+            i = c.index(sheet)
     except ValueError:
         raise ValueError("%d does not appear in the cycle %s"%(j,c))
 
-    return [c[k%n] for k in xrange(i,i+n)]
+    return tuple([c[k%n] for k in xrange(i,i+n)])
         
 
 
-def Frobenius_transform(A,g):
+def frobenius_transform(A,g):
     """
     This procedure brings any intersection matrix a to its canonical
     form by a transformation alpha * a * transpose(alpha)=b. If
@@ -73,12 +85,15 @@ def Frobenius_transform(A,g):
 
     XXX not well tested....XXX
     """
-    B = numpy.matrix(A) # XXX
+    if not isinstance(A,numpy.matrix):
+        B = numpy.matrix(A, dtype=numpy.int)
+    else:
+        B = A
     dim = B.shape[0]
 
     # the rand of an antisymmetric matrix is always even and is equal
     # to 2g in this case
-    alpha = numpy.eye(dim)
+    alpha = numpy.eye(dim, dtype=numpy.int)
     
     # create the block below the diagonal. make zeros everywhere else
     # in the first g columns
@@ -141,6 +156,59 @@ def Frobenius_transform(A,g):
     
 
 
+# def alt_tretkoff_table(hutwitz_system):
+#     base_point, base_sheets, branch_points, monodromy = hurwitz_system
+
+#     # the number of sheets of the Riemann surface
+#     covering_number = len(base_sheets)
+
+#     # the number of branch points
+#     t = len(branch_points)
+
+#     # the branch points together with their permutations, using the
+#     # notation of Tretkoff and Tretkoff
+#     c = [[ (branch_points[i], find_cycle(monodromy[i],j)) 
+#            for j in xrange(covering_number) ]
+#          for i in xrange(t) ]
+    
+#     # initial construction of first circle: from sheet one go to all
+#     # branchpoints on sheet one which are not fixed points
+#     G = nx.DiGraph()
+#     G.add_node(0)
+#     G.add_edges_from( [(0,c[i][0]) for i in xrange(t)] )
+    
+#     # vitied_labels keeps track of which sheets we've already visited
+#     used_sheet_labels = [0]
+    
+#     # used_bpt_labels keepst rack of which preimages of branch points
+#     # (cycles) we've used already. this includes one cycles, which are
+#     # terminal points
+#     used_bpt_labels = [c[i][0] for i in xrange(t)]
+#     for i in xrange(t):
+#         for j in xrange(j):
+#             if len(c[i][j][1]) == 1: 
+#                 used_bpt_labels.append(c[i][j])
+
+
+#     # loop until all sheets have been reached using a breadth first search
+#     level == 0
+#     while len(used_sheet_labels) < t:
+#         # grab all of the nodes that we haven't computed successors to
+#         # that haven't already been visited in the past
+#         if level % 2:
+#             current_level_nodes = [n for n in G.nodes if G.successors(n) == []
+#                                    and n not in used_bpt_labels]
+#         else:
+#             current_level_nodes = [n for n in G.nodes if G.successors(n) == []
+#                                    and n not in used_sheet_labels]
+
+        
+        
+
+
+    
+
+
 def tretkoff_table(hurwitz_system):
     """
     Encodes data from a given Hurwitz system into a graph that
@@ -158,6 +226,9 @@ def tretkoff_table(hurwitz_system):
     - a Tretkoff table encoding the c-cycle data.
     """
     base_point, base_sheets, branch_points, monodromy = hurwitz_system
+    
+    # XXX USE BRANCH POINT INDICES INSTEAD FOR EASE OF READNIG XXX
+    branch_points = range(len(branch_points))
 
     # the number of sheets of the Riemann surface
     covering_number = len(base_sheets)
@@ -167,7 +238,7 @@ def tretkoff_table(hurwitz_system):
 
     # the branch points together with their permutations, using the
     # notation of Tretkoff and Tretkoff
-    c = [[ (branch_points[i], find_cycle(mon[i],j)) 
+    c = [[ (branch_points[i], find_cycle(monodromy[i],j)) 
            for j in xrange(covering_number) ]
          for i in xrange(t) ]
     
@@ -182,17 +253,17 @@ def tretkoff_table(hurwitz_system):
             startseq.append(['stop',c[i][0]])
     
     # initialize Tretkoff table
-    tretkoff = {'C':{0:[1,[],startseq,[]]}, 'q':{}, 'p':{}}
+    tretkoff = {'C':{0:[[0,[],startseq,[]]]}, 'q':{}, 'p':{}}
     
     # vitied_labels keeps track of which sheets we've already visited
-    used_sheet_labels = [1]
+    used_sheet_labels = [0]
     
     # used_bpt_labels keepst rack of which preimages of branch points
     # (cycles) we've used already. this includes one cycles, which are
     # terminal points
-    used_bpt_labels = [c[i,0] for i in xrange(t)]
+    used_bpt_labels = [c[i][0] for i in xrange(t)]
     for i in xrange(t):
-        for j in xrange(j):
+        for j in xrange(covering_number):
             if len(c[i][j][1]) == 1: 
                 used_bpt_labels.append(c[i][j])
 
@@ -245,17 +316,22 @@ def tretkoff_table(hurwitz_system):
                             newlist = reorder_cycle(sourcelist[2][j][1],
                                                     sourcelist[0])
 
-                            # for each label other than the current
-                            # one (j, which was moved to the front of
-                            # the cycle) check if we need to add an
-                            # edge to the graph.
+                            # for each label in the cycle from the
+                            # originating vertex, (which was moved to
+                            # the front of the cycle) check if we need
+                            # to add an edge to the graph.
                             for k in range(1,len(newlist)):
                                 nlk = newlist[k]
-                                # sheet has not been visited
+                                # sheet has not been visited. add it
+                                # to the min spanning tree
                                 if nlk not in used_sheet_labels:
                                     a3.append(nlk)
                                     used_sheet_labels.append(nlk)
-                                # sheet has been visited
+                                # sheet has been visited. this means
+                                # that we would be adding an edge that
+                                # we would otherwise take out of the
+                                # min spanning tree. determine what
+                                # type of edge it is
                                 else:
                                     a3.append(['stop',nlk])
                                     # 'edge' denotes a branch pointing
@@ -290,7 +366,7 @@ def tretkoff_table(hurwitz_system):
                                                 a1,
                                                 a2,
                                                 a3,
-                                                [a4,k-1],
+                                                a4 + [k-1],
                                             ]
                                         #endif edge in q_edges
                                     #endif edge not in final_edges
@@ -347,16 +423,17 @@ def tretkoff_table(hurwitz_system):
                         # done in order: first the sheets that are
                         # next in the permutation, then the sheets in
                         # the permutation preceeding the current one
-                        if b1[0] != 'stop':
+#                        if b1[0] != 'stop':
+                        if not isinstance(b1,list):
                             startingindex = branch_points.index(b2[0])
                             for k in range(startingindex+1,t):
-                                ckb1 = c[k,b1]
+                                ckb1 = c[k][b1]
                                 if ckb1 not in used_bpt_labels:
                                     # the preimage of the branchpoint
                                     # has not been used. add it.
                                     if len(ckb1[1]) != 1:
                                         b3.append(ckb1)
-                                        use_bpt_labels.append(ckb1)
+                                        used_bpt_labels.append(ckb1)
                                 else:
                                     # the preimage of the branchpoint
                                     # has been used.
@@ -400,7 +477,8 @@ def tretkoff_table(hurwitz_system):
                                     #fi
                                 #fi
                             #od
-                            for k in xrange(startingindex-1):
+                            for k in xrange(startingindex):
+                                ckb1 = c[k][b1]
                                 if ckb1 not in used_bpt_labels:
                                     # the preimage of the branchpoint
                                     # has not been used
@@ -449,7 +527,7 @@ def tretkoff_table(hurwitz_system):
                             #od
                         #fi
                         # create a new vertex
-                        entry = [a1,a2,a3,a4]
+                        entry[j] = [a1,a2,a3,a4]
                     #od
                     # add the new vertex to the graph
                     tretkoff['C'][level][i] = entry
@@ -458,8 +536,9 @@ def tretkoff_table(hurwitz_system):
         #fi 
         # don't bunch the vertices together according
         # to their origin. All vertices are treated equal.
-        tretkoff['C'][level] = [tretkoff['C'][level][i] 
-                                for i in xrange(previous)]
+        # i.e. flatten the list
+        tretkoff['C'][level] = [vertex for vertex_list in tretkoff['C'][level]
+                                for vertex in vertex_list]
         level += 1
     #od
     # How many levels with new information are there? This excludes the last
@@ -492,17 +571,18 @@ def tretkoff_list(tretkoff_table):
             return not cmp(l2,l1)
     
     n = tretkoff_table['numberofcycles']
-    result = None
-    
-    lijst = [ [tretkoff_table['p'][i][3] for i in xrange(n)],
-              [tretkoff_table['q'][i][3] for i in xrange(n)] ]
+    result = []
+
+    lijst = [ tretkoff_table['p'][i][3] for i in xrange(n) ]
+    lijst.extend( [ tretkoff_table['q'][i][3] for i in xrange(n) ] )
     
     # check this since cmp \in {-1,0,1}
     lijst.sort(cmp=cmp)
-    for i in lijst:
-        j = lijst[i]
+    for e in lijst:
+        j = lijst.index(e)
         # result:=result,`if`(j>n,q[j-n],p[j])
-        result.append(tretkoff_table[j-n] if j > n else tretkoff_table[j])
+        result.append(tretkoff_table['q'][j-n] if j >= n   #XXX
+                      else tretkoff_table['p'][j])
 
     return result
 
@@ -513,24 +593,28 @@ def make_cycle(a,b):
     This procedure removes the common parts of two lists before
     putting them together to create a cycle.
     """
-    H = 0
-    while a[H] == b[H]: H += 1
+    H = -1
+    while a[H+1] == b[H+1]: H += 1
+
+    A = [a[i] for i in xrange(H,len(a))]
     B = [b[i] for i in range(H+1,len(b)-1)]
-    B.reverse()
-    cycle = reorder_cycle([a[i]  for i in range(H,len(a))], B)
+    B.reverse()    
+    A.extend(B)
+    cycle = reorder_cycle(A)
 
     return cycle
 
 
-def intersection_matrix(t_list, elements):
+def intersection_matrix(lijlist, elements):
     """
     Computes the intersection matrix, K, of the c-cycles given the pi/qi
     points. The ordering of the pi's and qi's determines the entry in the
     intersection matrix: -1, 0, or 1.
     """
-    length = len(t_list)
+    length = len(lijlist)
     dim    = length / 2
-    K      = numpy.zeros((dim,dim))
+    K      = numpy.zeros((dim,dim), dtype=numpy.int)
+    a      = [lij for lij in lijlist]
 
     for i in xrange(dim-1):
         a = reorder_cycle(a,elements[i])
@@ -538,13 +622,13 @@ def intersection_matrix(t_list, elements):
 
         for j in range(i+1,dim):
             pj = a.index(elements[j])
-            qj = a.index(elements[j])
+            qj = a.index(elements[j+dim])
             
             if   (pj<qi) and (qi<qj): K[i,j] = 1
             elif (qj<qi) and (qi<pj): K[i,j] = -1
             else:                     K[i,j] = 0
 
-    return K
+    return K - K.T
 
 
 
@@ -558,6 +642,7 @@ def homology_basis(tretkoff_table):
     root. Then we follow the path from the root to pi. These paths are
     pasted together and their overlap around the root is removed.
     """
+    c = []
     for i in xrange(tretkoff_table['numberofcycles']):
         pi = tretkoff_table['p'][i]
         qi = tretkoff_table['q'][i]
@@ -565,16 +650,16 @@ def homology_basis(tretkoff_table):
         qpath = qi[3]
 
         for Z in range(2):
-            part = [1]
+            part = [0]  # XXX
             k = 0
             vertex = tretkoff_table['C'][0][0]
-            for j in ppath if Z==0 else qpath:
+            for j in ppath if Z == 0 else qpath:
                 part.append(vertex[2][j])
-                loc1 = tertkoff_table['C'][k].index(vertex)
+                loc1 = tretkoff_table['C'][k].index(vertex)
                 loc2 = 0
                 
-                if loc1 > 1:
-                    for m in range(loc1-1):
+                if loc1 > 0:                  # XXX
+                    for m in range(loc1):     # XXX
                         loc2 += len(tretkoff_table['C'][k][m][2])
 
                 loc2 += j
@@ -586,13 +671,14 @@ def homology_basis(tretkoff_table):
             else:
                 qpart = part
 
-        # qpart:=subsop(nops(qpart)=qpart[-1][2],qpart);
-        qpart[-1] = qpart[-1][1] # XXX
-        c[i] = make_cycle(ppart, qpart)
+        # By construction, the last element of qpart should be a ['stop',sheet]
+        # tuple. Replace this tuple with the sheet number it contains since
+        # we don't need to keep track of 'stop's anymore.
+        qpart[-1] = qpart[-1][1]
+        c.append( make_cycle(ppart, qpart) )
 
     return c
 
-        
 
 
 
@@ -602,10 +688,9 @@ def canonical_basis(f,x,y):
     complex plane algebraic curve, return a canonical basis for the
     homology of the Riemann surface.
     """
-    # g = genus(f,x,y)   # XXX write this function...
+#    g = genus(f,x,y)   # XXX write this function...
     mon = Monodromy(f,x,y)
-    hurwitz_system = [mon.base_point(), mon.base_sheets(), 
-                      mon.branch_points(), mon.monodromy_group()]
+    hurwitz_system = mon.hurwitz_system()
 
     # compute key data elements
     # - t_table: path data from Tretkoff graph
@@ -621,10 +706,15 @@ def canonical_basis(f,x,y):
     t_matrix = intersection_matrix(t_list, 
                                    [t_table['p'][i] for i in xrange(c)] + \
                                    [t_table['q'][i] for i in xrange(c)])
-    
+
+    pdb.set_trace()
+
     # sanity check: make sure intersection matrix produces the same genus
-    if numpy.linalg.matrix_rank(t_matrix) != g:
-        raise Error("Found inconsistent genus in homolgy intersection matrix.")
+    rank = numpy.linalg.matrix_rank(t_matrix)
+    g = rank/2 # XXX See comment below
+#    if rank/2 != g:  # XXX genus
+#        raise ValueError("Found inconsistent genus in homolgy " + \
+#                         "intersection matrix.")
     
     alpha = frobenius_transform(t_matrix, g)
 
@@ -645,14 +735,22 @@ def canonical_basis(f,x,y):
                             "intersection matrix.")
 
     # place results in a dictionary
+    pdb.set_trace()
     c = {}
-    c['basepoint'] = mon[0]
-    c['sheets']    = mon[1]
+    c['basepoint'] = mon.base_point()
+    c['sheets']    = mon.base_sheets()
     c['genus']     = g
     c['cycles']    = t_basis
     c['linearcombination'] = alpha[:2*g,:]
-    c['canonicalcycles'] = ab_cycles(t_basis, c['linearcombination'])
+    c['canonicalcycles'] = ab_cycles(t_basis, alpha[:2*g,:])
 
+    return c
+
+
+
+
+def homology(*args, **kwds):
+    return canonical_basis(*args, **kwds)
 
 
 
@@ -762,7 +860,7 @@ def compress_cycle(cycle):
 
         c_cycle.extend(reform_cycle(c,min(c)))   # XXX or append?
 
-    return cycle
+    return c_cycle
                 
 
 
@@ -817,8 +915,27 @@ def ab_cycles(t_basis, alpha):
     return c
     
 
-    
-                                           
-    
 
 
+if __name__=='__main__':
+    from sympy.abc import x,y
+    
+    f0 = y**3 - 2*x**3*y - x**8  # Klein curve
+
+    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    f2 = -x**7 + 2*x**3*y + y**3
+    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    f4 = y**2 + x**3 - x**2
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+    f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
+    f7 = y**3 - (x**3 + y)**2 + 1
+    f8 = (x**6)*y**3 + 2*x**3*y - 1
+    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+    f11= y**2 - x*(x-1)*(x-2)*(x-3)  # simple genus two hyperelliptic
+    
+    f     = f11
+
+    basis = canonical_basis(f,x,y)
+
+    print basis
