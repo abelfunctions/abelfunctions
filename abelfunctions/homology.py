@@ -707,8 +707,6 @@ def canonical_basis(f,x,y):
                                    [t_table['p'][i] for i in xrange(c)] + \
                                    [t_table['q'][i] for i in xrange(c)])
 
-    pdb.set_trace()
-
     # sanity check: make sure intersection matrix produces the same genus
     rank = numpy.linalg.matrix_rank(t_matrix)
     g = rank/2 # XXX See comment below
@@ -735,7 +733,6 @@ def canonical_basis(f,x,y):
                             "intersection matrix.")
 
     # place results in a dictionary
-    pdb.set_trace()
     c = {}
     c['basepoint'] = mon.base_point()
     c['sheets']    = mon.base_sheets()
@@ -776,7 +773,7 @@ def simplify_cycle(t_table, lin_comb):
 
             # take as many copies of the cycle as needed
             cycle = temp_cycle*abs(lin_comb[i])  # XXX index check
-            i = 0
+            i = -1
         else:
             i += 1
 
@@ -784,7 +781,7 @@ def simplify_cycle(t_table, lin_comb):
     # combination.
     sheets = [cycle[2*i-1] for i in xrange(len(cycle)/2)]
     
-    for i in xrange(index1+1,r):   # XXX index check
+    for i in xrange(index+1,r):   # XXX index check
         if lin_comb[i] != 0:
             temp_cycle = t_table[i]
             n = len(temp_cycle)
@@ -826,35 +823,41 @@ def compress_cycle(cycle):
     then elements (i+1) and (i+2) can be removed from the
     list. Geometrically, this represents...XXX.
     
-    Finally, the cycle is rewritten to start fomt eh sheets with the
+    Finally, the cycle is rewritten to start fom the sheets with the
     smallest sheet number.
     """
     n = len(cycle)
     c_cycle = []
+
+    pdb.set_trace()
 
     # XXX there's definitely a way to make this more compact and
     # pythonic
     for i in xrange(n):
         c = cycle[i]
         j = 0
+
+        # hack ???
+        if not isinstance(c,list): c = [c]
+
         while j < len(c):
             if j == (len(c)-1):
                 if c[j] == c[1]:
                     c = [c[k]] + c[3:]
-                    j = 1
+                    j = 0
                 else:
                     j += 1
 
             elif j == (len(c)-2):
                 if c[j] == c[0]:
                     c = [c[k]] + c[:(len(c)-2)]
-                    j = 1
+                    j = 0
                 else:
                     j += 1
             else:
                 if c[j] == c[j+2]:
                     c = c[:j] + c[(j+2):]  # XXX index check
-                    j = 1
+                    j = 0
                 else:
                     j += 1
 
@@ -884,7 +887,7 @@ def reform_cycle(cycle):
         if (2*i+1) == n:   # XXX check index
             c = lijst[0]
         else:
-            c = lijst[2*i+2]  
+            c = lijst[2*i+2]
             
         pos1 = b[1].index(a)
         pos2 = b[1].index(c)
@@ -904,15 +907,19 @@ def reform_cycle(cycle):
 
 def ab_cycles(t_basis, alpha):
     """
-    Returns a list of the basis cycles.
+    Returns a list of the a- and b-cycles as computed from the 
+    c-cycles and the intersection matrix.
     """
     g,_ = alpha.shape
     c = {}
+    a = range(g)
+    b = range(g)
     for i in xrange(2*g):
-        key = b[i-g] if i>=g else a[i]
-        c[key] = compress_cycle(simplify_cicle(t_table, alpha[i,:]))
+        cycle = compress_cycle(simplify_cycle(t_basis, alpha[i,:]))
+        if i < g: a[i]   = cycle
+        else:     b[i-g] = cycle
 
-    return c
+    return [a,b]
     
 
 

@@ -1036,19 +1036,27 @@ class Monodromy(object):
 
 
 if __name__=='__main__':
-   from sympy.abc import x,y
+    from sympy.abc import x,y
 
-   f0 = y**3 - 2*x**3*y - x**8  # Klein curve
-   f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-   f2 = -x**7 + 2*x**3*y + y**3
-   f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
-   f4 = y**2 + x**3 - x**2
-   f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-   f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
-   f7 = y**3 - (x**3 + y)**2 + 1
-   f8 = (x**6)*y**3 + 2*x**3*y - 1
-   f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-   f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+    f0 = y**3 - 2*x**3*y - x**8  # Klein curve
+    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    f2 = -x**7 + 2*x**3*y + y**3
+    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    f4 = y**2 + x**3 - x**2
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+    f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
+    f7 = y**3 - (x**3 + y)**2 + 1
+    f8 = (x**6)*y**3 + 2*x**3*y - 1
+    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+    
+    f  = f7
+    M = Monodromy(f,x,y)
    
-   f  = f7
-   M = Monodromy(f,x,y)
+    import cProfile, pstats
+    cProfile.run('mon = M.monodromy()','monodromy.profile')
+    p = pstats.Stats('monodromy.profile')
+    p.strip_dirs()
+    p.sort_stats('time').print_stats(25)
+    p.sort_stats('cumulative').print_stats(25)
+    p.sort_stats('calls').print_stats(25)
