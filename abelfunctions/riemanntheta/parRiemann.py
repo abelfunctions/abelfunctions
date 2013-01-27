@@ -126,9 +126,13 @@ def func1(TILEWIDTH, TILEHEIGHT, g):
 #include <stdio.h>
 #include <math.h>
 
-__device__ __constant__ double Xd[%d];
-__device__ __constant__ double Yinvd[%d];
-__device__ __constant__ double Td[%d];
+#define GENUS %d
+#define TILEHEIGHT %d
+#define TILEWIDTH %d
+
+__device__ __constant__ double Xd[GENUS*GENUS];
+__device__ __constant__ double Yinvd[GENUS * GENUS];
+__device__ __constant__ double Td[GENUS*GENUS];
 
 /***************************************************************************
 
@@ -228,12 +232,9 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
   int tx = threadIdx.x;
   int ty = threadIdx.y;
 
-  __shared__ double Sd_s[%d];
-  __shared__ double xd_s[%d];
-  __shared__ double yd_s[%d];
-
-  int TILEWIDTH = %d;
-  int TILEHEIGHT = %d;
+  __shared__ double Sd_s[TILEWIDTH * GENUS];
+  __shared__ double xd_s[TILEHEIGHT * GENUS];
+  __shared__ double yd_s[TILEHEIGHT * GENUS];
 
   /*Determine n_1, the start of the summation vector,
   the full vector is of the form n_1, n_2, ..., n_g*/
@@ -269,7 +270,7 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
 }
 
 
-""" %(g*g, g*g, g*g, g*TILEWIDTH, g*TILEHEIGHT, g*TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
+""" %(g, TILEHEIGHT, TILEWIDTH)
     mod = SourceModule(template)
     func = mod.get_function("riemann_theta")
     Xd = mod.get_global("Xd")[0]
