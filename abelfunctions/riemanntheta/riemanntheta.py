@@ -92,7 +92,8 @@ different `z`.
   [CRTF], numerous bug fixes, documentation, doctests, symbolic
   evaluation
 
- 
+- Grady Williams (2012-2013)
+
 """
 import numpy as np
 import scipy as sp
