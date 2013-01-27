@@ -25,12 +25,6 @@ from pycuda.compiler import SourceModule
 
 def compute(X, Yinv, T, Z, S, g):
     S = np.array(S)
-    #Flatten all matrices
-    X = X.flatten()
-    Yinv = Yinv.flatten()
-    T = T.flatten()
-    Z = Z.flatten()
-    S = S.flatten()
     x = Z.real
     y = Z.imag
     
@@ -46,6 +40,9 @@ def compute(X, Yinv, T, Z, S, g):
     N = S.size/g
     #Number of points to calculate the function at
     K = Z.size/g
+    
+    X_len = N
+    Y_len = K
     
     #Create empty array to hold computed real values
     #First determine how many bytes we need to hold N complex values
@@ -73,15 +70,14 @@ def compute(X, Yinv, T, Z, S, g):
     cuda.memcpy_htod(yd, y)
     cuda.memcpy_htod(Sd, S)
     
-    #Execute the first kernel
-    partial_sums = func1()
+    #Prepare the first kernel for execution
+    TILEHEIGHT = 32
+    TILEWIDTH = 16
+    partial_sums = func1(TILEWIDTH, TILEHEIGHT, g)
     reduction = func2()
-    BLOCKSIZE = (16,16,1)
-    GRIDSIZE = (N//16 + 1,K//16 + 1, 1)
+    BLOCKSIZE = (TILEWIDTH, TILEHEIGHT, 1)
+    GRIDSIZE = (N//TILEWIDTH + 1,K//TILEHEIGHT + 1, 1)
 
-    X_len = N
-    Y_len = K
-    
     #Make all scalars into numpy data types
     N = np.int32(N)
     K = np.int32(K)
@@ -126,8 +122,8 @@ def compute(X, Yinv, T, Z, S, g):
     fsums = fsum_real[:K] + fsum_imag[:K]*1.0j
     return fsums
 
-def func1():
-    mod = SourceModule("""
+def func1(TILEWIDTH, TILEHEIGHT, g):
+    template = """
 
 /****************************************************************************
 
@@ -231,17 +227,23 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
   int tx = threadIdx.x;
   int ty = threadIdx.y;
 
-  int TILEWIDTH = 16;
-  int TILEHEIGHT = 16;
+  __shared__ double Sd_s[%d];
+  __shared__ double xd_s[%d];
+  __shared__ double yd_s[%d];
+
+  int TILEWIDTH = %d;
+  int TILEHEIGHT = %d;
 
   /*Determine n_1, the start of the summation vector,
   the full vector is of the form n_1, n_2, ..., n_g*/
   int n_start = (bx * TILEWIDTH + tx) * g;
   /*Now n = S[n_start], S[n_start + 1], ..., S[n_start + (g - 1)]*/
+
   /*Determine z the point of evaluation*/
   int z_start = (by * TILEHEIGHT + ty) * g;
   /*Now x = (x[z_start], x[z_start + 1], ... , x[z_start + (g-1)],
   and similiarly for y.*/
+
   if (n_start < N*g && z_start < K*g) {
     /*Compute the "cosine" and "sine" parts of the summand*/
     double ept, npt, cpt, spt;
@@ -256,8 +258,8 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
 }
 
 
-""")
-    
+""" %(g*TILEWIDTH, g*TILEHEIGHT, g*TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
+    mod = SourceModule(template)
     return mod.get_function("riemann_theta")
     
 def func2():
