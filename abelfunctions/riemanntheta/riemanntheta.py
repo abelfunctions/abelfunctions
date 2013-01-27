@@ -102,7 +102,7 @@ from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 from riemanntheta_misc import *
 import time
-from parRiemann import compute as parRiemann
+import parRiemann
 
 class RiemannTheta_Function:
     r"""
@@ -433,13 +433,17 @@ class RiemannTheta_Function:
 
         # compute oscillatory and exponential terms
         if gpu and List:
-            v = parRiemann(X, Yinv, T, z, S, g)
+            start = time.clock()
+            v = parRiemann.compute_v(X, Yinv, T, z, S, g)
+            print time.clock() - start
         elif (len(deriv) > 0):
             v = RIEMANN.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, List)
         else:
             v = RIEMANN.finite_sum(X, Yinv, T, z, S, g, List)
-
-        if List:
+            
+        if (gpu and List):
+            u = parRiemann.compute_u(z, Yinv, g)
+        elif (List):
             start = time.clock()
             u = []
             for w in z:
@@ -501,19 +505,20 @@ if __name__=="__main__":
     z4 = np.array([.345 + .768j, -44 - .76j])
     print theta.value_at_point([z0,z1,z2,z3,z4],Omega,gpu=False, List=True)
     print
-
+    
     print "GPU TEST"
     a = []
-    for x in range(12000):
+    for x in range(100000):
         a.append(z0)
         a.append(z1)
         a.append(z2)
         a.append(z3)
         a.append(z4)
     start1 = time.clock()
-    print theta.value_at_point(a, Omega, gpu=True, List=True)[1730:1735]
+    print theta.value_at_point(a, Omega, gpu=True, List=True)[57000:57005]
     print("GPU time to perform calculation: " + str(time.clock() - start1))
     start2 = time.clock()
+
     print theta.value_at_point(a, Omega, gpu=False, List=True)[1730:1735]
     print("CPU time to do same calculation: " + str(time.clock() - start2))
 
@@ -562,7 +567,5 @@ if __name__=="__main__":
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
-
-
                        
 

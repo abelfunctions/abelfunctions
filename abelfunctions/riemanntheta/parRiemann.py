@@ -23,7 +23,7 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
 
-def compute(X, Yinv, T, Z, S, g):
+def compute_v(X, Yinv, T, Z, S, g):
     S = np.array(S)
     x = Z.real
     y = Z.imag
@@ -89,19 +89,19 @@ def compute(X, Yinv, T, Z, S, g):
     
     """
     Now we perform GPU sum reduction on the imaginary and real parts
-    """ 
-    BLOCKSIZE = 128
+    TEST
+    """
     out_real = cuda.mem_alloc(fsum_real.nbytes)
     out_imag = cuda.mem_alloc(fsum_imag.nbytes)
-    stride = np.int32(X_len)
+    y_len = np.int32(Y_len)
     
     while (X_len > 1):
-        J = (X_len - 1)//BLOCKSIZE + 1
-        GRIDSIZE = (J, Y_len, 1)
-        reduction(fsum_reald, out_real, np.int32(X_len), stride, 
-                  block = (BLOCKSIZE,1,1), grid = GRIDSIZE)
-        reduction(fsum_imagd, out_imag, np.int32(X_len), stride,
-                  block = (BLOCKSIZE,1,1), grid = GRIDSIZE)
+        J = (X_len - 1)//16 + 1
+        GRIDSIZE = (J, (Y_len-1)//32 + 1, 1)
+        reduction(fsum_reald, out_real, np.int32(X_len), y_len, 
+                  block = (16,32,1), grid = GRIDSIZE)
+        reduction(fsum_imagd, out_imag, np.int32(X_len), y_len,
+                  block = (16,32,1), grid = GRIDSIZE)
         X_len = J
         cuda.Context.synchronize()
 
@@ -118,6 +118,41 @@ def compute(X, Yinv, T, Z, S, g):
     
     fsums = fsum_real[:K] + fsum_imag[:K]*1.0j
     return fsums
+
+def compute_u(z, Yinv, g):
+    y = z.imag
+    y_len = len(y)
+    u = np.zeros(y_len)
+    
+    """
+    y = [1,2,1,2]
+    Yinv = [1,0,0,1]
+    u = [0,0]
+    g = 2
+    y_len = 2
+    """
+
+    Yinv = np.require(Yinv, dtype = np.double, requirements = ['A', 'W', 'O', 'C'])
+    y = np.require(y, dtype = np.double, requirements = ['A', 'W', 'O', 'C'])
+    u = np.require(u, dtype = np.double, requirements = ['A', 'W', 'O', 'C'])
+
+    yd = cuda.mem_alloc(y.nbytes)   
+    ud = cuda.mem_alloc(u.nbytes)
+
+    dotter, Yinvd = func3(g, 32)
+    
+    cuda.memcpy_htod(yd,y)
+    cuda.memcpy_htod(ud,u)
+    cuda.memcpy_htod(Yinvd, Yinv)
+    
+    Blocksize = (g, 32, 1)
+    Gridsize = (1, (y_len - 1)//32 + 1,1)
+    dotter(yd, ud, np.int32(g), np.int32(y_len), 
+           block = Blocksize, grid = Gridsize)
+    cuda.Context.synchronize()
+    
+    cuda.memcpy_dtoh(u, ud)
+    return u
 
 def func1(TILEWIDTH, TILEHEIGHT, g):
     template = """
@@ -280,35 +315,39 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
     
 def func2():
     mod = SourceModule("""
-__global__ void reduction_kernel(double *A_d, double *A_outd, int num_elements, int stride)
+__global__ void reduction_kernel(double *A_d, double *A_outd, int x_len, int y_len, int POINTS)
 {
   int tdx = threadIdx.x;
+  int tdy = threadIdx.y;
   int bdx = blockIdx.x;
   int bdy = blockIdx.y;
-  int index = blockIdx.x * 128 + tdx;
-  int row = bdy * stride;
 
-  __shared__ double data[128];
-  data[tdx] = 0;
+  int x_ind = bdx*16 + tdx;
+  int y_ind = bdy*32 + tdy;
 
-  if (index < num_elements) {
-    data[tdx] = A_d[row + index];
+  __shared__ double data[16*32];
+  data[16*tdy + tdx] = 0;
+
+  if (x_ind < x_len && y_ind < y_len) {
+    data[tdy*16 + tdx] = A_d[y_ind*x_len + x_ind];
   }
   __syncthreads();
 
-  for (int i = 1; i < 128; i *= 2) {
+  for (int i = 1; i < 16; i *= 2) {
     if (tdx % (2*i) == 0) {
-      data[tdx] += data[tdx + i];
+      data[16*tdy + tdx] += data[16*tdy + tdx + i];
+      
     }
     __syncthreads();
   }
 
   if (tdx == 0) {
-    A_outd[bdx + row] = data[0];
+    int newLength = (x_len - 1)/16 + 1;
+    A_outd[y_ind*newLength + bdx] = data[16*tdy];
   }
 
   if (gridDim.x == 1) {
-    A_outd[bdy] = data[0];
+    A_outd[y_ind] = data[16*tdy];
   }
 }
 
@@ -316,3 +355,48 @@ __global__ void reduction_kernel(double *A_d, double *A_outd, int num_elements, 
 
     return mod.get_function("reduction_kernel")
 
+def func3(g, TILEHEIGHT):
+    template = """
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+#define GENUS %d
+#define TILEHEIGHT %d
+
+__device__ __constant__ double Yinvd[GENUS*GENUS]; 
+
+__global__ void kernel(double* yd, double* u, int g, int y_len)
+{
+  int tdy = threadIdx.y;
+  int bdy = blockIdx.y;
+  int tdx = threadIdx.x;
+
+  __shared__ double yd_s[GENUS*TILEHEIGHT];
+  yd_s[tdy*g + tdx] = 0;
+  if (bdy*TILEHEIGHT + tdy < y_len) {
+    yd_s[tdy*g + tdx] = yd[(bdy*TILEHEIGHT + tdy) * g + tdx];
+  }
+  __syncthreads();
+
+  if (bdy*TILEHEIGHT + tdy < y_len) {
+    int i,j;
+    double dot = 0;
+    double Yinvy_i;
+    for (i = 0; i < g; i++) {
+      Yinvy_i = 0;
+      for (j = 0; j < g; j++) {
+        Yinvy_i += Yinvd[g*i + j] * yd_s[tdy*g+j];
+      }
+      dot += yd_s[tdy*g+i] * Yinvy_i;
+    }
+    u[bdy*TILEHEIGHT + tdy] = M_PI * dot;
+  }
+}
+""" %(g, TILEHEIGHT)
+
+    mod = SourceModule(template)
+    func = mod.get_function("kernel")
+    Yinvd = mod.get_global("Yinvd")[0]
+    return (func, Yinvd)
