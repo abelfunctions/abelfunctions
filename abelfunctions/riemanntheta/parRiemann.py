@@ -124,14 +124,6 @@ def compute_u(z, Yinv, g):
     y_len = len(y)
     u = np.zeros(y_len)
     
-    """
-    y = [1,2,1,2]
-    Yinv = [1,0,0,1]
-    u = [0,0]
-    g = 2
-    y_len = 2
-    """
-
     Yinv = np.require(Yinv, dtype = np.double, requirements = ['A', 'W', 'O', 'C'])
     y = np.require(y, dtype = np.double, requirements = ['A', 'W', 'O', 'C'])
     u = np.require(u, dtype = np.double, requirements = ['A', 'W', 'O', 'C'])
