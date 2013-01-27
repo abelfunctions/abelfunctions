@@ -551,15 +551,13 @@ if __name__=="__main__":
 
     print "\tCalculating theta..."
     SIZE = 60
-    f = lambda x,y: theta.exp_and_osc_at_point([x+1.0j*y,0],Omega,gpu=False)[1]
-    f = np.vectorize(f)
     x = np.linspace(0,1,SIZE)
     y = np.linspace(0,5,SIZE)
     X,Y = p.meshgrid(x,y)
-    start = time.clock()
-    Z = (f(X,Y))
-    Z = np.real(Z)
-
+    Z = X + Y*1.0j
+    Z = Z.flatten()
+    U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, List=True, gpu=True)
+    Z = V.reshape(60,60)
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
