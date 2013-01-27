@@ -53,13 +53,18 @@ def compute(X, Yinv, T, Z, S, g):
     #Allocate memory on the GPU
     fsum_reald = cuda.mem_alloc(fsum_real.nbytes)
     fsum_imagd = cuda.mem_alloc(fsum_imag.nbytes)
-    Xd = cuda.mem_alloc(X.nbytes)
-    Yinvd = cuda.mem_alloc(Yinv.nbytes)
-    Td = cuda.mem_alloc(T.nbytes)
     xd = cuda.mem_alloc(x.nbytes)
     yd = cuda.mem_alloc(y.nbytes)
     Sd = cuda.mem_alloc(S.nbytes)
     
+    #Prepare the first kernel for execution
+    TILEHEIGHT = 32
+    TILEWIDTH = 16
+    partial_sums, Xd, Yinvd, Td  = func1(TILEWIDTH, TILEHEIGHT, g)
+    reduction = func2()
+    BLOCKSIZE = (TILEWIDTH, TILEHEIGHT, 1)
+    GRIDSIZE = (N//TILEWIDTH + 1,K//TILEHEIGHT + 1, 1)
+
     #Transfer data from CPU to GPU
     cuda.memcpy_htod(fsum_reald, fsum_real)
     cuda.memcpy_htod(fsum_imagd, fsum_imag)
@@ -69,21 +74,13 @@ def compute(X, Yinv, T, Z, S, g):
     cuda.memcpy_htod(xd, x)
     cuda.memcpy_htod(yd, y)
     cuda.memcpy_htod(Sd, S)
-    
-    #Prepare the first kernel for execution
-    TILEHEIGHT = 32
-    TILEWIDTH = 16
-    partial_sums = func1(TILEWIDTH, TILEHEIGHT, g)
-    reduction = func2()
-    BLOCKSIZE = (TILEWIDTH, TILEHEIGHT, 1)
-    GRIDSIZE = (N//TILEWIDTH + 1,K//TILEHEIGHT + 1, 1)
 
     #Make all scalars into numpy data types
     N = np.int32(N)
     K = np.int32(K)
     g = np.int32(g)
-
-    partial_sums(fsum_reald, fsum_imagd, Xd, Yinvd, Td, xd, yd, Sd, g, N, K,
+    
+    partial_sums(fsum_reald, fsum_imagd, xd, yd, Sd, g, N, K,
          block = BLOCKSIZE,
          grid = GRIDSIZE
          )
@@ -97,7 +94,7 @@ def compute(X, Yinv, T, Z, S, g):
     out_real = cuda.mem_alloc(fsum_real.nbytes)
     out_imag = cuda.mem_alloc(fsum_imag.nbytes)
     stride = np.int32(X_len)
-
+    
     while (X_len > 1):
         J = (X_len - 1)//BLOCKSIZE + 1
         GRIDSIZE = (J, Y_len, 1)
@@ -125,12 +122,15 @@ def compute(X, Yinv, T, Z, S, g):
 def func1(TILEWIDTH, TILEHEIGHT, g):
     template = """
 
-/****************************************************************************
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
+__device__ __constant__ double Xd[%d];
+__device__ __constant__ double Yinvd[%d];
+__device__ __constant__ double Td[%d];
+
+/***************************************************************************
 
 normpart
 --------
@@ -145,19 +145,20 @@ A helper function for the finite sum functions. Computes:
 
 ***************************************************************************/
 
-__device__ double normpart(double* Sd, double* Td, int g, double* Yinvd, 
-			  double* yd, int z_start, int n_start)
+__device__ double normpart(int g, double* Sd_s, double* yd_s)
 {
+  int tx = threadIdx.x;
+  int ty = threadIdx.y;
   double norm = 0;
   int i,j,k;
   for (i = 0; i < g; i++) {
     double sum = 0;
     for (j = 0; j < g; j++) {
       double T_ij = Td[i*g + j];
-      double n_i = Sd[n_start + i];
+      double n_i = Sd_s[tx*g + i];
       double shift_j = 0;
       for (k = 0; k < g; k++) {
-	shift_j += Yinvd[g*j + k]*yd[z_start + k];
+	shift_j += Yinvd[g*j + k]*yd_s[ty*g + k];
       }
       sum += T_ij * (n_i + shift_j - round(shift_j));
     }
@@ -182,17 +183,18 @@ A helper function for the finite sum functions. Computes:
 
 ***************************************************************************/
 
-__device__ double exppart(double* Sd, double* Xd, double* xd, int g,
-			 double *Yinvd, double* yd, int z_start,
-			 int n_start)
+__device__ double exppart(int g, double* Sd_s, 
+                          double* xd_s, double* yd_s)
 {
+  int tx = threadIdx.x;
+  int ty = threadIdx.y;
   double exppart = 0;
   int i,j,k,h;
   for (i = 0; i < g; i++) {
-    double n_i = Sd[n_start + i];
+    double n_i = Sd_s[tx*g + i];
     double shift_i = 0;
     for (k = 0; k < g; k++) {
-      shift_i += Yinvd[k + i*g] * yd[z_start + k];
+      shift_i += Yinvd[k + i*g] * yd_s[ty*g + k];
     }
     double A = n_i - round(shift_i);
     double Xshift_i = 0;
@@ -200,11 +202,11 @@ __device__ double exppart(double* Sd, double* Xd, double* xd, int g,
       double X_ij = Xd[j + i * g];
       double shift_j = 0;
       for (h = 0; h < g; h++) {
-	shift_j += Yinvd[h + j * g] * yd[z_start + h];
+	shift_j += Yinvd[h + j * g] * yd_s[ty*g + h];
       }
-      Xshift_i += (.5) * (X_ij * (Sd[n_start + j] - round(shift_j)));
+      Xshift_i += (.5) * (X_ij * (Sd_s[tx*g + j] - round(shift_j)));
     }
-    double B = Xshift_i + xd[z_start + i];
+    double B = Xshift_i + xd_s[ty*g + i];
     exppart += A * B;
   }
   return 2 * M_PI * exppart;
@@ -216,8 +218,7 @@ Kernel Function
 
 ************************************************************************/
 __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
-		      double* Xd, double* Yinvd,
-		      double* Td, double* xd, double* yd, double* Sd,
+		      double* xd, double* yd, double* Sd,
 		      int g, int N, int K)
 {
   /*Built in variables to be used, br is block row, bc is
@@ -244,11 +245,21 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
   /*Now x = (x[z_start], x[z_start + 1], ... , x[z_start + (g-1)],
   and similiarly for y.*/
 
+  /*Load data into shared arrays*/
+  int i;
+  for (i = 0; i < g; i++) {
+    Sd_s[tx*g + i] = Sd[n_start + i];
+    xd_s[ty*g + i] = xd[z_start + i];
+    yd_s[ty*g + i] = yd[z_start + i];
+  }
+
+  __syncthreads();
+
   if (n_start < N*g && z_start < K*g) {
     /*Compute the "cosine" and "sine" parts of the summand*/
     double ept, npt, cpt, spt;
-    ept = exppart(Sd, Xd, xd, g, Yinvd, yd, z_start, n_start);
-    npt = exp(normpart(Sd, Td, g, Yinvd, yd, z_start, n_start));
+    ept = exppart(g,Sd_s, xd_s, yd_s);
+    npt = exp(normpart(g, Sd_s, yd_s));
     cpt = npt * cos(ept);
     spt = npt * sin(ept);
   
@@ -258,9 +269,13 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
 }
 
 
-""" %(g*TILEWIDTH, g*TILEHEIGHT, g*TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
+""" %(g*g, g*g, g*g, g*TILEWIDTH, g*TILEHEIGHT, g*TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
     mod = SourceModule(template)
-    return mod.get_function("riemann_theta")
+    func = mod.get_function("riemann_theta")
+    Xd = mod.get_global("Xd")[0]
+    Yinvd = mod.get_global("Yinvd")[0]
+    Td = mod.get_global("Td")[0]
+    return (func, Xd, Yinvd, Td)
     
 def func2():
     mod = SourceModule("""

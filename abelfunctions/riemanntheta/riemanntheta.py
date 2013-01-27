@@ -440,6 +440,7 @@ class RiemannTheta_Function:
             v = RIEMANN.finite_sum(X, Yinv, T, z, S, g, List)
 
         if List:
+            start = time.clock()
             u = []
             for w in z:
                 w = np.array([w])
