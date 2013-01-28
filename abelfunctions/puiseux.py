@@ -63,7 +63,7 @@ def _bezout(q,m):
 
 
 
-def _square_free(Phi):
+def _square_free(Phi,var):
     """
     Given a polynomial `\Phi \in \mathbb{L}[Z]` returns a collection
     of pairs `\{(\Psi,r)\}` with `\Psi \in \mathbb{L}[Z]` and `r` a
@@ -76,7 +76,7 @@ def _square_free(Phi):
     computations without any factorization algorithm. It's implemented
     in sympy as ``sympy.sqf`` and ``sympy.sqf_list``
     """
-    return sympy.sqf_list(Phi)[1]
+    return sympy.sqf_list(Phi,var)[1]
 
 
 
@@ -375,13 +375,16 @@ def singular_term(F,X,Y,L,I,version):
             # each newton polygon side has a characteristic
             # polynomial. For each square-free factor, each root
             # corresponds to a K-term
-            for (Psi,r) in _square_free(Phi):
+            for (Psi,r) in _square_free(Phi,_Z):
                 Psi = sympy.Poly(Psi,_Z)
                 
                 # compute the roots of Psi. Use the RootOf construct if 
                 # possible. In the case when Psi is over EX (i.e. when
                 # RootOf doesn't work) then compute symbolic roots.
-                roots = Psi.all_roots(radicals=False)
+                try:
+                    roots = Psi.all_roots(radicals=False)
+                except NotImplementedError:
+                    roots = sympy.roots(Psi,_Z).keys()
 
                 for xi in roots:
                     # the classical version returns the "raw" roots
@@ -511,7 +514,6 @@ def build_series(pis,x,y,T,a,parametric):
             for TT in solns:  series.append(Q.subs(T,TT).simplify().collect(x-a))
 
     return series
-
 
 
 
