@@ -14,6 +14,8 @@ Authors
 """
 import sympy
 
+import pdb
+
 from puiseux import puiseux
 from integralbasis import Int
 from utilities import cached_function
@@ -200,7 +202,6 @@ def _delta_invariant(f,x,y,singular_pt):
     `singular_pt` = [alpha, beta, gamma] on the plane algebraic curve
     f(x,y) = 0.
     """
-
     # compute the Puiseux series at the projective point [alpha,
     # beta, gamma]. If on the line at infinity, make the
     # appropriate variable transformation.
@@ -213,8 +214,10 @@ def _delta_invariant(f,x,y,singular_pt):
     P_v0_x = []
     for X,Y in P_v0:
         solns = sympy.solve(u-X,_t)
-        P_v0_x.append(Y.subs(_t,solns[0]))
+        P_v0_x.append(Y.subs(_t,solns[0]).simplify().collect(u-u0))
     P_x = puiseux(g,u,v,u0,nterms=1,parametric=False)
+
+#    pdb.set_trace()
 
     # for each place compute its contribution to the delta invariant
     delta = sympy.Rational(0,1)
@@ -222,7 +225,7 @@ def _delta_invariant(f,x,y,singular_pt):
         yhat  = P_v0_x[i]
         j     = P_x.index(yhat)
         IntPj = Int(j,P_x,u,u0)
-        rj    = (P[i][0]-u0).leadterm(_t)[1]
+        rj    = (P[i][0]-u0).expand().leadterm(_t)[1]
         delta += sympy.Rational(rj * IntPj - rj + 1, 2)
 
     return delta
@@ -246,7 +249,8 @@ if __name__ == '__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
 
-    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
+#    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
+    fs = [f5]
 
     print '\nSingular points of curves:'
     for f in fs:
