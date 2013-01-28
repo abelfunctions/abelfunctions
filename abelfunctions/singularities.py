@@ -217,8 +217,6 @@ def _delta_invariant(f,x,y,singular_pt):
         P_v0_x.append(Y.subs(_t,solns[0]).simplify().collect(u-u0))
     P_x = puiseux(g,u,v,u0,nterms=1,parametric=False)
 
-#    pdb.set_trace()
-
     # for each place compute its contribution to the delta invariant
     delta = sympy.Rational(0,1)
     for i in range(len(P_v0_x)):
