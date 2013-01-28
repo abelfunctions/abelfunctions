@@ -227,6 +227,22 @@ def _delta_invariant(f,x,y,singular_pt):
         delta += sympy.Rational(rj * IntPj - rj + 1, 2)
 
     return delta
+
+
+@cached_function
+def genus(f,x,y):
+    """
+    Returns the genus of the Riemann surface corresponding to the complex plane
+    algebraic curve f = f(x,y).
+    """
+    F,d = homogenize(f,x,y,_z)
+    S = singular_points(f,x,y)
+
+    g = (d-1)*(d-2) / 2
+    for pt,(m,delta,r) in S:
+        g -= delta
+
+    return g
     
             
 
