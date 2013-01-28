@@ -49,7 +49,7 @@ def finite_sum(X, Yinv, T, Z, S, g, List):
            vals.append(real[0] + imag[0] * 1.0j)
         else:
            return real[0] + imag[0] * 1.0j
-    return vals
+    return np.array(vals)
                 
 
 @cython.boundscheck(False) #Turns off bounds checking
@@ -84,7 +84,7 @@ def finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, List):
            vals.append(real[0] + imag[0] * 1.0j)
         else:
            return real[0] + imag[0] * 1.0j
-    return vals
+    return np.array(vals)
 
 def find_int_points(int g, c, R, T):
     cdef int x

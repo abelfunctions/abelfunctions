@@ -101,7 +101,6 @@ import scipy.linalg as la
 import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
-from riemanntheta_misc import *
 import time
 import parRiemann
 
@@ -431,12 +430,9 @@ class RiemannTheta_Function:
             else:
                 R = self.radius(T, prec, deriv=deriv)
                 S = self.integer_points(Yinv, T, Tinv, z, g, R)
-
         # compute oscillatory and exponential terms
         if gpu and List:
-            start = time.clock()
             v = parRiemann.compute_v(X, Yinv, T, z, S, g)
-            print time.clock() - start
         elif (len(deriv) > 0):
             v = RIEMANN.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, List)
         else:
@@ -445,12 +441,12 @@ class RiemannTheta_Function:
         if (gpu and List):
             u = parRiemann.compute_u(z, Yinv, g)
         elif (List):
-            start = time.clock()
-            u = []
-            for w in z:
-                w = np.array([w])
-                val = pi*np.dot(w.imag, Yinv*w.imag.T).item(0,0)
-                u.append(val)
+            K = len(z)
+            u = np.zeros(K)
+            for i in range(K):
+                w = np.array([z[i,:].imag])
+                val = pi*np.dot(w, Yinv*w.T).item(0,0)
+                u[i] = val
         else:
             u = pi*np.dot(z.imag,Yinv * z.imag.T).item(0,0)
 
