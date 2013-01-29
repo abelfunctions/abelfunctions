@@ -560,6 +560,18 @@ if __name__=="__main__":
     Z = X + Y*1.0j
     Z = Z.flatten()
     U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, List=True, gpu=True)
+    U1,V1 = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, List=True, gpu=True)
+    uMax = 0
+    vMax = 0
+    for i in range(3600):
+        uDif = abs(U[i] - U1[i])
+        vDif = abs(V[i] - V1[i])
+        if (uDif > uMax):
+            uMax = uDif
+        if (vDif > vMax):
+            vMax = vDif
+    print vMax
+    print uMax
     Z = V.reshape(60,60)
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
