@@ -1,3 +1,11 @@
+"""
+Grady Williams
+January 28, 2013
+
+This module provides functions for displaying graphs of the Riemann-Theta
+function. 
+"""
+
 from abelfunctions import RiemannTheta
 import numpy as np
 from mayavi.mlab import *
