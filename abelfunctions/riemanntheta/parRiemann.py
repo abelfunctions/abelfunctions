@@ -186,12 +186,12 @@ __device__ double normpart(int g, double* Sd_s, double* yd_s)
     double sum = 0;
     for (j = 0; j < g; j++) {
       double T_ij = Td[i*g + j];
-      double n_i = Sd_s[tx*g + i];
+      double n_j = Sd_s[tx*g + j];
       double shift_j = 0;
       for (k = 0; k < g; k++) {
 	shift_j += Yinvd[g*j + k]*yd_s[ty*g + k];
       }
-      sum += T_ij * (n_i + shift_j - round(shift_j));
+      sum += T_ij * (n_j + shift_j - round(shift_j));
     }
     norm += sum * sum;
   }
