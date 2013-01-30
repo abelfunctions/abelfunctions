@@ -402,7 +402,7 @@ class Monodromy(object):
 
         # XXX UGLY...but I can't find a better way to convert a polynomial
         # to something that outputs mpc type roots
-        p         = sympy.poly(self.f.subs(x,b0), self.y)
+        p         = sympy.poly(self.f.subs(self.x,b0), self.y)
         coeffs    = p.all_coeffs()
         coeffs_b0 = map(lambda c: c.evalf(subs={self.x:b0}, 
                                           n = sympy.mpmath.mp.dps), coeffs)
