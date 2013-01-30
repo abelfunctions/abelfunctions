@@ -82,8 +82,6 @@ def frobenius_transform(A,g):
     diagonal is a gxg identity block. Below the diagonal is a gxg
     -identity block. The output of the procedure is the transformation
     matrix alpha.
-
-    XXX not well tested....XXX
     """
     if not isinstance(A,numpy.matrix):
         B = numpy.matrix(A, dtype=numpy.int)
