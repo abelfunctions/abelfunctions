@@ -331,14 +331,15 @@ class Monodromy(object):
         x, y = self.x, self.y
         p    = sympy.Poly(self.f,[x,y])
         res  = sympy.Poly(sympy.resultant(p,p.diff(y),y),x)
-    
+        
         # compute the numerical roots
         prec = sympy.mpmath.mp.dps
         rts = sympy.nroots(res,n=sympy.mpmath.mp.dps)
         disc_pts = map(sympy.mpmath.mpmathify,                                
                        [str(rt.n(prec)).replace('*I','j') for rt in rts])
+#        rts = sympy.mpmath.polyroots(res.all_coeffs())
 
-        return list(set(disc_pts))
+        return disc_pts
 
 
 
@@ -377,7 +378,7 @@ class Monodromy(object):
             return self._monodromy_graph
 
         disc_pts = self.discriminant_points()
-        
+
         # sort the discriminant points by angle.
         # notation:
         #     - b0 = base point
@@ -387,8 +388,9 @@ class Monodromy(object):
         key = lambda z: 100*sympy.mpmath.re(z) - sympy.mpmath.im(z)
         cmp = lambda z: sympy.mpmath.arg(z-b0)
         bd  = min(disc_pts, key=key)
-        base_radius = min( [numpy.abs(bd - bi) for bi in disc_pts 
+        base_radius = min( [sympy.mpmath.absmax(bd - bi) for bi in disc_pts 
                             if bi != bd] + [10] ) * self.kappa / 2.0
+        
         b0 = bd - base_radius
         disc_pts = sorted(disc_pts, key=cmp)
         bd_index = disc_pts.index(bd)
@@ -396,8 +398,18 @@ class Monodromy(object):
         # store sorted discriminant points and base point data
         self._discriminant_points = disc_pts
         self._base_point = b0
-        self._base_lift  = sympy.nroots(self.f.subs({self.x:b0}),
-                                        n=sympy.mpmath.mp.dps)
+
+
+        # XXX UGLY...but I can't find a better way to convert a polynomial
+        # to something that outputs mpc type roots
+        p         = sympy.poly(self.f.subs(x,b0), self.y)
+        coeffs    = p.all_coeffs()
+        coeffs_b0 = map(lambda c: c.evalf(subs={self.x:b0}, 
+                                          n = sympy.mpmath.mp.dps), coeffs)
+        coeffs_b0 = map(lambda z: sympy.mpmath.mp.mpc(*(z.as_real_imag())),
+                        coeffs_b0)
+        self._base_lift  = sympy.mpmath.polyroots(coeffs_b0)
+
 
         # Compute minimal spanning tree. the weights are the distances
         # between the nodes. the spanning tree algorihtm is from a
@@ -422,7 +434,8 @@ class Monodromy(object):
             radius = rho * self.kappa / 2.0
             
             # store useful data to graph
-            G.node[i]['pos']        = (sympy.re(disc_pt), sympy.im(disc_pt))
+            G.node[i]['pos']        = (sympy.mpmath.re(disc_pt), 
+                                       sympy.mpmath.im(disc_pt))
             G.node[i]['value']      = disc_pt
             G.node[i]['radius']     = radius
             G.node[i]['type']       = 'simple'
@@ -584,7 +597,7 @@ class Monodromy(object):
 
             
         
-    def _initial_monodromy_path(self, i, Npts=3):
+    def _initial_monodromy_path(self, i, Npts=4):
         """
         Returns a list of interpolating points on the initial monodromy
         path encircling the 'i'th discriminant point. 'Npts' is the number
@@ -613,11 +626,11 @@ class Monodromy(object):
         for idx in range(len(path_vertices)-1):
             curr_node   = path_vertices[idx]
             curr_radius = G.node[curr_node]['radius']
-            curr_pos    = G.node[curr_node]['pos']
+            curr_value  = G.node[curr_node]['value']
 
             next_node   = path_vertices[idx+1]
             next_radius = G.node[next_node]['radius']
-            next_pos    = G.node[next_node]['pos']
+            next_value  = G.node[next_node]['value']
 
             # Determine if semi-circle is needed. This is done by
             # checking the path index of the previous edge with the
@@ -629,17 +642,14 @@ class Monodromy(object):
             curr_edge_index = G[curr_node][next_node]['index']
             if prev_edge_index[1] != curr_edge_index[0]:
                 # add semicircle going in positive direction
-                z0  = curr_pos[0] + 1.0j*curr_pos[1]
                 arg = sympy.mpmath.pi if prev_edge_index[1] == -1 else 0
-                circ_pts = circle(curr_radius, z0, arg)
+                circ_pts = circle(curr_radius, curr_value, arg)
                 path_points.extend(circ_pts)
 
 
             # draw line to next discriminant point
-            start = curr_pos[0] + 1.0j*curr_pos[1] + \
-                curr_edge_index[0]*curr_radius
-            end   = next_pos[0] + 1.0j*next_pos[1] + \
-                curr_edge_index[1]*next_radius
+            start = curr_value +  curr_edge_index[0]*curr_radius
+            end   = next_value +  curr_edge_index[1]*next_radius
             line_pts = line(start, end)
             path_points.extend(line_pts)
 
@@ -651,14 +661,13 @@ class Monodromy(object):
         # discriminant point. There's a special case for when we just
         # encircle the root node.
         if len(path_vertices) == 1:
-            next_pos    = G.node[root]['pos']
+            next_value  = G.node[root]['value']
             next_radius = G.node[root]['radius']
             curr_edge_index = (-1,-1)
 
-        z0  = next_pos[0] + 1.0j*next_pos[1]
         arg = sympy.mpmath.pi if curr_edge_index[1] == -1 else 0
-        circ_pts = circle(next_radius, z0, arg) + \
-            circle(next_radius, z0, arg + sympy.mpmath.pi)
+        circ_pts = circle(next_radius, next_value, arg) + \
+            circle(next_radius, next_value, arg + sympy.mpmath.pi)
         circ_pts.append(circ_pts[0])
 
         # combine the path to the circle, the final circle points, 
@@ -669,7 +678,7 @@ class Monodromy(object):
 
 
 
-    def plot_initial_monodromy_path(self, i, Npts=3, eps=0.1):
+    def plot_initial_monodromy_path(self, i, Npts=4, eps=0.1):
         """
         Plots the initial monodromy path. Used for testing and
         debugging purposes.
@@ -700,22 +709,21 @@ class Monodromy(object):
         fig.show()
 
 
-    def initial_monodromy(self, i, Npts=2, lift_paths=False):
+    def initial_monodromy(self, i, Npts=4, lift_paths=False):
         """
         Returns the initial monodromy corresponding to disciminant
         point `i`.  That is, the permutation of sheets as we go around
         discriminant point `i` using the initial monodromy paths.
         """
-        # compute derivatives. optimize for return type
-        dfdx = sympy.diff(self.f, self.x)
-        dfdy = sympy.diff(self.f, self.y)
-        dfdx = sympy.lambdify([self.x,self.y], dfdx, "mpmath")
-        dfdy = sympy.lambdify([self.x,self.y], dfdy, "mpmath")
+        n = self.deg
 
-        # lift function: for each x = xi compute the roots yi_j lying
-        # above xi
-        lift  = lambda a: sympy.nroots(self.f.subs({self.x:a}),
-                                       n=sympy.mpmath.mp.dps)
+        # compute derivatives. optimize for return type
+        f = sympy.lambdify([self.x, self.y], self.f, "mpmath")
+        _dfdx = sympy.diff(self.f, self.x)
+        _dfdy = sympy.diff(self.f, self.y)
+        dfdx = sympy.lambdify([self.x,self.y], _dfdx, "mpmath")
+        dfdy = sympy.lambdify([self.x,self.y], _dfdy, "mpmath")
+
 
         # obtain interpolating points in path
         path = self._initial_monodromy_path(i, Npts=Npts)
@@ -729,30 +737,27 @@ class Monodromy(object):
         if lift_paths:
             lift_points = [base_lift]
 
+        yi   = [0]*n
         yim1 = base_lift
         xim1 = base_point
-        for xi in path:
+        for xi in path[1:]:
             # compute numerical approximation of the next set of roots
             # using Taylor series. This allows us to use fewer
-            # interpolating points
+            # interpolating points. Use generators for fast creation.
             dx = xi - xim1
-            yi = lift(xi)
-            yi_approx = [yim1[j] - dx * dfdx(xim1,yim1[j]) / dfdy(xim1,yim1[j])
-                         for j in xrange(self.deg)]
-
-            # if a matching permutation cannot be found, double the number
-            # of interpolating points and try again
-            try:
-                rho = matching_permutation(yi, yi_approx)
-            except:
-                return self.initial_monodromy(i, Npts=2*Npts, 
-                                              lift_paths=lift_paths)
-                
-            yi = rho.action(yi)
+            f_xi  = lambda y: f(xi,y)
+            df_xi = lambda y: - dx * dfdx(xi,y) / dfdy(xi,y)
+            for j in xrange(n):
+                yp = - dfdx(xim1,yim1[j]) / dfdy(xim1,yim1[j])
+                dy = yp * dx
+                yi_approx = yim1[j] + dy
+                guess = (yi_approx - dy/10, yi_approx, yi_approx + dy/10)
+                yi[j] = sympy.mpmath.findroot(f_xi, guess, df=df_xi,
+                                              solver='muller')
             
             # for plotting purposes, we optionally store the lift
             if lift_paths:
-                lift_points.append(yi)
+                lift_points.append([yij for yij in yi])
             
             yim1 = yi
             xim1 = xi
@@ -764,7 +769,7 @@ class Monodromy(object):
 
 
     
-    def plot_initial_monodromy_lift(self, i, Npts=3):
+    def plot_initial_monodromy_lift(self, i, Npts=4):
         """
         Plots the lift [y1,...,yn] on the complex plane as x varies 
         Along an initial monodromy path.
@@ -973,7 +978,7 @@ class Monodromy(object):
         return G.node[root]['string']
 
 
-    def monodromy(self, Npts=2):
+    def monodromy(self, Npts=4):
         """
         Returns the monodromy group.
 
@@ -1053,10 +1058,10 @@ if __name__=='__main__':
     f  = f7
     M = Monodromy(f,x,y)
    
-    import cProfile, pstats
-    cProfile.run('mon = M.monodromy()','monodromy.profile')
-    p = pstats.Stats('monodromy.profile')
-    p.strip_dirs()
-    p.sort_stats('time').print_stats(25)
-    p.sort_stats('cumulative').print_stats(25)
-    p.sort_stats('calls').print_stats(25)
+#     import cProfile, pstats
+#     cProfile.run('mon = M.monodromy()','monodromy.profile')
+#     p = pstats.Stats('monodromy.profile')
+#     p.strip_dirs()
+#     p.sort_stats('time').print_stats(25)
+#     p.sort_stats('cumulative').print_stats(25)
+#     p.sort_stats('calls').print_stats(25)
