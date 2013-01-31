@@ -100,15 +100,11 @@ def frobenius_transform(A,g):
         # and columns
         counter = dim-1
 
-        pdb.set_trace()
-
-        while numpy.all(B[(g+i):,i] == numpy.zeros(dim-(g+i))):
+        while numpy.all( B[(g+i):,i] == numpy.zeros(dim-(g+i)) ):
             alpha[[i,counter],:] = alpha[[counter,i],:]
             B[:,[i,counter]]     = B[:,[counter,i]]
             B[[i,counter],:]     = B[[counter,i],:]
             counter -= 1
-
-        pdb.set_trace()
         
         if B[i+g,i] == 0:
             # if the pivot element is zero then change rows to make it
@@ -135,14 +131,12 @@ def frobenius_transform(A,g):
             B[i+g,:]     *= pivot
             B[:,i+g]     *= pivot
 
-        for j in range(i,i+g-1) + range(i+g,dim):  # XXX double-check indices
+        for j in range(i,i+g) + range(i+g+1,dim):
             # use the pivot to create zeros in the rows above it and below it
             pivot = -B[j,i]/B[i+g,i]
             alpha[j,:] += pivot * alpha[i+g,:]
             B[j,:]     += pivot * B[i+g,:]
             B[:,j]     += pivot * B[:,i+g]
-
-    pdb.set_trace()
 
     for i in range(g):
         # the block aboce the diagonal is already there. use it to
@@ -663,8 +657,6 @@ def canonical_basis(f,x,y):
 #    if rank/2 != g:  # XXX genus
 #        raise ValueError("Found inconsistent genus in homolgy " + \
 #                         "intersection matrix.")
-
-    pdb.set_trace()
     
     alpha = frobenius_transform(t_matrix, g)
 
@@ -717,7 +709,7 @@ def simplify_cycle(t_table, lin_comb):
     while i != -1:
         if lin_comb[i] != 0:
             index = i
-            temp_cycle = t_table[i]
+            temp_cycle = [v for v in t_table[i]]
             n = len(temp_cycle)
 
             if lin_comb[i] < 0:
@@ -773,55 +765,66 @@ def simplify_cycle(t_table, lin_comb):
 
 
 
-def compress_cycle(cycle):
+def compress_cycle(llist):
     """
     Returns a "compressed form" of a list representing a cycle.
 
     If the (i+2)nd element in the list is equal to the ith element
     then elements (i+1) and (i+2) can be removed from the
-    list. Geometrically, this represents...XXX.
+    list. Geometrically, this represents either going around the same
+    branch point or going around a branch point and staying on the
+    same sheet.
     
     Finally, the cycle is rewritten to start fom the sheets with the
     smallest sheet number.
     """
-    n = len(cycle)
-    c_cycle = []
+    n = len(llist)
+    cycle = []
 
     pdb.set_trace()
 
-    # XXX there's definitely a way to make this more compact and
-    # pythonic
+    # XXX there's definitely a way to make this more pythonic
     for i in xrange(n):
-        c = cycle[i]
+        c = llist[i]
         j = 0
 
         # hack ???
         if not isinstance(c,list): c = [c]
 
         while j < len(c):
+            # We reached the end of the current cycle component. If
+            # this last element is equal to the second (index=1)
+            # element then trim off the first two elements.
             if j == (len(c)-1):
                 if c[j] == c[1]:
-                    c = [c[k]] + c[3:]
+                    c = c[2:]
                     j = 0
                 else:
                     j += 1
 
+            # We reached the second to last element of the current
+            # cycle component. If this second to last element is
+            # equal to the first (index=0) element then trim off the last
+            # two elements of the component.
             elif j == (len(c)-2):
                 if c[j] == c[0]:
-                    c = [c[k]] + c[:(len(c)-2)]
+                    c = c[:(len(c)-2)]
                     j = 0
                 else:
                     j += 1
+
+            # If  the jth  element is  equal to  the j+2  element then
+            # delete elements j and j+1.
             else:
                 if c[j] == c[j+2]:
-                    c = c[:j] + c[(j+2):]  # XXX index check
+                    c = c[:j] + c[(j+2):]
                     j = 0
                 else:
                     j += 1
 
-        c_cycle.extend(reform_cycle(c,min(c)))   # XXX or append?
+        cycle.extend(reform_cycle(reorder_cycle(c,min(c))))   # XXX or append?
 
-    return c_cycle
+    return cycle
                 
 
 
@@ -835,18 +838,55 @@ def reform_cycle(cycle):
     the branch point in the complex plane, the second indicates how
     many times one needs to go around the branch point (in the
     positive direction) to get to the next sheet.
+
+    Input: 
+
+    A cycle of the form
+
+        [s_0, (b_{i_0}, pi_{i_0}), s_1, (b_{i_1}, pi_{i_1}), ...]
+
+    where "s_k" is a sheet number, "b_{i_k}" is the {i_k}'th branch
+    point, and "pi_{i_k}" is the corresponding sheet permutation
+    associated with the branch point.
+
+    It is assumed that each of these sheet / branch point pairs
+    appear uniquely in this cycle since the input is recieved from
+    the function "compress_cycle()".
+
+    Output:
+    
+    A list of the form
+
+        [s_0, (b_{i_0}, n_{i_0}), s_1, (b_{i_1}, n_{i_1}), ...]
+
+    where "s_k" is a sheet number, "b_{i_k}" is the {i_k}'th branch
+    point, and "n_{i_k}" is the number of times and direction to go
+    about branch point "b_{i_k}".
     """
-    # XXX F**K THE INDEX TRANSLATION FROM MAPLE SUCKS
     n = len(cycle)
     lijst = cycle[:]  # make a copy, not a pointer to the same list
     for i in xrange(n/2):
+        # Grab the current sheet (a) + branch point pair (b).
         a = lijst[2*i]
-        b = lijst[2*i+1]   # XXX check above to make sure no "-1" indices
-        if (2*i+1) == n:   # XXX check index
+        b = lijst[2*i+1]
+
+        # If we're at the end of the cycle then wrap around to get the
+        # "next" sheet. Otherwise, the next sheet is the element
+        # following.
+        if (2*i+1) == (n-1):
             c = lijst[0]
         else:
             c = lijst[2*i+2]
-            
+        
+        # Branch points are of the form (branch point number/index,
+        # sheet permutation). "a" and "c" are the source and target
+        # sheets, respectively. Find where these sheets are located in
+        # the permutation and find the distance between the two
+        # sheets. This distance is equal to the number of times and
+        # direction one must go around the given branch point in order
+        # to get from sheet a to sheet c. Of all ways to go around the
+        # branch point to get from sheet a to c the one with the
+        # fewest number of rotations is selected.
         pos1 = b[1].index(a)
         pos2 = b[1].index(c)
         mini = min( [abs(pos2-pos1), pos2-pos1+len(b[1]), 
@@ -856,6 +896,7 @@ def reform_cycle(cycle):
         elif pos2-pos1+len(b[2]) == mini: around = pos2-pos1+len(b[1])
         else:                             around = pos2-pos1-len(b[1])
             
+        # Replace the permutation with the number of times 
         b[1] = around
         lijst[2*i+1] = b
 
