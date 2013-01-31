@@ -719,8 +719,8 @@ class Monodromy(object):
 
         # compute derivatives. optimize for return type
         f = sympy.lambdify([self.x, self.y], self.f, "mpmath")
-        _dfdx = sympy.diff(self.f, self.x)
-        _dfdy = sympy.diff(self.f, self.y)
+        _dfdx = sympy.diff(self.f, self.x).simplify()
+        _dfdy = sympy.diff(self.f, self.y).simplify()
         dfdx = sympy.lambdify([self.x,self.y], _dfdx, "mpmath")
         dfdy = sympy.lambdify([self.x,self.y], _dfdy, "mpmath")
 
@@ -749,9 +749,9 @@ class Monodromy(object):
             df_xi = lambda y: - dx * dfdx(xi,y) / dfdy(xi,y)
             for j in xrange(n):
                 yp = - dfdx(xim1,yim1[j]) / dfdy(xim1,yim1[j])
-                dy = yp * dx
+                dy = yp * dx + sympy.mpmath.eps       # in case yp == 0
                 yi_approx = yim1[j] + dy
-                guess = (yi_approx - dy/10, yi_approx, yi_approx + dy/10)
+                guess = (yi_approx - dy, yi_approx, yi_approx + dy)
                 yi[j] = sympy.mpmath.findroot(f_xi, guess, df=df_xi,
                                               solver='muller')
             
