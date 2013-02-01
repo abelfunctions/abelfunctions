@@ -9,7 +9,7 @@ import networkx as nx
 
 from abelfunctions.differentials import differentials
 from abelfunctions.monodromy     import Monodromy
-import abelfunctions.homology    import *
+import abelfunctions.homology    import homology
 
 _Z = sympy.Dummy('Z')
 
@@ -20,6 +20,230 @@ def path_to_base_point(self, rs, P):
     Determines a path from P to the base point of the Riemann surface,
     'rs'.
     """
+    pass
+
+
+
+def interpolating_circle(R, z0, arg, dir, Npts, endpoint=False):
+    """
+    Returns a list of sympy.mpmath.mpc points of length Npts
+    describing a semicircle in the complex plane with center `z0`,
+    radius `R`, initial position `arg`, and direction `dir`.
+    """
+    R, z0, arg, dir = map(sympy.mpmath.mpc, [R,z0,arg,dir])
+    exp = sympy.mpmath.exp
+    pi = sympy.mpmath.pi
+    j = sympy.mpmath.j
+    
+    t_pts  = sympy.mpmath.linspace(0, 1, Npts, endpoint=endpoint)
+    circle = [R*exp(j*(dir*pi*t + arg)) + z0 for t in t_pts]
+    return circle
+
+
+
+def interpolating_line(z0, z1, Npts, endpoint=False):
+    """
+    Returns a list of sympy.mpmath.mpc points of length Npts
+    describing a line in the complex plane from z0 to z1.
+    """
+    z0, z1 = map(sympy.mpmath.mpc, [z0,z1])
+    
+    t_pts = sympy.mpmath.linspace(0, 1, Npts, endpoint=endpoint)
+    line = [z0*(1-t) + z1*t for t in t_pts]
+    return line
+
+
+
+def path_around_branch_point(G, bpt, rot, Npts):
+    """
+    Returns a list of interpolating x-points starting from the base
+    point going around the branch point, "bpt", "rot" number of times.
+    The sign of "rot" determines direction.
+
+    Input:
+    
+    - G: the "monodromy graph", as computed by Monodromy
+    
+    - bpt: the index of the target branch point
+
+    - rot: the rotation number and direction of the path going around
+    branch point "bpt".
+
+    Output:
+
+    A list of interpolating x-points.
+    """
+    # Grab the root node.
+    root = G.node[bpt]['root']
+
+    # retreive the vertices between the base point vertex and
+    # the target vertex.
+    path_vertices = nx.shortest_path(G, source=root, target=bpt)
+
+    # retreive the conjugates. If we pass through a vertex that is
+    # a conjugate
+    conjugates = G.node[bpt]['conjugates']
+
+    # 1) Compute interpolating points for semi-circle / line pairs
+    # leading to the circle encircling the target branch
+    # point. (Taking conjugates into account.) Conjugation will
+    # indicate whether to pass a vertex on the path towards the target
+    # either above or below the vertex.
+    prev_node = root
+    for idx in range(len(path_vertices)-1):
+        curr_node   = path_vertices[idx]
+        curr_radius = G.node[curr_node]['radius']
+        curr_value  = G.node[curr_node]['value']
+
+        next_node   = path_vertices[idx+1]
+        next_radius = G.node[next_node]['radius']
+        next_value  = G.node[next_node]['value']
+
+        # Determine if semi-circle is needed. This is done by checking
+        # the path index of the previous edge with the path index of
+        # the next edge. If needed, add semicircle going in the
+        # appropriate direction where the direction is determined by
+        # the conjugation list. A special case is taken if we're 
+        # at the root vertex.
+        curr_edge_index = G[curr_node][next_node]['index']
+        if prev_node == root:
+            prev_edge_index = (0,-1)  # in the root node case
+        else:
+            prev_edge_index = G[prev_node][curr_node]['index']
+        if prev_edge_index[1] != curr_edge_index[0]:
+            arg = sympy.mpmath.pi if prev_edge_index[1] == -1 else 0
+            dir = -1 if curr_node in conjugates else 1
+            circ_pts = interpolating_circle(curr_radius, curr_value, arg,
+                                            dir, Npts)
+            path_points.extend(circ_pts)
+
+        # Add the line to the next discriminant point.
+        start = curr_value +  curr_edge_index[0]*curr_radius
+        end   = next_value +  curr_edge_index[1]*next_radius
+        line_pts = interpolating_line(start, end)
+        path_points.extend(line_pts)
+
+        # Update previous point
+        prev_node = curr_node
+
+
+    # 2) Construct interpolating points around the target
+    # branch point. The rotation number "rot" tells us how
+    # many times to go around the branch point and in which
+    # direction. There's a special case for when we just
+    # encircle the root node.
+    if len(path_vertices) == 1:
+        next_value  = G.node[root]['value']
+        next_radius = G.node[root]['radius']
+        curr_edge_index = (-1,-1)
+
+    arg = sympy.mpmath.pi if curr_edge_index[1] == -1 else 0
+    dir = 1 if rot > 0 else -1
+    circ_pts = interpolating_circle(next_radius, next_value, arg, dir, Npts) +\
+        interpolating_circle(next_radius, next_value, 
+                             arg+sympy.mpmath.pi, dir, Npts)
+    circ_pts = circ_pts * int(abs(rot))
+    circ_pts.append(circ_pts[0])
+
+    # 3) Combine the path to the circle, the final circle points, and
+    # the reverse path points
+    path_points.extend(circ_pts + path_points[::-1])2
+
+    return path_points
+
+
+
+def compute_lift_points(RS, x_points, y0):
+    """
+    Given a set of points in the complex x-plane, `x_points`, and a
+    starting sheet index, `sheet_index`, on the Riemann surface, `RS`
+    compute the set of complex y-points lying over the x-points on the
+    Riemann surface.
+
+    Input:
+
+    - `RS`: a RiemannSurface defined by a plane algebraic curve `f =
+      f(x,y)`
+
+    - `x_points`: a list of points in the complex x-plane that
+    interpolate a path on the cut Riemann surface, RS.
+
+    - `y0`: the y-point at which the path begins
+
+
+    Output:
+
+    - `y_points`: a list of complex y-points such that (x_points[i],
+    y_points[i]) defines an interpolating path on the Riemann surface
+    RS.
+    """
+    n = sympy.degree(RS.f,y)
+    eps = sympy.mpmath.eps
+
+    # Create the necessary functions for computing on the Riemann surface
+    f = sympy.lambdify([x, y], RS.f, "mpmath")
+    _dfdx = sympy.diff(f, x).simplify()
+    _dfdy = sympy.diff(f, y).simplify()
+    dfdx = sympy.lambdify([x, y], _dfdx, "mpmath")
+    dfdy = sympy.lambdify([x, y], _dfdy, "mpmath")
+
+    base_point = RS.base_points()
+    
+    # Check if (x_points[0], y0) is a point on the Riemann
+    # surface. (Or, is at least close enough to the Riemann surface
+    # for now.)
+    #
+    # XXX This function currently only works for paths starting at the
+    # base point on the Riemann surface
+    if sympy.mpmath.abs(x_points[0] - base_point) > eps / 2.0:
+        raise NotImplementedError("Cannot compute arbitrary paths on" + \
+                                      " Riemann surfaces, only on"    + \
+                                      " those starting at the base point.")
+
+    # Check if y0 is close enough to the Riemann surface. Compute the
+    # nearest y_point in order to get closer.
+    if sympy.mpmath.abs(f(x_points[0], y0)) < 2.0 * eps:
+        raise ValueError("(x_points[0], y0) is not a point on the" + \
+                             " Riemann surface.")
+
+    # Initialize analytic continuation loop: get as close as possible
+    # to the Riemann surface
+    xim1     = x_points[0]
+    f_xim1  = lambda y: f(xim1,y)
+    df_xim1 = lambda y: - dx * dfdx(xim1,y) / dfdy(xim1,y)
+    guess = (y0-eps, y0, y0+eps)
+    yim1 = sympy.mpmath.findroot(f_xim1, guess, df=df_xim1, solver='muller')
+
+    # analytic continuation loop
+    y_points    = range(len(x_points))
+    y_points[0] = yim1
+    idx = 1
+    max_dx = 0
+    for xi in x_points[1:]:
+        # compute numerical approximation of the next set of roots
+        # using Taylor series. This allows us to use fewer
+        # interpolating points. Use generators for fast creation.
+        dx = xi - xim1
+
+        f_xi  = lambda y: f(xi,y)
+        df_xi = lambda y: - dx * dfdx(xi,y) / dfdy(xi,y)
+
+        yp        = - dfdx(xim1,yim1) / dfdy(xim1,yim1)
+        dy        = yp * dx + sympy.mpmath.eps       # in case yp == 0
+        yi_approx = yim1 + dy
+        guess     = (yi_approx - dy, yi_approx, yi_approx + dy)
+        yi        = sympy.mpmath.findroot(f_xi, guess, df=df_xi,
+                                          solver='muller')
+
+        # store and update (making the array ahead of time is faster)
+        y_points[idx] = yi 
+        yim1 = yi
+        xim1 = xi
+        idx += 1
+    
+    return y_points
+                
+
 
 
 class RiemannSurface_Path():
@@ -160,6 +384,9 @@ class RiemannSurface(Monodromy):
         self.p = sympy.Poly(f,[x,y])
         self.x = x
         self.y = y
+        self._monodromy = self.monodromy()
+        self._homology  = homology(self._monodromy.hurwitz_system())
+        
 
     def __repr__(self):
         return "Riemann surface defined by the plane algebraic curve %s."%f
@@ -191,7 +418,7 @@ class RiemannSurface(Monodromy):
         `\mathbb{C}_x`-plane, return the branch points of the algebraic 
         curve `f = f(x,y)`.
         """
-        pass
+        return super.branch_points()
 
 
     def base_point(self):
@@ -201,7 +428,7 @@ class RiemannSurface(Monodromy):
         `b`-cycles begin and end) and `(y_0, ..., y_{n-1})` are the 
         ordered sheets lying above `a`.
         """
-        pass
+        return super.base_point()
         
         
     def holomorphic_differentials(self):
@@ -212,7 +439,7 @@ class RiemannSurface(Monodromy):
         return differentials(f,x,y)
 
 
-    def a_cycle(self, i, Npts=32):
+    def a_cycle(self, i, Npts=8):
         """
         Returns the ith a_cycle as an array of interpolating points
         starting from and ending at the basepoint of the Riemann
@@ -221,7 +448,7 @@ class RiemannSurface(Monodromy):
         mon
 
     
-    def b_cycle(self, i, Npts=32):
+    def b_cycle(self, i, Npts=8):
         """
         Returns the ith b_cycle as an array of interpolating points
         starting from and ending at the basepoint of the Riemann
@@ -230,46 +457,81 @@ class RiemannSurface(Monodromy):
         pass
 
 
-    def _get_cycle(self, k, Npts=32):
+    @cached_function
+    def c_cycle(self, i, Npts=8):
         """
-        Called by `a_cycle()` and `b_cycle()` to obtain the
-        corresponding cycle.
+        Returns a path in the complex x-plane of the x-points in the
+        monodromy path.
+        
+        Input:
+
+        - i: the index of the c-cycle
+        
+        - Npts: the number of interpolating points per "path
+        segment". A path segment refers to either a line segment
+        connecting two monodromy path circles or a semicircle as part
+        of a monodromy path circle.
+
+        Output:
+
+        - a list of interpolating x-point of the i'th c-cycle
         """
-        # compute the homology and grab the kth contour as a list of
-        # branch points, number of rotations, and direction
-        h = homology(f,x,y)
-        kappa = h[0]['linearcombination']
-        contours = h[0]['cycles']
-        contour = contours[k]
+        # get the cycle data from homology: each c-cycle is a list of
+        # alternating sheet numbers s_k and branch point / number of
+        # rotations tuples (b_{i_k}, n_k)
+        cycles  = self._homology['cycles']
+        
+        G = self.mondoromy_graph()
+        root = G.node[0]['root']
+        path_points = []
 
-        # determine information about the contour: start / stop
-        # points, the permutation of the target base point, and the
-        # sheet numbers
-        n = len(contour)/2
-        cycle = contour + [contour[0]]
-        for i in xrange(n):
-            bpoint     = cycle[2*i+1][0]    # XXX check indexing
-            perm       = cycle[2*i+1][1]
-            firstsheet = cycle[2*i]
-            lastsheet  = cycle[2*i+2]
-            perm = reorder_cycle(perm, firstsheet)
+        # For each (branch point, rotation number) pair appearing in
+        # the cycle compute the interpolating points in the complex
+        # x-plane going around the given branch points a number of
+        # times equal to the rotation number. Add these points to the
+        # list of path points.
+        for (bpt, rot) in cycles[i][1::2]:
+            bpt_path_points = path_around_branch_pont(G, bpt, rot, Npts)
+            path_points.extend(bpt_path_points)
 
-            # generate the path points corresponding to this branch
-            # point. use the monodromy graph and the conjugates
-            
+        return
+
+
+    def integrate_c_cycle(self, h, x, y, i, Npts=8)
+        """
+        Integrates the differential `omega = h(x,y) dx`, defined on the
+        Riemann surface, on the ith c-cycle.
+        
+        Input:
+
+        - `h,x,y`: a Sympy funciton in the variables `x` and `y`
+
+        - `i`: the index of the c-cycle to integrate over.
+
+        - `Npts`: the number of interpolating points per "path
+        segment". A path segment refers to either a line segment
+        connecting two monodromy path circles or a semicircle as part
+        of a monodromy path circle.
+        """
+        base_lift = self.base_lift()
+        y0 = base_lift[0]
+
+        # Determine the x- and y-points defining the path on the
+        # Riemann surface.
+        x_cycle_points = self.c_cycle(i,Npts=Npts)
+        y_cycle_points = compute_lift_points(self, x_cycle_points, y0)
+
+        # Compute h(x,y) over all (x,y) points on the Riemann surface
+        h = sympy.lambdify([x,y], h)
+        h_points = map(h, zip(x_cycle_points, y_cycle_points))
+        
+        # Numerically integrate
+        #
+        # XXX for now, use own trapezoidal rule
         
         
+
         
-        
-
-
-
-    def integrate(self, f, x, y, P1, P0='basepoint'):
-        """
-        Integrates the function `f = f(x,y)`, defined on the Riemann surface,
-        from the point P1 to the point P2.
-        """
-        pass
 
 
 
@@ -279,8 +541,13 @@ class RiemannSurface(Monodromy):
         the integral of the `j`th holomorphic differential basis element
         about the cycle `a_i`. (`B` is defined in the same way about the 
         `b`-cycles.)
+
+        Note: this function computes the integrals of the
+        differentials over each of the c-cycles and then uses the
+        homology data to determine which linear combination of
+        c-cycles integrals gives the a- and b-cycles integrals.
         """
-        pass
+        
         
 
         
