@@ -333,11 +333,10 @@ class Monodromy(object):
         res  = sympy.Poly(sympy.resultant(p,p.diff(y),y),x)
         
         # compute the numerical roots
-        prec = sympy.mpmath.mp.dps
-        rts = sympy.nroots(res,n=sympy.mpmath.mp.dps)
-        disc_pts = map(sympy.mpmath.mpmathify,                                
-                       [str(rt.n(prec)).replace('*I','j') for rt in rts])
-#        rts = sympy.mpmath.polyroots(res.all_coeffs())
+        dps = sympy.mpmath.mp.dps
+        rts = [rt for rt,ord in res.all_roots(multiple=False, radicals=False)]
+        rts = map(lambda z: sympy.N(z,n=dps).as_real_imag(), rts)
+        disc_pts = map(lambda z: sympy.mpmath.mpc(*z), rts)
 
         return disc_pts
 
@@ -777,19 +776,59 @@ class Monodromy(object):
         lift = self.initial_monodromy(i, Npts=Npts, lift_paths=True)
         clrs = ['b','g','r','k','c','m','y']*int(self.deg/7+1)
 
-        fig = plt.figure()
-        ax  = fig.add_subplot(111)
+#         for i in xrange(self.deg):
+#             yi = [lift[n][i] for n in xrange(len(lift))]
+#             yi_re = [sympy.re(yij) for yij in yi]
+#             yi_im = [sympy.im(yij) for yij in yi]
+#             ax.plot(yi_re, yi_im, color=clrs[i], 
+#                     linestyle='--', linewidth=3*(i+1), alpha=0.4)
 
+#         plt.show()
+
+        plt.ion()
+
+
+        # scan ahead to figure out the axes
+        axis = [-1,1,-1,1]
+        for j in xrange(len(lift)):
+            for i in xrange(self.deg):
+                yji = lift[j][i]
+                
+                if yji.real < axis[0]: axis[0] = float(yji.real)
+                if yji.real > axis[1]: axis[1] = float(yji.real)
+                if yji.imag < axis[2]: axis[2] = float(yji.imag)
+                if yji.imag > axis[3]: axis[3] = float(yji.imag)
+
+        xeps = (axis[1]-axis[0])/10.0
+        yeps = (axis[3]-axis[2])/10.0
+        axis[0] -= xeps
+        axis[1] += xeps
+        axis[2] -= yeps
+        axis[3] += xeps
+
+        plt.axis(axis)
+
+        xdata = {}
+        ydata = {}
+        lines = range(self.deg)
         for i in xrange(self.deg):
-            yi = [lift[n][i] for n in xrange(len(lift))]
-            yi_re = [sympy.re(yij) for yij in yi]
-            yi_im = [sympy.im(yij) for yij in yi]
-            ax.plot(yi_re, yi_im, color=clrs[i], 
-                    linestyle='--', linewidth=3*(i+1), alpha=0.4)
-            ax.plot(yi_re[-1], yi_im[-1], color=clrs[i],
-                    marker='o', markersize=3*(i+3), alpha=0.4)
+            y = lift[0][i]
+            xdata[i] = [y.real]
+            ydata[i] = [y.imag]
+            lines[i], = plt.plot(y.real, y.imag, color=clrs[i],
+                                 linestyle='--', linewidth=4*(i+1), alpha=0.3)
 
-        plt.show()
+
+        for j in xrange(len(lift)):
+            for i in xrange(self.deg):
+                y = lift[j][i]
+
+                xdata[i].append(y.real)
+                ydata[i].append(y.imag)
+
+                lines[i].set_xdata(xdata[i])
+                lines[i].set_ydata(ydata[i])
+            plt.draw()
 
 
     def _construct_position_tree(self):
@@ -1055,7 +1094,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
-    f  = f7
+    f  = f2
     M = Monodromy(f,x,y)
    
 #     import cProfile, pstats

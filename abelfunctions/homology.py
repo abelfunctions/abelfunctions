@@ -683,243 +683,13 @@ def canonical_basis(f,x,y):
     c['genus']     = g
     c['cycles']    = t_basis
     c['linearcombination'] = alpha[:2*g,:]
-    c['canonicalcycles'] = ab_cycles(t_basis, alpha[:2*g,:])
 
     return c
 
 
 
-
 def homology(*args, **kwds):
     return canonical_basis(*args, **kwds)
-
-
-
-
-def simplify_cycle(t_table, lin_comb):
-    """
-    Simplifies a cycle given as a linear combination of other
-    cycles. Returns a list of cycles, the sum of which constitutes the
-    new cycle.
-    """
-    pdb.set_trace()
-
-    r = len(lin_comb)
-    i = 0
-    while i != -1:
-        if lin_comb[i] != 0:
-            index = i
-            temp_cycle = [v for v in t_table[i]]
-            n = len(temp_cycle)
-
-            if lin_comb[i] < 0:
-                # reverse the cycle (with the first element fixed)    
-                temp_cycle = [temp_cycle[0]] + \
-                    [temp_cycle[n-j] for j in xrange(n-1)]
-
-            # take as many copies of the cycle as needed
-            cycle = temp_cycle*abs(lin_comb[i])  # XXX index check
-            i = -1
-        else:
-            i += 1
-
-    pdb.set_trace()
-
-    # compose this cycle with the other cycles that appear in the linear
-    # combination.
-    sheets = [cycle[2*i-1] for i in xrange(len(cycle)/2)]
-    
-    for i in xrange(index+1,r):   # XXX index check
-        if lin_comb[i] != 0:
-            temp_cycle = t_table[i]
-            n = len(temp_cycle)
-
-            if lin_comb[i] < 0:
-                # reverse the cycle (with the first element fixed)    
-                temp_cycle = [temp_cycle[0]] + \
-                    [temp_cycle[n-j] for j in xrange(n-1)]
-
-            # find a common sheet
-            temp_sheets = [temp_cycle[2*j-1] 
-                           for j in xrange(len(temp_cycle)/2)]
-            # take as many copies of the temp. cycle as needed
-            temp_cycle = temp_cycle*abs(lin_comb[i])
-
-            k = 0
-            while (k != -1) and (k < len(cycle)): # XXX index check
-                if sheets[k] in temp_sheets:
-                    sheet = sheet[k]
-                    cycle[k] = reorder_cycle(cycle[k], sheet)
-                    temp_cycle = reorder_cycle(temp_cycle, sheet)
-                    cycle[k] = cycle[k] + temp_cycle  # XXX double check
-                    k = 0
-                else:
-                    k += 1
-                    sheets.extend(temp_sheets)  # XXX extend or append
-            if k == len(cycle):
-                cycle.extend(temp_cycle)
-
-    pdb.set_trace()
-
-    return cycle
-
-
-
-def compress_cycle(llist):
-    """
-    Returns a "compressed form" of a list representing a cycle.
-
-    If the (i+2)nd element in the list is equal to the ith element
-    then elements (i+1) and (i+2) can be removed from the
-    list. Geometrically, this represents either going around the same
-    branch point or going around a branch point and staying on the
-    same sheet.
-    
-    Finally, the cycle is rewritten to start fom the sheets with the
-    smallest sheet number.
-    """
-    n = len(llist)
-    cycle = []
-
-    pdb.set_trace()
-
-    # XXX there's definitely a way to make this more pythonic
-    for i in xrange(n):
-        c = llist[i]
-        j = 0
-
-        # hack ???
-        if not isinstance(c,list): c = [c]
-
-        while j < len(c):
-            # We reached the end of the current cycle component. If
-            # this last element is equal to the second (index=1)
-            # element then trim off the first two elements.
-            if j == (len(c)-1):
-                if c[j] == c[1]:
-                    c = c[2:]
-                    j = 0
-                else:
-                    j += 1
-
-            # We reached the second to last element of the current
-            # cycle component. If this second to last element is
-            # equal to the first (index=0) element then trim off the last
-            # two elements of the component.
-            elif j == (len(c)-2):
-                if c[j] == c[0]:
-                    c = c[:(len(c)-2)]
-                    j = 0
-                else:
-                    j += 1
-
-            # If  the jth  element is  equal to  the j+2  element then
-            # delete elements j and j+1.
-            else:
-                if c[j] == c[j+2]:
-                    c = c[:j] + c[(j+2):]
-                    j = 0
-                else:
-                    j += 1
-
-        cycle.extend(reform_cycle(reorder_cycle(c,min(c))))   # XXX or append?
-
-    return cycle
-                
-
-
-
-def reform_cycle(cycle):
-    """
-    Rewrite a cycle in a specific form.
-
-    The odd entries in the output list are sheet numbers. The even
-    entries are lists with two elements: the first is the location of
-    the branch point in the complex plane, the second indicates how
-    many times one needs to go around the branch point (in the
-    positive direction) to get to the next sheet.
-
-    Input: 
-
-    A cycle of the form
-
-        [s_0, (b_{i_0}, pi_{i_0}), s_1, (b_{i_1}, pi_{i_1}), ...]
-
-    where "s_k" is a sheet number, "b_{i_k}" is the {i_k}'th branch
-    point, and "pi_{i_k}" is the corresponding sheet permutation
-    associated with the branch point.
-
-    It is assumed that each of these sheet / branch point pairs
-    appear uniquely in this cycle since the input is recieved from
-    the function "compress_cycle()".
-
-    Output:
-    
-    A list of the form
-
-        [s_0, (b_{i_0}, n_{i_0}), s_1, (b_{i_1}, n_{i_1}), ...]
-
-    where "s_k" is a sheet number, "b_{i_k}" is the {i_k}'th branch
-    point, and "n_{i_k}" is the number of times and direction to go
-    about branch point "b_{i_k}".
-    """
-    n = len(cycle)
-    lijst = cycle[:]  # make a copy, not a pointer to the same list
-    for i in xrange(n/2):
-        # Grab the current sheet (a) + branch point pair (b).
-        a = lijst[2*i]
-        b = lijst[2*i+1]
-
-        # If we're at the end of the cycle then wrap around to get the
-        # "next" sheet. Otherwise, the next sheet is the element
-        # following.
-        if (2*i+1) == (n-1):
-            c = lijst[0]
-        else:
-            c = lijst[2*i+2]
-        
-        # Branch points are of the form (branch point number/index,
-        # sheet permutation). "a" and "c" are the source and target
-        # sheets, respectively. Find where these sheets are located in
-        # the permutation and find the distance between the two
-        # sheets. This distance is equal to the number of times and
-        # direction one must go around the given branch point in order
-        # to get from sheet a to sheet c. Of all ways to go around the
-        # branch point to get from sheet a to c the one with the
-        # fewest number of rotations is selected.
-        pos1 = b[1].index(a)
-        pos2 = b[1].index(c)
-        mini = min( [abs(pos2-pos1), pos2-pos1+len(b[1]), 
-                     abs(pos2-pos1-len(b[1]))] )
-
-        if abs(pos2-pos1) == mini:        around = pos2-pos1
-        elif pos2-pos1+len(b[2]) == mini: around = pos2-pos1+len(b[1])
-        else:                             around = pos2-pos1-len(b[1])
-            
-        # Replace the permutation with the number of times 
-        b[1] = around
-        lijst[2*i+1] = b
-
-    return lijst
-        
-
-
-def ab_cycles(t_basis, alpha):
-    """
-    Returns a list of the a- and b-cycles as computed from the 
-    c-cycles and the intersection matrix.
-    """
-    g,_ = alpha.shape
-    c = {}
-    a = range(g)
-    b = range(g)
-    for i in xrange(2*g):
-        cycle = compress_cycle(simplify_cycle(t_basis, alpha[i,:]))
-        if i < g: a[i]   = cycle
-        else:     b[i-g] = cycle
-
-    return [a,b]
-    
 
 
 
@@ -939,9 +709,17 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     f11= y**2 - x*(x-1)*(x-2)*(x-3)  # simple genus two hyperelliptic
-    
-    f = f11
 
-    basis = canonical_basis(f,x,y)
 
-    print basis
+    f = f2
+
+    pdb.set_trace()
+    M = Monodromy(f,x,y)
+
+"""
+    hom = homology(f,x,y)
+    for key,value in hom.iteritems():
+        print key
+        print value
+        print
+"""
