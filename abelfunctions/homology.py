@@ -625,6 +625,81 @@ def homology_basis(tretkoff_table):
 
 
 
+def reform_cycle(lijist):
+    """
+    Rewrite a cycle in a specific form.
+
+    The odd entries in the output list are sheet numbers. The even
+    entries are lists with two elements: the first is the location of
+    the branch point in the complex plane, the second indicates how
+    many times one needs to go around the branch point (in the
+    positive direction) to get to the next sheet.
+
+    Input: 
+
+    A cycle of the form
+
+        [s_0, (b_{i_0}, pi_{i_0}), s_1, (b_{i_1}, pi_{i_1}), ...]
+
+    where "s_k" is a sheet number, "b_{i_k}" is the {i_k}'th branch
+    point, and "pi_{i_k}" is the corresponding sheet permutation
+    associated with the branch point.
+
+    It is assumed that each of these sheet / branch point pairs
+    appear uniquely in this cycle since the input is recieved from
+    the function "compress_cycle()".
+
+    Output:
+    
+    A list of the form
+
+        [s_0, (b_{i_0}, n_{i_0}), s_1, (b_{i_1}, n_{i_1}), ...]
+
+    where "s_k" is a sheet number, "b_{i_k}" is the {i_k}'th branch
+    point, and "n_{i_k}" is the number of times and direction to go
+    about branch point "b_{i_k}".
+    """
+    n = len(cycle)
+    lijst = cycle[:]  # make a copy, not a pointer to the same list
+    for i in xrange(n/2):
+        # Grab the current sheet (a) + branch point pair (b).
+        a = lijst[2*i]
+        b = lijst[2*i+1]
+
+        # If we're at the end of the cycle then wrap around to get the
+        # "next" sheet. Otherwise, the next sheet is the element
+        # following.
+        if (2*i+1) == (n-1):
+            c = lijst[0]
+        else:
+            c = lijst[2*i+2]
+        
+        # Branch points are of the form (branch point number/index,
+        # sheet permutation). "a" and "c" are the source and target
+        # sheets, respectively. Find where these sheets are located in
+        # the permutation and find the distance between the two
+        # sheets. This distance is equal to the number of times and
+        # direction one must go around the given branch point in order
+        # to get from sheet a to sheet c. Of all ways to go around the
+        # branch point to get from sheet a to c the one with the
+        # fewest number of rotations is selected.
+        pos1 = b[1].index(a)
+        pos2 = b[1].index(c)
+        mini = min( [abs(pos2-pos1), pos2-pos1+len(b[1]), 
+                     abs(pos2-pos1-len(b[1]))] )
+
+        if abs(pos2-pos1) == mini:        around = pos2-pos1
+        elif pos2-pos1+len(b[2]) == mini: around = pos2-pos1+len(b[1])
+        else:                             around = pos2-pos1-len(b[1])
+            
+        # Replace the permutation with the number of times 
+        b[1] = around
+        lijst[2*i+1] = b
+
+    return lijst
+
+
+
 
 def canonical_basis(f,x,y):
     """
@@ -681,7 +756,7 @@ def canonical_basis(f,x,y):
     c['basepoint'] = mon.base_point()
     c['sheets']    = mon.base_sheets()
     c['genus']     = g
-    c['cycles']    = t_basis
+    c['cycles']    = map(reform_cycle, t_basis)
     c['linearcombination'] = alpha[:2*g,:]
 
     return c
