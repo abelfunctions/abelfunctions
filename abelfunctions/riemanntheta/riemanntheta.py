@@ -169,6 +169,7 @@ class RiemannTheta_Function:
         self._Yinv      = None
         self._T         = None
         self._Tinv      = None
+        self._prec      = 1e-8
 
 
     def lattice(self):
@@ -415,10 +416,10 @@ class RiemannTheta_Function:
         # compute integer points: check for uniform approximation
         if self.uniform:
             # check if we've already computed the uniform radius and intpoints
-            if self._rad is None:
-                
+            if (not np.array_equal(self._Omega, Omega) or self._prec != prec):
+                self._Omega = Omega
+                self._prec = prec
                 self._rad = self.radius(T, prec, deriv=deriv)
-            if self._intpoints is None:
                 origin          = [0]*g
                 self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                       g, self._rad)
@@ -512,11 +513,11 @@ if __name__=="__main__":
         a.append(z3)
         a.append(z4)
     start1 = time.clock()
-    print theta.value_at_point(a, Omega, gpu=True, List=True)[57000:57005]
+    print theta.value_at_point(a, Omega, gpu=True, List=True, prec=1e-12)[57000:57005]
     print("GPU time to perform calculation: " + str(time.clock() - start1))
     start2 = time.clock()
 
-    print theta.value_at_point(a, Omega, gpu=False, List=True)[1730:1735]
+    print theta.value_at_point(a, Omega, gpu=False, List=True,prec=1e-12)[1730:1735]
     print("CPU time to do same calculation: " + str(time.clock() - start2))
 
     print
