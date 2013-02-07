@@ -959,7 +959,10 @@ class Monodromy(object):
                 if G.node[v]['type'] == 'v-point node':
                     G.node[v]['type'] = 'node'
 
-                    # XXX probably don't need the conditional. need to make sure that v is included in the string since if we need to conjugate by v then we need to also conjugate 
+                    # XXX probably don't need the conditional. need to
+                    # make sure that v is included in the string since
+                    # if we need to conjugate by v then we need to
+                    # also conjugate
                     if G.node[v]['string'] == []:
                         G.node[v]['string'] = [v]
 
@@ -1014,7 +1017,7 @@ class Monodromy(object):
             else:
                 n += 1
 
-        return G.node[root]['string']
+        return [v for v in G.node[root]['string']]
 
 
     def monodromy(self, Npts=4):

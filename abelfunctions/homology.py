@@ -8,6 +8,7 @@ import sympy
 import networkx as nx
 
 from monodromy import Permutation, Monodromy
+from singularities import genus
 
 import pdb
 
@@ -68,7 +69,7 @@ def reorder_cycle(c, j=None):
     except ValueError:
         raise ValueError("%d does not appear in the cycle %s"%(j,c))
 
-    return tuple([c[k%n] for k in xrange(i,i+n)])
+    return [c[k%n] for k in xrange(i,i+n)]   # tuple(...)
         
 
 
@@ -625,7 +626,7 @@ def homology_basis(tretkoff_table):
 
 
 
-def reform_cycle(lijist):
+def reform_cycle(cycle):
     """
     Rewrite a cycle in a specific form.
 
@@ -693,7 +694,7 @@ def reform_cycle(lijist):
         else:                             around = pos2-pos1-len(b[1])
             
         # Replace the permutation with the number of times 
-        b[1] = around
+        b = (b[0], around)
         lijst[2*i+1] = b
 
     return lijst
@@ -707,7 +708,7 @@ def canonical_basis(f,x,y):
     complex plane algebraic curve, return a canonical basis for the
     homology of the Riemann surface.
     """
-#    g = genus(f,x,y)   # XXX write this function...
+    g = genus(f,x,y)   # XXX write this function...
     mon = Monodromy(f,x,y)
     hurwitz_system = mon.hurwitz_system()
 
@@ -728,10 +729,9 @@ def canonical_basis(f,x,y):
 
     # sanity check: make sure intersection matrix produces the same genus
     rank = numpy.linalg.matrix_rank(t_matrix)
-    g = rank/2 # XXX See comment below
-#    if rank/2 != g:  # XXX genus
-#        raise ValueError("Found inconsistent genus in homolgy " + \
-#                         "intersection matrix.")
+    if rank/2 != g:
+        raise ValueError("Found inconsistent genus in homolgy " + \
+                         "intersection matrix.")
     
     alpha = frobenius_transform(t_matrix, g)
 
