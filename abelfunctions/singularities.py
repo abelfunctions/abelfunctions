@@ -171,7 +171,7 @@ def _multiplicity(f,x,y,singular_pt):
         si = abs( Y.leadterm(_t)[1] )
         m += min(ri,si)
 
-    return m
+    return int(m)
 
 @cached_function
 def _branching_number(f,x,y,singular_pt):
@@ -226,7 +226,7 @@ def _delta_invariant(f,x,y,singular_pt):
         rj    = (P[i][0]-u0).expand().leadterm(_t)[1]
         delta += sympy.Rational(rj * IntPj - rj + 1, 2)
 
-    return delta
+    return int(delta)
 
 
 @cached_function
@@ -242,7 +242,7 @@ def genus(f,x,y):
     for pt,(m,delta,r) in S:
         g -= delta
 
-    return g
+    return int(g)
     
             
 
