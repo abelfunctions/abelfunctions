@@ -13,8 +13,24 @@ from monodromy   import Monodromy
 from homology    import homology
 
 
+import pdb
+
+
 def differentials(foo):
     return None
+
+
+def polyroots(f,x,y,xi):
+    dps = sympy.mpmath.mp.dps
+
+    p = sympy.poly(f,y)
+    coeffs = [c.evalf(subs={x:xi},n=dps) for c in p.all_coeffs()]
+    coeffs = [sympy.mpmath.mpc(*(z.as_real_imag())) for z in coeffs]
+
+    return sympy.mpmath.polyroots(coeffs)
+    
+    
+    
 
 
 def path_around_branch_point(G, bpt, rot):
@@ -76,7 +92,7 @@ def path_around_branch_point(G, bpt, rot):
             prev_edge_index = G[prev_node][curr_node]['index']
         if prev_edge_index[1] != curr_edge_index[0]:
             arg = sympy.mpmath.pi if prev_edge_index[1] == -1 else 0
-            dir = 1 if curr_node in conjugates else -1
+            dir = -1 if prev_node in conjugates else 1 # XXX
             path_data.append((curr_radius, curr_value, arg, dir))
 
         # Add the line to the next discriminant point.
@@ -113,40 +129,33 @@ def path_around_branch_point(G, bpt, rot):
     pi = sympy.mpmath.pi
     j = sympy.mpmath.j
 
-    # add the segments leading up to the branch point circle
+    # Add the segments leading up to the branch point circle
     for datum in path_data:
         if len(datum) == 2:
-            z0,z1     = map(sympy.mpmath.mpc,datum)
-            segment   = lambda t: z0*(1-t) + z1*t
-            d_segment = lambda t: -z0 + z1
+            z0,z1 = map(sympy.mpmath.mpc,datum)
+            seg = lambda t,z0=z0,z1=z1: z0*(1-t) + z1*t
         else:
-            R,w,arg,dir = map(sympy.mpmath.mpc,datum)
-            segment     = lambda t: R*exp(j*(dir*pi*t + arg)) + w
-            d_segment   = lambda t: R*j*dir*pi * exp(j*(dir*pi*t + arg))
+            R,w,arg,d = map(sympy.mpmath.mpc,datum)
+            seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*t + arg)) + w
+        path_segments.append(seg)
 
-        path_segments.append( (segment, d_segment) )
-
-    # add the semicircle segments going around the branch point
+    # Add the semicircle segments going around the branch point
     for datum in circle_data:
-        R,w,arg,dir = map(sympy.mpmath.mpc,datum)
-        segment     = lambda t: R*exp(j*(dir*pi*t + arg)) + w
-        d_segment   = lambda t: R*j*dir*pi * exp(j*(dir*pi*t + arg))
-        path_segments.append( (segment, d_segment) )
+        R,w,arg,d = map(sympy.mpmath.mpc,datum)
+        seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*t + arg)) + w
+        path_segments.append(seg)
 
-    # add the reversed path segments leading back to the base point
+    # Add the reversed path segments leading back to the base point
     # (to reverse these paths, simply make the transformation t |-->
     # (1-t) )
     for datum in reversed(path_data):
         if len(datum) == 2:
-            z0,z1     = map(sympy.mpmath.mpc,datum)
-            segment   = lambda t: z0*t + z1*(1-t)
-            d_segment = lambda t: z0 - z1
+            z0,z1 = map(sympy.mpmath.mpc,datum)
+            seg = lambda t,z0=z0,z1=z1: z0*t + z1*(1-t)
         else:
-            R,w,arg,dir = map(sympy.mpmath.mpc,datum)
-            segment     = lambda t: R*exp(j*(dir*pi*(1-t) + arg)) + w
-            d_segment   = lambda t: -R*j*dir*pi * exp(j*(dir*pi*(1-t) + arg))
-
-        path_segments.append( (segment, d_segment) )
+            R,w,arg,d = map(sympy.mpmath.mpc,datum)
+            seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*(1-t) + arg)) + w
+        path_segments.append(seg)
     
     return path_segments
 
@@ -218,13 +227,15 @@ class RiemannSurfacePath():
         self.P0 = P0
         self.P1 = P1
 
-        self._checkpoint_cost   = 3
+        self._checkpoint_cost   = 4
         self._path_segments     = path_segments
         self._num_path_segments = len(path_segments)
 
-        self._checkpoints    = { 0:(self.P0.x, self.P0.y) }
+        self._checkpoints    = { 0:self.P0 }
         self._cache_size     = 1
         self._max_cache_size = 2**10
+
+        self._initialize_checkpoints()
 
 
     def __repr__(self):
@@ -233,17 +244,16 @@ class RiemannSurfacePath():
         else:
             return 'Closed path at %s on %s'%(self.P0,self.RS)
 
-
-    def _from_path_segments(self, path_segments):
+    def _initialize_checkpoints(self):
         """
-        Construct the path from a set of "path_segments". These are used
-        internally to define a piecewise differentiable path in the 
-        complex x-plane.
+        Compute 
         """
-        self._path_segments = path_segments
-        self._num_path_segments = len(path_segments)
+        ppseg = 8
+        t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
+        for ti in t_pts:
+            P = self(ti)
+            self._add_checkpoint(ti, P)
 
-        self.P1 = self(1)
 
 
     def _nearest_checkpoint(self, t):
@@ -257,18 +267,16 @@ class RiemannSurfacePath():
         making future analytic continuations potentially faster.
         """
         tim1 = 0
-        xim1 = self.P0.x
-        yim1 = self.P0.y
+        Pim1 = self.P0
 
         # _checkpoints is a dictionary with keys ti and values points
         # on the path
-        for ti, (xi, yi) in self._checkpoints.iteritems():
+        for ti, Pi in self._checkpoints.iteritems():
             if ti >= t:
-                return (tim1, (xim1, yim1))
+                return (tim1, Pi)
             else:
                 tim1 = ti
-                xim1 = xi
-                yim1 = yi
+                Pim1 = Pi
 
         # no suitable checkpoint found: either no checkpoints are
         # available or something wrong happened. Return the first
@@ -284,31 +292,35 @@ class RiemannSurfacePath():
         scaling is performed to determine which segment the
         corresponding x is computed from.
         """
-        t_scaled = t*self._num_path_segments
+        # The entire path is parameterized by t in [0,1]. We need to
+        # determine which of the segments this t lies in.
+        t_scaled = t * self._num_path_segments
         t_floor = sympy.mpmath.floor(t_scaled)
-        t = t_scaled - t_floor
+        t_seg = t_scaled - t_floor
 
         # If the last point is requested (t=1) then decrement since it
         # should just be the last segment evaluated at t=1.
         t_floor = int(t_floor)
         if t_floor == self._num_path_segments:
-            t_floor -= 1
+            t_floor = -1
+            t_seg = 1-sympy.mpmath.eps
 
-        return self._path_segments[t_floor][0](t)
+        return self._path_segments[t_floor](t_seg)
 
         
 
-    def _add_checkpoint(self, ti, xi, yi):
+    def _add_checkpoint(self, ti, Pi):
         """
-        Adds the checkpoint xi = x(ti), yi = y(x(ti)) to the inner
-        cache. If the max cache size is reached then the first key tj
-        found that is less than ti is removed from the checkpoint
-        cache.
+        Adds the checkpoint Pi = {xi = x(ti), yi = y(x(ti))} to the
+        inner cache. If the max cache size is reached then the first
+        key tj found that is less than ti is removed from the
+        checkpoint cache.
         """
-        self._checkpoints[ti] = (xi,yi)
+        self._checkpoints[ti] = Pi
+        self._cache_size += 1
 
-        # pop an item from the cache7
-        if self._cache_size == self._max_cache_size:
+        # pop an item from the cache
+        if self._cache_size > self._max_cache_size:
             for tj in self._checkpoints.iterkeys():
                 if tj < ti:
                     self._checkpoints.pop(ti)
@@ -321,7 +333,7 @@ class RiemannSurfacePath():
         Empties the checkpoint cache.
         """
         self._checkpoints.clear()
-        self._checkpoints = { 0:(self.P0.x, self.P0.y) }
+        self._checkpoints = { 0:self.P0 }
         self._cache_size = 1
         
 
@@ -332,94 +344,93 @@ class RiemannSurfacePath():
         interval [0,1]. self(0) returns the starting point. 
         """
         eps = sympy.mpmath.eps
+        deg = self.RS.n
 
         # get the nearest already computed point on the path. If the
         # nearest computed point is at "t" then just return the cached
         # point now.
-        t0, (x0,y0) = self._nearest_checkpoint(t)
+        t0, P0 = self._nearest_checkpoint(t)
         if t == t0:
-            return (x0,y0)
+            return P0
 
         # Analytic continuation loop: start with dt = 1. Take a step
         # using Taylor series. Use a root finder to get to the closest
         # point on the Riemann surface. Check if this point is on the
         # correct sheet. If not, have the dt and try again
         tim1 = t0
-        ti   = t
-        xim1 = x0
-        yim1 = y0
-        xi   = self.get_x(ti)
+        xim1 = P0.x
+        yim1 = P0.y
+        ti = t
+        xi = self.get_x(ti)
 
         # keep track of how many times we need to refine the grid for
         # checkpointing purposes
-        num_refinements = 0   
-#        while tim1 != t:
-        while sympy.mpmath.absmin(tim1-t) > eps:
-            dx   = xi-xim1
-            f_xi  = lambda y: self.RS.f(xi,y)
-            df_xi = lambda y: - dx * self.RS.dfdx(xi,y) / self.RS.dfdy(xi,y)
-
+        num_refinements = 0
+        while not sympy.mpmath.almosteq(tim1,t):
             # Take a continuation step using a first order Taylor
             # series.  (The root finder needs a 3-tuple guess so we
             # add a little bit of error to dy.)
-            yp        = - self.RS.dfdx(xim1,yim1) / self.RS.dfdy(xim1,yim1)
-            dy        = yp * dx
+            dx = xi-xim1
+            yp = - self.RS.dfdx(xim1,yim1) / self.RS.dfdy(xim1,yim1)
+            dy = yp * dx
             yi_approx = yim1 + dy
-            guess     = (yi_approx - dy - eps, yi_approx, yi_approx + dy + eps)
-            yi        = sympy.mpmath.findroot(f_xi, guess, df=df_xi,
-                                              solver='muller')
 
-            # Check if we're on the correct branch: yi (the point on
-            # the RS) should be closer to yi_approx (the Taylor approx
-            # of yi) than to yim1 (the previous point). If we're
-            # further away then the root finder had trouble.
-            #
-            # XXX Not sure if this is the right thing to do...
-            if sympy.mpmath.absmin(yi-yi_approx)<sympy.mpmath.absmax(yi-yim1):
-                # we're close enough
+
+            converged = True
+            
+            if converged:
+                # Get the next root.
+                fibre_im1 = polyroots(self.RS.p, self.RS.x, self.RS.y, xi)
+                yi = min([yj for yj in fibre_im1], 
+                         key = lambda z: sympy.mpmath.absmin(yj-yi_approx))
+
+                # Update
                 tim1 = ti
-                ti   = t
                 xim1 = xi
                 yim1 = yi
-                xi   = self.get_x(ti)
+                ti = t
+                xi = self.get_x(ti)
+
+                # Checkpoint this point on the path if we had to
+                # refine too many times.
+                if num_refinements >= self._checkpoint_cost:
+                    Pim1 = RiemannSurfacePoint(self.RS,xim1,yim1,exact=True)
+                    self._add_checkpoint(tim1,Pim1)
+                    num_refinements = 0 
             else:
-                # refine
-                ti = (ti + tim1) / 2.0
+                # The chosen dx resulted in too large of a jump in y.
+                # Shorten the dx jump and try again.
+                ti = (ti+tim1) / 2.0
                 xi = self.get_x(ti)
                 num_refinements += 1
+                
 
-        # add checkpoint if we needed to refine too many times
-        if num_refinements >= self._checkpoint_cost:
-            self._add_checkpoint(ti,xi,yi)
-
-        Pi = RiemannSurfacePoint(self.RS,xi,yi,exact=True)
+        # Create a point on the Riemann surface. Return the derivative
+        # x'(t) if requested. (Used for path integration.)
+        Pi = RiemannSurfacePoint(self.RS,xim1,yim1,exact=True)
         if dxdt: 
             return Pi, dx/dt
         else:
             return Pi
 
 
-    def sample_uniform(self, Npts):
+    def sample_uniform(self, t0=0, t1=1, Npts=64):
         """
         Return a uniform sample on the path.
         """
-        t_pts = sympy.mpmath.linspace(0,1,Npts)
+        t_pts = sympy.mpmath.linspace(t0,t1,Npts)
         P_pts = map(self, t_pts)
         return P_pts
 
 
-    def plot(self, *args, **kwds):
+    def plot(self, t0=0, t1=1, Npts=64, *args, **kwds):
         """
         Plots the path in the complex x- and y-planes.
         """
-        # get the number of points to plot
-        try: 
-            Npts = kwds['Npts']
-        except KeyError:
-            Npts = 32
+        P_pts = self.sample_uniform(t0,t1,Npts)
+        x_pts = [P.x for P in P_pts]
+        y_pts = [P.y for P in P_pts]
 
-        P_pts = self.sample_uniform(Npts)
-        x_pts, y_pts = zip(*P_pts)
         x_re = [x.real for x in x_pts]
         x_im = [x.imag for x in x_pts]
         y_re = [y.real for y in y_pts]
@@ -431,20 +442,18 @@ class RiemannSurfacePath():
 
         x_ax.plot(x_re, x_im, *args, **kwds)
         y_ax.plot(y_re, y_im, *args, **kwds)
+        for n in xrange(len(y_re)):
+            y_ax.text(y_re[n], y_im[n], str(n), fontsize=8)
 
         x_ax.axis('tight')
         y_ax.axis('tight')
 
         fig.show()
 
-    def plot_path_segments(self, *args, **kwds):
-        # get the number of points to plot
-        try: 
-            Npts = kwds['Npts']
-        except KeyError:
-            Npts = 64
-
-        t_pts = sympy.mpmath.linspace(0,1,Npts)
+    def plot_path_segments(self, t0=0, t1=1, Npts=64, *args, **kwds):
+        """
+        """
+        t_pts = sympy.mpmath.linspace(t0,t1,Npts)
         x_pts = map(self.get_x,t_pts)
         x_re = [x.real for x in x_pts]
         x_im = [x.imag for x in x_pts]
@@ -457,10 +466,7 @@ class RiemannSurfacePath():
         ax.plot(x_re, x_im, 'b--', alpha=0.3)
         ax.hold(True)
         for n in xrange(N):
-            if n < N/2: eps = -0.01
-            else:       eps = 0.01
-
-            ax.text(x_re[n], x_im[n]+eps, str(n), fontsize=8)
+            ax.text(x_re[n], x_im[n], str(n), fontsize=8)
 
         ax.axis('tight')
         fig.show()
@@ -488,7 +494,8 @@ class RiemannSurface(Monodromy):
         _dfdy = sympy.diff(f, y).simplify()
 
         # Fast, multipreicise evaluation functions
-        self.p    = sympy.Poly(f,[x,y])
+        self.F    = f
+        self.p    = sympy.Poly(f,[y])
         self.f    = sympy.lambdify([x,y], f, "mpmath")
         self.dfdx = sympy.lambdify([x, y], _dfdx, "mpmath")
         self.dfdy = sympy.lambdify([x, y], _dfdy, "mpmath")
@@ -500,7 +507,7 @@ class RiemannSurface(Monodromy):
 
 
     def __repr__(self):
-        return "Riemann surface defined by the algebraic curve %s." %(self.f)
+        return "Riemann surface defined by the algebraic curve %s." %(self.F)
 
 
 
@@ -583,7 +590,7 @@ class RiemannSurface(Monodromy):
         x0 = self.base_point()
         y0 = self.base_lift()[0]  # c-cycles always start on sheet 0
         P = RiemannSurfacePoint(self, x0, y0, exact=True)
-        gamma = RiemannSurfacePath(self, P, path_segments=bpt_path_segments)
+        gamma = RiemannSurfacePath(self, P, path_segments=path_segments)
 
         return gamma
 
