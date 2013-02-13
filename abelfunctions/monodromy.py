@@ -262,6 +262,14 @@ class Monodromy(object):
         self.f = f
         self.x = x
         self.y = y
+        
+        dfdx = sympy.diff(f, x).simplify()
+        dfdy = sympy.diff(f, y).simplify()
+
+        self._f   = sympy.lambdify((x,y), f, "mpmath")
+        self.dfdx = sympy.lambdify((x,y), dfdx, "mpmath")
+        self.dfdy = sympy.lambdify((x,y), dfdy, "mpmath")
+        
         self.deg = sympy.degree(f,y)
         
         self.kappa = kappa
@@ -717,12 +725,9 @@ class Monodromy(object):
         n = self.deg
 
         # compute derivatives. optimize for return type
-        f = sympy.lambdify([self.x, self.y], self.f, "mpmath")
-        _dfdx = sympy.diff(self.f, self.x).simplify()
-        _dfdy = sympy.diff(self.f, self.y).simplify()
-        dfdx = sympy.lambdify([self.x,self.y], _dfdx, "mpmath")
-        dfdy = sympy.lambdify([self.x,self.y], _dfdy, "mpmath")
-
+        f = self._f
+        dfdx = self.dfdx
+        dfdy = self.dfdy
 
         # obtain interpolating points in path
         path = self._initial_monodromy_path(i, Npts=Npts)
