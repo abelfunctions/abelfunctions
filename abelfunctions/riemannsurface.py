@@ -6,7 +6,10 @@ import numpy
 import scipy
 import sympy
 import networkx as nx
+
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 import matplotlib.pyplot as plt
+
 
 #from abelfunctions.differentials import differentials
 from monodromy   import Monodromy
@@ -23,7 +26,7 @@ def differentials(foo):
 def polyroots(f,x,y,xi):
     dps = sympy.mpmath.mp.dps
 
-    p = sympy.poly(f,y)
+    p = f.as_poly(y)
     coeffs = [c.evalf(subs={x:xi},n=dps) for c in p.all_coeffs()]
     coeffs = [sympy.mpmath.mpc(*(z.as_real_imag())) for z in coeffs]
 
@@ -198,10 +201,22 @@ class RiemannSurfacePoint():
     def __repr__(self):
         return "(%s, %s)" %(self.x, self.y)
 
-    def __getitem__(self,i):
-        if i: return self.y
-        else: return self.x
 
+    def __eq__(self,other):
+        """
+        TODO: add way of determining equality of Riemann surfaces, if
+        possible.
+        """
+        almosteq = sympy.mpmath.almosteq
+
+        if isinstance(other,RiemannSurfacePoint):
+            if almosteq(self.x,other.x) and almosteq(self.y,other.y):
+                return True
+        return False
+
+            
+    def __hash__(self):
+        return hash((self.x, self.y))
 
 
 class RiemannSurfacePath():
@@ -210,7 +225,7 @@ class RiemannSurfacePath():
     [0,1]. Used for analytically continuing and integrating on Riemann
     surfaces.
     """
-    def __init__(self, RS, P0, P1=None, path_segments=None):
+    def __init__(self, RS, P0, path_segments=None):
         """
         Create a path on the RiemannSurface, `RS`, starting at the
         RiemannSurfacePoint, `P0`.
@@ -225,9 +240,19 @@ class RiemannSurfacePath():
         """
         self.RS = RS
         self.P0 = P0
-        self.P1 = P1
 
-        self._checkpoint_cost   = 4
+        self.f = RS.f
+        self.x = RS.x
+        self.y = RS.y
+        
+        dfdx = sympy.diff(f,x).expand()
+        dfdy = sympy.diff(f,y).expand()
+        
+        self._f = sympy.lambdify((self.x,self.y), self.f, "mpmath")
+        self.dfdx = sympy.lambdify((self.x,self.y), dfdx, "mpmath")
+        self.dfdy = sympy.lambdify((self.x,self.y), dfdy, "mpmath")
+
+        self._checkpoint_cost   = 8
         self._path_segments     = path_segments
         self._num_path_segments = len(path_segments)
 
@@ -239,10 +264,8 @@ class RiemannSurfacePath():
 
 
     def __repr__(self):
-        if self.P1:
-            return 'Path from %s to %s on %s'%(self.P0,self.P1,self.RS)
-        else:
-            return 'Closed path at %s on %s'%(self.P0,self.RS)
+        return 'Path on %s' %(self.RS)
+
 
     def _initialize_checkpoints(self):
         """
@@ -251,9 +274,8 @@ class RiemannSurfacePath():
         ppseg = 8
         t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
         for ti in t_pts:
-            P = self(ti)
+            P = self.analytically_continue(ti)
             self._add_checkpoint(ti, P)
-
 
 
     def _nearest_checkpoint(self, t):
@@ -271,7 +293,7 @@ class RiemannSurfacePath():
 
         # _checkpoints is a dictionary with keys ti and values points
         # on the path
-        for ti, Pi in self._checkpoints.iteritems():
+        for ti, Pi in sorted(self._checkpoints.iteritems()):
             if ti >= t:
                 return (tim1, Pi)
             else:
@@ -282,6 +304,7 @@ class RiemannSurfacePath():
         # available or something wrong happened. Return the first
         # point of the path
         return (0, self._checkpoints[0])
+
 
 
     def get_x(self, t):
@@ -323,11 +346,10 @@ class RiemannSurfacePath():
         if self._cache_size > self._max_cache_size:
             for tj in self._checkpoints.iterkeys():
                 if tj < ti:
-                    self._checkpoints.pop(ti)
+                    self._checkpoints.pop(tj)
                     break
 
         
-
     def _clear_checkpoints(self):
         """
         Empties the checkpoint cache.
@@ -335,16 +357,21 @@ class RiemannSurfacePath():
         self._checkpoints.clear()
         self._checkpoints = { 0:self.P0 }
         self._cache_size = 1
+
         
 
-
     def __call__(self, t, dxdt=False):
+        return self.analytically_continue(t,dxdt=dxdt)
+
+
+
+    def analytically_continue(self, t, dxdt=False):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point. 
         """
         eps = sympy.mpmath.eps
-        deg = self.RS.n
+        deg = self.RS.deg
 
         # get the nearest already computed point on the path. If the
         # nearest computed point is at "t" then just return the cached
@@ -358,60 +385,36 @@ class RiemannSurfacePath():
         # point on the Riemann surface. Check if this point is on the
         # correct sheet. If not, have the dt and try again
         tim1 = t0
-        xim1 = P0.x
-        yim1 = P0.y
-        ti = t
-        xi = self.get_x(ti)
+        xim1 = P0[0]
+        yim1 = P0[1]
 
-        # keep track of how many times we need to refine the grid for
-        # checkpointing purposes
-        num_refinements = 0
-        while not sympy.mpmath.almosteq(tim1,t):
-            # Take a continuation step using a first order Taylor
-            # series.  (The root finder needs a 3-tuple guess so we
-            # add a little bit of error to dy.)
+        maxiter = 256
+        maxn = 0
+        Npts = 32
+        x_path = (self.get_x(ti) for ti in sympy.mpmath.linspace(t0,t,Npts))
+        for xi in x_path:
+            # Taylor step to obtain approximate
             dx = xi-xim1
-            yp = - self.RS.dfdx(xim1,yim1) / self.RS.dfdy(xim1,yim1)
-            dy = yp * dx
+            dy = - dx * self.dfdx(xim1,yim1) / self.dfdy(xim1,yim1)
             yi_approx = yim1 + dy
 
+            # Newton iterate to next point. (Note: this is done
+            # instead of "sympy.mpmath.polyroots" for speed and
+            # instead of sympy.mpmath.findroot for performance.)
+            yi = yi_approx
+            for n in xrange(maxiter):
+                step = self._f(xi,yi) / self.dfdy(xi,yi)
+                if sympy.mpmath.absmin(step) < 2*eps:
+                    maxn = max(n, maxn)
+                    break
+                yi -= step
 
-            converged = True
-            
-            if converged:
-                # Get the next root.
-                fibre_im1 = polyroots(self.RS.p, self.RS.x, self.RS.y, xi)
-                yi = min([yj for yj in fibre_im1], 
-                         key = lambda z: sympy.mpmath.absmin(yj-yi_approx))
+            xim1 = xi
+            yim1 = yi
 
-                # Update
-                tim1 = ti
-                xim1 = xi
-                yim1 = yi
-                ti = t
-                xi = self.get_x(ti)
+        # XXX Add some sort of checkpointing routine here.
 
-                # Checkpoint this point on the path if we had to
-                # refine too many times.
-                if num_refinements >= self._checkpoint_cost:
-                    Pim1 = RiemannSurfacePoint(self.RS,xim1,yim1,exact=True)
-                    self._add_checkpoint(tim1,Pim1)
-                    num_refinements = 0 
-            else:
-                # The chosen dx resulted in too large of a jump in y.
-                # Shorten the dx jump and try again.
-                ti = (ti+tim1) / 2.0
-                xi = self.get_x(ti)
-                num_refinements += 1
-                
-
-        # Create a point on the Riemann surface. Return the derivative
-        # x'(t) if requested. (Used for path integration.)
-        Pi = RiemannSurfacePoint(self.RS,xim1,yim1,exact=True)
-        if dxdt: 
-            return Pi, dx/dt
-        else:
-            return Pi
+        return (xi,yi)
 
 
     def sample_uniform(self, t0=0, t1=1, Npts=64):
@@ -419,17 +422,16 @@ class RiemannSurfacePath():
         Return a uniform sample on the path.
         """
         t_pts = sympy.mpmath.linspace(t0,t1,Npts)
-        P_pts = map(self, t_pts)
+        P_pts = [self.analytically_continue(t_pt) for t_pt in t_pts]
         return P_pts
 
 
-    def plot(self, t0=0, t1=1, Npts=64, *args, **kwds):
+    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, *args, **kwds):
         """
         Plots the path in the complex x- and y-planes.
         """
-        P_pts = self.sample_uniform(t0,t1,Npts)
-        x_pts = [P.x for P in P_pts]
-        y_pts = [P.y for P in P_pts]
+        P_pts = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
+        x_pts, y_pts = zip(*P_pts)
 
         x_re = [x.real for x in x_pts]
         x_im = [x.imag for x in x_pts]
@@ -442,15 +444,50 @@ class RiemannSurfacePath():
 
         x_ax.plot(x_re, x_im, *args, **kwds)
         y_ax.plot(y_re, y_im, *args, **kwds)
-        for n in xrange(len(y_re)):
-            y_ax.text(y_re[n], y_im[n], str(n), fontsize=8)
+
+        if show_numbers:
+            for n in xrange(len(y_re)):
+                x_ax.text(x_re[n], x_im[n], str(n), fontsize=8)
+                y_ax.text(y_re[n], y_im[n], str(n), fontsize=8)
 
         x_ax.axis('tight')
         y_ax.axis('tight')
 
         fig.show()
 
-    def plot_path_segments(self, t0=0, t1=1, Npts=64, *args, **kwds):
+    def plot3d(self, t0=0, t1=1, Npts=64, *args, **kwds):
+        """
+        """
+        t_pts = sympy.mpmath.linspace(t0,t1,Npts)
+        P_pts = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
+        x_pts, y_pts = zip(*P_pts)
+
+        x_re = [x.real for x in x_pts]
+        x_im = [x.imag for x in x_pts]
+        y_re = [y.real for y in y_pts]
+        y_im = [y.imag for y in y_pts]
+
+        fig = plt.figure(figsize=plt.figaspect(0.5))
+
+        # Axis #1: real part of path
+        y_re_min = min(y_re)
+        z = [y_re_min]*Npts
+        ax1 = fig.add_subplot(1,2,1,projection='3d')
+        ax1.plot(x_re,x_im,z,*args,**kwds)
+        ax1.plot(x_re,x_im,y_re,*args,**kwds)
+
+        # Axis #1: real part of path
+        y_im_min = min(y_im)
+        z = [y_im_min]*Npts
+        ax2 = fig.add_subplot(1,2,2,projection='3d')
+        ax2.plot(x_re,x_im,z,*args,**kwds)
+        ax2.plot(x_re,x_im,y_im,*args,**kwds)
+
+        fig.show()
+        
+
+    def plot_path_segments(self, t0=0, t1=1, Npts=64, show_numbers=False,
+                           *args,**kwds):
         """
         """
         t_pts = sympy.mpmath.linspace(t0,t1,Npts)
@@ -490,24 +527,9 @@ class RiemannSurface(Monodromy):
         self._monodromy = self.monodromy()
         self._homology  = homology(f,x,y)
 
-        _dfdx = sympy.diff(f, x).simplify()
-        _dfdy = sympy.diff(f, y).simplify()
-
-        # Fast, multipreicise evaluation functions
-        self.F    = f
-        self.p    = sympy.Poly(f,[y])
-        self.f    = sympy.lambdify([x,y], f, "mpmath")
-        self.dfdx = sympy.lambdify([x, y], _dfdx, "mpmath")
-        self.dfdy = sympy.lambdify([x, y], _dfdy, "mpmath")
-        self.x = x
-        self.y = y
-        
-        self.n = sympy.degree(f,y)
-
-
 
     def __repr__(self):
-        return "Riemann surface defined by the algebraic curve %s." %(self.F)
+        return "Riemann surface defined by the algebraic curve %s." %(self.f)
 
 
 
@@ -589,8 +611,7 @@ class RiemannSurface(Monodromy):
         # Construct the RiemannSurfacePath
         x0 = self.base_point()
         y0 = self.base_lift()[0]  # c-cycles always start on sheet 0
-        P = RiemannSurfacePoint(self, x0, y0, exact=True)
-        gamma = RiemannSurfacePath(self, P, path_segments=path_segments)
+        gamma = RiemannSurfacePath(self, (x0,y0), path_segments=path_segments)
 
         return gamma
 
