@@ -19,8 +19,10 @@ from homology    import homology
 import pdb
 
 
+
 def differentials(foo):
     return None
+
 
 
 def polyroots(f,x,y,xi):
@@ -31,9 +33,7 @@ def polyroots(f,x,y,xi):
     coeffs = [sympy.mpmath.mpc(*(z.as_real_imag())) for z in coeffs]
 
     return sympy.mpmath.polyroots(coeffs)
-    
-    
-    
+
 
 
 def path_around_branch_point(G, bpt, rot):
@@ -137,16 +137,19 @@ def path_around_branch_point(G, bpt, rot):
         if len(datum) == 2:
             z0,z1 = map(sympy.mpmath.mpc,datum)
             seg = lambda t,z0=z0,z1=z1: z0*(1-t) + z1*t
+            dseg = lambda t,z0=z0,z1=z1: -z0+z1
         else:
             R,w,arg,d = map(sympy.mpmath.mpc,datum)
             seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*t + arg)) + w
-        path_segments.append(seg)
+            dseg = lambda t,R=R,w=w,arg=arg,d=d: (R*j*d*pi)*exp(j*(d*pi*t+arg))
+        path_segments.append((seg,dseg))
 
     # Add the semicircle segments going around the branch point
     for datum in circle_data:
         R,w,arg,d = map(sympy.mpmath.mpc,datum)
         seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*t + arg)) + w
-        path_segments.append(seg)
+        dseg = lambda t,R=R,w=w,arg=arg,d=d: (R*j*d*pi)*exp(j*(d*pi*t+arg))
+        path_segments.append((seg,dseg))
 
     # Add the reversed path segments leading back to the base point
     # (to reverse these paths, simply make the transformation t |-->
@@ -155,10 +158,13 @@ def path_around_branch_point(G, bpt, rot):
         if len(datum) == 2:
             z0,z1 = map(sympy.mpmath.mpc,datum)
             seg = lambda t,z0=z0,z1=z1: z0*t + z1*(1-t)
+            dseg = lambda t,z0=z0,z1=z1: z0-z1
         else:
             R,w,arg,d = map(sympy.mpmath.mpc,datum)
             seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*(1-t) + arg)) + w
-        path_segments.append(seg)
+            dseg = lambda t,R=R,w=w,arg=arg,d=d: -(R*j*d*pi) * \
+                exp(j*(d*pi*(1-t) + arg))
+        path_segments.append((seg,dseg))
     
     return path_segments
 
@@ -274,7 +280,7 @@ class RiemannSurfacePath():
         ppseg = 8
         t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
         for ti in t_pts:
-            P = self.analytically_continue(ti)
+            P = self.analytically_continue(ti,Npts=16)
             self._add_checkpoint(ti, P)
 
 
@@ -293,9 +299,9 @@ class RiemannSurfacePath():
 
         # _checkpoints is a dictionary with keys ti and values points
         # on the path
-        for ti, Pi in sorted(self._checkpoints.iteritems()):
+        for ti, Pi in iter(sorted(self._checkpoints.items())):
             if ti >= t:
-                return (tim1, Pi)
+                return (tim1, Pim1)
             else:
                 tim1 = ti
                 Pim1 = Pi
@@ -307,7 +313,7 @@ class RiemannSurfacePath():
 
 
 
-    def get_x(self, t):
+    def get_x(self, t, dxdt=False):
         """
         Returns the x-point corresponding to t.
 
@@ -328,7 +334,11 @@ class RiemannSurfacePath():
             t_floor = -1
             t_seg = 1-sympy.mpmath.eps
 
-        return self._path_segments[t_floor](t_seg)
+        seg, dseg = self._path_segments[t_floor]
+        if dxdt:    
+            return dseg(t_seg)
+        else:
+            return seg(t_seg)
 
         
 
@@ -347,6 +357,7 @@ class RiemannSurfacePath():
             for tj in self._checkpoints.iterkeys():
                 if tj < ti:
                     self._checkpoints.pop(tj)
+                    self._cache_size -= 1
                     break
 
         
@@ -365,7 +376,7 @@ class RiemannSurfacePath():
 
 
 
-    def analytically_continue(self, t, dxdt=False):
+    def analytically_continue(self, t, dxdt=False, Npts=4):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point. 
@@ -388,11 +399,13 @@ class RiemannSurfacePath():
         xim1 = P0[0]
         yim1 = P0[1]
 
-        maxiter = 256
+        maxiter = 32
         maxn = 0
-        Npts = 32
-        x_path = (self.get_x(ti) for ti in sympy.mpmath.linspace(t0,t,Npts))
-        for xi in x_path:
+        t_pts = sympy.mpmath.linspace(t0,t,Npts)
+        for i in xrange(1,Npts):
+            ti = t_pts[i]
+            xi = self.get_x(ti)
+
             # Taylor step to obtain approximate
             dx = xi-xim1
             dy = - dx * self.dfdx(xim1,yim1) / self.dfdy(xim1,yim1)
@@ -401,50 +414,108 @@ class RiemannSurfacePath():
             # Newton iterate to next point. (Note: this is done
             # instead of "sympy.mpmath.polyroots" for speed and
             # instead of sympy.mpmath.findroot for performance.)
+            #
+            # Add extra precision, too
             yi = yi_approx
-            for n in xrange(maxiter):
-                step = self._f(xi,yi) / self.dfdy(xi,yi)
-                if sympy.mpmath.absmin(step) < 2*eps:
-                    maxn = max(n, maxn)
-                    break
-                yi -= step
+            with sympy.mpmath.extraprec(4):
+                for n in xrange(maxiter):
+                    step = self._f(xi,yi) / self.dfdy(xi,yi)
+                    if sympy.mpmath.absmin(step) < eps:
+                        maxn = max(n, maxn)
+                        break
+                    yi -= step
 
             xim1 = xi
             yim1 = yi
 
-        # XXX Add some sort of checkpointing routine here.
 
-        return (xi,yi)
+        # Checkpoint this point if it took too many Newton iterations
+        # at any point along the path.
+        if maxn >= 4:
+            self._add_checkpoint(t,(xi,yi))
+
+        if dxdt:
+            return (xi,yi), self.get_x(t,dxdt=True)
+        else:
+            return (xi,yi)
+
 
 
     def sample_uniform(self, t0=0, t1=1, Npts=64):
         """
         Return a uniform sample on the path.
         """
-        t_pts = sympy.mpmath.linspace(t0,t1,Npts)
-        P_pts = [self.analytically_continue(t_pt) for t_pt in t_pts]
-        return P_pts
+        t = sympy.mpmath.linspace(t0,t1,Npts)
+        P = map(self.analytically_continue, t)
+        return P
 
 
-    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, *args, **kwds):
+    def sample_clenshaw_curtis(self, t0=0, t1=1, Npts=64):
+        """
+        Return a Clenshaw-Curtis sample (also referred to as a Chebysheb or
+        cosine distribution sample) on the path.
+        """
+        pi = sympy.mpmath.pi
+        theta = sympy.mpmath.linspace(0,pi,Npts)
+        P = map(lambda phi: self.analytically_continue(sympy.mpmath.cos(phi)),
+                theta)
+        return P
+
+
+    def decompose_points(self, P):
+        """
+        Converts a collection of Riemann surface points:..
+
+            Ps = {..., (xi,yi), ...}
+
+        to four lists
+        
+            { xi.real }, { xi.imag }, { yi.real }, { yi.imag }.
+        """
+        x, y = zip(*P)
+        x_re = [xi.real for xi in x]
+        x_im = [xi.imag for xi in x]
+        y_re = [yi.real for yi in y]
+        y_im = [yi.imag for yi in y]
+        
+        return x_re, x_im, y_re, y_im
+        
+
+    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, **kwds):
         """
         Plots the path in the complex x- and y-planes.
+
+        Inputs:
+
+        - t0,t1: (default: 0,1) Starting and ending point on the path.
+
+        - Npts: (default: 64) Number of interpolating points to plot.
+        
+        - show_numbers: (default: False) If true, will plot the index
+        of the points on the path as well. This helps when trying to
+        determine the direction of the path.
+
+        - **kwds: additional keywords are sent to
+            matplotlib.pyplot.plot()
         """
-        P_pts = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
-        x_pts, y_pts = zip(*P_pts)
-
-        x_re = [x.real for x in x_pts]
-        x_im = [x.imag for x in x_pts]
-        y_re = [y.real for y in y_pts]
-        y_im = [y.imag for y in y_pts]
-
+        P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
+        
         fig = plt.figure()
-        x_ax = fig.add_subplot(1,2,1)
-        y_ax = fig.add_subplot(1,2,2)
+        x_ax = fig.add_subplot(2,1,1)
+        y_ax = fig.add_subplot(2,1,2)
 
-        x_ax.plot(x_re, x_im, *args, **kwds)
-        y_ax.plot(y_re, y_im, *args, **kwds)
+        # First, plot all checkpoints.
+        checkpoints = self._checkpoints.values()
+        x_re, x_im, y_re, y_im = self.decompose_points(checkpoints)
+        x_ax.plot(x_re, x_im, 'o', **kwds)
+        y_ax.plot(y_re, y_im, 'o', **kwds)
+        
+        
+        # Second, plot requested interpolants
+        x_re, x_im, y_re, y_im = self.decompose_points(P)
 
+        x_ax.plot(x_re, x_im, **kwds)
+        y_ax.plot(y_re, y_im, **kwds)
         if show_numbers:
             for n in xrange(len(y_re)):
                 x_ax.text(x_re[n], x_im[n], str(n), fontsize=8)
@@ -455,8 +526,21 @@ class RiemannSurfacePath():
 
         fig.show()
 
-    def plot3d(self, t0=0, t1=1, Npts=64, *args, **kwds):
+
+
+    def plot3d(self, t0=0, t1=1, Npts=64, **kwds):
         """
+        Plots the path in the complex x- and y-planes.
+
+        Inputs:
+
+        - t0,t1: (default: 0,1) Starting and ending point on the path.
+
+        - Npts: (default: 64) Number of interpolating points to plot.
+
+        - **kwds: additional keywords are sent to
+            matplotlib.axes3d.Axes3D.plot()
+
         """
         t_pts = sympy.mpmath.linspace(t0,t1,Npts)
         P_pts = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
@@ -472,19 +556,20 @@ class RiemannSurfacePath():
         # Axis #1: real part of path
         y_re_min = min(y_re)
         z = [y_re_min]*Npts
-        ax1 = fig.add_subplot(1,2,1,projection='3d')
+        ax1 = fig.add_subplot(2,1,1,projection='3d')
         ax1.plot(x_re,x_im,z,*args,**kwds)
         ax1.plot(x_re,x_im,y_re,*args,**kwds)
 
         # Axis #1: real part of path
         y_im_min = min(y_im)
         z = [y_im_min]*Npts
-        ax2 = fig.add_subplot(1,2,2,projection='3d')
+        ax2 = fig.add_subplot(2,1,2,projection='3d')
         ax2.plot(x_re,x_im,z,*args,**kwds)
         ax2.plot(x_re,x_im,y_im,*args,**kwds)
 
         fig.show()
-        
+
+
 
     def plot_path_segments(self, t0=0, t1=1, Npts=64, show_numbers=False,
                            *args,**kwds):
@@ -629,19 +714,19 @@ class RiemannSurface(Monodromy):
         - `path`: a RiemannSurfacePath defined on the Riemann surface
         """
         x0,y0 = path(0)
-        omega = sympy.lambdify([x,y], omega)
+        omega = sympy.lambdify((x,y), omega, "mpmath")
         
         # Numerically integrate over each path segment. This is most
         # probably a good idea since it allows for good checkpointing.
-        def func(t):
-            P,dxdt = path(t, dxdt=True)
-            return omega(P.x, P.y) * dxdt
+        def integrand(t):
+            (xi,yi),dxdt = path(t, dxdt=True)
+            return omega(xi,yi) * dxdt
 
         val = sympy.mpmath.mpc(0)
         n   = sympy.mpmath.mpf(path._num_path_segments)
         for k in xrange(n):
-            val += quad(func, [k/n,(k+1)/n])
-            
+            val += sympy.mpmath.quadgl(integrand, [k/n,(k+1)/n])
+        
         return val
 
 
