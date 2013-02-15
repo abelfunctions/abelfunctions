@@ -336,7 +336,7 @@ class RiemannSurfacePath():
 
         seg, dseg = self._path_segments[t_floor]
         if dxdt:    
-            return dseg(t_seg)
+            return self._num_path_segments * dseg(t_seg)
         else:
             return seg(t_seg)
 
@@ -389,7 +389,10 @@ class RiemannSurfacePath():
         # point now.
         t0, P0 = self._nearest_checkpoint(t)
         if t == t0:
-            return P0
+            if dxdt:
+                return P0, self.get_x(t,dxdt=True)
+            else:
+                return P0
 
         # Analytic continuation loop: start with dt = 1. Take a step
         # using Taylor series. Use a root finder to get to the closest
@@ -441,23 +444,24 @@ class RiemannSurfacePath():
 
 
 
-    def sample_uniform(self, t0=0, t1=1, Npts=64):
+    def sample_uniform(self, t0=0, t1=1, Npts=64, dxdt=False):
         """
         Return a uniform sample on the path.
         """
         t = sympy.mpmath.linspace(t0,t1,Npts)
-        P = map(self.analytically_continue, t)
+        P = map(lambda ti: self.analytically_continue(ti,dxdt=dxdt), t)
         return P
 
 
-    def sample_clenshaw_curtis(self, t0=0, t1=1, Npts=64):
+    def sample_clenshaw_curtis(self, t0=0, t1=1, Npts=64, dxdt=False):
         """
         Return a Clenshaw-Curtis sample (also referred to as a Chebysheb or
         cosine distribution sample) on the path.
         """
         pi = sympy.mpmath.pi
         theta = sympy.mpmath.linspace(0,pi,Npts)
-        P = map(lambda phi: self.analytically_continue(sympy.mpmath.cos(phi)),
+        P = map(lambda phi: self.analytically_continue(sympy.mpmath.cos(phi),
+                                                       dxdt=dxdt),
                 theta)
         return P
 
@@ -507,8 +511,8 @@ class RiemannSurfacePath():
         # First, plot all checkpoints.
         checkpoints = self._checkpoints.values()
         x_re, x_im, y_re, y_im = self.decompose_points(checkpoints)
-        x_ax.plot(x_re, x_im, 'o', **kwds)
-        y_ax.plot(y_re, y_im, 'o', **kwds)
+        x_ax.plot(x_re, x_im, '.', **kwds)
+        y_ax.plot(y_re, y_im, '.', **kwds)
         
         
         # Second, plot requested interpolants
@@ -518,8 +522,8 @@ class RiemannSurfacePath():
         y_ax.plot(y_re, y_im, **kwds)
         if show_numbers:
             for n in xrange(len(y_re)):
-                x_ax.text(x_re[n], x_im[n], str(n), fontsize=8)
-                y_ax.text(y_re[n], y_im[n], str(n), fontsize=8)
+                x_ax.text(x_re[n], x_im[n], str(n), fontsize=10)
+                y_ax.text(y_re[n], y_im[n], str(n), fontsize=10)
 
         x_ax.axis('tight')
         y_ax.axis('tight')
@@ -718,14 +722,15 @@ class RiemannSurface(Monodromy):
         
         # Numerically integrate over each path segment. This is most
         # probably a good idea since it allows for good checkpointing.
-        def integrand(t):
+        def integrand(t,omega,path):
             (xi,yi),dxdt = path(t, dxdt=True)
             return omega(xi,yi) * dxdt
 
         val = sympy.mpmath.mpc(0)
         n   = sympy.mpmath.mpf(path._num_path_segments)
         for k in xrange(n):
-            val += sympy.mpmath.quadgl(integrand, [k/n,(k+1)/n])
+            val += sympy.mpmath.quadgl(lambda t: integrand(t,omega,path), 
+                                       [k/n,(k+1)/n])
         
         return val
 
