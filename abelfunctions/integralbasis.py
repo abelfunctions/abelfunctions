@@ -141,6 +141,7 @@ def integral_basis(f,x,y):
     """
     # If the curve is not monic then map y |-> y/lc(x) where lc(x)
     # is the leading coefficient of f
+    T  = sympy.Dummy('T')
     d  = sympy.degree(f,y)
     lc = sympy.LC(f,y)
     if x in lc:
@@ -234,7 +235,7 @@ if __name__=="__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
+    fs = [f3]
       
     for f in fs:
         print "Plane curve...\n"
