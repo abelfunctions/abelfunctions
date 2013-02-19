@@ -87,7 +87,7 @@ def _singular_points_infinite(f,x,y):
 
 
 @cached_function
-def singular_points(f,x,y):
+def singularities(f,x,y):
     """
     Returns the points in P^2_C at which f = f(x,y) is singular.
 
@@ -236,7 +236,7 @@ def genus(f,x,y):
     algebraic curve f = f(x,y).
     """
     F,d = homogenize(f,x,y,_z)
-    S = singular_points(f,x,y)
+    S = singularities(f,x,y)
 
     g = (d-1)*(d-2) / 2
     for pt,(m,delta,r) in S:
