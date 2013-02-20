@@ -33,9 +33,10 @@ def valuation(p,x,alpha):
     Given a collection of Puiseux series, return the valuations. That
     is, the exponents of the leading order term.
     """
-    terms = p.subs(x,x+alpha).simplify().expand().collect(x,evaluate=False).keys()
-    lead  = terms[0]
-    val   = lead.as_coeff_exponent(x)[1]
+    expr = p.subs(x,x+alpha).powsimp(x,combine='base')
+    terms = expr.collect(x,evaluate=False).keys()
+    lead = terms[0]
+    val = lead.as_coeff_exponent(x)[1]
     return val
 
 
@@ -105,12 +106,14 @@ def compute_series_truncations(f,x,y,alpha,T):
     r = puiseux(f,x,y,alpha,degree_bound=Nmax)
     n = len(r)
 
-
     for i in xrange(n):
-        ri = r[i].subs(x,x+alpha).expand().collect(x,evaluate=False)
-        ri_trunc = sum( [coeff*term for term,coeff in ri.iteritems()
-                         if term.as_coeff_exponent(x)[1] <= N[i]] )
-        r[i] = sympy.sympify(ri_trunc).subs(x,x-alpha)
+        ri = r[i].subs(x,x+alpha).expand(log=False,power_base=False,
+                                         power_exp=False,multinomial=False,
+                                         basic=False,force=True)
+        terms = ri.collect(x,evaluate=False)
+        ri_trunc = sum( coeff*term for term,coeff in terms.iteritems()
+                        if term.as_coeff_exponent(x)[1] < N[i] )
+        r[i] = ri_trunc
 
     return r
 
@@ -129,8 +132,11 @@ def _negative_power_coeffs(expr, var, alpha):
     NOTE: This is written because sympy's built in functions don't seem to do
     what I want it to do.
     """
-    terms  = expr.subs(var,var+alpha).expand(force=True).collect(var,evaluate=False)
-    coeffs = [coeff.simplify() for term,coeff in terms.iteritems() 
+    expr = expr.subs(var,var+alpha).expand(log=False,power_base=False,
+                                           power_exp=False,multinomial=True,
+                                           basic=False,force=True)
+    terms  = expr.collect(var,evaluate=False)
+    coeffs = [coeff for term,coeff in terms.iteritems() 
               if term.as_coeff_exponent(var)[1] < 0]
     return coeffs
 
@@ -177,15 +183,15 @@ def integral_basis(f,x,y):
     #
     # Main Loop
     #
-    a = sympy.symbols('a:%d'%n)
+    a = [sympy.Dummy('a%d'%k) for k in xrange(n)]
     b = [1]
     for d in range(1,n):
         bd = y*b[-1]
 
         for l in range(len(df)):
-            k      = df[l]
+            k = df[l]
             alphak = alpha[l]
-            rk     = r[l]
+            rk = r[l]
 
             found_something = True            
             while found_something:
@@ -201,7 +207,7 @@ def integral_basis(f,x,y):
                     coeffs.extend(_negative_power_coeffs(A_rki, x, alphak))
                
                 # solve the coefficient equations for a0,...,a_{d-1}
-                coeffs = set( [coeff.as_numer_denom()[0] for coeff in coeffs] )
+                coeffs = [coeff.as_numer_denom()[0] for coeff in coeffs]
                 sols = sympy.solve_poly_system(coeffs, a[:d])
                 if sols is None or sols == []:
                     found_something = False
@@ -215,7 +221,7 @@ def integral_basis(f,x,y):
 
     # finally, convert back to singularized curve if necessary
     for i in xrange(1,len(b)):
-        b[i] = b[i].subs(y,y*lc).simplify()
+        b[i] = b[i].subs(y,y*lc).ratsimp()
 
     return b
 
@@ -224,7 +230,7 @@ def integral_basis(f,x,y):
 
 if __name__=="__main__":
     from sympy.abc import x,y,T
-#    import cProfile, pstats
+    import cProfile, pstats
 
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
     f2 = -x**7 + 2*x**3*y + y**3
@@ -239,7 +245,7 @@ if __name__=="__main__":
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
     fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
-      
+
     for f in fs:
         print "Plane curve...\n"
         sympy.pprint(f)
@@ -248,12 +254,11 @@ if __name__=="__main__":
         b = integral_basis(f,x,y)
         sympy.pprint(b)
     
-#    cProfile.run("b = integral_basis(f,x,y)",'intbasis.profile')
+#     f = f5
+
+#     cProfile.run("b = integral_basis(f,x,y)",'intbasis.profile')
 #     p = pstats.Stats('intbasis.profile')
 #     p.strip_dirs()
 #     p.sort_stats('time').print_stats(12)
 #     p.sort_stats('cumulative').print_stats(12)
 #     p.sort_stats('calls').print_stats(12)
-    
-
-    
