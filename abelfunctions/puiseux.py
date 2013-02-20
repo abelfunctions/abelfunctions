@@ -155,7 +155,8 @@ def polygon(F,X,Y,I):
 
     OUTPUTS:
     
-    -- ``(list)``: a list of tuples `(q,m,l,\Phi)` where `q,m,l` are integers with `(q,m) = 1`, `q>0`, and `\Phi \in \mathbb{L}[Z]`.
+    -- ``(list)``: a list of tuples `(q,m,l,\Phi)` where `q,m,l` are
+       integers with `(q,m) = 1`, `q>0`, and `\Phi \in \mathbb{L}[Z]`.
     """
     # compute the coefficients and support of F
     P = sympy.poly(F,X,Y)
@@ -171,7 +172,8 @@ def polygon(F,X,Y,I):
     if type(hull) == sympy.Segment:
         hull_with_bdry = support       # colinear support is a newton polygon
     else:
-        hull_with_bdry = [p for p in support if not hull.encloses(sympy.Point(p))]
+        hull_with_bdry = [p for p in support 
+                          if not hull.encloses(sympy.Point(p))]
     newton = []
 
     # find the start and end points (0,J) and (I,0). Include points
@@ -502,7 +504,7 @@ def build_series(pis,x,y,T,a,parametric):
             Q = Q.subs([(x,P1),(y,Q1)])
 
         P = P.subs([(x,T),(y,0)])
-        Q = Q.subs([(x,T),(y,0)]).simplify().collect(T)
+        Q = Q.subs([(x,T),(y,0)]).powsimp(T,combine='base')
 
         # append parametric or non-parametric form
         if parametric:
@@ -511,7 +513,8 @@ def build_series(pis,x,y,T,a,parametric):
         else:
             if a == sympy.oo: solns = sympy.solve(1/x-P,T)
             else:             solns = sympy.solve((x-a)-P,T)
-            for TT in solns:  series.append(Q.subs(T,TT).simplify().collect(x-a))
+            for TT in solns:  
+                series.append(Q.subs(T,TT))
 
     return series
 
@@ -585,14 +588,14 @@ if __name__ == "__main__":
 
     f  = f3
     a  = 1
-    N  = 2
+    N  = 4
 
     print "Curve:\n"
     sympy.pretty_print(f)
 
     import cProfile, pstats
     cProfile.run(
-    "P = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')"
+    "P = puiseux(f,x,y,a,degree_bound=N,parametric=True,version='rational')"
     ,'puiseux.profile')
     p = pstats.Stats('puiseux.profile')
     p.strip_dirs()

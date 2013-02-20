@@ -38,6 +38,7 @@ def valuation(p,x,alpha):
     val   = lead.as_coeff_exponent(x)[1]
     return val
 
+
 def Int(i,p,x,alpha):
     """
     The function .. math:
@@ -54,6 +55,7 @@ def Int(i,p,x,alpha):
             val += valuation(pi-p[k],x,alpha)
 
     return val
+
 
 def compute_expansion_bounds(p,x,alpha):
     """
@@ -93,7 +95,7 @@ def compute_series_truncations(f,x,y,alpha,T):
     efficiency. (Sympy doesn't do as well with fractional exponents.)
     """
     # compute the first terms of the Puiseux series expansions
-    p = puiseux(f,x,y,alpha,nterms=2,parametric=False)
+    p = puiseux(f,x,y,alpha,nterms=1,parametric=False)
     
     # compute the expansion bounds
     N = compute_expansion_bounds(p,x,alpha)
@@ -226,7 +228,8 @@ if __name__=="__main__":
 
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
     f2 = -x**7 + 2*x**3*y + y**3
-    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+#    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    f3 = y**2 - (x+1)*(x-1)*(x-2)*(x+2)*(x-3)*(x+3)*(x-4)*(x+4)
     f4 = y**2 + x**3 - x**2
     f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
     f6 = y**4 - y**2*x + x**2
@@ -235,7 +238,7 @@ if __name__=="__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    fs = [f3]
+    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
       
     for f in fs:
         print "Plane curve...\n"
