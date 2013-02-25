@@ -530,13 +530,13 @@ def build_series(pis,x,y,T,a,parametric):
         e = qh[(0,R)]
         lam = reduce(lambda z1,z2: z1*z2, 
                      (mu[k]**qh[(0,k)] for k in xrange(R)))
-        X = lam.simplify()*T**e
+        X = sympy.simplify(lam)*T**e
 
         # compute Y = \sum_{h=1}^R alpha_h * T**n_h. 
         if parametric:
             Y = sympy.S(0)
         else:
-            lams = sympy.solve(lam*_Z**e-1,_Z,multiple=True)
+            lams = sympy.solve(lam*_Z**e - 1,_Z,multiple=True)
             Y = [sympy.S(0) for _ in xrange(e)]
             
 
@@ -556,12 +556,12 @@ def build_series(pis,x,y,T,a,parametric):
 
             alpha_h *= eta_h*beta[h-1]
             if parametric:
-                Y += sympy.together(alpha_h)*T**n_h
+                Y += sympy.powsimp(alpha_h)*T**n_h
             else:
                 s_h = sympy.Rational(n_h,e)
                 for i in xrange(e):
-                    alpha_h = sympy.together(alpha_h*lams[i])
-                    Y[i] += alpha_h*(x-a)**s_h
+                    alpha_h_i = sympy.powsimp(alpha_h*(lams[i]**n_h))
+                    Y[i] += alpha_h_i*(x-a)**s_h
 
         # All puiseux series associated with this place are computed.
         # Add to series list.
@@ -640,26 +640,32 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f1
+    f  = f2
     a  = 0
     N  = 10
 
     print "Curve:\n"
     sympy.pretty_print(f)
+    
+    PT = puiseux(f,x,y,a,degree_bound=N,parametric=T,version='rational')
+    Px = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')
 
-    import cProfile, pstats
-    cProfile.run(
-    "P = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')"
-    ,'puiseux.profile')
-    p = pstats.Stats('puiseux.profile')
-    p.strip_dirs()
-    p.sort_stats('time').print_stats(15)
-    p.sort_stats('cumulative').print_stats(15)
-    p.sort_stats('calls').print_stats(15)
+    sympy.pprint(PT)
+    sympy.pprint(Px)
+
+#     import cProfile, pstats
+#     cProfile.run(
+#     "P = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')"
+#     ,'puiseux.profile')
+#     p = pstats.Stats('puiseux.profile')
+#     p.strip_dirs()
+#     p.sort_stats('time').print_stats(15)
+#     p.sort_stats('cumulative').print_stats(15)
+#     p.sort_stats('calls').print_stats(15)
    
-    print "\nPuiseux Expansions at x =", a
-    for Y in P:
-        print "Expansion:"
-        sympy.pretty_print(Y)
-        print
+#     print "\nPuiseux Expansions at x =", a
+#     for Y in P:
+#         print "Expansion:"
+#         sympy.pretty_print(Y)
+#         print
 
