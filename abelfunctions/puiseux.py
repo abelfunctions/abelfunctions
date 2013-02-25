@@ -17,7 +17,6 @@ _Z = sympy.Dummy('Z')
 _U = sympy.Dummy('U')
 
 
-
 def _coefficient(F):
     """
     Helper function. Returns a dictionary of coefficients of the polynomial
@@ -129,6 +128,8 @@ def _new_polynomial(F,X,Y,tau,l):
     new_d = dict([((a-l,b),c) for (a,b),c in d.iteritems()])
     Fnew = sympy.Poly.from_dict(new_d, gens=[X,Y], domain=sympy.EX)
     return Fnew
+
+
 
 def polygon(F,X,Y,I):
     """
@@ -267,7 +268,7 @@ def polygon(F,X,Y,I):
     return params    
 
 
-@cached_function
+
 def newton(F,X,Y,nterms,degree_bound,version='rational'):
     """
     Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 
@@ -317,7 +318,7 @@ def regular(S,X,Y,nterms,degree_bound):
             # construction once we break the bound.
             deg += m
                 
-            beta = - a[(m,0)]/a[(0,1)]
+            beta = sympy.together(-a[(m,0)]/a[(0,1)])
             tau = (1,1,m,beta,1)
             pi.append(tau)
             F = _new_polynomial(F,X,Y,tau,m)
@@ -364,8 +365,8 @@ def singular_term(F,X,Y,L,I,version):
     # otherwise, use the standard newton polygon method
     if is_singular(F,X,Y):
         for (q,m,l,Phi) in desingularize(F,X,Y):
-            for eta in Phi.all_roots(radicals=False):
-                tau = (q,1,m,1,eta)
+            for eta in Phi.all_roots(radicals=True):
+                tau = (q,1,m,1,sympy.together(eta))
                 T.append((tau,0,1))
     else:
         # each side of the newton polygon corresponds to a K-term.
@@ -384,7 +385,7 @@ def singular_term(F,X,Y,L,I,version):
                 # possible. In the case when Psi is over EX (i.e. when
                 # RootOf doesn't work) then compute symbolic roots.
                 try:
-                    roots = Psi.all_roots(radicals=False)
+                    roots = Psi.all_roots(radicals=True)
                 except NotImplementedError:
                     roots = sympy.roots(Psi,_Z).keys()
 
@@ -392,7 +393,7 @@ def singular_term(F,X,Y,L,I,version):
                     # the classical version returns the "raw" roots
                     if version == 'classical':
                         P = sympy.Poly(_U**q-xi,_U)
-                        beta = RootOf(P,0,radicals=False)
+                        beta = RootOf(P,0,radicals=True)
                         tau = (q,1,m,beta,1)
                         T.append((tau,l,r))
                     # the rational version rescales parameters so as
@@ -400,7 +401,7 @@ def singular_term(F,X,Y,L,I,version):
                     # expansions.
                     if version == 'rational':
                         mu = xi**(-v)
-                        beta = xi**u
+                        beta = sympy.together(xi**u)
                         tau = (q,mu,m,beta,1)
                         T.append((tau,l,r))
     return T
@@ -479,42 +480,95 @@ def desingularize(f,x,y):
 
 
 
+def build_qh_dict(q):
+    """
+    Given an array, q, of length R efficientily compute
+
+        q_{h_1}^{h_2} = \prod_{k=h_1+1}^{h_2} q[k-1], 0 \leq h1 \leq h2 \leq R
+
+    values used int "Rational pusieux expansions" by D. Duval. Returns
+    a dictionary with keys (h1,h2).
+    """
+    R = len(q)
+    qh = dict(((h,h),1) for h in xrange(R+1))
+    
+    # for each q[h], determine which existing entries in the qh dict
+    # we can append to to create new entries.
+    for h in xrange(R):
+        for (h1,h2), qh1h2 in qh.items():
+            # indexing shift.
+            if h2 == h:
+                qh[(h1,h2+1)] = qh1h2*q[h]
+
+    return qh
+
+
+
 def build_series(pis,x,y,T,a,parametric):
     """
     Builds all Puiseux series from pi data.
 
     `\pi_i=(q,\mu,m,\beta,\eta), X \mapsto\mu X^q,Y \mapsto X^m(\beta+\eta Y)`
+
+    Algorithm:
+
+    Uses the formulas from p. 135 "Rational puiseux expandsions" by
+    D. Duval. The indexing is adjusted: m,beta,mu,eta are all shifted
+    down by one. However, the intexing on qh should match that of
+    D. Duval.
     """
     series = []
+
     # build singular part of expansion series
     for pi in pis:
-        # get first elements
-        q,mu,m,beta,eta = pi[0]
-        P = mu*x**q
-        Q = eta*(beta + y)*x**m
-        n = len(pi)
+        q,mu,m,beta,eta = zip(*pi)
+        R = len(pi)
 
-        # build rest of series
-        for h in xrange(1,n):
-            q,mu,m,beta,eta = pi[h]
-            P1 = mu*x**q
-            Q1 = eta*(beta + y)*x**m
-            
-            P = P.subs(x,P1)
-            Q = Q.subs([(x,P1),(y,Q1)])
+        qh = build_qh_dict(q)
 
-        P = P.subs([(x,T),(y,0)])
-        Q = Q.subs([(x,T),(y,0)]).powsimp(T,combine='base')
+        # compute X = lam*T**e
+        e = qh[(0,R)]
+        lam = reduce(lambda z1,z2: z1*z2, 
+                     (mu[k]**qh[(0,k)] for k in xrange(R)))
+        X = lam.simplify()*T**e
 
-        # append parametric or non-parametric form
+        # compute Y = \sum_{h=1}^R alpha_h * T**n_h. 
         if parametric:
-            if a == sympy.oo: series.append((1/P,Q))
-            else:             series.append((P+a,Q))
+            Y = sympy.S(0)
         else:
-            if a == sympy.oo: solns = sympy.solve(1/x-P,T)
-            else:             solns = sympy.solve((x-a)-P,T)
-            for TT in solns:  
-                series.append(Q.subs(T,TT))
+            lams = sympy.solve(lam*_Z**e-1,_Z,multiple=True)
+            Y = [sympy.S(0) for _ in xrange(e)]
+            
+
+        n_h = sympy.S(0)
+        eta_h = sympy.S(1)
+        for h in xrange(1,R):
+            eta_h *= eta[h-1]
+            n_h += m[h-1]*qh[(h,R)]
+
+            alpha_h = sympy.S(1)
+            for i in xrange(1,h+1):
+                alpha_h *= mu[i]**sum(m[j-1]*qh[(j,i)] 
+                                      for j in xrange(1,i+1))
+            for i in xrange(h+1,R):
+                alpha_h *= mu[i]**sum(m[j-1]*qh[(j,i)] 
+                                      for j in xrange(1,h+1))
+
+            alpha_h *= eta_h*beta[h-1]
+            if parametric:
+                Y += sympy.together(alpha_h)*T**n_h
+            else:
+                s_h = sympy.Rational(n_h,e)
+                for i in xrange(e):
+                    alpha_h = sympy.together(alpha_h*lams[i])
+                    Y[i] += alpha_h*(x-a)**s_h
+
+        # All puiseux series associated with this place are computed.
+        # Add to series list.
+        if parametric:
+            series.append((X,Y))
+        else:
+            series.extend(Y)
 
     return series
 
@@ -586,16 +640,16 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f3
-    a  = 1
-    N  = 4
+    f  = f1
+    a  = 0
+    N  = 10
 
     print "Curve:\n"
     sympy.pretty_print(f)
 
     import cProfile, pstats
     cProfile.run(
-    "P = puiseux(f,x,y,a,degree_bound=N,parametric=True,version='rational')"
+    "P = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')"
     ,'puiseux.profile')
     p = pstats.Stats('puiseux.profile')
     p.strip_dirs()
