@@ -65,7 +65,7 @@ exppart(double* n, double* X, double* x, double* intshift, int g)
     for (i = 0; i < g; i++){
     	dot += tmp1[i]*tmp2[i];
     }
-    double ept = 2* M_PI * dot; 
+    double ept = 2* M_PI * dot;
     return ept;
 }
 
@@ -183,7 +183,6 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
         npt = exp(normpart(n, T, fracshift, g));
         cpt = npt * cos(ept);
         spt = npt * sin(ept);
-
         real_total += cpt;
         imag_total += spt;
     }
