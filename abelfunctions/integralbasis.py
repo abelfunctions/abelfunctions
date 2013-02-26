@@ -33,7 +33,7 @@ def valuation(p,x,alpha):
     Given a collection of Puiseux series, return the valuations. That
     is, the exponents of the leading order term.
     """
-    terms = p.collect(x,evaluate=False).keys()
+    terms = p.collect(x-alpha,evaluate=False).keys()
     lead = terms[0]
     val = lead.as_coeff_exponent(x)[1]
     return val

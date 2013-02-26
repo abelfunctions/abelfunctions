@@ -270,7 +270,7 @@ def polygon(F,X,Y,I):
     return params    
 
 
-
+@cached_function
 def newton(F,X,Y,nterms,degree_bound,version='rational'):
     """
     Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 

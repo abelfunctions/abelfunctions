@@ -51,19 +51,19 @@ class TestPuiseux(unittest.TestCase):
         self.assertEqual(polygon(f2,x,y,1), [(1,4,7,2*Z-1), (2,3,9,Z+2)])
 
     def test_puiseux(self):
-        self.assertEqual(puiseux(f1,x,y,0,4),
+        self.assertEqual(puiseux(f1,x,y,0,4,parametric=T),
                          [(T**2, T**7/2 + T**6 + T**5 + T**4)])
-        self.assertEqual(puiseux(f2,x,y,0,4),
+        self.assertEqual(puiseux(f2,x,y,0,4,parametric=T),
                          [(T, 
                            -3*T**19/256 + 3*T**14/128 - T**9/16 + T**4/2), 
                           (-T**2/2, 
                             -T**18/16384 + 3*T**13/4096 - T**8/64 - T**3/2)])
-        self.assertEqual(puiseux(f3,x,y,0,2),
+        self.assertEqual(puiseux(f3,x,y,0,2,parametric=T),
                          [(-57**(1/2)*T/19, 136*57**(1/2)*T**2/1083 + T), 
                           (57**(1/2)*T/19, -136*57**(1/2)*T**2/1083 + T), 
                           (T, -11*3**(1/2)*T/12 - 3**(1/2)/2), 
                           (T, 11*3**(1/2)*T/12 + 3**(1/2)/2)])
-        self.assertEqual(puiseux(f4,x,y,0,4),
+        self.assertEqual(puiseux(f4,x,y,0,4,parametric=R),
                          [(-T, T**4/16 - T**3/8 + T**2/2 + T),
                           (T, -T**4/16 - T**3/8 - T**2/2 + T)])
                           

@@ -4,7 +4,7 @@ import sympy
 from sympy.abc import x,y
 
 from abelfunctions.singularities import (
-    singular_points,)
+    singularities,)
 
 # === test curves ===
 # Example curves are from "Computing with Plane Algebraic Curves and Riemann 
@@ -28,7 +28,7 @@ class TestDifferentials(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_singular_points(self):
+    def test_singularities(self):
         S1 = singularities(f1,x,y)
         S2 = singularities(f2,x,y)
         S3 = singularities(f3,x,y)
@@ -42,16 +42,41 @@ class TestDifferentials(unittest.TestCase):
 
         rt5 = [rt for rt,_ in sympy.roots(x**2 + 1, x).iteritems()]
 
-        S1act = [(0,0,1),(0,1,0)]
-        S2act = [(0,0,1),(0,1,0)]
-        S3act = [(0,0,1),(1,-1,1),(1,1,1)]
-        S4act = [(0,0,1)]
-        S5act = [(0,0,1),(rt5[0],1,0),(rt5[1],1,0)]
-        S6act = [(0,0,1),(1,0,0)]
-        S7act = [(0,1,0)]
-        S8act = [(0,1,0),(1,0,0)]
-        S9act = [(0,1,0)]
-        S10act= [(0,1,0),(1,0,0)]
+        S1act = [
+            ((0,0,1),(2,2,1)),
+            ((0,1,0),(2,1,2))
+            ]
+        S2act = [
+            ((0,0,1),(3,4,2)),
+            ((0,1,0),(4,9,1))
+            ]
+        S3act = [
+            ((0,0,1),(2,1,2)),
+            ((1,-1,1),(2,1,2)),
+            ((1,1,1),(2,1,2))
+            ]
+        S4act = [
+            ((0,0,1),(2,1,2))
+            ]
+        S5act = [
+            ((0,0,1),(3,3,3)),
+            ((rt5[0],1,0),(3,3,3)),
+            ((rt5[1],1,0),(3,3,3))
+            ]
+        S6act = [
+            ((0,0,1),(2,2,2)),
+            ((1,0,0),(2,2,2))
+            ]
+        S7act = [((0,1,0),(3,6,3))]
+        S8act = [
+            ((0,1,0),(6,21,3)),
+            ((1,0,0),(3,7,2))
+            ]
+        S9act = [((0,1,0),(5,12,1))]
+        S10act= [
+            ((0,1,0),(3,6,1)),
+            ((1,0,0),(4,6,4))
+            ]
 
         self.assertItemsEqual(S1,S1act)
         self.assertItemsEqual(S2,S2act)

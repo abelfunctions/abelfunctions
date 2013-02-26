@@ -102,7 +102,11 @@ import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 import time
-import parRiemann
+
+try:
+    import parRiemann
+except ImportError:
+    print("Need CUDA and pyCUDA installed to use GPU Riemann Theta")
 
 class RiemannTheta_Function:
     r"""

@@ -17,7 +17,7 @@ import sympy
 import pdb
 
 from puiseux import puiseux
-from integralbasis import Int
+from integralbasis import Int, valuation
 from utilities import cached_function
 
 # temporary, hidden symbol to maintain clean Sympy cache
@@ -207,23 +207,36 @@ def _delta_invariant(f,x,y,singular_pt):
     # appropriate variable transformation.
     g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
 
-    # compute Puiseux expansions at u=u0 and filter out
-    # only those with v(t=0) == v0
-    P = puiseux(g,u,v,u0,nterms=1,parametric=_t)
-    P_v0 = [(X,Y) for X,Y in P if Y.subs(_t,0) == v0]
-    P_v0_x = []
-    for X,Y in P_v0:
-        solns = sympy.solve(u-X,_t)
-        P_v0_x.append(Y.subs(_t,solns[0]).simplify().collect(u-u0))
-    P_x = puiseux(g,u,v,u0,nterms=1,parametric=False)
+    # compute Puiseux expansions at u=u0 and filter out only those
+    # with v(t=0) == v0. We only chose one y=y(x) Puiseux series for
+    # each place as a representative to prevent over-counting.
+    P = puiseux(g,u,v,u0,nterms=0,parametric=_t)
+    P_x = puiseux(g,u,v,u0,nterms=0,parametric=False)
+    P_x_v0 = []
+    for X,Y in P:
+        if Y.subs(_t,0).simplify() == v0:
+            # find the first x-series with the same v0 value
+            for p in P_x:
+                if p.subs(u,u0).simplify() == v0:
+                    P_x_v0.append(p)
+                    break
 
     # for each place compute its contribution to the delta invariant
     delta = sympy.Rational(0,1)
-    for i in range(len(P_v0_x)):
-        yhat  = P_v0_x[i]
-        j     = P_x.index(yhat)
+    for i in range(len(P_x_v0)):
+        yhat  = P_x_v0[i]
+        j = P_x.index(yhat)
         IntPj = Int(j,P_x,u,u0)
-        rj    = (P[i][0]-u0).expand().leadterm(_t)[1]
+
+        # obtain the ramification index by finding the parametric
+        # Puiseux series at (u0,v0)
+        rj = sympy.oo
+        for X,Y in P:
+            if Y.subs(_t,0).simplify() == v0:
+                rj = (X-u0).as_coeff_exponent(_t)[1]
+                break
+        if rj == sympy.oo: raise ValueError("Error in computing thing.")
+
         delta += sympy.Rational(rj * IntPj - rj + 1, 2)
 
     return int(delta)
@@ -263,15 +276,15 @@ if __name__ == '__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
 
-#    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
-    fs = [f5]
+    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
+#    fs = [f5]
 
     print '\nSingular points of curves:'
     for f in fs:
         print '\n\tCurve:'
         sympy.pprint(f)
         print '\nall singular points:'
-        singular_pts = singular_points(f,x,y)
+        singular_pts = singularities(f,x,y)
         for singular_pt in singular_pts:
             print "Point:"
             sympy.pprint(singular_pt[0])
