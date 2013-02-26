@@ -12,6 +12,8 @@ from operator import itemgetter
 from sympy.core.numbers import Zero
 from utilities import cached_function
 
+import pdb
+
 # we use global symbols for Sympy caching performance
 _Z = sympy.Dummy('Z')
 _U = sympy.Dummy('U')
@@ -300,13 +302,17 @@ def regular(S,X,Y,nterms,degree_bound):
     R = []
     for (pi,F) in S:        
         # grow each expansion to the number of desired terms
+        Npi = len(pi)
 
         # if a degree bound is specified, get the degree of the
-        # singular part of the Puiseux series
+        # singular part of the Puiseux series. We also want to compute
+        # enough terms to distinguish the puiseux series.
         q,mu,m,beta,eta = pi[-1]
-        deg = sympy.Rational(m,q)
+        e = reduce( lambda q1,q2: q1*q1, (tau[0] for tau in pi) )
+        ydeg = sum( tau[0]*tau[2] for tau in pi )
+        need_more_terms = True
 
-        while (len(pi) < nterms) and (deg < degree_bound):
+        while ((Npi < nterms) and (ydeg < e*degree_bound)) or need_more_terms:
             # if the set of all (0,j), j!=0 is empty, then we've 
             # encountered a finite puiseux expansion
             a = dict(F.terms())
@@ -316,12 +322,19 @@ def regular(S,X,Y,nterms,degree_bound):
 
             # if a degree bound is specified, break pi-series
             # construction once we break the bound.
-            deg += m
+            ydeg += m
+            Npi += 1
                 
             beta = sympy.together(-a[(m,0)]/a[(0,1)])
             tau = (1,1,m,beta,1)
             pi.append(tau)
             F = _new_polynomial(F,X,Y,tau,m)
+
+            # if the degree in the y-series isn't divisible by the
+            # ramification index then we have enough terms to
+            # distinguish the puiseux series.
+            if sympy.gcd(ydeg,e) == 1:
+                need_more_terms = False
 
         R.append(pi)
 
@@ -516,7 +529,7 @@ def build_series(pis,x,y,T,a,parametric):
     D. Duval. The indexing is adjusted: m,beta,mu,eta are all shifted
     down by one. However, the intexing on qh should match that of
     D. Duval.
-    """
+}    """
     series = []
 
     # build singular part of expansion series
@@ -538,29 +551,29 @@ def build_series(pis,x,y,T,a,parametric):
         else:
             lams = sympy.solve(lam*_Z**e - 1,_Z,multiple=True)
             Y = [sympy.S(0) for _ in xrange(e)]
-            
 
         n_h = sympy.S(0)
         eta_h = sympy.S(1)
-        for h in xrange(1,R):
-            eta_h *= eta[h-1]
-            n_h += m[h-1]*qh[(h,R)]
+
+        for h in xrange(0,R):
+            eta_h *= eta[h]
+            n_h += m[h] * qh[(h+1,R)]
 
             alpha_h = sympy.S(1)
-            for i in xrange(1,h+1):
-                alpha_h *= mu[i]**sum(m[j-1]*qh[(j,i)] 
-                                      for j in xrange(1,i+1))
-            for i in xrange(h+1,R):
-                alpha_h *= mu[i]**sum(m[j-1]*qh[(j,i)] 
-                                      for j in xrange(1,h+1))
-
-            alpha_h *= eta_h*beta[h-1]
+            for i in xrange(0,h):
+                alpha_h *= mu[i]**sum(m[j]*qh[(j+1,i)] 
+                                      for j in xrange(0,i))
+            for i in xrange(h,R):
+                alpha_h *= mu[i]**sum(m[j]*qh[(j+1,i)] 
+                                      for j in xrange(0,h))
+            
+            alpha_h *= eta_h*beta[h]
             if parametric:
-                Y += sympy.powsimp(alpha_h)*T**n_h
+                Y += sympy.simplify(alpha_h)*T**n_h
             else:
                 s_h = sympy.Rational(n_h,e)
                 for i in xrange(e):
-                    alpha_h_i = sympy.powsimp(alpha_h*(lams[i]**n_h))
+                    alpha_h_i = sympy.simplify(alpha_h*(lams[i]**n_h))
                     Y[i] += alpha_h_i*(x-a)**s_h
 
         # All puiseux series associated with this place are computed.
@@ -640,18 +653,28 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f2
+    f  = f8
     a  = 0
-    N  = 10
+    N  = 5
 
     print "Curve:\n"
-    sympy.pretty_print(f)
+    sympy.pprint(f)
     
-    PT = puiseux(f,x,y,a,degree_bound=N,parametric=T,version='rational')
-    Px = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')
-
+    sympy.pprint("\nT series:")
+    PT = puiseux(f,x,y,a,nterms=N,parametric=T,version='rational')
     sympy.pprint(PT)
+
+    sympy.pprint("\nx series:")
+    Px = puiseux(f,x,y,a,nterms=N,parametric=False,version='rational')
     sympy.pprint(Px)
+
+    print "Testing factorization:\n"
+    ff = sympy.S(1)
+    for p in Px: ff *= y-p
+    sympy.pprint((f-ff).expand(force=True).collect(x-a))
+
+    
+    
 
 #     import cProfile, pstats
 #     cProfile.run(

@@ -33,8 +33,7 @@ def valuation(p,x,alpha):
     Given a collection of Puiseux series, return the valuations. That
     is, the exponents of the leading order term.
     """
-    expr = p.subs(x,x+alpha).powsimp(x,combine='base')
-    terms = expr.collect(x,evaluate=False).keys()
+    terms = p.collect(x,evaluate=False).keys()
     lead = terms[0]
     val = lead.as_coeff_exponent(x)[1]
     return val
@@ -96,8 +95,8 @@ def compute_series_truncations(f,x,y,alpha,T):
     efficiency. (Sympy doesn't do as well with fractional exponents.)
     """
     # compute the first terms of the Puiseux series expansions
-    p = puiseux(f,x,y,alpha,nterms=1,parametric=False)
-    
+    p = puiseux(f,x,y,alpha,nterms=0,parametric=False)
+
     # compute the expansion bounds
     N = compute_expansion_bounds(p,x,alpha)
     Nmax = max(N)
@@ -107,12 +106,9 @@ def compute_series_truncations(f,x,y,alpha,T):
     n = len(r)
 
     for i in xrange(n):
-        ri = r[i].subs(x,x+alpha).expand(log=False,power_base=False,
-                                         power_exp=False,multinomial=False,
-                                         basic=False,force=True)
-        terms = ri.collect(x,evaluate=False)
+        terms = r[i].collect(x-alpha,evaluate=False)
         ri_trunc = sum( coeff*term for term,coeff in terms.iteritems()
-                        if term.as_coeff_exponent(x)[1] < N[i] )
+                        if term.as_coeff_exponent(x)[1] <= N[i] )
         r[i] = ri_trunc
 
     return r
@@ -179,7 +175,6 @@ def integral_basis(f,x,y):
         alpha.append(alphak)
         r.append(rk)
 
-        
     #
     # Main Loop
     #
