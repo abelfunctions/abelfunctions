@@ -10,7 +10,7 @@ from abelfunctions import RiemannTheta
 import numpy as np
 from mayavi.mlab import *
 
-def get_a_vals(SIZE, gpu):
+def get_r1_vals(SIZE, gpu):
     theta = RiemannTheta
     Omega = np.matrix([[1.690983006 + .951056516*1.0j, 1.5 + .363271264*1.0j],
                        [1.5 + .363271264*1.0j, 1.309016994 + .951056516*1.0j]])
@@ -22,30 +22,30 @@ def get_a_vals(SIZE, gpu):
     return X,Y,V
 
 def a_plt1(SIZE=75, warp="auto", d_axes=False, gpu=False):
-    X,Y,V = get_a_vals(SIZE, gpu)
+    X,Y,V = get_r1_vals(SIZE, gpu)
     V = V.real
     s = surf(X,Y,V, warp_scale = warp)
     if d_axes:
         axes()
     return s
 
-def a_plt2(SIZE=75,warp="auto", d_axes=False, gpu=False):
-    X,Y,V = get_a_vals(SIZE,gpu)
+def b_plt1(SIZE=75,warp="auto", d_axes=False, gpu=False):
+    X,Y,V = get_r1_vals(SIZE,gpu)
     V = V.imag
     s = surf(X,Y,V, warp_scale = warp)
     if d_axes:
         axes()
     return s
 
-def a_plt3(SIZE=75, warp="auto", d_axes=False, gpu=False):
-    X,Y,V = get_a_vals(SIZE, gpu)
+def c_plt1(SIZE=75, warp="auto", d_axes=False, gpu=False):
+    X,Y,V = get_r1_vals(SIZE, gpu)
     V = np.absolute(V)
     s = surf(X,Y,V, warp_scale = warp)
     if d_axes:
         axes()
     return s
 
-def get_b_vals(SIZE, gpu):
+def get_r2_vals(SIZE, gpu):
     theta = RiemannTheta
     Omega = np.matrix([[1.690983006 + .951056516*1.0j, 1.5 + .363271264*1.0j],
                       [1.5 + .363271264*1.0j, 1.309016994 + .951056516*1.0j]])
@@ -59,8 +59,8 @@ def get_b_vals(SIZE, gpu):
     V = V.reshape(SIZE,SIZE)
     return X,Y,V
 
-def b_plt1(SIZE=75,warp = "auto",d_axes=False, gpu=False):
-    X,Y,V = get_b_vals(SIZE, gpu)
+def a_plt2(SIZE=75,warp = "auto",d_axes=False, gpu=False):
+    X,Y,V = get_r2_vals(SIZE, gpu)
     V = V.real
     s = surf(X,Y,V, warp_scale = warp)
     if d_axes:
@@ -68,22 +68,22 @@ def b_plt1(SIZE=75,warp = "auto",d_axes=False, gpu=False):
     return s
 
 def b_plt2(SIZE=75,warp= "auto", d_axes=False, gpu=False):
-    X,Y,V = get_b_vals(SIZE, gpu)
+    X,Y,V = get_r2_vals(SIZE, gpu)
     V = V.imag
     s = surf(X,Y,V, warp_scale = warp)
     if d_axes:
         axes()
     return s
 
-def b_plt3(SIZE=75, warp = "auto", d_axes=False, gpu=False):
-    X,Y,V = get_b_vals(SIZE, gpu)
+def c_plt2(SIZE=75, warp = "auto", d_axes=False, gpu=False):
+    X,Y,V = get_r2_vals(SIZE, gpu)
     V = np.absolute(V)
     s = surf(X,Y,V,warp_scale = warp)
     if d_axes:
         axes()
     return s
 
-def get_c_vals(SIZE, gpu):
+def get_r3_vals(SIZE, gpu):
     theta = RiemannTheta
     Omega = np.matrix([[1.690983006 + .951056516*1.0j, 1.5 + .363271264*1.0j],
                        [1.5 + .363271264*1.0j, 1.309016994 + .951056516*1.0j]])
@@ -94,16 +94,16 @@ def get_c_vals(SIZE, gpu):
     V = V.reshape(SIZE, SIZE)
     return X,Y,V
 
-def c_plt1(SIZE=75, warp = "auto", d_axes=False, gpu=False):
-    X,Y,V = get_c_vals(SIZE, gpu)
+def a_plt3(SIZE=75, warp = "auto", d_axes=False, gpu=False):
+    X,Y,V = get_r3_vals(SIZE, gpu)
     V = V.real
     s = surf(X,Y,V, warp_scale = warp)
     if d_axes:
         axes()
     return s
 
-def c_plt2(SIZE=75, warp= "auto", d_axes=False, gpu=False):
-    X,Y,V = get_c_vals(SIZE,gpu)
+def b_plt3(SIZE=75, warp= "auto", d_axes=False, gpu=False):
+    X,Y,V = get_r3_vals(SIZE,gpu)
     V = V.imag
     s = surf(X,Y,V, warp_scale = warp)
     if d_axes:
@@ -111,7 +111,7 @@ def c_plt2(SIZE=75, warp= "auto", d_axes=False, gpu=False):
     return s
 
 def c_plt3(SIZE=75, warp= "auto", d_axes=False, gpu=False):
-    X,Y,V = get_c_vals(SIZE,gpu)
+    X,Y,V = get_r3_vals(SIZE,gpu)
     V = np.absolute(V)
     s = surf(X,Y,V,warp_scale = warp)
     if d_axes:
