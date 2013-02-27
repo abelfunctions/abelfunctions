@@ -193,7 +193,7 @@ def _branching_number(f,x,y,singular_pt):
     P = puiseux(g,u,v,u0,nterms=1,parametric=_t)
     P_v0 = [(X,Y) for X,Y in P if Y.subs(_t,0) == v0]
 
-    return len(P_v0)
+    return sympy.S(len(P_v0))
 
 @cached_function
 def _delta_invariant(f,x,y,singular_pt):
@@ -221,6 +221,8 @@ def _delta_invariant(f,x,y,singular_pt):
                     P_x_v0.append(p)
                     break
 
+    pdb.set_trace()
+
     # for each place compute its contribution to the delta invariant
     delta = sympy.Rational(0,1)
     for i in range(len(P_x_v0)):
@@ -239,7 +241,7 @@ def _delta_invariant(f,x,y,singular_pt):
 
         delta += sympy.Rational(rj * IntPj - rj + 1, 2)
 
-    return int(delta)
+    return sympy.numer(delta)
 
 
 @cached_function
@@ -255,7 +257,7 @@ def genus(f,x,y):
     for pt,(m,delta,r) in S:
         g -= delta
 
-    return int(g)
+    return g
     
             
 
@@ -277,7 +279,7 @@ if __name__ == '__main__':
     
 
     fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
-#    fs = [f5]
+    fs = [f2]
 
     print '\nSingular points of curves:'
     for f in fs:

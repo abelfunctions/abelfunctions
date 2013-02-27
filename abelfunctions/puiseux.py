@@ -554,17 +554,16 @@ def build_series(pis,x,y,T,a,parametric):
 
         n_h = sympy.S(0)
         eta_h = sympy.S(1)
-
         for h in xrange(0,R):
-            eta_h *= eta[h]
+            eta_h *= eta[h]            
             n_h += m[h] * qh[(h+1,R)]
 
             alpha_h = sympy.S(1)
             for i in xrange(0,h):
-                alpha_h *= mu[i]**sum(m[j]*qh[(j+1,i)] 
+                alpha_h *= mu[i+1]**sum(m[j]*qh[(j+1,i)] 
                                       for j in xrange(0,i))
-            for i in xrange(h,R):
-                alpha_h *= mu[i]**sum(m[j]*qh[(j+1,i)] 
+            for i in xrange(h,R-1):
+                alpha_h *= mu[i+1]**sum(m[j]*qh[(j+1,i)] 
                                       for j in xrange(0,h))
             
             alpha_h *= eta_h*beta[h]
@@ -653,25 +652,28 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f8
+    f  = f3
     a  = 0
-    N  = 5
+    N  = 0
 
     print "Curve:\n"
     sympy.pprint(f)
+
+    P = puiseux(f,x,y,0,N,parametric=T)
+    print P
     
-    sympy.pprint("\nT series:")
-    PT = puiseux(f,x,y,a,nterms=N,parametric=T,version='rational')
-    sympy.pprint(PT)
+#     sympy.pprint("\nT series:")
+#     PT = puiseux(f,x,y,a,nterms=N,parametric=T,version='rational')
+#     sympy.pprint(PT)
 
-    sympy.pprint("\nx series:")
-    Px = puiseux(f,x,y,a,nterms=N,parametric=False,version='rational')
-    sympy.pprint(Px)
+#     sympy.pprint("\nx series:")
+#     Px = puiseux(f,x,y,a,nterms=N,parametric=False,version='rational')
+#     sympy.pprint(Px)
 
-    print "Testing factorization:\n"
-    ff = sympy.S(1)
-    for p in Px: ff *= y-p
-    sympy.pprint((f-ff).expand(force=True).collect(x-a))
+#     print "Testing factorization:\n"
+#     ff = sympy.S(1)
+#     for p in Px: ff *= y-p
+#     sympy.pprint((f-ff).expand(force=True).collect(x-a))
 
     
     

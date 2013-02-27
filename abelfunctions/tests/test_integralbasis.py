@@ -32,7 +32,7 @@ class TestIntegralBasis(unittest.TestCase):
 
     def test_integral_basis(self):
         self.assertEqual(integral_basis(f1,x,y),
-                         [1, y*(x**2 - x + 1)/x**2])
+                         [1, y - (x*y - y)/x**2])
         self.assertEqual(integral_basis(f2,x,y),
                          [1, y/x, y**2/x**3])
 
