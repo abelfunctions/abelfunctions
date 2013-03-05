@@ -345,6 +345,23 @@ class Monodromy(object):
         rts = [rt for rt,ord in res.all_roots(multiple=False, radicals=False)]
         rts = map(lambda z: sympy.N(z,n=dps).as_real_imag(), rts)
         disc_pts = map(lambda z: sympy.mpmath.mpc(*z), rts)
+        
+        # Pop any roots that appear to be equal up to the set
+        # multiprecision.  Geometrically, this may cause two roots to
+        # be interpreted as one thus possibly reducing the genus of
+        # the curve. XXX Think of better ways to deal with this
+        # scenario.
+        N = len(disc_pts)
+        i = 0
+        while i < N:
+            k = i+1
+            while k < N:
+                if (k != i) and sympy.mpmath.almosteq(disc_pts[i],disc_pts[k]):
+                    disc_pts.remove(disc_pts[k])
+                    N -= 1
+                k += 1
+            i += 1
+        
 
         return disc_pts
 
@@ -1102,7 +1119,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
-    f  = f2
+    f  = f5
     M = Monodromy(f,x,y)
    
 #     import cProfile, pstats
