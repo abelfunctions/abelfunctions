@@ -340,12 +340,16 @@ class Monodromy(object):
         p    = sympy.Poly(self.f,[x,y])
         res  = sympy.Poly(sympy.resultant(p,p.diff(y),y),x)
         
-        # compute the numerical roots
+        # Compute the numerical roots. Since Sympy has issues
+        # balancing between precision and speed we compute the roots
+        # of each factor of the resultant.
         dps = sympy.mpmath.mp.dps
-        rts = [rt for rt,ord in res.all_roots(multiple=False, radicals=False)]
-        rts = map(lambda z: sympy.N(z,n=dps).as_real_imag(), rts)
+        rts = []
+        for factor,degree in res.factor_list_include():
+            rts.extend(factor.nroots(n=dps+3))
+        rts = map(lambda z: z.as_real_imag(), rts)
         disc_pts = map(lambda z: sympy.mpmath.mpc(*z), rts)
-        
+
         # Pop any roots that appear to be equal up to the set
         # multiprecision.  Geometrically, this may cause two roots to
         # be interpreted as one thus possibly reducing the genus of
@@ -354,12 +358,14 @@ class Monodromy(object):
         N = len(disc_pts)
         i = 0
         while i < N:
-            k = i+1
+            k = 0
             while k < N:
-                if (k != i) and sympy.mpmath.almosteq(disc_pts[i],disc_pts[k]):
+                eq = sympy.mpmath.almosteq(disc_pts[i],disc_pts[k])
+                if (k != i) and eq:
                     disc_pts.remove(disc_pts[k])
                     N -= 1
-                k += 1
+                else:
+                    k += 1
             i += 1
         
 
@@ -1119,7 +1125,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
-    f  = f5
+    f  = f10
     M = Monodromy(f,x,y)
    
 #     import cProfile, pstats
