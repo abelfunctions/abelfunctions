@@ -103,8 +103,8 @@ packages = [
     ]
 
 ext_modules = [
-    Extension('abelfunctions.riemanntheta.RIEMANN',
-              sources = ["abelfunctions/riemanntheta/Cython-Riemann.pyx",
+    Extension('abelfunctions.riemanntheta.riemanntheta_cy',
+              sources = ["abelfunctions/riemanntheta/riemanntheta_cy.pyx",
                          "abelfunctions/riemanntheta/riemanntheta.c"],
               include_dirs = [np.get_include()]
               )
