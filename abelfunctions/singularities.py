@@ -114,9 +114,13 @@ def singularities(f,x,y):
 
     info = []
     for singular_pt in S:
-        m     = _multiplicity(f,x,y,singular_pt)
-        delta = _delta_invariant(f,x,y,singular_pt)
-        r     = _branching_number(f,x,y,singular_pt)
+        # Perform a projective transformation of the curve so it's
+        # almost centered at the singular point.
+        g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
+
+        m     = _multiplicity(g,u,v,u0,v0)
+        delta = _delta_invariant(g,u,v,u0,v0)
+        r     = _branching_number(g,u,v,u0,v0)
 
         info.append((m,delta,r))
 
@@ -154,8 +158,8 @@ def _transform(f,x,y,singular_pt):
             return g,y,_z,beta,gamma
 
 
-@cached_function
-def _multiplicity(f,x,y,singular_pt):
+
+def _multiplicity(g,u,v,u0,v0):
     """
     Returns the multiplicity of the place (alpha : beta : 1) from the
     Puiseux series P at the place.
@@ -168,11 +172,6 @@ def _multiplicity(f,x,y,singular_pt):
     at (alpha : beta : 1) the contribution from Pj to the multiplicity
     is min( deg x(t), deg y(t) ).
     """
-    # compute the Puiseux series at the projective point [alpha,
-    # beta, gamma]. If on the line at infinity, make the
-    # appropriate variable transformation.
-    g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
-
     # compute Puiseux expansions at u=u0 and filter out
     # only those with v(t=0) == v0
     P = puiseux(g,u,v,u0,nterms=0,parametric=_t)
@@ -187,8 +186,9 @@ def _multiplicity(f,x,y,singular_pt):
 
     return m
 
-@cached_function
-def _branching_number(f,x,y,singular_pt):
+
+
+def _branching_number(g,u,v,u0,v0):
     """
     Returns the branching number of the place [alpha : beta : 1]
     from the Puiseux series P at the place.
@@ -197,11 +197,6 @@ def _branching_number(f,x,y,singular_pt):
     (i.e. non-interacting branches) at the place. In parametric form,
     this is simply the number of Puiseux series at the place.
     """
-    # compute the Puiseux series at the projective point [alpha,
-    # beta, gamma]. If on the line at infinity, make the
-    # appropriate variable transformation.
-    g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
-
     # compute Puiseux expansions at u=u0 and filter out
     # only those with v(t=0) == v0
     P = puiseux(g,u,v,u0,nterms=1,parametric=_t)
@@ -209,18 +204,14 @@ def _branching_number(f,x,y,singular_pt):
 
     return sympy.S(len(P_v0))
 
-@cached_function
-def _delta_invariant(f,x,y,singular_pt):
+
+
+def _delta_invariant(g,u,v,u0,v0):
     """
     Returns the delta invariant corresponding to the singular point
     `singular_pt` = [alpha, beta, gamma] on the plane algebraic curve
     f(x,y) = 0.
     """
-    # compute the Puiseux series at the projective point [alpha,
-    # beta, gamma]. If on the line at infinity, make the
-    # appropriate variable transformation.
-    g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
-
     # compute Puiseux expansions at u=u0 and filter out only those
     # with v(t=0) == v0. We only chose one y=y(x) Puiseux series for
     # each place as a representative to prevent over-counting by using
