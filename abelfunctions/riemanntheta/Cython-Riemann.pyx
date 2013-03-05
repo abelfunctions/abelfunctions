@@ -87,6 +87,7 @@ def finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, List):
     return np.array(vals)
 
 def find_int_points(int g, c, R, T):
+    begin = time.clock()
     cdef int x
     cdef int a,b
     points = []
@@ -119,6 +120,8 @@ def find_int_points(int g, c, R, T):
                 stack.append((newStart, g - 1, newc, newR[0]))
         if (len(stack) == 0):
             FINISHED = True
-
+    print "Integer Points Time:"
+    print time.clock() - begin
+    print "--------------------"
     return points
                  

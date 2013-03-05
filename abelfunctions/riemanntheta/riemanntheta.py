@@ -102,7 +102,13 @@ import RIEMANN
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 import time
-import parRiemann
+
+gpu_capable = True
+try:
+    import parRiemann
+except ImportError:
+    gpu_capable = False
+
 
 class RiemannTheta_Function:
     r"""
@@ -387,7 +393,7 @@ class RiemannTheta_Function:
         return rad
 
 
-    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False, List=False):
+    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
         r"""
         Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
         (Or a given directional derivative of `\theta`.) That is, compute 
@@ -406,7 +412,7 @@ class RiemannTheta_Function:
             
         # extract real and imaginary parts of input z
         length = 1
-        if List:
+        if batch:
             length = len(z)
         z = np.array(z).reshape((length, g))
 
@@ -426,22 +432,23 @@ class RiemannTheta_Function:
             R = self._rad
             S = self._intpoints
         else:
-            if(List):
+            if(batch):
                 raise Exception("Can't compute pointwise approximation for multiple points.\nUse uniform approximation or call the function seperately for each point.")
             else:
                 R = self.radius(T, prec, deriv=deriv)
-                S = self.integer_points(Yinv, T, Tinv, z, g, R)
+                S = self.integer_points(Yinv, T, 
+Tinv, z, g, R)
         # compute oscillatory and exponential terms
-        if gpu and List:
+        if gpu and batch:
             v = parRiemann.compute_v(X, Yinv, T, z, S, g)
         elif (len(deriv) > 0):
-            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, List)
+            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
-            v = RIEMANN.finite_sum(X, Yinv, T, z, S, g, List)
+            v = RIEMANN.finite_sum(X, Yinv, T, z, S, g, batch)
             
-        if (gpu and List):
+        if (gpu and batch):
             u = parRiemann.compute_u(z, Yinv, g)
-        elif (List):
+        elif (batch):
             K = len(z)
             u = np.zeros(K)
             for i in range(K):
@@ -453,23 +460,23 @@ class RiemannTheta_Function:
 
         return u,v
 
-    def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=False, List=False):
+    def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
         r"""
-        Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if List is True.
+        Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if batch is True.
         """
 
         exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, prec=prec,
-                                                       deriv=deriv, gpu=gpu,List=List)
+                                                       deriv=deriv, gpu=gpu,batch=batch)
 
         return np.exp(exp_part) * osc_part
 
-    def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=False, List=False):
+    def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z`. Lazy evaluation
-        is done if the input contains symbolic variables. If list is set to true
-        then the functions expects a list as input and returns a list as output
+        is done if the input contains symbolic variables. If batch is set to true
+        then the functions expects a list/numpy array as input and returns a numpy array as output
         """
-        return self.value_at_point(z, Omega, prec=prec, deriv=deriv, gpu=gpu, List=List)
+        return self.value_at_point(z, Omega, prec=prec, deriv=deriv, gpu=gpu, batch=batch)
                 
 
 
@@ -484,13 +491,13 @@ if __name__=="__main__":
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    print theta.value_at_point(z,Omega,gpu=False)
+    print theta.value_at_point(z,Omega)
     print "1.1654 - 1.9522e-15*I"
     print 
     
     print "Test #2:"
     z1 = np.array([1.0j,1.0j])
-    print theta.value_at_point(z1,Omega,gpu=False)
+    print theta.value_at_point(z1,Omega)
     print "-438.94 + 0.00056160*I"
     print
 
@@ -501,24 +508,24 @@ if __name__=="__main__":
     z2 = np.array([.5 + .5j, .5 + .5j])
     z3 = np.array([0 + .5j, .33 + .8j])
     z4 = np.array([.345 + .768j, -44 - .76j])
-    print theta.value_at_point([z0,z1,z2,z3,z4],Omega,gpu=False, List=True)
+    print theta.value_at_point([z0,z1,z2,z3,z4],Omega, batch=True)
     print
     
-    print "GPU TEST"
-    a = []
-    for x in range(100000):
-        a.append(z0)
-        a.append(z1)
-        a.append(z2)
-        a.append(z3)
-        a.append(z4)
-    start1 = time.clock()
-    print theta.value_at_point(a, Omega, gpu=True, List=True, prec=1e-12)[57000:57005]
-    print("GPU time to perform calculation: " + str(time.clock() - start1))
-    start2 = time.clock()
+    if (gpu_capable):
+        a = []
+        for x in range(100000):
+            a.append(z0)
+            a.append(z1)
+            a.append(z2)
+            a.append(z3)
+            a.append(z4)
+        start1 = time.clock()
+        print theta.value_at_point(a, Omega, gpu=True, batch=True, prec=1e-12)[57000:57005]
+        print("GPU time to perform calculation: " + str(time.clock() - start1))
+        start2 = time.clock()
 
-    print theta.value_at_point(a, Omega, gpu=False, List=True,prec=1e-12)[1730:1735]
-    print("CPU time to do same calculation: " + str(time.clock() - start2))
+        print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)[1730:1735]
+        print("CPU time to do same calculation: " + str(time.clock() - start2))
 
     print
     print "Derivative Tests:"
@@ -526,23 +533,23 @@ if __name__=="__main__":
     print
     y = np.array([1.0j, 0])
     print "For [[1,0]]:"
-    print theta.value_at_point(y, Omega, deriv = [[1,0]], gpu = False)
+    print theta.value_at_point(y, Omega, deriv = [[1,0]])
     print "0 - 146.49i"
     print
     print "For [[1,0] , [1,0]]: "
-    print theta.value_at_point(y, Omega, deriv = [[1,0], [0,1]], gpu = False)
+    print theta.value_at_point(y, Omega, deriv = [[1,0], [0,1]])
     print "0 + 0i" 
     print
     print "For [[0,1], [1,0]]: "
-    print theta.value_at_point(y, Omega, deriv = [[0,1], [1,0]], gpu = False)
+    print theta.value_at_point(y, Omega, deriv = [[0,1], [1,0]])
     print "0 + 0i"
     print
     print "For [[1,0],[1,0],[1,1]]:"
-    print theta.value_at_point(y, Omega, deriv = [[1,0], [1,0], [1,1]], gpu = False)
+    print theta.value_at_point(y, Omega, deriv = [[1,0], [1,0], [1,1]])
     print "0 + 7400.39i" 
     print
     print "For [[1,1],[1,1],[1,1],[1,1]]: "
-    print theta.value_at_point(y, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], gpu = False)
+    print theta.value_at_point(y, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]])
     print "41743.92 + 0i" 
     print
    
@@ -560,20 +567,8 @@ if __name__=="__main__":
     X,Y = p.meshgrid(x,y)
     Z = X + Y*1.0j
     Z = Z.flatten()
-    U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, List=True, gpu=True)
-    U1,V1 = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, List=True, gpu=True)
-    uMax = 0
-    vMax = 0
-    for i in range(3600):
-        uDif = abs(U[i] - U1[i])
-        vDif = abs(V[i] - V1[i])
-        if (uDif > uMax):
-            uMax = uDif
-        if (vDif > vMax):
-            vMax = vDif
-    print vMax
-    print uMax
-    Z = V.reshape(60,60)
+    U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
+    Z = V.reshape(60,60).real
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
