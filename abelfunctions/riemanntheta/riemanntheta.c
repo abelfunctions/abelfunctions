@@ -366,48 +366,6 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     free(fracshift);     
 }
 
-/******************************************************************************
-  integer_points
-
-  Compute the set U_R of the integeral points needed to compute the Riemann 
-  theta function to the given precision.
-******************************************************************************/
-//void integer_points(double* intpoints, 
-//	       double* T,
-//	       double* c
-//	       int g, 
-//	       double R)
-//{
-// int x, a, b;
-//
-//  struct slice {
-//    double *vector;
-//    double *center;
-//    int g;
-//    int R;
-//  };
-  //Initialize stack of points
-  //Initialze stack
-  //add (), g, c, R struct to stack
-//  first = (double*)malloc(g*sizeof(double));
-//  struct slice starter{first, c, g, R};
-  //while we have elements in the stack
-  //pop an element off the stack
-  //calculate a and b
-  //check if we've reached the end of the ellipsoid (a < b ?)
-  /*If we have reached the end jump to the next iteration of loop, if in addition
-    the stack is empty we have to immediately quit the loop */
-  //if g == 0, append the points
-  //Otherwise, calculate the starting point for the next dimension down,
-  //append that information to the top of the stack
-  
-  //If the stack is empty stop
-  
-//  points = (double*)malloc( * sizeof(double))
-  
-//}
-
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

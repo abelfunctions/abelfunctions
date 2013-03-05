@@ -98,7 +98,7 @@ different `z`.
 import numpy as np
 import scipy as sp
 import scipy.linalg as la
-import RIEMANN
+import riemanntheta_cy
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 import time
@@ -268,7 +268,7 @@ class RiemannTheta_Function:
             c     = Yinv * y
             intc  = c.round()
             leftc = c - intc
-        return RIEMANN.find_int_points(g-1, leftc, R, T)
+        return riemanntheta_cy.find_int_points(g-1, leftc, R, T)
 
     def radius(self, T, prec, deriv=[]):
         r"""
@@ -442,9 +442,9 @@ Tinv, z, g, R)
         if gpu and batch:
             v = parRiemann.compute_v(X, Yinv, T, z, S, g)
         elif (len(deriv) > 0):
-            v = RIEMANN.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
+            v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
-            v = RIEMANN.finite_sum(X, Yinv, T, z, S, g, batch)
+            v = riemanntheta_cy.finite_sum(X, Yinv, T, z, S, g, batch)
             
         if (gpu and batch):
             u = parRiemann.compute_u(z, Yinv, g)
