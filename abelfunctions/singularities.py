@@ -46,11 +46,12 @@ def _singular_points_finite(f,x,y):
     # compute the finite singularities: use the resultant
     p  = sympy.Poly(f,[x,y])
     n  = p.degree(y)
+
     res = sympy.Poly(sympy.resultant(p,p.diff(y),y),x)
-    for xk,deg in res.all_roots(multiple=False,radicals=False):
+    for xk,deg in sympy.roots(res,x).iteritems():
         if deg > 1:
             fxk = sympy.Poly(f.subs({x:xk,y:_Z}), _Z)
-            for ykj,_ in fxk.all_roots(multiple=False,radicals=False):
+            for ykj,_ in sympy.roots(fxk, _Z).iteritems():
                 fx = f.diff(x)
                 fy = f.diff(y)
                 subs = {x:xk,y:ykj}
@@ -72,15 +73,28 @@ def _singular_points_infinite(f,x,y):
     # find singular points at infinity
     F0 = sympy.Poly(F.subs([(_z,0)]),[x,y])
     domain = sympy.QQ[sympy.I]
-    solsX1 = F0.subs({x:1,y:_Z}).all_roots(multiple=False,radicals=False)
-    solsY1 = F0.subs({y:1,x:_Z}).all_roots(multiple=False,radicals=False)
+    solsX1 = sympy.roots(F0.subs({x:1,y:_Z}),_Z).keys()
+    solsY1 = sympy.roots(F0.subs({y:1,x:_Z}),_Z).keys()
 
-    sols   = [ (1,yi,0) for yi,_ in solsX1 ]
-    sols.extend( [ (xi,1,0) for xi,_ in solsY1 ] )
+    all_sols = [ (1,yi,0) for yi in solsX1 ]
+    all_sols.extend( [ (xi,1,0) for xi in solsY1 ] )
 
+    # these points are in projective space, so filter out equal points
+    # such as (1,I,0) == (-I,1,0). We normalize these projective
+    # points such that 1 appears in either the x- or y- coordinate
+    sols = []
+    for xi,yi,zi in all_sols:
+        normalized = (1,yi/xi,0) if xi != sympy.S(0) else (xi/yi,1,0)
+        if not normalized in sols:
+            sols.append(normalized)
+
+    # Filter out any points that are not singular by checking if the
+    # gradient vanishes.
     grad = [F.diff(var) for var in [x,y,_z]]
     for xi,yi,zi in sols:
-        if not any( map(lambda e: e.subs({x:xi,y:yi,_z:zi}),grad) ):
+        fsub = lambda e,x=x,y=y,_z=_z,xi=xi,yi=yi,zi=zi:  \
+               e.subs({x:xi,y:yi,_z:zi}).simplify() != sympy.S(0)
+        if not any(map(fsub,grad)):
             S.append((xi,yi,zi))
 
     return S
@@ -161,7 +175,7 @@ def _multiplicity(f,x,y,singular_pt):
 
     # compute Puiseux expansions at u=u0 and filter out
     # only those with v(t=0) == v0
-    P = puiseux(g,u,v,u0,nterms=1,parametric=_t)
+    P = puiseux(g,u,v,u0,nterms=0,parametric=_t)
 
     m = 0
     for X,Y in P:
@@ -171,7 +185,7 @@ def _multiplicity(f,x,y,singular_pt):
         si = abs( Y.leadterm(_t)[1] )
         m += min(ri,si)
 
-    return int(m)
+    return m
 
 @cached_function
 def _branching_number(f,x,y,singular_pt):
@@ -209,36 +223,34 @@ def _delta_invariant(f,x,y,singular_pt):
 
     # compute Puiseux expansions at u=u0 and filter out only those
     # with v(t=0) == v0. We only chose one y=y(x) Puiseux series for
-    # each place as a representative to prevent over-counting.
-    P = puiseux(g,u,v,u0,nterms=0,parametric=_t)
-    P_x = puiseux(g,u,v,u0,nterms=0,parametric=False)
+    # each place as a representative to prevent over-counting by using
+    # the "grouped=True" flag in Puiseux
+    P = puiseux(g,u,v,u0,nterms=0,parametric=_t,grouped=True)
+    P_x = puiseux(g,u,v,u0,nterms=0,parametric=False,grouped=True)
     P_x_v0 = []
-    for X,Y in P:
+    for i in range(len(P)):
+        X,Y = P[i]
+        p = P_x[i][0]
         if Y.subs(_t,0).simplify() == v0:
-            # find the first x-series with the same v0 value
-            for p in P_x:
-                if p.subs(u,u0).simplify() == v0:
-                    P_x_v0.append(p)
-                    break
+            # store the index as well so we know which parametric form
+            # corresponds to this puiseux series.
+            P_x_v0.append((p,i))
 
-    pdb.set_trace()
-
+    # now obtain ungrouped series
+    P_x = puiseux(g,u,v,u0,nterms=0,parametric=False)
+    
     # for each place compute its contribution to the delta invariant
     delta = sympy.Rational(0,1)
     for i in range(len(P_x_v0)):
-        yhat  = P_x_v0[i]
+        yhat, place_index = P_x_v0[i]
         j = P_x.index(yhat)
         IntPj = Int(j,P_x,u,u0)
 
-        # obtain the ramification index by finding the parametric
-        # Puiseux series at (u0,v0)
-        rj = sympy.oo
-        for X,Y in P:
-            if Y.subs(_t,0).simplify() == v0:
-                rj = (X-u0).as_coeff_exponent(_t)[1]
-                break
-        if rj == sympy.oo: raise ValueError("Error in computing thing.")
-
+        # obtain the ramification index by retreiving the
+        # corresponding parametric form. By definition, this
+        # parametric series satisfies Y(t=0) = v0
+        X,Y = P[place_index]
+        rj = (X-u0).as_coeff_exponent(_t)[1]
         delta += sympy.Rational(rj * IntPj - rj + 1, 2)
 
     return sympy.numer(delta)
@@ -272,14 +284,14 @@ if __name__ == '__main__':
     f4 = y**2 + x**3 - x**2
     f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
     f6 = y**4 - y**2*x + x**2
-    f7 = y**3 - (x**3 + y)**2 + 1
+#    f7 = y**3 - (x**3 + y)**2 + 1
     f8 = x**6*y**3 + 2*x**3*y - 1
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
 
-    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
-    fs = [f2]
+#    fs = [f1,f2,f3,f4,f5,f6,f8,f9,f10]
+    fs = [f10]
 
     print '\nSingular points of curves:'
     for f in fs:

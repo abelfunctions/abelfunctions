@@ -270,7 +270,7 @@ def polygon(F,X,Y,I):
     return params    
 
 
-@cached_function
+
 def newton(F,X,Y,nterms,degree_bound,version='rational'):
     """
     Compute the Puiseux series data `\pi = (\tau_1,\ldots,\tau_R)` where 
@@ -336,9 +336,9 @@ def regular(S,X,Y,nterms,degree_bound):
             if sympy.gcd(ydeg,e) == 1:
                 need_more_terms = False
 
-        R.append(pi)
+        R.append(tuple(pi))
 
-    return R
+    return tuple(R)
         
 
 
@@ -516,7 +516,7 @@ def build_qh_dict(q):
     return qh
 
 
-
+@cached_function
 def build_series(pis,x,y,T,a,parametric):
     """
     Builds all Puiseux series from pi data.
@@ -529,7 +529,7 @@ def build_series(pis,x,y,T,a,parametric):
     D. Duval. The indexing is adjusted: m,beta,mu,eta are all shifted
     down by one. However, the intexing on qh should match that of
     D. Duval.
-}    """
+    """
     series = []
 
     # build singular part of expansion series
@@ -543,13 +543,13 @@ def build_series(pis,x,y,T,a,parametric):
         e = qh[(0,R)]
         lam = reduce(lambda z1,z2: z1*z2, 
                      (mu[k]**qh[(0,k)] for k in xrange(R)))
-        X = sympy.simplify(lam)*T**e
+        X = sympy.simplify(lam)*T**e + a
 
         # compute Y = \sum_{h=1}^R alpha_h * T**n_h. 
         if parametric:
             Y = sympy.S(0)
         else:
-            lams = sympy.solve(lam*_Z**e - 1,_Z,multiple=True)
+            lams = sympy.roots(lam*_Z**e - 1,_Z,multiple=True)
             Y = [sympy.S(0) for _ in xrange(e)]
 
         n_h = sympy.S(0)
@@ -580,14 +580,14 @@ def build_series(pis,x,y,T,a,parametric):
         if parametric:
             series.append((X,Y))
         else:
-            series.extend(Y)
+            series.append(Y)
 
     return series
 
 
 
 def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo, 
-            parametric=None, version='rational'):
+            parametric=None, version='rational', grouped=False):
     """
     Computes the first `n` terms of the Puiseux series expansions of 
     `f = f(x,y)` at `x=a`.
@@ -608,6 +608,9 @@ def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo,
     -- ``version``: (default: ``'rational'``) use 'rational' for rational
        Puiseux series expansions. Use 'classical' for expansions containing
        algebraic numbers
+
+    * ``grouped``: (default: ``False``) If true, group `y = y(x)`
+      Puiseux series by their place. Used primarily by singularities()
     """
     if version not in ['classical','rational']:
         raise AttributeError("'version' must be 'classical' or 'rational'")
@@ -630,6 +633,10 @@ def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo,
     # compute the puiseux series data and build the series. If a parametric
     pis = newton(f,x,y,nterms,degree_bound,version=version)
     series = build_series(pis,x,y,T,a,parametric)
+
+    # flatten
+    if not parametric and not grouped:
+        series = [item for sublist in series for item in sublist]
     
     return series
 
@@ -652,15 +659,15 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f3
+    f  = f7
     a  = 0
     N  = 0
 
     print "Curve:\n"
     sympy.pprint(f)
 
-    P = puiseux(f,x,y,0,N,parametric=T)
-    print P
+    P = puiseux(f,x,y,0,N,parametric=True)
+    sympy.pprint(P)
     
 #     sympy.pprint("\nT series:")
 #     PT = puiseux(f,x,y,a,nterms=N,parametric=T,version='rational')
@@ -675,8 +682,6 @@ if __name__ == "__main__":
 #     for p in Px: ff *= y-p
 #     sympy.pprint((f-ff).expand(force=True).collect(x-a))
 
-    
-    
 
 #     import cProfile, pstats
 #     cProfile.run(
