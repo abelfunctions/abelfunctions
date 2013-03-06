@@ -14,6 +14,7 @@ from matplotlib.cbook import flatten
 
 from utilities import cached_function, cached_property
 
+from riemannsurface_path import polyroots
 
 import pdb
 
@@ -739,7 +740,7 @@ class Monodromy(object):
         fig.show()
 
 
-    def initial_monodromy(self, i, Npts=4, lift_paths=False):
+    def initial_monodromy(self, i, Npts=8, lift_paths=False):
         """
         Returns the initial monodromy corresponding to disciminant
         point `i`.  That is, the permutation of sheets as we go around
@@ -754,6 +755,9 @@ class Monodromy(object):
 
         # obtain interpolating points in path
         path = self._initial_monodromy_path(i, Npts=Npts)
+        N = len(path)
+        maxiter = 32
+        eps = sympy.mpmath.mp.eps
 
         # note that the order of base_lift is fixed at creation of the
         # class / monodromy group.
@@ -767,36 +771,62 @@ class Monodromy(object):
         yi   = [0]*n
         yim1 = base_lift
         xim1 = base_point
-        for xi in path[1:]:
-            # compute numerical approximation of the next set of roots
-            # using Taylor series. This allows us to use fewer
-            # interpolating points. Use generators for fast creation.
-            dx = xi - xim1
-            f_xi  = lambda y: f(xi,y)
-            df_xi = lambda y: - dx * dfdx(xi,y) / dfdy(xi,y)
-            for j in xrange(n):
-                yp = - dfdx(xim1,yim1[j]) / dfdy(xim1,yim1[j])
-                dy = yp * dx + sympy.mpmath.eps       # in case yp == 0
-                yi_approx = yim1[j] + dy
-                guess = (yi_approx - dy, yi_approx, yi_approx + dy)
-                yi[j] = sympy.mpmath.findroot(f_xi, guess, df=df_xi,
-                                              solver='muller')
+#         for xi in path[1:]:
+#             # compute numerical approximation of the next set of roots
+#             # using Taylor series. This allows us to use fewer
+#             # interpolating points. Use generators for fast creation.
+#             dx = xi - xim1
+#             f_xi  = lambda y: f(xi,y)
+#             df_xi = lambda y: - dx * dfdx(xi,y) / dfdy(xi,y)
+#             for j in xrange(n):
+#                 yp = - dfdx(xim1,yim1[j]) / dfdy(xim1,yim1[j])
+#                 dy = yp * dx + sympy.mpmath.eps       # in case yp == 0
+#                 yi_approx = yim1[j] + dy
+#                 guess = (yi_approx - dy, yi_approx, yi_approx + dy)
+#                 yi[j] = sympy.mpmath.findroot(f_xi, guess, df=df_xi,
+#                                               solver='muller')
             
-            # for plotting purposes, we optionally store the lift
-            if lift_paths:
+#             # for plotting purposes, we optionally store the lift
+#             if lift_paths:
+#                 lift_points.append([yij for yij in yi])
+            
+#             yim1 = yi
+#             xim1 = xi
+
+        for i in xrange(1,N):
+            xi = path[i]
+            dx = xi-xim1
+            
+            with sympy.mpmath.extraprec(4):
+                for j in xrange(n):
+                    yim1j = yim1[j]
+                    dyj = - dx * self.dfdx(xim1,yim1j) / self.dfdy(xim1,yim1j)
+                    yij_approx = yim1j + dyj
+
+                    # Newton iterate to next point. (Note: this is done
+                    # instead of "sympy.mpmath.polyroots" for speed and
+                    # instead of sympy.mpmath.findroot for performance.)
+                    yij = yij_approx
+                    for k in xrange(maxiter):
+                        step = self._f(xi,yij) / self.dfdy(xi,yij)
+                        yij -= step
+
+                    yi[j] = yij
+
+            if lift_paths: 
                 lift_points.append([yij for yij in yi])
-            
-            yim1 = yi
+
             xim1 = xi
+            yim1 = yi
+
 
         # return the lift points, if requested. Otherwise, just return
         # the initial monodromy permutation.
         if lift_paths: return lift_points
         else:          return matching_permutation(base_lift, yi)
 
-
     
-    def plot_initial_monodromy_lift(self, i, Npts=4):
+    def plot_initial_monodromy_lift(self, i, Npts=8):
         """
         Plots the lift [y1,...,yn] on the complex plane as x varies 
         Along an initial monodromy path.
@@ -1048,7 +1078,7 @@ class Monodromy(object):
         return [v for v in G.node[root]['string']]
 
 
-    def monodromy(self, Npts=4):
+    def monodromy(self, Npts=8):
         """
         Returns the monodromy group.
 

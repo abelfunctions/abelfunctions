@@ -207,8 +207,8 @@ class RiemannSurfacePath():
         self.x = RS.x
         self.y = RS.y
         
-        dfdx = sympy.diff(f,x).expand()
-        dfdy = sympy.diff(f,y).expand()
+        dfdx = sympy.diff(self.f,self.x).expand()
+        dfdy = sympy.diff(self.f,self.y).expand()
         
         self._f = sympy.lambdify((self.x,self.y), self.f, "mpmath")
         self.dfdx = sympy.lambdify((self.x,self.y), dfdx, "mpmath")
@@ -236,7 +236,7 @@ class RiemannSurfacePath():
         ppseg = 8
         t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
         for ti in t_pts:
-            P = self.analytically_continue(ti,Npts=16)
+            P = self.analytically_continue(ti,Npts=4)
             self._add_checkpoint(ti, P)
 
 

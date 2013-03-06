@@ -139,7 +139,7 @@ def frobenius_transform(A,g):
             B[j,:]     += pivot * B[i+g,:]
             B[:,j]     += pivot * B[:,i+g]
 
-    for i in range(g):
+    for i in xrange(g):
         # the block aboce the diagonal is already there. use it to
         # create zeros everywhere else in teh second block of g
         # columns. automatically all other coluns are then zero,
@@ -708,7 +708,7 @@ def canonical_basis(f,x,y):
     complex plane algebraic curve, return a canonical basis for the
     homology of the Riemann surface.
     """
-    g = genus(f,x,y)   # XXX write this function...
+    g = int(genus(f,x,y))
     mon = Monodromy(f,x,y)
     hurwitz_system = mon.hurwitz_system()
 
@@ -733,7 +733,7 @@ def canonical_basis(f,x,y):
         raise ValueError("Found inconsistent genus in homolgy " + \
                          "intersection matrix.")
     
-    alpha = frobenius_transform(t_matrix, g)
+    alpha = frobenius_transform(t_matrix,g)
 
     # sanity check: did the Frobenius transform produce the correct result?
     # alpha * t_matrix * alpha.T = J where J has the gxg identity I in the

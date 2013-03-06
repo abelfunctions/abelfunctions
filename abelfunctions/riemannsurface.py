@@ -14,9 +14,10 @@ from monodromy   import Monodromy
 from homology    import homology
 from riemannsurface_path import (
     path_around_branch_point,
-    RiemannSurface_Path,
+    RiemannSurfacePath,
     )
-from riemannsurface_point import RiemannSurface_Point
+from riemannsurface_point import RiemannSurfacePoint
+from singularities import genus
 
 
 import pdb
@@ -54,7 +55,14 @@ class RiemannSurface(Monodromy):
         Returns the basis of holomorphic differentials defined on the
         Riemann surface.
         """
-        return differentials(f,x,y)
+#        return differentials(f,x,y)
+        return [1/self.y]
+
+    def genus(self):
+        """
+        Return the genus of the Riemann surface.
+        """
+        return genus(self.f, self.x, self.y)
 
 
     def a_cycle(self, i):
@@ -158,7 +166,8 @@ class RiemannSurface(Monodromy):
         lincombs = self._homology['linearcombination']
         n_cycles = len(self._homology['cycles'])
         c_cycles = [self.c_cycle(i) for i in range(n_cycles)]
-        differentials = self.differentials()
+        differentials = self.holomorphic_differentials()
+        g = self.genus()
         x = self.x
         y = self.y
 
@@ -166,20 +175,24 @@ class RiemannSurface(Monodromy):
         # this...
         A = []
         B = []
-        for i in xrange(self.genus()):
+        for i in xrange(g):
             omega = differentials[i]
             Ai = []
             Bi = []
             for j in xrange(g):
                 lincomb  = lincombs[j]
                 # XXX check that len(lincomb) == n_cycles
-                integral = sum(lincomb[k]*self.integrate(omega,x,y,c_cycles[k]) 
-                               for k in xrange(n_cycles) if lincomb[k] != 0)
+                integral = sum(
+                    lincomb[k]*self.integrate(omega,x,y,c_cycles[k]) 
+                    for k in xrange(n_cycles) if lincomb[k] != 0
+                    )
                 Ai.append(integral)
 
                 lincomb  = lincombs[j+g]
-                integral = sum(lincomb[k]*self.integrate(omega,x,y,c_cycles[k]) 
-                               for k in xrange(n_cycles) if lincomb[k] != 0)
+                integral = sum(
+                    lincomb[k]*self.integrate(omega,x,y,c_cycles[k]) 
+                    for k in xrange(n_cycles) if lincomb[k] != 0
+                    )
                 Bi.append(integral)
 
             A.append(Ai)
@@ -209,7 +222,7 @@ if __name__ == '__main__':
     f11= y**2 - x*(x-1)*(x-2)*(x-3)  # simple genus one hyperelliptic
 
 
-    f = f10
+    f = f11
     X = RiemannSurface(f,x,y)
 
 
