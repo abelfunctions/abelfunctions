@@ -16,6 +16,7 @@ import numpy
 import scipy
 import sympy
 import networkx as nx
+import matplotlib.pyplot as plt
 
 
 
@@ -194,18 +195,26 @@ class RiemannSurfacePath():
 
         Input:
 
-        - `RS`: a RiemannSurface on which the path is defined
+        - `RS`: a RiemannSurface on which the path is defined. (Or, a
+          tuple containing `(f,x,y)` where ``f(x,y) = 0`` defined the
+          Riemann surface.
 
         - `P0`: a RiemannSurfacePoint where the path begins.
 
         - `P1`: (optional) a RiemannSurfacePoint where the path ends.
         """
-        self.RS = RS
-        self.P0 = P0
+        if isinstance(RS,tuple):
+            f,x,y = RS
+            self.f = f
+            self.x = x
+            self.y = y
+        else:
+            self.f = RS.f
+            self.x = RS.x
+            self.y = RS.y
 
-        self.f = RS.f
-        self.x = RS.x
-        self.y = RS.y
+        self.P0 = P0
+        self.deg = sympy.degree(f,y)
         
         dfdx = sympy.diff(self.f,self.x).expand()
         dfdy = sympy.diff(self.f,self.y).expand()
@@ -226,7 +235,7 @@ class RiemannSurfacePath():
 
 
     def __repr__(self):
-        return 'Path on %s' %(self.RS)
+        return 'Path on the Riemann surface defined by the curve %s = 0'%self.f
 
 
     def _initialize_checkpoints(self):
@@ -338,7 +347,7 @@ class RiemannSurfacePath():
         interval [0,1]. self(0) returns the starting point. 
         """
         eps = sympy.mpmath.eps
-        deg = self.RS.deg
+        deg = self.deg
 
         # get the nearest already computed point on the path. If the
         # nearest computed point is at "t" then just return the cached
@@ -441,7 +450,8 @@ class RiemannSurfacePath():
         return x_re, x_im, y_re, y_im
         
 
-    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, **kwds):
+    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, 
+             y_only=False, **kwds):
         """
         Plots the path in the complex x- and y-planes.
 
@@ -460,28 +470,38 @@ class RiemannSurfacePath():
         """
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
         
-        fig = plt.figure()
-        x_ax = fig.add_subplot(2,1,1)
-        y_ax = fig.add_subplot(2,1,2)
+        if y_only:
+            fig = plt.gcf()
+            y_ax = fig.gca()
+            y_ax.hold(True)
+        else:
+            fig = plt.figure()
+            x_ax = fig.add_subplot(2,1,1)
+            y_ax = fig.add_subplot(2,1,2)
 
         # First, plot all checkpoints.
         checkpoints = self._checkpoints.values()
         x_re, x_im, y_re, y_im = self.decompose_points(checkpoints)
-        x_ax.plot(x_re, x_im, '.', **kwds)
+
+        if not y_only:
+            x_ax.plot(x_re, x_im, '.', **kwds)
         y_ax.plot(y_re, y_im, '.', **kwds)
         
         
         # Second, plot requested interpolants
         x_re, x_im, y_re, y_im = self.decompose_points(P)
-
-        x_ax.plot(x_re, x_im, **kwds)
+        
+        if not y_only:
+            x_ax.plot(x_re, x_im, **kwds)
         y_ax.plot(y_re, y_im, **kwds)
         if show_numbers:
             for n in xrange(len(y_re)):
-                x_ax.text(x_re[n], x_im[n], str(n), fontsize=10)
+                if not y_only:
+                    x_ax.text(x_re[n], x_im[n], str(n), fontsize=10)
                 y_ax.text(y_re[n], y_im[n], str(n), fontsize=10)
 
-        x_ax.axis('tight')
+        if not y_only:
+            x_ax.axis('tight')
         y_ax.axis('tight')
 
         fig.show()

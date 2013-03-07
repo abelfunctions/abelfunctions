@@ -1,5 +1,8 @@
 """
 Monodromy
+
+Module for computing the monodromy group of the set of branch points
+of a complex plane algebraic curve.
 """
 
 import numpy
@@ -14,7 +17,11 @@ from matplotlib.cbook import flatten
 
 from utilities import cached_function, cached_property
 
-from riemannsurface_path import polyroots
+from riemannsurface_path import (
+    polyroots, 
+    path_around_branch_point,
+    RiemannSurfacePath,
+    )
 
 import pdb
 
@@ -454,292 +461,12 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     else:
         G.node[bd_index]['type'] = 'node'
 
-    return G
 
 
-def show_paths(G):
-    """
-    Plot all of the paths in the complex x-plane of the monodromy
-    group.
-    """
-    fig = plt.figure()
-    ax  = fig.add_subplot(111)
-
-    # plot the location of the base_point
-    a = G.node[0]['basepoint']
-    ax.plot(sympy.re(a), sympy.im(a), color='r', 
-            marker='o', markersize=10)
-
-    for i in G.nodes():
-        # plot the circle about the discriminant point
-        radius = G.node[i]['radius']
-        pos    = G.node[i]['pos']
-        circle = Circle(pos, radius, edgecolor='b', facecolor='w')
-        ax.add_patch(circle)
-
-        # mark the node number
-        ax.text(pos[0], pos[1], '%d'%i, 
-                horizontalalignment='center', verticalalignment='center')
-
-        # for each connected discriminant point, draw the line
-        # connecting the two circles. (using the path index.)
-        for k in G.successors(i):
-            index       = G[i][k]['index']
-            next_pos    = G.node[k]['pos']
-            next_radius = G.node[k]['radius']
-            x    = (pos[0] + index[0]*radius, 
-                    next_pos[0] + index[1]*next_radius)
-            y    = (pos[1], next_pos[1])
-            line = Line2D(x,y)
-            ax.add_line(line)
-
-    ax.axis('tight', aspect=1.0)
-
-
-def initial_monodromy_path(G,i,Npts=4):
-    """
-    Returns a list of interpolating points on the initial monodromy
-    path encircling the 'i'th discriminant point. 'Npts' is the number
-    of interpolating points per "section" of the path where the path
-    is divided into semi-circle and line segment sections.
-    """
-    # Functions for computing interpolating points on semi-circles
-    # and line segments.
-    t_pts = sympy.mpmath.linspace(0, 1, Npts, endpoint=False)
-    circle = lambda R, z0, arg: \
-        [R*sympy.mpmath.exp(sympy.mpmath.j*(sympy.mpmath.pi*t + arg)) + z0
-         for t in t_pts]
-    line = lambda start, end: [start*(1-t) + end*t for t in t_pts]
-
-    root = G.node[i]['root']
-    path_points = []
-
-    # Compute interpolating points for circle / line pairs. That
-    # is, for each node in the shortest path to the target node
-    # determine the interpolating points on the circle and the
-    # interpolating points on the line connecting to the next
-    # discriminant point.
-    path_vertices = nx.shortest_path(G, source=root, target=i)
-    prev_node = root
-    for idx in range(len(path_vertices)-1):
-        curr_node   = path_vertices[idx]
-        curr_radius = G.node[curr_node]['radius']
-        curr_value  = G.node[curr_node]['value']
-
-        next_node   = path_vertices[idx+1]
-        next_radius = G.node[next_node]['radius']
-        next_value  = G.node[next_node]['value']
-
-        # Determine if semi-circle is needed. This is done by
-        # checking the path index of the previous edge with the
-        # path index of the next edge
-        if prev_node == root: 
-            prev_edge_index = (0,-1)  # in the root node case
-        else: 
-            prev_edge_index = G[prev_node][curr_node]['index']
-        curr_edge_index = G[curr_node][next_node]['index']
-        if prev_edge_index[1] != curr_edge_index[0]:
-            # add semicircle going in positive direction
-            arg = sympy.mpmath.pi if prev_edge_index[1] == -1 else 0
-            circ_pts = circle(curr_radius, curr_value, arg)
-            path_points.extend(circ_pts)
-
-        # draw line to next discriminant point
-        start = curr_value +  curr_edge_index[0]*curr_radius
-        end   = next_value +  curr_edge_index[1]*next_radius
-        line_pts = line(start, end)
-        path_points.extend(line_pts)
-
-        # update previous point
-        prev_node = curr_node
-
-    # we have now arrived at the circle encircling the desired
-    # discriminant point. There's a special case for when we just
-    # encircle the root node.
-    if len(path_vertices) == 1:
-        next_value  = G.node[root]['value']
-        next_radius = G.node[root]['radius']
-        curr_edge_index = (-1,-1)
-
-    arg = sympy.mpmath.pi if curr_edge_index[1] == -1 else 0
-    circ_pts = circle(next_radius, next_value, arg) + \
-        circle(next_radius, next_value, arg + sympy.mpmath.pi)
-    circ_pts.append(circ_pts[0])
-
-    # combine the path to the circle, the final circle points, 
-    # and the reverse path points
-    path_points += circ_pts + path_points[::-1]
-
-    return path_points
-
-
-def plot_initial_monodromy_path(f,x,y,i,kappa=3.0/5.0,Npts=4,eps=0.1):
-    """
-    Plots the initial monodromy path. Used for testing and
-    debugging purposes.
-    """
-    # plot the monodromy graph
-    G = monodromy_graph(f,x,y,kappa=kappa)
-    show_paths(G)
-    fig = plt.gcf()
-    ax  = fig.gca()
-
-    # compute the path points
-    path_points = initial_monodromy_path(f,x,y,G,i,Npts=Npts)
-    N = len(path_points)
-
-    # plot forward path
-    topos = lambda pp: (sympy.re(pp), sympy.im(pp))
-    for n in xrange(N/2):
-        pos = topos(path_points[n])
-        ax.text(pos[0], pos[1], '%d'%n, size='x-small',
-                verticalalignment='top')
-
-    # plot return path
-    for n in xrange(N/2,N):
-        pos = topos(path_points[n])
-        ax.text(pos[0], pos[1], '%d'%n, size='x-small',
-                verticalalignment='bottom')
-
-    ax.axis('tight')
-    fig.show()
-
-
-def initial_monodromy(f,x,y,G,i,kappa=3.0/5.0,Npts=8,lift_paths=False):
-    """
-    Returns the initial monodromy corresponding to disciminant
-    point `i`.  That is, the permutation of sheets as we go around
-    discriminant point `i` using the initial monodromy paths.
-    """
-    # compute mpmath-optimized versions of f and its derivatives
-    dfdx = sympy.diff(f,x)
-    dfdy = sympy.diff(f,y)
-
-    _f   = sympy.lambdify((x,y), f, "mpmath")
-    dfdx = sympy.lambdify((x,y), dfdx, "mpmath")
-    dfdy = sympy.lambdify((x,y), dfdy, "mpmath")
-    
-    deg = sympy.degree(f,y)
-
-    # obtain interpolating points in path
-    path = initial_monodromy_path(G,i,Npts=Npts)
-    N = len(path)
-    maxiter = 32
-    eps = sympy.mpmath.mp.eps
-
-    # note that the order of base_lift is fixed at creation of the
-    # class / monodromy group.
-    base_point = G.node[0]['basepoint']
-    base_lift = G.node[0]['baselift']
-    prev_rts = [yi for yi in base_lift]
-
-    if lift_paths:
-        lift_points = [base_lift]
-
-    # analytically continue along the path starting with the base lift
-    # at the base point.
-    yi   = [0]*deg
-    yim1 = base_lift
-    xim1 = base_point
-    for i in xrange(1,N):
-        xi = path[i]
-        dx = xi-xim1
-
-        with sympy.mpmath.extraprec(4):
-            for j in xrange(deg):
-                # compute numerical approximation of the next set of
-                # roots using Taylor series. This allows us to use
-                # fewer interpolating points. Use generators for fast
-                # creation.
-                yim1j = yim1[j]
-                dyj = - dx * dfdx(xim1,yim1j) / dfdy(xim1,yim1j)
-                yij_approx = yim1j + dyj
-
-                # Newton iterate to next point. (Note: this is done
-                # instead of "sympy.mpmath.polyroots" for speed and
-                # instead of sympy.mpmath.findroot for performance.)
-                yij = yij_approx
-                for k in xrange(maxiter):
-                    step = _f(xi,yij) / dfdy(xi,yij)
-                    yij -= step
-
-                yi[j] = yij
-
-        if lift_paths: 
-            lift_points.append([yij for yij in yi])
-
-        xim1 = xi
-        yim1 = yi
-
-    # return the lift points, if requested. Otherwise, just return
-    # the initial monodromy permutation.
-    if lift_paths: return lift_points
-    else:          return matching_permutation(base_lift, yi)
-
-
-def plot_initial_monodromy_lift(f,x,y,i,kappa=3.0/5.0,Npts=8):
-    """
-    Plots the lift [y1,...,yn] on the complex plane as x varies 
-    Along an initial monodromy path.
-    """
-    G = monodromy_graph(f,x,y,kappa=kappa)
-    lift = initial_monodromy(f,x,y,G,i,Npts=Npts,lift_paths=True)
-    deg = len(lift[0])
-    clrs = ['b','g','r','k','c','m','y']*int(deg/7+1)
-
-    plt.ion()
-
-    # scan ahead in order to determine proper plot bounds
-    axis = [-1,1,-1,1]
-    for j in xrange(len(lift)):
-        for i in xrange(deg):
-            yji = lift[j][i]
-
-            if yji.real < axis[0]: axis[0] = float(yji.real)
-            if yji.real > axis[1]: axis[1] = float(yji.real)
-            if yji.imag < axis[2]: axis[2] = float(yji.imag)
-            if yji.imag > axis[3]: axis[3] = float(yji.imag)
-
-    xeps = (axis[1]-axis[0])/10.0
-    yeps = (axis[3]-axis[2])/10.0
-    axis[0] -= xeps
-    axis[1] += xeps
-    axis[2] -= yeps
-    axis[3] += xeps
-
-    plt.axis(axis)
-
-    # initialize plot with base lift
-    xdata = {}
-    ydata = {}
-    lines = range(deg)
-    for i in xrange(deg):
-        y = lift[0][i]
-        xdata[i] = [y.real]
-        ydata[i] = [y.imag]
-        lines[i], = plt.plot(y.real, y.imag, color=clrs[i],
-                             linestyle='--', linewidth=4*(i+1), alpha=0.3)
-
-    # for each complex x-point plot the ordered lift at that point
-    for j in xrange(len(lift)):
-        for i in xrange(deg):
-            y = lift[j][i]
-
-            xdata[i].append(y.real)
-            ydata[i].append(y.imag)
-
-            lines[i].set_xdata(xdata[i])
-            lines[i].set_ydata(ydata[i])
-        plt.draw()
-
-
-def _construct_position_tree(G):
-    """
-    Returns the "relative position tree", a list giving the relative
-    ordering of the branch points, using the monodromy graph data.
-
-    See Section 3 of [FCS].
-    """
+    #
+    # Comptue the graph node conjugates so as to establisht he proper
+    # ordering of the monodromy paths.
+    #
     def angle(w, origin_vertex=None):
         """
         Compute the angle between vertex v and w using monodromy
@@ -915,11 +642,76 @@ def _construct_position_tree(G):
         else:
             n += 1
 
-    return [v for v in G.node[root]['string']]
+    # finally, use the string data to compute the "position tree" and
+    # then, from this data, compute the conjugates of each node in the
+    # graph.
+    N = len(disc_pts)
+    position_tree = [v for v in G.node[root]['string']]    
+    while N > 0:
+        # grab the largest element in the tree
+        m = max(position_tree)
+        i = position_tree.index(m)
+        if i == (N-1):
+            position_tree.remove(m)
+            N -= 1
+        else:
+            # k is the element of the tree appearing to the right
+            # of the element m. conjugate phi_m by phi_k
+            k = position_tree[i+1]
+
+            # swap m and k in the position tree
+            position_tree[i+1] = m
+            position_tree[i] = k
+
+            # store conjugation information in self
+            G.node[m]['conjugates'].append(k)
+
+    return G
+
+
+
+def show_paths(G):
+    """
+    Plot all of the paths in the complex x-plane of the monodromy
+    group.
+    """
+    fig = plt.figure()
+    ax  = fig.add_subplot(111)
+
+    # plot the location of the base_point
+    a = G.node[0]['basepoint']
+    ax.plot(sympy.re(a), sympy.im(a), color='r', 
+            marker='o', markersize=10)
+
+    for i in G.nodes():
+        # plot the circle about the discriminant point
+        radius = G.node[i]['radius']
+        pos    = G.node[i]['pos']
+        circle = Circle(pos, radius, edgecolor='b', facecolor='w')
+        ax.add_patch(circle)
+
+        # mark the node number
+        ax.text(pos[0], pos[1], '%d'%i, 
+                horizontalalignment='center', verticalalignment='center')
+
+        # for each connected discriminant point, draw the line
+        # connecting the two circles. (using the path index.)
+        for k in G.successors(i):
+            index       = G[i][k]['index']
+            next_pos    = G.node[k]['pos']
+            next_radius = G.node[k]['radius']
+            x    = (pos[0] + index[0]*radius, 
+                    next_pos[0] + index[1]*next_radius)
+            y    = (pos[1], next_pos[1])
+            line = Line2D(x,y)
+            ax.add_line(line)
+
+    ax.axis('tight', aspect=1.0)
+
 
 
 @cached_function
-def monodromy(f,x,y,kappa=3.0/5.0,Npts=8):
+def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     """
     Returns information about the monodromy group of the Riemann
     surface associated with the plane complex algebraic curve ``f(x,y)
@@ -953,44 +745,43 @@ def monodromy(f,x,y,kappa=3.0/5.0,Npts=8):
       as large as possible without intersecting any other monodromy
       path circles.
 
-    - `Npts`: (default: 8) the number of interpolating points per path
-      segment to use when computing the initial monodromy
+    - `ppseg`: (default: 8) the number of interpolating points per path
+      segment to use when analytically continuing along each monodromy
+      path
     """
-    G = monodromy_graph(f,x,y)
-    disc_pts = [data['value'] for node,data in G.nodes(data=True)]
-    N = len(disc_pts)
-
-    monodromy = [initial_monodromy(f,x,y,G,i,Npts=Npts) for i in range(N)]
-    position_tree = _construct_position_tree(G)
-
-    while N > 0:
-        # grab the largest element in the tree
-        m = max(position_tree)
-        i = position_tree.index(m)
-        if i == (N-1):
-            position_tree.remove(m)
-            N -= 1
-        else:
-            # k is the element of the tree appearing to the right
-            # of the element m. conjugate phi_m by phi_k
-            k = position_tree[i+1]
-            phi_m = monodromy[m]
-            phi_k = monodromy[k]
-            monodromy[m] = phi_k * phi_m * phi_k.inv()
-
-            # swap m and k in the position tree
-            position_tree[i+1] = m
-            position_tree[i] = k
-
-            # store conjugation information in self
-            G.node[m]['conjugates'].append(k)
-
-    # return the Hurwitz system and monodromy graph
+    deg = sympy.degree(f,y)
+    G = monodromy_graph(f,x,y,kappa=kappa)
     base_point = G.node[0]['basepoint']
     base_sheets = G.node[0]['baselift']
-    branch_points = disc_pts    
+    branch_points = [data['value'] for node,data in G.nodes(data=True)]
+
+    mon = []
+    for i in G.nodes():
+        path_segments = path_around_branch_point(G,i,1)
+        yend = []
+        for j in xrange(deg): 
+            gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets[j]),
+                                       path_segments=path_segments)
+            yendj = gamma(1)
+            yend.append(yendj)
+
+        mon.append(matching_permutation(base_sheets,yend))
 
     return base_point, base_sheets, branch_points, monodromy, G
+
+
+def continue_fibre(G, base_point, base_sheets, branch_point):
+    """
+    """
+    fig = plt.figure()
+    _ = fig.axes()
+    for sheet in base_sheets:
+        path_segments = path_around_branch_point(G,branch_point,1)
+        gamma = RiemannSurfacePath((f,x,y),(base_point,sheet),
+                                   path_segments=path_segments)
+        gamma.plot(y_only=True)
+
+    
 
 
 
@@ -1012,6 +803,16 @@ if __name__=='__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
     f = f10
+
+    print "Computing monodromy graph of", f
+    G = monodromy_graph(f,x,y)
+    base_point = G.node[0]['basepoint']
+    base_sheets = G.node[0]['baselift']
+    branch_points = [data['value'] for node,data in G.nodes(data=True)]
+
+    branch_point = 4
+    continue_fibre(G, base_point, base_sheets, branch_point)
+
    
 #     import cProfile, pstats
 #     cProfile.run('mon = M.monodromy()','monodromy.profile')
