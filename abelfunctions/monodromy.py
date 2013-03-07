@@ -707,6 +707,7 @@ def show_paths(G):
             ax.add_line(line)
 
     ax.axis('tight', aspect=1.0)
+    fig.show()
 
 
 
@@ -770,18 +771,14 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     return base_point, base_sheets, branch_points, monodromy, G
 
 
-def continue_fibre(G, base_point, base_sheets, branch_point):
+def plot_fibre(G, base_point, base_sheets, branch_point):
     """
     """
-    fig = plt.figure()
-    _ = fig.axes()
     for sheet in base_sheets:
         path_segments = path_around_branch_point(G,branch_point,1)
         gamma = RiemannSurfacePath((f,x,y),(base_point,sheet),
                                    path_segments=path_segments)
-        gamma.plot(y_only=True)
-
-    
+        gamma.plot()
 
 
 
@@ -810,8 +807,8 @@ if __name__=='__main__':
     base_sheets = G.node[0]['baselift']
     branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
-    branch_point = 4
-    continue_fibre(G, base_point, base_sheets, branch_point)
+    branch_point = 5
+    plot_fibre(G, base_point, base_sheets, branch_point)
 
    
 #     import cProfile, pstats

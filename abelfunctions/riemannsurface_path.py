@@ -245,7 +245,7 @@ class RiemannSurfacePath():
         ppseg = 8
         t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
         for ti in t_pts:
-            P = self.analytically_continue(ti,Npts=4)
+            P = self.analytically_continue(ti,Npts=32)
             self._add_checkpoint(ti, P)
 
 
@@ -341,7 +341,7 @@ class RiemannSurfacePath():
 
 
 
-    def analytically_continue(self, t, dxdt=False, Npts=4):
+    def analytically_continue(self, t, dxdt=False, Npts=16):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point. 
@@ -399,7 +399,7 @@ class RiemannSurfacePath():
 
         # Checkpoint this point if it took too many Newton iterations
         # at any point along the path.
-        if maxn >= 4:
+        if maxn >= 6:
             self._add_checkpoint(t,(xi,yi))
 
         if dxdt:
@@ -450,8 +450,7 @@ class RiemannSurfacePath():
         return x_re, x_im, y_re, y_im
         
 
-    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, 
-             y_only=False, **kwds):
+    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, **kwds):
         """
         Plots the path in the complex x- and y-planes.
 
@@ -470,29 +469,23 @@ class RiemannSurfacePath():
         """
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
         
-        if y_only:
-            fig = plt.gcf()
-            y_ax = fig.gca()
-            y_ax.hold(True)
-        else:
-            fig = plt.figure()
-            x_ax = fig.add_subplot(2,1,1)
-            y_ax = fig.add_subplot(2,1,2)
+        fig = plt.figure()
+        x_ax = fig.add_subplot(2,1,1)
+        y_ax = fig.add_subplot(2,1,2)
 
         # First, plot all checkpoints.
         checkpoints = self._checkpoints.values()
         x_re, x_im, y_re, y_im = self.decompose_points(checkpoints)
 
-        if not y_only:
-            x_ax.plot(x_re, x_im, '.', **kwds)
+        x_ax.plot(x_re, x_im, '.', **kwds)
         y_ax.plot(y_re, y_im, '.', **kwds)
         
         
         # Second, plot requested interpolants
         x_re, x_im, y_re, y_im = self.decompose_points(P)
-        
-        if not y_only:
-            x_ax.plot(x_re, x_im, **kwds)
+        x_ax.plot(x_re[0], x_im[0], 'k.', markersize=20, **kwds)
+        y_ax.plot(y_re[0], y_im[0], 'k.', markersize=20, **kwds)
+        x_ax.plot(x_re, x_im, **kwds)
         y_ax.plot(y_re, y_im, **kwds)
         if show_numbers:
             for n in xrange(len(y_re)):
@@ -500,8 +493,7 @@ class RiemannSurfacePath():
                     x_ax.text(x_re[n], x_im[n], str(n), fontsize=10)
                 y_ax.text(y_re[n], y_im[n], str(n), fontsize=10)
 
-        if not y_only:
-            x_ax.axis('tight')
+        x_ax.axis('tight')
         y_ax.axis('tight')
 
         fig.show()
