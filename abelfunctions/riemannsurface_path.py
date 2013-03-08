@@ -5,7 +5,7 @@ This module defines paths on Riemann surfaces, codified in the class
 `RiemannSurface_Path`. The primary components of a `RiemannSurface_Path`
 are
 
-- a path, as a piecewise collection of semi-circles and lines, in the 
+- a path, as a piecewise collection of semi-circles and lines, in the
 complex x-plane.
 
 - a mechanisim for analytically continuing any or all y-roots lying
@@ -28,7 +28,7 @@ def polyroots(f,x,y,xi):
     Precision is set by modifying `sympy.mpmath.mp.dps`.
 
     Input:
-    
+
     - `f,x,y`: a complex plane algebraic curve in x,y with
       `sympy.mpmath.mpc` coefficients
 
@@ -55,9 +55,9 @@ def path_around_branch_point(G, bpt, rot):
     number of times.  The sign of "rot" determines direction.
 
     Input:
-    
+
     - G: the "monodromy graph", as computed by Monodromy
-    
+
     - bpt: the index of the target branch point
 
     - rot: the rotation number and direction of the path going around
@@ -97,7 +97,7 @@ def path_around_branch_point(G, bpt, rot):
         # the path index of the previous edge with the path index of
         # the next edge. If needed, add semicircle going in the
         # appropriate direction where the direction is determined by
-        # the conjugation list. A special case is taken if we're 
+        # the conjugation list. A special case is taken if we're
         # at the root vertex.
         curr_edge_index = G[curr_node][next_node]['index']
         if prev_node == root:
@@ -176,7 +176,7 @@ def path_around_branch_point(G, bpt, rot):
             dseg = lambda t,R=R,w=w,arg=arg,d=d: -(R*j*d*pi) * \
                 exp(j*(d*pi*(1-t) + arg))
         path_segments.append((seg,dseg))
-    
+
     return path_segments
 
 
@@ -215,10 +215,10 @@ class RiemannSurfacePath():
 
         self.P0 = P0
         self.deg = sympy.degree(f,y)
-        
+
         dfdx = sympy.diff(self.f,self.x).expand()
         dfdy = sympy.diff(self.f,self.y).expand()
-        
+
         self._f = sympy.lambdify((self.x,self.y), self.f, "mpmath")
         self.dfdx = sympy.lambdify((self.x,self.y), dfdx, "mpmath")
         self.dfdy = sympy.lambdify((self.x,self.y), dfdy, "mpmath")
@@ -240,7 +240,7 @@ class RiemannSurfacePath():
 
     def _initialize_checkpoints(self):
         """
-        Compute 
+        Compute
         """
         ppseg = 8
         t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
@@ -300,12 +300,12 @@ class RiemannSurfacePath():
             t_seg = 1-sympy.mpmath.eps
 
         seg, dseg = self._path_segments[t_floor]
-        if dxdt:    
+        if dxdt:
             return self._num_path_segments * dseg(t_seg)
         else:
             return seg(t_seg)
 
-        
+
 
     def _add_checkpoint(self, ti, Pi):
         """
@@ -325,7 +325,7 @@ class RiemannSurfacePath():
                     self._cache_size -= 1
                     break
 
-        
+
     def _clear_checkpoints(self):
         """
         Empties the checkpoint cache.
@@ -334,7 +334,7 @@ class RiemannSurfacePath():
         self._checkpoints = { 0:self.P0 }
         self._cache_size = 1
 
-        
+
 
     def __call__(self, t, dxdt=False):
         return self.analytically_continue(t,dxdt=dxdt)
@@ -344,7 +344,7 @@ class RiemannSurfacePath():
     def analytically_continue(self, t, dxdt=False, Npts=16):
         """
         Analytically continue along the path to the given `t` in the
-        interval [0,1]. self(0) returns the starting point. 
+        interval [0,1]. self(0) returns the starting point.
         """
         eps = sympy.mpmath.eps
         deg = self.deg
@@ -438,7 +438,7 @@ class RiemannSurfacePath():
             Ps = {..., (xi,yi), ...}
 
         to four lists
-        
+
             { xi.real }, { xi.imag }, { yi.real }, { yi.imag }.
         """
         x, y = zip(*P)
@@ -446,9 +446,9 @@ class RiemannSurfacePath():
         x_im = [xi.imag for xi in x]
         y_re = [yi.real for yi in y]
         y_im = [yi.imag for yi in y]
-        
+
         return x_re, x_im, y_re, y_im
-        
+
 
     def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, **kwds):
         """
@@ -459,7 +459,7 @@ class RiemannSurfacePath():
         - t0,t1: (default: 0,1) Starting and ending point on the path.
 
         - Npts: (default: 64) Number of interpolating points to plot.
-        
+
         - show_numbers: (default: False) If true, will plot the index
         of the points on the path as well. This helps when trying to
         determine the direction of the path.
@@ -468,7 +468,7 @@ class RiemannSurfacePath():
             matplotlib.pyplot.plot()
         """
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
-        
+
         fig = plt.figure()
         x_ax = fig.add_subplot(2,1,1)
         y_ax = fig.add_subplot(2,1,2)
@@ -479,8 +479,8 @@ class RiemannSurfacePath():
 
         x_ax.plot(x_re, x_im, '.', **kwds)
         y_ax.plot(y_re, y_im, '.', **kwds)
-        
-        
+
+
         # Second, plot requested interpolants
         x_re, x_im, y_re, y_im = self.decompose_points(P)
         x_ax.plot(x_re[0], x_im[0], 'k.', markersize=20, **kwds)
@@ -554,7 +554,7 @@ class RiemannSurfacePath():
 
         fig = plt.figure()
         ax  = fig.add_subplot(1,1,1)
-        
+
         eps = 0.1
         N = len(x_pts)
         ax.plot(x_re, x_im, 'b--', alpha=0.3)
@@ -564,7 +564,33 @@ class RiemannSurfacePath():
 
         ax.axis('tight')
         fig.show()
-        
-        
-        
 
+
+
+
+def plot_fibre(f,x,y,branch_point):
+    """
+    """
+    from monodromy import monodromy_graph
+    G = monodromy_graph(f,x,y)
+    base_sheets = G.node[0]['baselift']
+    branch_points = [data['value'] for node,data in G.nodes(data=True)]
+    for sheet in base_sheets:
+        path_segments = path_around_branch_point(G,branch_point,1)
+        gamma = RiemannSurfacePath((f,x,y),(base_point,sheet),
+                                   path_segments=path_segments)
+        gamma.plot(Npts=96)
+
+
+
+if __name__=='__main__':
+    print "=== Riemann surface path ==="
+    import sympy
+    from sympy.abc import x,y
+
+    sympy.mpmath.mp.dps=5
+
+    f = (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+
+    branch_point = 5
+    print "Plotting fibres going around branch point %d" %branch_p
