@@ -48,7 +48,7 @@ def polyroots(f,x,y,xi):
 
 
 
-def path_around_branch_point(G, bpt, rot):
+def path_around_branch_point(G, bpt, rot, types='numpy'):
     """
     Returns a list of sympy functions parameterizing the path starting
     from the base point going around the branch point, "bpt", "rot"
@@ -139,27 +139,38 @@ def path_around_branch_point(G, bpt, rot):
     # 3) Use the path data to compute parameterizations of each of the
     # path segments.
     path_segments = []
-    exp = sympy.mpmath.exp
-    pi = sympy.mpmath.pi
-    j = sympy.mpmath.j
+    if types == 'mpmath':
+        exp = sympy.mpmath.exp
+        pi = sympy.mpmath.pi
+        j = sympy.mpmath.j
+        cast_type = sympy.mpmath.mpc
+    else:
+        exp = numpy.exp
+        pi = numpy.pi
+        j = numpy.complex(1.0j)
+        cast_type = numpy.complex
 
     # Add the segments leading up to the branch point circle
     for datum in path_data:
         if len(datum) == 2:
-            z0,z1 = map(sympy.mpmath.mpc,datum)
+            z0,z1 = map(cast_type,datum)
             seg = lambda t,z0=z0,z1=z1: z0*(1-t) + z1*t
             dseg = lambda t,z0=z0,z1=z1: -z0+z1
         else:
-            R,w,arg,d = map(sympy.mpmath.mpc,datum)
-            seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*t + arg)) + w
-            dseg = lambda t,R=R,w=w,arg=arg,d=d: (R*j*d*pi)*exp(j*(d*pi*t+arg))
+            R,w,arg,d = map(cast_type,datum)
+            seg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
+                R*exp(j*(d*pi*t + arg)) + w
+            dseg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
+                (R*j*d*pi)*exp(j*(d*pi*t+arg))
         path_segments.append((seg,dseg))
 
     # Add the semicircle segments going around the branch point
     for datum in circle_data:
-        R,w,arg,d = map(sympy.mpmath.mpc,datum)
-        seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*t + arg)) + w
-        dseg = lambda t,R=R,w=w,arg=arg,d=d: (R*j*d*pi)*exp(j*(d*pi*t+arg))
+        R,w,arg,d = map(cast_type,datum)
+        seg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
+            R*exp(j*(d*pi*t + arg)) + w
+        dseg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
+            (R*j*d*pi)*exp(j*(d*pi*t+arg))
         path_segments.append((seg,dseg))
 
     # Add the reversed path segments leading back to the base point
@@ -167,14 +178,15 @@ def path_around_branch_point(G, bpt, rot):
     # (1-t) )
     for datum in reversed(path_data):
         if len(datum) == 2:
-            z0,z1 = map(sympy.mpmath.mpc,datum)
+            z0,z1 = map(cast_type,datum)
             seg = lambda t,z0=z0,z1=z1: z0*t + z1*(1-t)
             dseg = lambda t,z0=z0,z1=z1: z0-z1
         else:
-            R,w,arg,d = map(sympy.mpmath.mpc,datum)
-            seg = lambda t,R=R,w=w,arg=arg,d=d: R*exp(j*(d*pi*(1-t) + arg)) + w
-            dseg = lambda t,R=R,w=w,arg=arg,d=d: -(R*j*d*pi) * \
-                exp(j*(d*pi*(1-t) + arg))
+            R,w,arg,d = map(cast_type,datum)
+            seg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
+                R*exp(j*(d*pi*(1-t) + arg)) + w
+            dseg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
+                -(R*j*d*pi) * exp(j*(d*pi*(1-t) + arg))
         path_segments.append((seg,dseg))
 
     return path_segments
@@ -188,7 +200,7 @@ class RiemannSurfacePath():
     [0,1]. Used for analytically continuing and integrating on Riemann
     surfaces.
     """
-    def __init__(self, RS, P0, path_segments=None):
+    def __init__(self, RS, P0, path_segments=None, types='numpy'):
         """
         Create a path on the RiemannSurface, `RS`, starting at the
         RiemannSurfacePoint, `P0`.
@@ -201,7 +213,14 @@ class RiemannSurfacePath():
 
         - `P0`: a RiemannSurfacePoint where the path begins.
 
-        - `P1`: (optional) a RiemannSurfacePoint where the path ends.
+        - `P1`: (default: `None`) a RiemannSurfacePoint where the path ends.
+
+        - `types`: (default: `'numpy'`) chose which underlying data types to
+        use. Options include
+
+          * `'numpy'`: use `numpy.complex` data types
+          
+          * `'mpmath'`: use `sympy.mpmath.mp.mpc` data types
         """
         if isinstance(RS,tuple):
             f,x,y = RS
@@ -213,24 +232,37 @@ class RiemannSurfacePath():
             self.x = RS.x
             self.y = RS.y
 
-        self.P0 = P0
-        self.deg = sympy.degree(f,y)
+        # cast into appropriate data type
+        if types == 'mpmath':
+            self.P0 = map(sympy.mpmath.mpc,P0)
+        else:
+            self.P0 = map(numpy.complex,P0)
 
+        self.deg = sympy.degree(f,y)
+        self.types = types
+
+        # construct fast, type-cast lambda functions from the
+        # algebraic curve. used in performing the Taylor step in the
+        # analytic continuation
         dfdx = sympy.diff(self.f,self.x).expand()
         dfdy = sympy.diff(self.f,self.y).expand()
+        self._f = sympy.lambdify((self.x,self.y), self.f, self.types)
+        self.dfdx = sympy.lambdify((self.x,self.y), dfdx, self.types)
+        self.dfdy = sympy.lambdify((self.x,self.y), dfdy, self.types)
 
-        self._f = sympy.lambdify((self.x,self.y), self.f, "mpmath")
-        self.dfdx = sympy.lambdify((self.x,self.y), dfdx, "mpmath")
-        self.dfdy = sympy.lambdify((self.x,self.y), dfdy, "mpmath")
-
+        # store checkpoint and path data
         self._checkpoint_cost   = 8
         self._path_segments     = path_segments
         self._num_path_segments = len(path_segments)
-
         self._checkpoints    = { 0:self.P0 }
         self._cache_size     = 1
         self._max_cache_size = 2**10
 
+        # initialize the checkpoints: in each path segment
+        # analytically continue to a certain number of points along
+        # the path and store in memory. This is done so one doesn't
+        # have to analytically continue from the base point every time
+        # you want to find a point on the path
         self._initialize_checkpoints()
 
 
@@ -243,7 +275,11 @@ class RiemannSurfacePath():
         Compute
         """
         ppseg = 8
-        t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
+        if self.types == 'mpmath':
+            t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
+        else:
+            t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments)
+
         for ti in t_pts:
             P = self.analytically_continue(ti,Npts=32)
             self._add_checkpoint(ti, P)
@@ -286,10 +322,17 @@ class RiemannSurfacePath():
         scaling is performed to determine which segment the
         corresponding x is computed from.
         """
+        if self.types == 'mpmath':
+            floor = sympy.mpmath.floor
+            eps = sympy.mpmath.eps
+        else:
+            floor = numpy.floor
+            eps = 1.0e-16
+
         # The entire path is parameterized by t in [0,1]. We need to
         # determine which of the segments this t lies in.
         t_scaled = t * self._num_path_segments
-        t_floor = sympy.mpmath.floor(t_scaled)
+        t_floor = floor(t_scaled)
         t_seg = t_scaled - t_floor
 
         # If the last point is requested (t=1) then decrement since it
@@ -297,7 +340,7 @@ class RiemannSurfacePath():
         t_floor = int(t_floor)
         if t_floor == self._num_path_segments:
             t_floor = -1
-            t_seg = 1-sympy.mpmath.eps
+            t_seg = 1 - eps
 
         seg, dseg = self._path_segments[t_floor]
         if dxdt:
@@ -341,14 +384,18 @@ class RiemannSurfacePath():
 
 
 
-    def analytically_continue(self, t, dxdt=False, Npts=16):
+    def analytically_continue(self, t, dxdt=False, Npts=32):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point.
         """
-        eps = sympy.mpmath.eps
-        deg = self.deg
+#         if self.types == 'mpmath':
+#             t = sympy.mpmath.mp.mpf(t)
+#         else:
+#             t = numpy.double(t)
 
+        eps = 1e-14
+        deg = self.deg
         # get the nearest already computed point on the path. If the
         # nearest computed point is at "t" then just return the cached
         # point now.
@@ -369,7 +416,7 @@ class RiemannSurfacePath():
 
         maxiter = 32
         maxn = 0
-        t_pts = sympy.mpmath.linspace(t0,t,Npts)
+        t_pts = numpy.linspace(t0,t,Npts)
         for i in xrange(1,Npts):
             ti = t_pts[i]
             xi = self.get_x(ti)
@@ -385,13 +432,12 @@ class RiemannSurfacePath():
             #
             # Add extra precision, too
             yi = yi_approx
-            with sympy.mpmath.extraprec(4):
-                for n in xrange(maxiter):
-                    step = self._f(xi,yi) / self.dfdy(xi,yi)
-                    if sympy.mpmath.absmin(step) < eps:
-                        maxn = max(n, maxn)
-                        break
-                    yi -= step
+            for n in xrange(maxiter):
+                step = self._f(xi,yi) / self.dfdy(xi,yi)
+                if sympy.mpmath.absmin(step) < eps:
+                    maxn = max(n, maxn)
+                    break
+                yi -= step
 
             xim1 = xi
             yim1 = yi
@@ -413,7 +459,11 @@ class RiemannSurfacePath():
         """
         Return a uniform sample on the path.
         """
-        t = sympy.mpmath.linspace(t0,t1,Npts)
+        if self.types == 'mpmath':
+            t = sympy.mpmath.linspace(t0,t1,Npts)
+        else:
+            t = numpy.linspace(t0,t1,Npts)
+
         P = map(lambda ti: self.analytically_continue(ti,dxdt=dxdt), t)
         return P
 
@@ -423,10 +473,17 @@ class RiemannSurfacePath():
         Return a Clenshaw-Curtis sample (also referred to as a Chebysheb or
         cosine distribution sample) on the path.
         """
-        pi = sympy.mpmath.pi
-        theta = sympy.mpmath.linspace(0,pi,Npts)
-        P = map(lambda phi: self.analytically_continue(sympy.mpmath.cos(phi),
-                                                       dxdt=dxdt),
+        
+        if self.types == 'mpmath':
+            pi = sympy.mpmath.pi
+            theta = sympy.mpmath.linspace(0,pi,Npts)
+            cos = sympy.mpmath.cos
+        else:
+            pi = numpy.pi
+            theta = numpy.linspace(0,pi,Npts)
+            cos = numpy.cos
+
+        P = map(lambda phi: self.analytically_continue(cos(phi),dxdt=dxdt),
                 theta)
         return P
 
@@ -514,7 +571,6 @@ class RiemannSurfacePath():
             matplotlib.axes3d.Axes3D.plot()
 
         """
-        t_pts = sympy.mpmath.linspace(t0,t1,Npts)
         P_pts = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
         x_pts, y_pts = zip(*P_pts)
 
@@ -573,6 +629,7 @@ def plot_fibre(f,x,y,branch_point):
     """
     from monodromy import monodromy_graph
     G = monodromy_graph(f,x,y)
+    base_point = G.node[0]['basepoint']
     base_sheets = G.node[0]['baselift']
     branch_points = [data['value'] for node,data in G.nodes(data=True)]
     for sheet in base_sheets:
@@ -588,9 +645,10 @@ if __name__=='__main__':
     import sympy
     from sympy.abc import x,y
 
-    sympy.mpmath.mp.dps=5
+#    sympy.mpmath.mp.dps=5
 
     f = (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
     branch_point = 5
-    print "Plotting fibres going around branch point %d" %branch_p
+    print "Plotting fibres going around branch point %d" %branch_point
+    plot_fibre(f,x,y,branch_point)
