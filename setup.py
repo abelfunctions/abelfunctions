@@ -14,17 +14,15 @@ custom directory <dir>, use
     python setup.py --prefix=<dir>
 """
 
-__version__ = '0.3'
-
-from distutils.core      import setup, Command
+from distutils.core import setup, Command
 from distutils.extension import Extension
-from Cython.Distutils    import build_ext
-
+from Cython.Distutils import build_ext
 import unittest
 import os
 import os.path
-import numpy as np
+import numpy
 
+import abelfunctions
 
 class clean(Command):
     """
@@ -106,7 +104,7 @@ ext_modules = [
     Extension('abelfunctions.riemanntheta.RIEMANN',
               sources = ["abelfunctions/riemanntheta/Cython-Riemann.pyx",
                          "abelfunctions/riemanntheta/riemanntheta.c"],
-              include_dirs = [np.get_include()]
+              include_dirs = [numpy.get_include()]
               )
     ]
     
@@ -136,7 +134,7 @@ Department of Applied Mathematics at the University of Washington.'''
 
 setup(
     name = 'abelfunctions',
-    version = __version__,
+    version = abelfunctions.__version__,
     description = 'Python library for computing with Abelian functions',
     long_description = long_description,
     author = 'Chris Swierczewski',

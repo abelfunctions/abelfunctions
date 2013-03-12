@@ -17,7 +17,7 @@ from matplotlib.cbook import flatten
 
 from utilities import cached_function, cached_property
 
-from riemannsurface_path import (
+from abelfunctions.riemannsurface_path import (
     polyroots, 
     path_around_branch_point,
     RiemannSurfacePath,
@@ -763,12 +763,12 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
         for j in xrange(deg): 
             gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets[j]),
                                        path_segments=path_segments)
-            yendj = gamma(1)
+            yendj = gamma(1)[1]
             yend.append(yendj)
 
         mon.append(matching_permutation(base_sheets,yend))
 
-    return base_point, base_sheets, branch_points, monodromy, G
+    return base_point, base_sheets, branch_points, mon, G
 
 
 def plot_fibre(G, base_point, base_sheets, branch_point):
@@ -799,7 +799,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     
-    f = f10
+    f = f2
 
     print "Computing monodromy graph of", f
     G = monodromy_graph(f,x,y)
@@ -807,9 +807,11 @@ if __name__=='__main__':
     base_sheets = G.node[0]['baselift']
     branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
-    branch_point = 5
-    plot_fibre(G, base_point, base_sheets, branch_point)
+    show_paths(G)
 
+    print "Computing monodromy of", f
+    mon = monodromy(f,x,y)
+    base_point, base_sheets, branch_points, m, G = mon
    
 #     import cProfile, pstats
 #     cProfile.run('mon = M.monodromy()','monodromy.profile')

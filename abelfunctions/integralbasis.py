@@ -22,8 +22,8 @@ p. 353-363
 """
 import sympy
 
-from puiseux import puiseux
-from utilities import cached_function
+from abelfunctions.puiseux import puiseux
+from abelfunctions.utilities import cached_function
 
 import pdb
 

@@ -238,7 +238,7 @@ class RiemannSurfacePath():
         else:
             self.P0 = map(numpy.complex,P0)
 
-        self.deg = sympy.degree(f,y)
+        self.deg = sympy.degree(self.f,self.y)
         self.types = types
 
         # construct fast, type-cast lambda functions from the

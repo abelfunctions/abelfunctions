@@ -182,9 +182,10 @@ def polygon(F,X,Y,I):
     # find the start and end points (0,J) and (I,0). Include points
     # along the i-axis if I==1. Otherwise, only include points with
     # negative slope if I==2
-    JJ = min([j for (i,j) in hull if i == 0])
-    if I == 2: II = min([i for (i,j) in hull if j == 0])
-    else:      II = max([i for (i,j) in hull if j == 0])
+    vertices = hull.points if isinstance(hull,sympy.Segment) else hull.vertices
+    JJ = min(pt.y for pt in vertices if pt.x == 0)
+    if I == 2: II = min(pt.x for pt in vertices if pt.y == 0)
+    else:      II = max(pt.x for pt in vertices if pt.y == 0)
     testslope = -float(JJ)/II
 
     # determine largest slope with (0,JJ). If this is greater than the
@@ -623,7 +624,7 @@ def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo,
     # scale f accordingly
     if a == sympy.oo: f = (f.subs(x,1/x) * x**(f.degree(x)))
     else:             f = f.subs(x,x+a)
-    f = sympy.Poly(f.simplify(),[x,y])
+    f = sympy.Poly(f,[x,y])
 
     # if parametric represenation is requested then use variable
     # specified, if any. Otherwise, create a dummy variable.

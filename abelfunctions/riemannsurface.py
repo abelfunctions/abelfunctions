@@ -1,38 +1,38 @@
 """
 Riemann Surfaces
 """
-
 import numpy
 import scipy
+import scipy.integrate
 import sympy
-import networkx as nx
 
-from mpl_toolkits.mplot3d.axes3d import Axes3D
-import matplotlib.pyplot as plt
 
-from monodromy   import Monodromy
-from homology    import homology
-from riemannsurface_path import (
+from abelfunctions.monodromy import monodromy, show_paths
+from abelfunctions.homology import homology
+from abelfunctions.riemannsurface_path import (
     path_around_branch_point,
     RiemannSurfacePath,
     )
-from riemannsurface_point import RiemannSurfacePoint
-from singularities import genus
+from abelfunctions.riemannsurface_point import RiemannSurfacePoint
+from abelfunctions.singularities import genus
+from abelfunctions.utilities import cached_function
 
 
 import pdb
         
 
-class RiemannSurface(Monodromy):
+class RiemannSurface(object):
     """
     Class for defining a Riemann surface corresponding to a plane
     algebraic curve.
     """
     def __init__(self, f, x, y):
-        # XXX clean this up. Understand subclassing better.
-        super(RiemannSurface, self).__init__(f,x,y)
-        self._monodromy = self.monodromy()
-        self._homology  = homology(f,x,y)
+        self.f = f
+        self.x = x
+        self.y = y
+
+#         self._monodromy = monodromy()
+#         self._homology  = homology(f,x,y)
 
     def __repr__(self):
         return "Riemann surface defined by the algebraic curve %s." %(self.f)
@@ -47,16 +47,59 @@ class RiemannSurface(Monodromy):
         `(x0,y0)`. (In the event that floating point precision is used
         to calculate the coordinates `(x0,y0)`.
         """
-        return RiemannSurface_Point(self,x0,y0)
+        return RiemannSurfacePoint(self,x0,y0)
+    
+
+    def monodromy(self):
+        """
+        """
+        return monodromy(self.f, self.x, self.y)
+
+
+    def monodromy_graph(self):
+        """
+        """
+        #base_point, base_sheets, branch_points, mon, G = self.monodromy()
+        return self.monodromy()[4]
+
+
+    def base_point(self):
+        return self.monodromy()[0]
+
+
+    def base_sheets(self):
+        return self.monodromy()[1]
+
+
+    def base_lift(self):
+        return self.base_sheets()
+
+
+    def branch_points(self):
+        return self.monodromy()[2]
+
+
+    def monodromy_group(self):
+        return self.monodromy()[3]
+
+
+    def homology(self):
+        return homology(self.f, self.x, self.y)
 
 
     def holomorphic_differentials(self):
         """ 
         Returns the basis of holomorphic differentials defined on the
         Riemann surface.
+
+        NOTE: NOT IMPLEMENTED
         """
 #        return differentials(f,x,y)
-        return [1/self.y]
+        f,x,y = self.f,self.x,self.y
+        dfdy = sympy.diff(f,y)
+
+#        return [x*y/dfdy, x**3/dfdy]
+        return [1/y]
 
     def genus(self):
         """
@@ -83,6 +126,7 @@ class RiemannSurface(Monodromy):
         pass
 
 
+    @cached_function
     def c_cycle(self, i):
         """
         Returns a path in the complex x-plane of the x-points in the
@@ -99,7 +143,7 @@ class RiemannSurface(Monodromy):
         # get the cycle data from homology: each c-cycle is a list of
         # alternating sheet numbers s_k and branch point / number of
         # rotations tuples (b_{i_k}, n_k)
-        cycles  = self._homology['cycles']
+        cycles  = self.homology()['cycles']
         
         G = self.monodromy_graph()
         root = G.node[0]['root']
@@ -134,7 +178,7 @@ class RiemannSurface(Monodromy):
         - `path`: a RiemannSurfacePath defined on the Riemann surface
         """
         x0,y0 = path(0)
-        omega = sympy.lambdify((x,y), omega, "mpmath")
+        omega = sympy.lambdify((x,y), omega, "numpy")
         
         # Numerically integrate over each path segment. This is most
         # probably a good idea since it allows for good checkpointing.
@@ -142,12 +186,26 @@ class RiemannSurface(Monodromy):
             (xi,yi),dxdt = path(t, dxdt=True)
             return omega(xi,yi) * dxdt
 
-        val = sympy.mpmath.mpc(0)
-        n   = sympy.mpmath.mpf(path._num_path_segments)
+        val = numpy.double(0)
+        n   = numpy.int(path._num_path_segments)
         for k in xrange(n):
-            val += sympy.mpmath.quadgl(lambda t: integrand(t,omega,path), 
-                                       [k/n,(k+1)/n])
+#             val += sympy.mpmath.quadgl(lambda t: integrand(t,omega,path), 
+#                                        [k/n,(k+1)/n])
+#             val_real += scipy.integrate.quad(
+#                 lambda t: scipy.real(integrand(t,omega,path)),
+#                 k/n,(k+1)/n
+#                 )
+
+#             val_imag += scipy.integrate.quad(
+#                 lambda t: scipy.imag(integrand(t,omega,path)),
+#                 k/n,(k+1)/n
+#                 )
         
+#         return val_real + 1.0j*val_imag
+            tpts = numpy.linspace(k/n+0.00000001,(k+1)/n-0.000000000,512)
+            fpts = [integrand(tpt,omega,path) for tpt in tpts]
+            val += scipy.integrate.trapz(tpts,fpts)
+
         return val
 
 
@@ -163,8 +221,8 @@ class RiemannSurface(Monodromy):
         homology data to determine which linear combination of
         c-cycles integrals gives the a- and b-cycles integrals.
         """
-        lincombs = self._homology['linearcombination']
-        n_cycles = len(self._homology['cycles'])
+        lincombs = self.homology()['linearcombination']
+        n_cycles = len(self.homology()['cycles'])
         c_cycles = [self.c_cycle(i) for i in range(n_cycles)]
         differentials = self.holomorphic_differentials()
         g = self.genus()
@@ -198,8 +256,15 @@ class RiemannSurface(Monodromy):
             A.append(Ai)
             B.append(Bi)
 
-        # need to transpose...
+        # need to transpose...?
         return (A,B)
+
+
+    def show_paths(self):
+        """
+        """
+        G = self.monodromy_graph()
+        show_paths(G)
 
 
 
@@ -222,7 +287,7 @@ if __name__ == '__main__':
     f11= y**2 - x*(x-1)*(x-2)*(x-3)  # simple genus one hyperelliptic
 
 
-    f = f11
+    f = f2
     X = RiemannSurface(f,x,y)
 
 

@@ -12,9 +12,9 @@ holomorphic on `X` if it is holomorphic at every point on `X`.
 import sympy
 import sympy.mpmath as mpmath
 
-from integralbasis import integral_basis
-from singularities import singularities, _transform
-from utilities import cached_function
+from abelfunctions.integralbasis import integral_basis
+from abelfunctions.singularities import singularities, _transform
+from abelfunctions.utilities import cached_function
 
 
 

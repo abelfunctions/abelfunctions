@@ -16,9 +16,9 @@ import sympy
 
 import pdb
 
-from puiseux import puiseux
-from integralbasis import Int, valuation
-from utilities import cached_function
+from abelfunctions.puiseux import puiseux
+from abelfunctions.integralbasis import Int, valuation
+from abelfunctions.utilities import cached_function
 
 # temporary, hidden symbol to maintain clean Sympy cache
 _t = sympy.Symbol('t')
@@ -247,7 +247,6 @@ def _delta_invariant(g,u,v,u0,v0):
     return sympy.numer(delta)
 
 
-@cached_function
 def genus(f,x,y):
     """
     Returns the genus of the Riemann surface corresponding to the complex plane

@@ -7,8 +7,8 @@ import scipy
 import sympy
 import networkx as nx
 
-from monodromy import Permutation, Monodromy
-from singularities import genus
+from abelfunctions.monodromy import Permutation, monodromy
+from abelfunctions.singularities import genus
 
 import pdb
 
@@ -170,7 +170,7 @@ def tretkoff_table(hurwitz_system):
     Output:
     - a Tretkoff table encoding the c-cycle data.
     """
-    base_point, base_sheets, branch_points, monodromy = hurwitz_system
+    base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
     
     # XXX USE BRANCH POINT INDICES INSTEAD FOR EASE OF READNIG XXX
     branch_points = range(len(branch_points))
@@ -709,13 +709,13 @@ def canonical_basis(f,x,y):
     homology of the Riemann surface.
     """
     g = int(genus(f,x,y))
-    mon = Monodromy(f,x,y)
-    hurwitz_system = mon.hurwitz_system()
+    hurwitz_system = monodromy(f,x,y)
+    base_point, base_sheets, branch_points, mon, G = hurwitz_system
 
     # compute key data elements
     # - t_table: path data from Tretkoff graph
     # - t_basis: a collection of cycles generated from the Tretkoff table.
-    #            the homology cycles are formed by a linear comb of theseXS
+    #            the homology cycles are formed by a linear comb of these
     # - t_list:  a ordering of the pi/qi symbols used to dermine the
     #            intersection matric of the t_basis cycles
     t_table = tretkoff_table(hurwitz_system)
@@ -753,10 +753,10 @@ def canonical_basis(f,x,y):
 
     # place results in a dictionary
     c = {}
-    c['basepoint'] = mon.base_point()
-    c['sheets']    = mon.base_sheets()
-    c['genus']     = g
-    c['cycles']    = map(reform_cycle, t_basis)
+    c['basepoint'] = base_point
+    c['sheets'] = base_sheets
+    c['genus'] = g
+    c['cycles'] = map(reform_cycle, t_basis)
     c['linearcombination'] = alpha[:2*g,:]
 
     return c
