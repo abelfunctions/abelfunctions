@@ -99,7 +99,8 @@ class RiemannSurface(object):
         dfdy = sympy.diff(f,y)
 
 #        return [x*y/dfdy, x**3/dfdy]
-        return [1/y]
+        
+        return [1/(2*y)]
 
     def genus(self):
         """
@@ -202,7 +203,8 @@ class RiemannSurface(object):
 #                 )
         
 #         return val_real + 1.0j*val_imag
-            tpts = numpy.linspace(k/n+0.00000001,(k+1)/n-0.000000000,512)
+            k = numpy.double(k)
+            tpts = numpy.linspace(k/n,(k+1)/n,512)
             fpts = [integrand(tpt,omega,path) for tpt in tpts]
             val += scipy.integrate.trapz(tpts,fpts)
 

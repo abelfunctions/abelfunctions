@@ -539,17 +539,18 @@ class RiemannSurfacePath():
 
 
         # Second, plot requested interpolants
-        x_re, x_im, y_re, y_im = self.decompose_points(P)
-        x_ax.plot(x_re[0], x_im[0], 'k.', markersize=20, **kwds)
-        y_ax.plot(y_re[0], y_im[0], 'k.', markersize=20, **kwds)
-        x_ax.plot(x_re, x_im, **kwds)
-        y_ax.plot(y_re, y_im, **kwds)
         if show_numbers:
+            x_re, x_im, y_re, y_im = self.decompose_points(P)
             for n in xrange(len(y_re)):
-                if not y_only:
-                    x_ax.text(x_re[n], x_im[n], str(n), fontsize=10)
+                x_ax.text(x_re[n], x_im[n], str(n), fontsize=10)
                 y_ax.text(y_re[n], y_im[n], str(n), fontsize=10)
-
+        else:
+            x_re, x_im, y_re, y_im = self.decompose_points(P)
+            x_ax.plot(x_re[0], x_im[0], 'k.', markersize=20, **kwds)
+            y_ax.plot(y_re[0], y_im[0], 'k.', markersize=20, **kwds)
+            x_ax.plot(x_re, x_im, **kwds)
+            y_ax.plot(y_re, y_im, **kwds)
+            
         x_ax.axis('tight')
         y_ax.axis('tight')
 
@@ -557,7 +558,7 @@ class RiemannSurfacePath():
 
 
 
-    def plot3d(self, t0=0, t1=1, Npts=64, **kwds):
+    def plot3d(self, t0=0, t1=1, Npts=128, *args, **kwds):
         """
         Plots the path in the complex x- and y-planes.
 
