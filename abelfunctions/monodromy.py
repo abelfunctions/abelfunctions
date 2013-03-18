@@ -137,10 +137,13 @@ class Permutation(object):
         return self.__rmul__(other)
 
     def __rmul__(self, other):
-        # pad the permutations if they are of different lengths
-        new_other = other[:] + [i+1 for i in range(len(other), len(self))]
-        new_p1 = self[:] + [i+1 for i in range(len(self), len(other))]
-        return Permutation([new_p1[i-1] for i in new_other])
+#         # pad the permutations if they are of different lengths
+#         new_other = other[:] + [i+1 for i in range(len(other), len(self))]
+#         new_p1 = self[:] + [i+1 for i in range(len(self), len(other))]
+#         return Permutation([new_p1[i-1] for i in new_other])
+        new_other = other[:] + [i for i in range(len(other), len(self))]
+        new_p1 = self[:] + [i for i in range(len(self), len(other))]
+        return Permutation([new_p1[i] for i in new_other])
 
     def __call__(self, i):
         """
@@ -814,7 +817,7 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     if not phi.is_identity():
         # test that the product of the finite monodromy group elements is
         # equal to the inverse of the permuatation at infinity
-        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon)
+        phi_prod = reduce(lambda phi1,phi2: phi1*phi2, mon)
         if phi_prod.inv() == phi:
             branch_points.append(sympy.oo)
             mon.append(phi)
@@ -839,20 +842,34 @@ if __name__=='__main__':
     f8 = (x**6)*y**3 + 2*x**3*y - 1
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+
+
+    a = Permutation([[1,2],[0,3]])
+    b = Permutation([[0],[1,2],[3]])
+    c = Permutation([[0,3],[1],[2]])
     
-    f = f2
+    print 'a    ', a
+    print 'b    ', b
+    print 'c    ', c
+    print
+    print 'a*b  ',a*b
+    print 'a*c  ',a*c
+    print 'a*b*c',a*b*c
+    print '== id',(a*b*c).is_identity()
+    
+#     f = f2
 
-    print "Computing monodromy graph of", f
-    G = monodromy_graph(f,x,y)
-    base_point = G.node[0]['basepoint']
-    base_sheets = G.node[0]['baselift']
-    branch_points = [data['value'] for node,data in G.nodes(data=True)]
+#     print "Computing monodromy graph of", f
+#     G = monodromy_graph(f,x,y)
+#     base_point = G.node[0]['basepoint']
+#     base_sheets = G.node[0]['baselift']
+#     branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
-    show_paths(G)
+#     show_paths(G)
 
-    print "Computing monodromy of", f
-    mon = monodromy(f,x,y)
-    base_point, base_sheets, branch_points, m, G = mon
+#     print "Computing monodromy of", f
+#     mon = monodromy(f,x,y)
+#     base_point, base_sheets, branch_points, m, G = mon
    
 #     import cProfile, pstats
 #     cProfile.run('mon = M.monodromy()','monodromy.profile')
