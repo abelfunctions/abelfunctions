@@ -48,96 +48,30 @@ def polyroots(f,x,y,xi):
 
 
 
-def path_around_branch_point(G, bpt, rot, types='numpy'):
+def _path_segments_from_path_data(path_data, circle_data, types='numpy'):
     """
-    Returns a list of sympy functions parameterizing the path starting
-    from the base point going around the branch point, "bpt", "rot"
-    number of times.  The sign of "rot" determines direction.
+    Take data about the x-path and returns parameterizing functions.
 
     Input:
 
-    - G: the "monodromy graph", as computed by Monodromy
+    - `path_data`: a list containing tuples
 
-    - bpt: the index of the target branch point
+        (z0,z1)
 
-    - rot: the rotation number and direction of the path going around
-    branch point "bpt".
+        or
+        
+        (R,w,arg,d)
+
+        containing information about how to get to the final circle of
+        the x-path.
+
+    - `circle_data`: a list containing tuples (R,w,arg,d) describing
+      how to go around the circle.
 
     Output:
 
-    A list of path segments defined by sympy functions.
+    [x(t),dxdt(t)]
     """
-    root = G.node[bpt]['root']
-
-    # retreive the vertices between the base point vertex and
-    # the target vertex.
-    path_vertices = nx.shortest_path(G, source=root, target=bpt)
-
-    # retreive the conjugates. If we pass through a vertex that is
-    # a conjugate
-    conjugates = G.node[bpt]['conjugates']
-
-    # 1) Compute path data for semi-circle / line pairs leading to the
-    # circle encircling the target branch point. (Taking conjugates
-    # into account.) Conjugation will indicate whether to pass a
-    # vertex on the path towards the target either above or below the
-    # vertex.
-    path_data = []
-    prev_node = root
-    for idx in range(len(path_vertices)-1):
-        curr_node   = path_vertices[idx]
-        curr_radius = G.node[curr_node]['radius']
-        curr_value  = G.node[curr_node]['value']
-
-        next_node   = path_vertices[idx+1]
-        next_radius = G.node[next_node]['radius']
-        next_value  = G.node[next_node]['value']
-
-        # Determine if semi-circle is needed. This is done by checking
-        # the path index of the previous edge with the path index of
-        # the next edge. If needed, add semicircle going in the
-        # appropriate direction where the direction is determined by
-        # the conjugation list. A special case is taken if we're
-        # at the root vertex.
-        curr_edge_index = G[curr_node][next_node]['index']
-        if prev_node == root:
-            prev_edge_index = (0,-1)  # in the root node case
-        else:
-            prev_edge_index = G[prev_node][curr_node]['index']
-        if prev_edge_index[1] != curr_edge_index[0]:
-            arg = sympy.mpmath.pi if prev_edge_index[1] == -1 else 0
-            dir = -1 if prev_node in conjugates else 1 # XXX
-            path_data.append((curr_radius, curr_value, arg, dir))
-
-        # Add the line to the next discriminant point.
-        start = curr_value +  curr_edge_index[0]*curr_radius
-        end   = next_value +  curr_edge_index[1]*next_radius
-        path_data.append((start,end))
-
-        # Update previous point
-        prev_node = curr_node
-
-
-    # 2) Construct interpolating points around the target
-    # branch point. The rotation number "rot" tells us how
-    # many times to go around the branch point and in which
-    # direction. There's a special case for when we just
-    # encircle the root node.
-    if len(path_vertices) == 1:
-        next_value  = G.node[root]['value']
-        next_radius = G.node[root]['radius']
-        curr_edge_index = (-1,-1)
-
-    arg = sympy.mpmath.pi if curr_edge_index[1] == -1 else 0
-    dir = 1 if rot > 0 else -1
-    circle_data = [
-        (next_radius, next_value, arg, dir),
-        (next_radius, next_value, arg+sympy.mpmath.pi, dir)
-        ]
-    circle_data = circle_data * int(abs(rot))
-
-    # 3) Use the path data to compute parameterizations of each of the
-    # path segments.
     path_segments = []
     if types == 'mpmath':
         exp = sympy.mpmath.exp
@@ -191,6 +125,175 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
 
     return path_segments
 
+
+def path_around_branch_point(G, bpt, rot, types='numpy'):
+    """
+    Returns a list of lambda functions parameterizing the path starting
+    from the base point going around the branch point, "bpt", "rot"
+    number of times.  The sign of "rot" determines direction.
+
+    Input:
+
+    - G: the "monodromy graph", as computed by monodromy_graph()
+
+    - bpt: the index of the target branch point
+
+    - rot: the rotation number and direction of the path going around
+    branch point "bpt".
+
+    Output:
+
+    A list of path segments ``(x(t), dxdt(t))`` for ``t \in [0,1]``
+    defined by lambda functions.
+    """
+    if types == 'mpmath':
+        abs = sympy.mpmath.abs
+        pi = sympy.mpmath.pi
+    else:
+        abs = numpy.abs
+        pi = numpy.pi
+
+    root = G.node[bpt]['root']
+
+    # retreive the vertices between the base point vertex and
+    # the target vertex.
+    path_vertices = nx.shortest_path(G, source=root, target=bpt)
+
+    # retreive the conjugates. If we pass through a vertex that is
+    # a conjugate
+    conjugates = G.node[bpt]['conjugates']
+
+    # 1) Compute path data for semi-circle / line pairs leading to the
+    # circle encircling the target branch point. (Taking conjugates
+    # into account.) Conjugation will indicate whether to pass a
+    # vertex on the path towards the target either above or below the
+    # vertex.
+    path_data = []
+    prev_node = root
+    for idx in range(len(path_vertices)-1):
+        curr_node   = path_vertices[idx]
+        curr_radius = G.node[curr_node]['radius']
+        curr_value  = G.node[curr_node]['value']
+
+        next_node   = path_vertices[idx+1]
+        next_radius = G.node[next_node]['radius']
+        next_value  = G.node[next_node]['value']
+
+        # Determine if semi-circle is needed. This is done by checking
+        # the path index of the previous edge with the path index of
+        # the next edge. If needed, add semicircle going in the
+        # appropriate direction where the direction is determined by
+        # the conjugation list. A special case is taken if we're
+        # at the root vertex.
+        curr_edge_index = G[curr_node][next_node]['index']
+        if prev_node == root:
+            prev_edge_index = (0,-1)  # in the root node case
+        else:
+            prev_edge_index = G[prev_node][curr_node]['index']
+        if prev_edge_index[1] != curr_edge_index[0]:
+            arg = pi if prev_edge_index[1] == -1 else 0
+            dir = -1 if prev_node in conjugates else 1 # XXX
+            path_data.append((curr_radius, curr_value, arg, dir))
+
+        # Add the line to the next discriminant point.
+        start = curr_value +  curr_edge_index[0]*curr_radius
+        end   = next_value +  curr_edge_index[1]*next_radius
+        path_data.append((start,end))
+
+        # Update previous point
+        prev_node = curr_node
+
+    # Construct interpolating points around the target
+    # branch point. The rotation number "rot" tells us how
+    # many times to go around the branch point and in which
+    # direction. There's a special case for when we just
+    # encircle the root node.
+    if len(path_vertices) == 1:
+        next_value  = G.node[root]['value']
+        next_radius = G.node[root]['radius']
+        curr_edge_index = (-1,-1)
+
+    arg = pi if curr_edge_index[1] == -1 else 0
+    dir = 1 if rot > 0 else -1
+    circle_data = [
+        (next_radius, next_value, arg, dir),
+        (next_radius, next_value, arg+pi, dir)
+        ]
+    circle_data = circle_data * int(abs(rot))
+
+    path_segments = _path_segments_from_path_data(path_data,circle_data,
+                                                  types=types)
+    return path_segments
+
+
+def path_around_infinity(G, rot, types='numpy'):
+    """
+    Returns a list of labmda functions paramterizing the path starting 
+    from the base point and going around infinity.
+
+    Input: 
+    
+    - G: the "monodromy graph", as computed by monodromy_graph()
+
+    - bpt: the index of the target branch point
+
+    - rot: the rotation number and direction of the path going around
+    branch point "bpt".
+
+    Output:
+
+    A list of path segments ``(x(t), dxdt(t))`` for ``t \in [0,1]``
+    defined by lambda functions.
+    """
+    if types == 'mpmath':
+        abs = sympy.mpmath.absmin
+        arg = sympy.mpmath.arg
+        pi = sympy.mpmath.pi
+        CC = sympy.mpmath.mp.mpc
+    else:
+        abs = numpy.abs
+        arg = numpy.angle
+        pi = numpy.pi
+        CC = numpy.complex
+
+    # determine the center of the circle
+    values = [data['value'] for node,data in G.nodes(data=True)]
+    center = 0 #sum(values)/len(values)
+
+    # the radius of the circle is the distance from the center to the furthest
+    # away branch point plus the monodromy path radius at that branch point
+    radius = 0
+    for node,data in G.nodes(data=True):
+        node_value = data['value']
+        node_radius = data['radius']        
+
+        current_radius = abs(node_value) + node_radius
+        radius = current_radius if current_radius > radius else radius
+        if current_radius > radius:
+            radius = current_radius
+        max(abs(value-center) for value in values)
+
+    # the base point is chosen to be furthest to the left of all branch points.
+    # travel along the line made by the base point and the center until we
+    # reach the perimeter of the circle.
+    base_point = CC(G.node[0]['basepoint'])
+    z0 = CC(base_point)
+    arg0 = arg(z0)               # starting angle on the circle
+    z1 = CC((z0/abs(z0))*radius) # starting point on the circle
+    dir = 1 if rot > 0 else -1
+
+    # construct path
+    if abs(base_point - z1) > 10**(-14):
+        path_data = [(base_point,z1)]
+    else:
+        path_data = []
+
+    circle_data = [(radius,center,arg0,dir), (radius,center,arg0+pi,dir)]
+    circle_data = circle_data * int(abs(rot))
+
+    path_segments = _path_segments_from_path_data(path_data,circle_data,
+                                                  types=types)
+    return path_segments
 
 
 
@@ -546,8 +649,10 @@ class RiemannSurfacePath():
                 y_ax.text(y_re[n], y_im[n], str(n), fontsize=10)
         else:
             x_re, x_im, y_re, y_im = self.decompose_points(P)
-            x_ax.plot(x_re[0], x_im[0], 'k.', markersize=20, **kwds)
-            y_ax.plot(y_re[0], y_im[0], 'k.', markersize=20, **kwds)
+            x_ax.plot(x_re[0], x_im[0], 'k.', markersize=40, **kwds)
+            y_ax.plot(y_re[0], y_im[0], 'k.', markersize=40, **kwds)
+            x_ax.plot(x_re[-1], x_im[-1], 'r.', markersize=20, **kwds)
+            y_ax.plot(y_re[-1], y_im[-1], 'r.', markersize=20, **kwds)
             x_ax.plot(x_re, x_im, **kwds)
             y_ax.plot(y_re, y_im, **kwds)
             
@@ -645,11 +750,15 @@ if __name__=='__main__':
     print "=== Riemann surface path ==="
     import sympy
     from sympy.abc import x,y
+    from abelfunctions.monodromy import monodromy_graph
 
-#    sympy.mpmath.mp.dps=5
+    f2 = -x**7 + 2*x**3*y + y**3
+    G = monodromy_graph(f2,x,y)
+    path_segments = path_around_infinity(G,1)
 
-    f = (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
-
-    branch_point = 5
-    print "Plotting fibres going around branch point %d" %branch_point
-    plot_fibre(f,x,y,branch_point)
+    base_point = G.node[0]['basepoint']
+    base_sheets = G.node[0]['baselift']
+    x0,y0 = base_point, base_sheets[0]
+    
+    gamma = RiemannSurfacePath((f2,x,y),(x0,y0),path_segments=path_segments)
+    gamma.plot(Npts=256)

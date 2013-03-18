@@ -20,6 +20,7 @@ from utilities import cached_function, cached_property
 from abelfunctions.riemannsurface_path import (
     polyroots, 
     path_around_branch_point,
+    path_around_infinity,
     RiemannSurfacePath,
     )
 
@@ -57,17 +58,18 @@ class Permutation(object):
         """
         if isinstance(l,list):
             if isinstance(l[0],list):
-                l = self._list_from_cycle(l)
-            self._list = l                
+                l = self._list_from_cycles(l)
+            self._list = l
         else:
             # try to turn object into list
             self._list = list(l)
             self.__init__(l)
 
+        self._cycles = self._cycles_from_list(self._list)
         self._hash = None
 
 
-    def _list_from_cycle(self,cycles):
+    def _list_from_cycles(self,cycles):
         """
         Create a permutation list ``i \to l[i]`` from a cycle notation
         list.
@@ -94,11 +96,25 @@ class Permutation(object):
 
         return l
 
-    def _cycle_from_list(self,l):
-        pass
+    def _cycles_from_list(self,l):
+        n = len(l)
+        cycles = []
+        not_visited = range(n)[::-1]
+
+        while len(not_visited) > 0:
+            i = not_visited.pop()
+            cycle = [i]
+            j = l[i]
+            while j != i:
+                cycle.append(j)
+                not_visited.remove(j)
+                j = self(j)
+            cycles.append(tuple(cycle))
+
+        return cycles
 
     def __str__(self):
-        return str(self._list)
+        return str(self._cycles)
 
     def __repr__(self):
         return self._list.__repr__()
@@ -136,6 +152,12 @@ class Permutation(object):
             raise TypeError, "i (= %s) must be an integer between %s and %s" %(i,0,len(self)-1)
 
 
+    def is_identity(self):
+        n = len(self._list)
+        if self._list == range(n):
+            return True
+        return False
+
     def index(self, key):
         return self._list.index(key)
 
@@ -151,7 +173,6 @@ class Permutation(object):
         """
         if len(a) != len(self):
             raise ValueError, "len(a) must equal len(self)"
-#        return map(lambda i: a[self[i]-1], range(len(a)))
         return map(lambda i: a[self[i]], range(len(a)))
 
     def inv(self):
@@ -758,6 +779,8 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
 
     mon = []
     for i in G.nodes():
+        # compute path segments to path around b_i and analytically
+        # continue each fibre element
         path_segments = path_around_branch_point(G,i,1)
         yend = []
         for j in xrange(deg): 
@@ -766,23 +789,41 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
             yendj = gamma(1)[1]
             yend.append(yendj)
 
-        mon.append(matching_permutation(base_sheets,yend))
+        # check if permutation is identity. if so, delete b_i from the
+        # branch point list. if not add the permutation to the
+        # monodromy group
+        phi = matching_permutation(base_sheets,yend)
+        if phi.is_identity():
+            branch_points.pop(i)
+        else:
+            mon.append(phi)
+
+    # analytically continue around infinity. append if branch point
+    path_segments = path_around_infinity(G,-1)
+    yend = []
+    for j in xrange(deg):
+        gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets[j]),
+                                   path_segments=path_segments)
+        yendj = gamma(1)[1]
+        yend.append(yendj)
+
+    # check if permutation is identity. if so, delete b_i from the
+    # branch point list. if not add the permutation to the
+    # monodromy group
+    phi = matching_permutation(base_sheets,yend)
+    if not phi.is_identity():
+        # test that the product of the finite monodromy group elements is
+        # equal to the inverse of the permuatation at infinity
+        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon)
+        if phi_prod.inv() == phi:
+            branch_points.append(sympy.oo)
+            mon.append(phi)
+        else:
+            raise ValueError('Contradictory permutation at infinity.')
 
     return base_point, base_sheets, branch_points, mon, G
 
 
-def plot_fibre(G, base_point, base_sheets, branch_point):
-    """
-    """
-    for sheet in base_sheets:
-        path_segments = path_around_branch_point(G,branch_point,1)
-        gamma = RiemannSurfacePath((f,x,y),(base_point,sheet),
-                                   path_segments=path_segments)
-        gamma.plot()
-
-
-
-    
 
 if __name__=='__main__':
     from sympy.abc import x,y
