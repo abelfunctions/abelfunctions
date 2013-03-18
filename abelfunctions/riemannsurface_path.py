@@ -19,8 +19,10 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
+import pdb
 
-def polyroots(f,x,y,xi):
+
+def polyroots(f,x,y,xi,types='numpy'):
     """
     Helper function for computing multiprecise roots of polynomials
     using `sympy.mpmath`.
@@ -39,10 +41,17 @@ def polyroots(f,x,y,xi):
     - the multiprecise roots of ``f(xi,y) = 0``.
     """
     dps = sympy.mpmath.mp.dps
-
     p = f.as_poly(y)
-    coeffs = [c.evalf(subs={x:xi},n=dps) for c in p.all_coeffs()]
-    coeffs = [sympy.mpmath.mpc(*(z.as_real_imag())) for z in coeffs]
+
+    if types == 'mpmath':
+        coeffs = [c.evalf(subs={x:xi},n=dps) for c in p.all_coeffs()]
+        coeffs = [sympy.mpmath.mpc(*(z.as_real_imag())) for z in coeffs]
+        return sympy.mpmath.polyroots(coeffs)
+    else:
+        coeffs = [c.evalf(subs={x:xi},n=15) for c in p.all_coeffs()]
+        coeffs = [numpy.complex(z) for z in coeffs]
+        poly = numpy.poly1d(coeffs)
+        return poly.r
 
     return sympy.mpmath.polyroots(coeffs)
 
@@ -314,7 +323,8 @@ class RiemannSurfacePath():
           tuple containing `(f,x,y)` where ``f(x,y) = 0`` defined the
           Riemann surface.
 
-        - `P0`: a RiemannSurfacePoint where the path begins.
+        - `P0`: a RiemannSurfacePoint where the path begins. `P0[0]` is the
+        base point and `P0[1]` is the base fibre
 
         - `P1`: (default: `None`) a RiemannSurfacePoint where the path ends.
 
@@ -337,10 +347,11 @@ class RiemannSurfacePath():
 
         # cast into appropriate data type
         if types == 'mpmath':
-            self.P0 = map(sympy.mpmath.mpc,P0)
+            CC = sympy.mpmath.mp.mpc
         else:
-            self.P0 = map(numpy.complex,P0)
+            CC = numpy.complex
 
+        self.P0 = (CC(P0[0]),map(CC,P0[1]))
         self.deg = sympy.degree(self.f,self.y)
         self.types = types
 
@@ -384,7 +395,7 @@ class RiemannSurfacePath():
             t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments)
 
         for ti in t_pts:
-            P = self.analytically_continue(ti,Npts=32)
+            P = self.analytically_continue(ti,Npts=4)
             self._add_checkpoint(ti, P)
 
 
@@ -481,24 +492,18 @@ class RiemannSurfacePath():
         self._cache_size = 1
 
 
-
     def __call__(self, t, dxdt=False):
         return self.analytically_continue(t,dxdt=dxdt)
 
 
-
-    def analytically_continue(self, t, dxdt=False, Npts=32):
+    def analytically_continue(self, t, dxdt=False, Npts=4):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point.
         """
-#         if self.types == 'mpmath':
-#             t = sympy.mpmath.mp.mpf(t)
-#         else:
-#             t = numpy.double(t)
-
         eps = 1e-14
         deg = self.deg
+
         # get the nearest already computed point on the path. If the
         # nearest computed point is at "t" then just return the cached
         # point now.
@@ -509,52 +514,78 @@ class RiemannSurfacePath():
             else:
                 return P0
 
-        # Analytic continuation loop: start with dt = 1. Take a step
-        # using Taylor series. Use a root finder to get to the closest
-        # point on the Riemann surface. Check if this point is on the
-        # correct sheet. If not, have the dt and try again
-        tim1 = t0
-        xim1 = P0[0]
-        yim1 = P0[1]
+        # Analytic continuation loop: start with dt =
+        # (t-t0)/Npts. Take a step using Taylor series. Use a root
+        # finder to get to the closest point on the Riemann
+        # surface. Check if this point is on the correct sheet. If
+        # not, have the dt and try again
+        dt = (t-t0)/numpy.double(Npts)
+        dtmax = dt
+        ti = t0
+        xi = P0[0]
+        yi = list(P0[1])
+        dyi = range(deg)
 
         maxiter = 32
-        maxn = 0
-        t_pts = numpy.linspace(t0,t,Npts)
-        for i in xrange(1,Npts):
-            ti = t_pts[i]
-            xi = self.get_x(ti)
+        refinement_level = 0
 
-            # Taylor step to obtain approximate
-            dx = xi-xim1
-            dy = - dx * self.dfdx(xim1,yim1) / self.dfdy(xim1,yim1)
-            yi_approx = yim1 + dy
+        while ti < t:
+            # take a dt step and compute dy for each current y-roots
+            tip1 = ti + dt
+            xip1 = self.get_x(tip1)
+            dx = xip1-xi
+            for j in xrange(deg):
+                yij = yi[j]
+                dyij = - dx * self.dfdx(xi,yij) / self.dfdy(xi,yij)
+                dyi[j] = dyij
 
-            # Newton iterate to next point. (Note: this is done
-            # instead of "sympy.mpmath.polyroots" for speed and
-            # instead of sympy.mpmath.findroot for performance.)
-            #
-            # Add extra precision, too
-            yi = yi_approx
-            for n in xrange(maxiter):
-                step = self._f(xi,yi) / self.dfdy(xi,yi)
-                if sympy.mpmath.absmin(step) < eps:
-                    maxn = max(n, maxn)
-                    break
-                yi -= step
+            # determine smallest distance between y-roots
+            yip1 = polyroots(f,x,y,xip1,types='numpy')
+            d_min = numpy.inf
+            for j in xrange(deg):
+                for k in xrange(j+1,deg):
+                    d = numpy.abs(yip1[j]-yip1[k])
+                    if d < d_min: d_min = d
 
-            xim1 = xi
-            yim1 = yi
+            # check if we took too large of a step by comparing each
+            # dy step against the minimal step that we can take.
+            if any([numpy.abs(dyij) > d_min/2.0 for dyij in dyi]):
+                dt = dt/2.0
+                refinement_level += 1
+                if dt < eps:
+                    raise ValueError('Analytic continuation failed. ' + \
+                                     'Step size too small.')
+            else:
+                # step small enough. Use Newton's method to converge
+                # on the appropriate roots
+                for j in xrange(deg):
+                    # Newton iterate to next point. (Note: this is done
+                    # instead of "sympy.mpmath.polyroots" for speed and
+                    # instead of sympy.mpmath.findroot for performance.)
+                    yij = yi[j] + dyi[j]
+                    for n in xrange(maxiter):
+                        step = self._f(xip1,yij) / self.dfdy(xip1,yij)
+                        if numpy.abs(step) < eps:
+                            break
+                        yij -= step
+                    yi[j] = yij
+                
+                ti = tip1
+                xi = xip1
+                refinement_level -= 1
+                if refinement_level < 0:
+                    refinement_level == 0
 
-
-        # Checkpoint this point if it took too many Newton iterations
-        # at any point along the path.
-        if maxn >= 6:
-            self._add_checkpoint(t,(xi,yi))
-
+#                 # add checkpoint if we needed to refine multiple times
+#                 if refinement_level > 3:
+#                     print "...Adding checkpoint"
+#                     self._add_checkpoint(ti,(xi,yi))
+#                     refinement_level = 0
+        
         if dxdt:
-            return (xi,yi), self.get_x(t,dxdt=True)
+            return (xi,tuple(yi)), self.get_x(t,dxdt=True)
         else:
-            return (xi,yi)
+            return (xi,tuple(yi))
 
 
 
@@ -567,7 +598,7 @@ class RiemannSurfacePath():
         else:
             t = numpy.linspace(t0,t1,Npts)
 
-        P = map(lambda ti: self.analytically_continue(ti,dxdt=dxdt), t)
+        P = map(lambda ti: self(ti,dxdt=dxdt), t)
         return P
 
 
@@ -576,7 +607,6 @@ class RiemannSurfacePath():
         Return a Clenshaw-Curtis sample (also referred to as a Chebysheb or
         cosine distribution sample) on the path.
         """
-        
         if self.types == 'mpmath':
             pi = sympy.mpmath.pi
             theta = sympy.mpmath.linspace(0,pi,Npts)
@@ -604,8 +634,12 @@ class RiemannSurfacePath():
         x, y = zip(*P)
         x_re = [xi.real for xi in x]
         x_im = [xi.imag for xi in x]
-        y_re = [yi.real for yi in y]
-        y_im = [yi.imag for yi in y]
+
+        y_re = []
+        y_im = []
+        for j in xrange(self.deg):
+            y_re.append( [yi[j].real for yi in y] )
+            y_im.append( [yi[j].imag for yi in y] )
 
         return x_re, x_im, y_re, y_im
 
@@ -627,37 +661,34 @@ class RiemannSurfacePath():
         - **kwds: additional keywords are sent to
             matplotlib.pyplot.plot()
         """
-        P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
+        deg = self.deg
+
 
         fig = plt.figure()
-        x_ax = fig.add_subplot(2,1,1)
-        y_ax = fig.add_subplot(2,1,2)
 
-        # First, plot all checkpoints.
-        checkpoints = self._checkpoints.values()
-        x_re, x_im, y_re, y_im = self.decompose_points(checkpoints)
+        P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
+        C = [Pi for ti,Pi in self._checkpoints.iteritems()]
 
-        x_ax.plot(x_re, x_im, '.', **kwds)
-        y_ax.plot(y_re, y_im, '.', **kwds)
+        # plot chosen interpolating points
+        x_ax = fig.add_subplot(1,deg+1,1)
+        x_re, x_im, y_re, y_im = self.decompose_points(P)
+        x_ax.plot(x_re, x_im, '-', **kwds)
+        x_ax.plot(x_re[-1], x_im[-1], 'k.', markersize=30)
+        x_ax.plot(x_re[0], x_im[0], 'r.', markersize=20)
+        for j in xrange(deg):
+            y_ax = fig.add_subplot(1,deg+1,j+2)
 
+            y_ax.plot(y_re[j], y_im[j], 'g-', **kwds)
+            y_ax.plot(y_re[j][-1], y_im[j][-1], 'k.', markersize=30)
+            y_ax.plot(y_re[j][0], y_im[j][0], 'r.', markersize=20)
 
-        # Second, plot requested interpolants
-        if show_numbers:
-            x_re, x_im, y_re, y_im = self.decompose_points(P)
-            for n in xrange(len(y_re)):
-                x_ax.text(x_re[n], x_im[n], str(n), fontsize=10)
-                y_ax.text(y_re[n], y_im[n], str(n), fontsize=10)
-        else:
-            x_re, x_im, y_re, y_im = self.decompose_points(P)
-            x_ax.plot(x_re[0], x_im[0], 'k.', markersize=40, **kwds)
-            y_ax.plot(y_re[0], y_im[0], 'k.', markersize=40, **kwds)
-            x_ax.plot(x_re[-1], x_im[-1], 'r.', markersize=20, **kwds)
-            y_ax.plot(y_re[-1], y_im[-1], 'r.', markersize=20, **kwds)
-            x_ax.plot(x_re, x_im, **kwds)
-            y_ax.plot(y_re, y_im, **kwds)
-            
-        x_ax.axis('tight')
-        y_ax.axis('tight')
+        # plot checkpoints
+        x_re, x_im, y_re, y_im = self.decompose_points(C)
+        x_ax.plot(x_re, x_im, 'k.', **kwds)
+        for j in xrange(deg):
+            y_ax = fig.add_subplot(1,deg+1,j+2)
+            y_ax.plot(y_re[j], y_im[j], 'k.', **kwds)
+
 
         fig.show()
 
@@ -747,18 +778,29 @@ def plot_fibre(f,x,y,branch_point):
 
 
 if __name__=='__main__':
+    print 
+    print "============================"
     print "=== Riemann surface path ==="
+    print "============================"
     import sympy
     from sympy.abc import x,y
-    from abelfunctions.monodromy import monodromy_graph
+    from abelfunctions.monodromy import monodromy_graph, show_paths
 
     f2 = -x**7 + 2*x**3*y + y**3
-    G = monodromy_graph(f2,x,y)
-    path_segments = path_around_infinity(G,1)
+    f = f2
 
+    print "=== (computing monodromy graph) ==="
+    G = monodromy_graph(f2,x,y)
+    path_segments = path_around_branch_point(G,4,1)
+    show_paths(G)
+
+    print "===   (obtaining base place)    ==="
     base_point = G.node[0]['basepoint']
     base_sheets = G.node[0]['baselift']
-    x0,y0 = base_point, base_sheets[0]
+    x0,y0 = base_point, base_sheets
     
-    gamma = RiemannSurfacePath((f2,x,y),(x0,y0),path_segments=path_segments)
-    gamma.plot(Npts=256)
+    print "===     (constructing path)     ==="
+    gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
+
+    print "===        (plotting)           ==="
+    gamma.plot(Npts=128)
