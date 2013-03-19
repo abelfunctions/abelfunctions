@@ -397,8 +397,7 @@ class RiemannSurfacePath():
         tim1 = 0.0
         Pim1 = self.P0
         for ti in t_pts[1:]:
-            print "=== continuing to chkpt at t =", ti
-            Pi = self.analytically_continue(ti,Npts=2,checkpoint=(tim1,Pim1))
+            Pi = self.analytically_continue(ti,Npts=4,checkpoint=(tim1,Pim1))
             self._checkpoints[ti] = Pi
 
             tim1 = ti
@@ -538,7 +537,7 @@ class RiemannSurfacePath():
         yip1 = [0]*deg
         yip1_approx = [0]*deg
 
-        refinement_level = 0
+
         while ti < t:
             tip1 = ti + dt
             xip1 = self.get_x(tip1)
@@ -547,13 +546,17 @@ class RiemannSurfacePath():
             # calculate roots at next x-value
             yip1_actual = polyroots(f,x,y,xip1,types='numpy')
 
-            # compute Taylor step
-            close_enough = True
-            outy = []
+            # compute Taylor steps
             for j in xrange(deg):
                 yij = yi[j]
                 dyij = - dx * self.dfdx(xi,yij) / self.dfdy(xi,yij)
-                yip1j_approx = yij + dyij
+                yip1_approx[j] = yij + dyij
+
+            # determine if the step size is too large
+            close_enough = True
+            outy = []
+            for j in xrange(deg):
+                yip1j_approx = yip1_approx[j]
 
                 # for each approximate root, determine closest and
                 # second closest actual roots. 
@@ -674,14 +677,11 @@ class RiemannSurfacePath():
 
         fig = plt.figure()
 
-        print "=== (plot) samplling uniform ==="
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
         C = [Pi for ti,Pi in self._checkpoints.iteritems()]
 
         # plot chosen interpolating points
         x_ax = fig.add_subplot(1,deg+1,1)
-
-        print "=== (plot) decomposing points ==="
         x_re, x_im, y_re, y_im = self.decompose_points(P)
         x_ax.plot(x_re, x_im, '-', **kwds)
         x_ax.plot(x_re[-1], x_im[-1], 'k.', markersize=30)
@@ -801,8 +801,8 @@ if __name__=='__main__':
     f = f1
 
     print "=== (computing monodromy graph) ==="
-    G = monodromy_graph(f2,x,y)
-    path_segments = path_around_branch_point(G,1,1)
+    G = monodromy_graph(f,x,y)
+    path_segments = path_around_branch_point(G,0,1)
 
     print "===   (obtaining base place)    ==="
     base_point = G.node[0]['basepoint']
