@@ -51,7 +51,7 @@ def polyroots(f,x,y,xi,types='numpy'):
         coeffs = [c.evalf(subs={x:xi},n=15) for c in p.all_coeffs()]
         coeffs = [numpy.complex(z) for z in coeffs]
         poly = numpy.poly1d(coeffs)
-        return poly.r
+        return (poly.r).tolist()
 
     return sympy.mpmath.polyroots(coeffs)
 
@@ -351,7 +351,7 @@ class RiemannSurfacePath():
         else:
             CC = numpy.complex
 
-        self.P0 = (CC(P0[0]),map(CC,P0[1]))
+        self.P0 = (CC(P0[0]), map(CC,P0[1]))
         self.deg = sympy.degree(self.f,self.y)
         self.types = types
 
@@ -394,9 +394,15 @@ class RiemannSurfacePath():
         else:
             t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments)
 
-        for ti in t_pts:
-            P = self.analytically_continue(ti,Npts=4)
-            self._add_checkpoint(ti, P)
+        tim1 = 0.0
+        Pim1 = self.P0
+        for ti in t_pts[1:]:
+            print "=== continuing to chkpt at t =", ti
+            Pi = self.analytically_continue(ti,Npts=2,checkpoint=(tim1,Pim1))
+            self._checkpoints[ti] = Pi
+
+            tim1 = ti
+            Pim1 = Pi
 
 
     def _nearest_checkpoint(self, t):
@@ -496,7 +502,7 @@ class RiemannSurfacePath():
         return self.analytically_continue(t,dxdt=dxdt)
 
 
-    def analytically_continue(self, t, dxdt=False, Npts=4):
+    def analytically_continue(self, t, dxdt=False, Npts=4, checkpoint=None):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point.
@@ -507,7 +513,11 @@ class RiemannSurfacePath():
         # get the nearest already computed point on the path. If the
         # nearest computed point is at "t" then just return the cached
         # point now.
-        t0, P0 = self._nearest_checkpoint(t)
+        if checkpoint:
+            t0,P0 = checkpoint
+        else:
+            t0,P0 = self._nearest_checkpoint(t)
+
         if t == t0:
             if dxdt:
                 return P0, self.get_x(t,dxdt=True)
@@ -522,65 +532,63 @@ class RiemannSurfacePath():
         dt = (t-t0)/numpy.double(Npts)
         dtmax = dt
         ti = t0
+        tip1 = ti + dt
         xi = P0[0]
         yi = list(P0[1])
-        dyi = range(deg)
+        yip1 = [0]*deg
+        yip1_approx = [0]*deg
 
-        maxiter = 32
         refinement_level = 0
-
         while ti < t:
-            # take a dt step and compute dy for each current y-roots
             tip1 = ti + dt
             xip1 = self.get_x(tip1)
             dx = xip1-xi
+
+            # calculate roots at next x-value
+            yip1_actual = polyroots(f,x,y,xip1,types='numpy')
+
+            # compute Taylor step
+            close_enough = True
+            outy = []
             for j in xrange(deg):
                 yij = yi[j]
                 dyij = - dx * self.dfdx(xi,yij) / self.dfdy(xi,yij)
-                dyi[j] = dyij
+                yip1j_approx = yij + dyij
 
-            # determine smallest distance between y-roots
-            yip1 = polyroots(f,x,y,xip1,types='numpy')
-            d_min = numpy.inf
-            for j in xrange(deg):
-                for k in xrange(j+1,deg):
-                    d = numpy.abs(yip1[j]-yip1[k])
-                    if d < d_min: d_min = d
+                # for each approximate root, determine closest and
+                # second closest actual roots. 
+                d_first = numpy.inf
+                d_second = numpy.inf
+                root = numpy.inf
+                for yip1k in yip1_actual:
+                    dist = numpy.abs(yip1j_approx - yip1k)
+                    if dist < d_first:
+                        d_second = d_first
+                        d_first = dist        
+                        root = yip1k
+                    elif dist < d_second:
+                        d_second = dist
 
-            # check if we took too large of a step by comparing each
-            # dy step against the minimal step that we can take.
-            if any([numpy.abs(dyij) > d_min/2.0 for dyij in dyi]):
-                dt = dt/2.0
-                refinement_level += 1
-                if dt < eps:
-                    raise ValueError('Analytic continuation failed. ' + \
-                                     'Step size too small.')
-            else:
-                # step small enough. Use Newton's method to converge
-                # on the appropriate roots
-                for j in xrange(deg):
-                    # Newton iterate to next point. (Note: this is done
-                    # instead of "sympy.mpmath.polyroots" for speed and
-                    # instead of sympy.mpmath.findroot for performance.)
-                    yij = yi[j] + dyi[j]
-                    for n in xrange(maxiter):
-                        step = self._f(xip1,yij) / self.dfdy(xip1,yij)
-                        if numpy.abs(step) < eps:
-                            break
-                        yij -= step
-                    yi[j] = yij
-                
+                outy.append(root)
+                yip1_actual.remove(root)
+
+                # check distances
+                if d_first > d_second/4.0:
+                    close_enough = False
+
+            # if we are close enough then update. otherwise,
+            # refine and try again
+            if close_enough:
                 ti = tip1
                 xi = xip1
-                refinement_level -= 1
-                if refinement_level < 0:
-                    refinement_level == 0
+                for j in xrange(deg):
+                    yi[j] = outy[j]
 
-#                 # add checkpoint if we needed to refine multiple times
-#                 if refinement_level > 3:
-#                     print "...Adding checkpoint"
-#                     self._add_checkpoint(ti,(xi,yi))
-#                     refinement_level = 0
+                # check if we are allowed to increase the t-step
+                # XXX CHECK XXX
+                dt = min(dt*2,dtmax)
+            else:
+                dt *= 0.5
         
         if dxdt:
             return (xi,tuple(yi)), self.get_x(t,dxdt=True)
@@ -596,9 +604,9 @@ class RiemannSurfacePath():
         if self.types == 'mpmath':
             t = sympy.mpmath.linspace(t0,t1,Npts)
         else:
-            t = numpy.linspace(t0,t1,Npts)
+            t = numpy.linspace(t0,t1,Npts).tolist()
 
-        P = map(lambda ti: self(ti,dxdt=dxdt), t)
+        P = [self.analytically_continue(ti,dxdt=dxdt) for ti in t]
         return P
 
 
@@ -666,18 +674,20 @@ class RiemannSurfacePath():
 
         fig = plt.figure()
 
+        print "=== (plot) samplling uniform ==="
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
         C = [Pi for ti,Pi in self._checkpoints.iteritems()]
 
         # plot chosen interpolating points
         x_ax = fig.add_subplot(1,deg+1,1)
+
+        print "=== (plot) decomposing points ==="
         x_re, x_im, y_re, y_im = self.decompose_points(P)
         x_ax.plot(x_re, x_im, '-', **kwds)
         x_ax.plot(x_re[-1], x_im[-1], 'k.', markersize=30)
         x_ax.plot(x_re[0], x_im[0], 'r.', markersize=20)
         for j in xrange(deg):
             y_ax = fig.add_subplot(1,deg+1,j+2)
-
             y_ax.plot(y_re[j], y_im[j], 'g-', **kwds)
             y_ax.plot(y_re[j][-1], y_im[j][-1], 'k.', markersize=30)
             y_ax.plot(y_re[j][0], y_im[j][0], 'r.', markersize=20)
@@ -786,13 +796,13 @@ if __name__=='__main__':
     from sympy.abc import x,y
     from abelfunctions.monodromy import monodromy_graph, show_paths
 
+    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
     f2 = -x**7 + 2*x**3*y + y**3
-    f = f2
+    f = f1
 
     print "=== (computing monodromy graph) ==="
     G = monodromy_graph(f2,x,y)
-    path_segments = path_around_branch_point(G,4,1)
-    show_paths(G)
+    path_segments = path_around_branch_point(G,1,1)
 
     print "===   (obtaining base place)    ==="
     base_point = G.node[0]['basepoint']
