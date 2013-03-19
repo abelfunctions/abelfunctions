@@ -544,7 +544,7 @@ class RiemannSurfacePath():
             dx = xip1-xi
 
             # calculate roots at next x-value
-            yip1_actual = polyroots(f,x,y,xip1,types='numpy')
+            yip1_actual = polyroots(self.f,self.x,self.y,xip1,types='numpy')
 
             # compute Taylor steps
             for j in xrange(deg):
@@ -802,7 +802,8 @@ if __name__=='__main__':
 
     print "=== (computing monodromy graph) ==="
     G = monodromy_graph(f,x,y)
-    path_segments = path_around_branch_point(G,0,1)
+#    path_segments = path_around_branch_point(G,0,1)
+    path_segments = path_around_infinity(G,1)
 
     print "===   (obtaining base place)    ==="
     base_point = G.node[0]['basepoint']

@@ -783,14 +783,11 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     mon = []
     for i in G.nodes():
         # compute path segments to path around b_i and analytically
-        # continue each fibre element
+        # continuing the base_fibre
         path_segments = path_around_branch_point(G,i,1)
-        yend = []
-        for j in xrange(deg): 
-            gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets[j]),
-                                       path_segments=path_segments)
-            yendj = gamma(1)[1]
-            yend.append(yendj)
+        gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
+                                   path_segments=path_segments)
+        yend = gamma(1)[1]
 
         # check if permutation is identity. if so, delete b_i from the
         # branch point list. if not add the permutation to the
@@ -803,12 +800,9 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
 
     # analytically continue around infinity. append if branch point
     path_segments = path_around_infinity(G,-1)
-    yend = []
-    for j in xrange(deg):
-        gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets[j]),
-                                   path_segments=path_segments)
-        yendj = gamma(1)[1]
-        yend.append(yendj)
+    gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
+                               path_segments=path_segments)
+    yend = gamma(1)[1]
 
     # check if permutation is identity. if so, delete b_i from the
     # branch point list. if not add the permutation to the
@@ -817,8 +811,9 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     if not phi.is_identity():
         # test that the product of the finite monodromy group elements is
         # equal to the inverse of the permuatation at infinity
-        phi_prod = reduce(lambda phi1,phi2: phi1*phi2, mon)
-        if phi_prod.inv() == phi:
+        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon)
+        phi_prod = phi_prod * phi
+        if phi_prod.is_identity():
             branch_points.append(sympy.oo)
             mon.append(phi)
         else:

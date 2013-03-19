@@ -31,18 +31,8 @@ path_segments = path_around_infinity(G,1)
 base_point = G.node[0]['basepoint']
 base_sheets = G.node[0]['baselift']
 
-x0,y0 = base_point, base_sheets[0]
-gamma0 = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
-gamma0.plot(Npts=256)
+x0,y0 = base_point, base_sheets
+gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
+gamma.plot(Npts=128)
 
-x1,y1 = base_point, base_sheets[1]
-gamma1 = RiemannSurfacePath((f,x,y),(x1,y1),path_segments=path_segments)
-gamma1.plot(Npts=256)
-
-x2,y2 = base_point, base_sheets[2]
-gamma2 = RiemannSurfacePath((f,x,y),(x2,y2),path_segments=path_segments)
-gamma2.plot(Npts=256)
-
-# x3,y3 = base_point, base_sheets[3]
-# gamma3 = RiemannSurfacePath((f,x,y),(x3,y3),path_segments=path_segments)
-# gamma3.plot(Npts=256)
+base_point, base_sheets, branch_points, mon, G = monodromy(f,x,y)
