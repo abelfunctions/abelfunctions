@@ -798,6 +798,11 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
         else:
             mon.append(phi)
 
+
+    # XXX convert monodromy to both mpmath and numpy later
+    branch_points = [numpy.complex(bpt) for bpt in branch_points]
+
+
     # analytically continue around infinity. append if branch point
     path_segments = path_around_infinity(G,-1)
     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
@@ -818,6 +823,9 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
             mon.append(phi)
         else:
             raise ValueError('Contradictory permutation at infinity.')
+
+
+    
 
     return base_point, base_sheets, branch_points, mon, G
 

@@ -11,16 +11,14 @@ print X
 
 print "\n\tRS: monodromy"
 base_point, base_sheets, branch_points, mon, G = X.monodromy()
-print "base_point:"
+print "\nbase_point:"
 print base_point
-print "base_sheets:"
+print "\nbase_sheets:"
 for s in base_sheets: print s
-print "branch points:"
+print "\nbranch points:"
 for b in branch_points: print b
-print "monodromy group:"
+print "\nmonodromy group:"
 for m in mon: print m
-
-X.show_paths()
 
 print "\n\tRS: homology"
 hom = X.homology()

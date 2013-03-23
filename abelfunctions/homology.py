@@ -173,7 +173,7 @@ def tretkoff_table(hurwitz_system):
     base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
     
     # XXX USE BRANCH POINT INDICES INSTEAD FOR EASE OF READNIG XXX
-    branch_points = range(len(branch_points))
+    #branch_points = range(len(branch_points))
 
     # the number of sheets of the Riemann surface
     covering_number = len(base_sheets)
@@ -241,8 +241,9 @@ def tretkoff_table(hurwitz_system):
                 if tretkoff['C'][level-1][i][2] != []:
                     finished = False
                     # sourcelist = vertex at previous level
-                    sourcelist = tretkoff['C'][level-1][i]
+                    sourcelist = [item for item in tretkoff['C'][level-1][i]] + []
                     entry = [[] for _ in xrange(len(sourcelist[2]))]
+#                    entry = []
 
                     # construct a new vertex at thsi level for every
                     # branch leaving the vertex at the previous level
@@ -281,7 +282,7 @@ def tretkoff_table(hurwitz_system):
                                     a3.append(['stop',nlk])
                                     # 'edge' denotes a branch pointing
                                     # at an endpoint of the graph
-                                    edge = [nlk, a1]
+                                    edge = [nlk,a1]
                                     if edge not in final_edges:
                                         # it's the first time this
                                         # edge occurs: add it to the
@@ -320,12 +321,14 @@ def tretkoff_table(hurwitz_system):
                         #endif a1[0] != 'stop'
 
                         # create the new vertex
-                        entry[j] = [a1,a2,a3,a4]
+                        entry[j] = [item for item in [a1,a2,a3,a4]]
+#                        entry.append([a1,a2,a3,a4])
+#                        assert len(entry) == len(sourcelist[2])
 
                     #endfor j in range(len(sourcelist)
 
                     # add / replace the new vertex to the graph
-                    tretkoff['C'][level][i] = entry
+                    tretkoff['C'][level][i] = [item for item in entry]
 
                 #endif tretkoff['C'][level-1][i][2] != []:
             #endfor i in xrange(previous)
@@ -344,10 +347,11 @@ def tretkoff_table(hurwitz_system):
                 if tretkoff['C'][level-1][i][2] != []:
                     finished = False
                     # sourcelist = vertex at previous level
-                    sourcelist = tretkoff['C'][level-1][i]
+                    sourcelist = tretkoff['C'][level-1][i] + []
                     # construct a new vertex at this level for every
                     # branch leaving the vertex at the previous level
                     entry = [[] for _ in xrange(len(sourcelist[2]))]
+#                    entry = []
                     for j in xrange(len(sourcelist[2])):
                         # b1 = new vertex
                         # b2 = originating vertex
@@ -368,7 +372,7 @@ def tretkoff_table(hurwitz_system):
                         # done in order: first the sheets that are
                         # next in the permutation, then the sheets in
                         # the permutation preceeding the current one
-#                        if b1[0] != 'stop':
+#                        if b1[0] != 'stop':                        
                         if not isinstance(b1,list):
                             startingindex = branch_points.index(b2[0])
                             for k in range(startingindex+1,t):
@@ -472,10 +476,12 @@ def tretkoff_table(hurwitz_system):
                             #od
                         #fi
                         # create a new vertex
-                        entry[j] = [a1,a2,a3,a4]
+                        entry[j] = [item for item in [a1,a2,a3,a4]]
+#                        entry.append([a1,a2,a3,a4])
+#                        assert len(entry) == len(sourcelist[2])
                     #od
                     # add the new vertex to the graph
-                    tretkoff['C'][level][i] = entry
+                    tretkoff['C'][level][i] = [item for item in entry]
                 #fi 
             #od 
         #fi 
@@ -788,13 +794,8 @@ if __name__=='__main__':
 
     f = f2
 
-    pdb.set_trace()
-    M = Monodromy(f,x,y)
-
-"""
     hom = homology(f,x,y)
     for key,value in hom.iteritems():
         print key
         print value
         print
-"""

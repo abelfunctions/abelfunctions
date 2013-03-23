@@ -100,7 +100,7 @@ class RiemannSurface(object):
 
 #        return [x*y/dfdy, x**3/dfdy]
         
-        return [1/(2*y)]
+        return [1/y]
 
     def genus(self):
         """
@@ -161,7 +161,7 @@ class RiemannSurface(object):
 
         # Construct the RiemannSurfacePath
         x0 = self.base_point()
-        y0 = self.base_lift()[0]  # c-cycles always start on sheet 0
+        y0 = self.base_lift()
         gamma = RiemannSurfacePath(self, (x0,y0), path_segments=path_segments)
 
         return gamma
@@ -185,7 +185,7 @@ class RiemannSurface(object):
         # probably a good idea since it allows for good checkpointing.
         def integrand(t,omega,path):
             (xi,yi),dxdt = path(t, dxdt=True)
-            return omega(xi,yi) * dxdt
+            return omega(xi,yi[0]) * dxdt  # follow the base fibre
 
         val = numpy.double(0)
         n   = numpy.int(path._num_path_segments)

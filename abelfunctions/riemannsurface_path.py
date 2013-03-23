@@ -22,6 +22,47 @@ import matplotlib.pyplot as plt
 import pdb
 
 
+def factorial(n):
+    return reduce(lambda a,b: a*b, xrange(1,n+1))
+
+def smale_gamma(df,n,x,y):
+    """
+    Smale's gamma function.
+    """
+    mags = []
+    for k in xrange(2,n+1):
+        foo = (df[k](x,y)/df[1](x,y))/factorial(k)
+        foo = numpy.abs(foo)**(1.0/(k-1.0))
+        mags.append(foo)
+    return max(mags)
+
+def smale_beta(df,x,y):
+    """
+    Smale's beta function.
+    """
+    return numpy.abs(df[0](x,y)/df[1](x,y))
+
+def smale_alpha(df,n,x,y):
+    """
+    Smale's alpha function. Used to determine if Newton's method will
+    converge to a y-root.
+    """
+    return beta(df,x,y) * gamma(df,n,x,y)
+
+
+def smale_newton(f,dfdy,xip1,y):
+    eps = 1e-15
+    maxsteps = 10
+    for _ in xrange(maxsteps):
+        step = f(xip1,y)/dfdy(xip1,y)
+        if numpy.abs(step) < eps:
+            break
+        else:
+            y -= step
+    return y
+
+
+
 def polyroots(f,x,y,xi,types='numpy'):
     """
     Helper function for computing multiprecise roots of polynomials
@@ -162,7 +203,10 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
         abs = numpy.abs
         pi = numpy.pi
 
-    root = G.node[bpt]['root']
+    ## HACK
+    bpt_index = [n for n,val in G.nodes(data=True) 
+                 if abs(val['value']-bpt) < 1e-15]
+    root = G.node[0]['root']
 
     # retreive the vertices between the base point vertex and
     # the target vertex.
@@ -170,6 +214,7 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
 
     # retreive the conjugates. If we pass through a vertex that is
     # a conjugate
+
     conjugates = G.node[bpt]['conjugates']
 
     # 1) Compute path data for semi-circle / line pairs leading to the
@@ -363,20 +408,19 @@ class RiemannSurfacePath():
         self._f = sympy.lambdify((self.x,self.y), self.f, self.types)
         self.dfdx = sympy.lambdify((self.x,self.y), dfdx, self.types)
         self.dfdy = sympy.lambdify((self.x,self.y), dfdy, self.types)
+        self.dfs = [sympy.lambdify((x,y),sympy.diff(f,y,k), self.types) 
+                    for k in xrange(self.deg+1)]
 
-        # store checkpoint and path data
-        self._checkpoint_cost   = 8
+        # path data
         self._path_segments     = path_segments
         self._num_path_segments = len(path_segments)
-        self._checkpoints    = { 0:self.P0 }
-        self._cache_size     = 1
-        self._max_cache_size = 2**10
 
         # initialize the checkpoints: in each path segment
         # analytically continue to a certain number of points along
         # the path and store in memory. This is done so one doesn't
         # have to analytically continue from the base point every time
         # you want to find a point on the path
+        self._checkpoints = [(0,self.P0)]
         self._initialize_checkpoints()
 
 
@@ -388,18 +432,17 @@ class RiemannSurfacePath():
         """
         Compute
         """
-        ppseg = 8
+        ppseg = 4
         if self.types == 'mpmath':
             t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
         else:
             t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments)
 
-        tim1 = 0.0
+        tim1 = 0
         Pim1 = self.P0
         for ti in t_pts[1:]:
             Pi = self.analytically_continue(ti,Npts=4,checkpoint=(tim1,Pim1))
-            self._checkpoints[ti] = Pi
-
+            self._checkpoints.append((ti,Pi))
             tim1 = ti
             Pim1 = Pi
 
@@ -418,8 +461,8 @@ class RiemannSurfacePath():
         Pim1 = self.P0
 
         # _checkpoints is a dictionary with keys ti and values points
-        # on the path
-        for ti, Pi in iter(sorted(self._checkpoints.items())):
+        # on the path. By constuction, the checkpoints are ordered.
+        for ti, Pi in self._checkpoints:
             if ti >= t:
                 return (tim1, Pim1)
             else:
@@ -429,8 +472,7 @@ class RiemannSurfacePath():
         # no suitable checkpoint found: either no checkpoints are
         # available or something wrong happened. Return the first
         # point of the path
-        return (0, self._checkpoints[0])
-
+        return self._checkpoints[0]
 
 
     def get_x(self, t, dxdt=False):
@@ -469,32 +511,32 @@ class RiemannSurfacePath():
 
 
 
-    def _add_checkpoint(self, ti, Pi):
-        """
-        Adds the checkpoint Pi = {xi = x(ti), yi = y(x(ti))} to the
-        inner cache. If the max cache size is reached then the first
-        key tj found that is less than ti is removed from the
-        checkpoint cache.
-        """
-        self._checkpoints[ti] = Pi
-        self._cache_size += 1
+#     def _add_checkpoint(self, ti, Pi):
+#         """
+#         Adds the checkpoint Pi = {xi = x(ti), yi = y(x(ti))} to the
+#         inner cache. If the max cache size is reached then the first
+#         key tj found that is less than ti is removed from the
+#         checkpoint cache.
+#         """
+#         self._checkpoints[ti] = Pi
+#         self._cache_size += 1
 
-        # pop an item from the cache
-        if self._cache_size > self._max_cache_size:
-            for tj in self._checkpoints.iterkeys():
-                if tj < ti:
-                    self._checkpoints.pop(tj)
-                    self._cache_size -= 1
-                    break
+#         # pop an item from the cache
+#         if self._cache_size > self._max_cache_size:
+#             for tj in self._checkpoints.iterkeys():
+#                 if tj < ti:
+#                     self._checkpoints.pop(tj)
+#                     self._cache_size -= 1
+#                     break
 
 
-    def _clear_checkpoints(self):
-        """
-        Empties the checkpoint cache.
-        """
-        self._checkpoints.clear()
-        self._checkpoints = { 0:self.P0 }
-        self._cache_size = 1
+#     def _clear_checkpoints(self):
+#         """
+#         Empties the checkpoint cache.
+#         """
+#         self._checkpoints.clear()
+#         self._checkpoints = { 0:self.P0 }
+#         self._cache_size = 1
 
 
     def __call__(self, t, dxdt=False):
@@ -506,93 +548,74 @@ class RiemannSurfacePath():
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point.
         """
-        eps = 1e-14
-        deg = self.deg
+        n = self.deg
+        alpha0 = (13.0 - 2.0*numpy.sqrt(17.0))/4.0
+        
 
-        # get the nearest already computed point on the path. If the
-        # nearest computed point is at "t" then just return the cached
-        # point now.
+        # checkpointing allows us to start our analytic continuation
+        # from a point further along the path from t=0
         if checkpoint:
-            t0,P0 = checkpoint
+            t0,(xi,yi) = checkpoint
         else:
-            t0,P0 = self._nearest_checkpoint(t)
+            t0,(xi,yi) = self._nearest_checkpoint(t)
 
-        if t == t0:
-            if dxdt:
-                return P0, self.get_x(t,dxdt=True)
-            else:
-                return P0
-
-        # Analytic continuation loop: start with dt =
-        # (t-t0)/Npts. Take a step using Taylor series. Use a root
-        # finder to get to the closest point on the Riemann
-        # surface. Check if this point is on the correct sheet. If
-        # not, have the dt and try again
-        dt = (t-t0)/numpy.double(Npts)
-        dtmax = dt
+        # main loop
+        maxdt = (t-t0)/Npts
+        dt = maxdt
         ti = t0
-        tip1 = ti + dt
-        xi = P0[0]
-        yi = list(P0[1])
-        yip1 = [0]*deg
-        yip1_approx = [0]*deg
-
-
         while ti < t:
+            # iterate and approximate
             tip1 = ti + dt
             xip1 = self.get_x(tip1)
-            dx = xip1-xi
+            yapp = [yij for yij in yi]
 
-            # calculate roots at next x-value
-            yip1_actual = polyroots(self.f,self.x,self.y,xip1,types='numpy')
+            # we have to check quadratic basin stuff for _every_ root
+            # simultaneously or else we might have a branch jump
+            are_approximate_solutions = True                
+            beta_yapp = [smale_beta(self.dfs,xip1,yappj) for yappj in yapp]
+            for j in xrange(n):
+                # check if our guess is in the quadratic convergence basin
+                gammaj = smale_gamma(self.dfs,n,xip1,yapp[j])
+                alphaj = beta_yapp[j] * gammaj
+                if alphaj >= alpha0:
+                    are_approximate_solutions = False
+                    break
 
-            # compute Taylor steps
-            for j in xrange(deg):
-                yij = yi[j]
-                dyij = - dx * self.dfdx(xi,yij) / self.dfdy(xi,yij)
-                yip1_approx[j] = yij + dyij
+            # only perform separated basins detection if the roots are
+            # close enough
+            separated_basins = True
+            if are_approximate_solutions:
+                # now that we know the solutions are approximate solutions, we
+                # use the basin radius formula to ensure that each approximate
+                # root is within only one quadradic convergence basin.
+                for j in xrange(n):
+                    betaj = beta_yapp[j]
+                    for k in xrange(n):
+                        if j != k:
+                            dist = numpy.abs(yapp[j] - yapp[k])
+                            betak = beta_yapp[k]
 
-            # determine if the step size is too large
-            close_enough = True
-            outy = []
-            for j in xrange(deg):
-                yip1j_approx = yip1_approx[j]
+                            # use triangle inequality to guarantee separation
+                            # since we don't know what the actual roots are
+                            if dist <= 2*(betaj + betak):
+                                separated_basins = False
+                                break
 
-                # for each approximate root, determine closest and
-                # second closest actual roots. 
-                d_first = numpy.inf
-                d_second = numpy.inf
-                root = numpy.inf
-                for yip1k in yip1_actual:
-                    dist = numpy.abs(yip1j_approx - yip1k)
-                    if dist < d_first:
-                        d_second = d_first
-                        d_first = dist        
-                        root = yip1k
-                    elif dist < d_second:
-                        d_second = dist
+            # raise warning if it looks like something went wrong
+            if dt < 1e-15:
+                raise Warning("Smallest adaptive refinement level " + \
+                              "reached during analytic continuation.")
 
-                outy.append(root)
-                yip1_actual.remove(root)
-
-                # check distances
-                if d_first > d_second/4.0:
-                    close_enough = False
-
-            # if we are close enough then update. otherwise,
-            # refine and try again
-            if close_enough:
+            if are_approximate_solutions and separated_basins:
+                yi = [smale_newton(self.dfs[0],self.dfs[1],xip1,yappj) 
+                      for yappj in yapp]
                 ti = tip1
                 xi = xip1
-                for j in xrange(deg):
-                    yi[j] = outy[j]
-
-                # check if we are allowed to increase the t-step
-                # XXX CHECK XXX
-                dt = min(dt*2,dtmax)
+                dt = min(2*dt,maxdt)                
+#                dt = dt if ti+dt <= t else t-ti
             else:
                 dt *= 0.5
-        
+
         if dxdt:
             return (xi,tuple(yi)), self.get_x(t,dxdt=True)
         else:
@@ -655,7 +678,7 @@ class RiemannSurfacePath():
         return x_re, x_im, y_re, y_im
 
 
-    def plot(self, t0=0, t1=1, Npts=64, show_numbers=False, **kwds):
+    def plot(self, t0=0, t1=1, Npts=64, **kwds):
         """
         Plots the path in the complex x- and y-planes.
 
@@ -664,10 +687,6 @@ class RiemannSurfacePath():
         - t0,t1: (default: 0,1) Starting and ending point on the path.
 
         - Npts: (default: 64) Number of interpolating points to plot.
-
-        - show_numbers: (default: False) If true, will plot the index
-        of the points on the path as well. This helps when trying to
-        determine the direction of the path.
 
         - **kwds: additional keywords are sent to
             matplotlib.pyplot.plot()
@@ -678,7 +697,7 @@ class RiemannSurfacePath():
         fig = plt.figure()
 
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
-        C = [Pi for ti,Pi in self._checkpoints.iteritems()]
+        C = [Pi for ti,Pi in self._checkpoints]
 
         # plot chosen interpolating points
         x_ax = fig.add_subplot(1,deg+1,1)
@@ -796,14 +815,26 @@ if __name__=='__main__':
     from sympy.abc import x,y
     from abelfunctions.monodromy import monodromy_graph, show_paths
 
+    # compute f and its derivatives with respect to y along with
+    # additional data
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
     f2 = -x**7 + 2*x**3*y + y**3
-    f = f1
+    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    f4 = y**2 + x**3 - x**2
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+    f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
+    f7 = y**3 - (x**3 + y)**2 + 1
+    f8 = (x**6)*y**3 + 2*x**3*y - 1
+    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+
+    f = f2
 
     print "=== (computing monodromy graph) ==="
+    bpt = 5
     G = monodromy_graph(f,x,y)
-#    path_segments = path_around_branch_point(G,0,1)
-    path_segments = path_around_infinity(G,1)
+    path_segments = path_around_branch_point(G,bpt,1)
+#    path_segments = path_around_infinity(G,1)
 
     print "===   (obtaining base place)    ==="
     base_point = G.node[0]['basepoint']
@@ -814,4 +845,4 @@ if __name__=='__main__':
     gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
 
     print "===        (plotting)           ==="
-    gamma.plot(Npts=128)
+    gamma.plot(Npts=256)
