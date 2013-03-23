@@ -408,7 +408,8 @@ class RiemannSurfacePath():
         self._f = sympy.lambdify((self.x,self.y), self.f, self.types)
         self.dfdx = sympy.lambdify((self.x,self.y), dfdx, self.types)
         self.dfdy = sympy.lambdify((self.x,self.y), dfdy, self.types)
-        self.dfs = [sympy.lambdify((x,y),sympy.diff(f,y,k), self.types) 
+        self.dfs = [sympy.lambdify((self.x,self.y),
+                                   sympy.diff(self.f,self.y,k), self.types) 
                     for k in xrange(self.deg+1)]
 
         # path data
