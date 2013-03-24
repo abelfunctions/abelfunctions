@@ -204,8 +204,6 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
         pi = numpy.pi
 
     ## HACK
-    bpt_index = [n for n,val in G.nodes(data=True) 
-                 if abs(val['value']-bpt) < 1e-15]
     root = G.node[0]['root']
 
     # retreive the vertices between the base point vertex and
@@ -442,7 +440,7 @@ class RiemannSurfacePath():
         tim1 = 0
         Pim1 = self.P0
         for ti in t_pts[1:]:
-            Pi = self.analytically_continue(ti,Npts=4,checkpoint=(tim1,Pim1))
+            Pi = self.analytically_continue(ti,Npts=8,checkpoint=(tim1,Pim1))
             self._checkpoints.append((ti,Pi))
             tim1 = ti
             Pim1 = Pi
@@ -544,7 +542,7 @@ class RiemannSurfacePath():
         return self.analytically_continue(t,dxdt=dxdt)
 
 
-    def analytically_continue(self, t, dxdt=False, Npts=4, checkpoint=None):
+    def analytically_continue(self, t, dxdt=False, Npts=8, checkpoint=None):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point.
