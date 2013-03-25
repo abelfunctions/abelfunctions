@@ -28,13 +28,16 @@ def find_cycle(pi, j):
     if isinstance(pi, list):
         pi = Permutation(pi)
 
-    cycle = [j]
-    k = pi(j)
-    while k != j:
-        cycle.append(k) # update the cycle
-        k = pi(k)       # iterate
-
-    return reorder_cycle(tuple(cycle), min(cycle))
+#     cycle = [j]
+#     k = pi(j)
+#     while k != j:
+#         cycle.append(k) # update the cycle
+#         k = pi(k)       # iterate
+        
+    cycles = pi._cycles
+    for cycle in cycles:
+        if j in cycle:
+            return reorder_cycle(cycle, min(cycle))
 
 
 def smallest(l):
@@ -69,7 +72,7 @@ def reorder_cycle(c, j=None):
     except ValueError:
         raise ValueError("%d does not appear in the cycle %s"%(j,c))
 
-    return [c[k%n] for k in xrange(i,i+n)]   # tuple(...)
+    return [c[k%n] for k in xrange(i,i+n)]
         
 
 
@@ -183,11 +186,11 @@ def tretkoff_table(hurwitz_system):
 
     # the branch points together with their permutations, using the
     # notation of Tretkoff and Tretkoff
-    c = [[ (branch_points[i], find_cycle(monodromy[i],j)) 
+    c = [[ [branch_points[i], find_cycle(monodromy[i],j)] 
            for j in xrange(covering_number) ]
          for i in xrange(t) ]
     
-    # initial construction of first circle: from sheet one go to all
+    # initial construction of first circle: from sheet zero go to all
     # branchpoints on sheet one which are not fixed points
     finished = False
     startseq = []
@@ -197,7 +200,7 @@ def tretkoff_table(hurwitz_system):
         else:
             startseq.append(['stop',c[i][0]])
     
-    # initialize Tretkoff table
+    # initialize Tretkoff table:
     tretkoff = {'C':{0:[[0,[],startseq,[]]]}, 'q':{}, 'p':{}}
     
     # vitied_labels keeps track of which sheets we've already visited
@@ -209,14 +212,19 @@ def tretkoff_table(hurwitz_system):
     used_bpt_labels = [c[i][0] for i in xrange(t)]
     for i in xrange(t):
         for j in xrange(covering_number):
-            if len(c[i][j][1]) == 1: 
+            if len(c[i][j][1]) == 1:
                 used_bpt_labels.append(c[i][j])
-
 
     # Main Loop: 'level' keeps track of which level from the root C0
     # we are on in the graph. 'final_edges' holds the final edges in
     # the graph, as in the notation of [TT]. 'q_edges'....XXXX.
     # 'q_counter' keeps track of the final points
+    #
+    # tretkoff['C'][level] consists of a list of data:
+    #
+    # * level even:
+    #    sheet number, 
+    
     level = 1
     final_edges = []
     q_edges = []
@@ -241,9 +249,9 @@ def tretkoff_table(hurwitz_system):
                 if tretkoff['C'][level-1][i][2] != []:
                     finished = False
                     # sourcelist = vertex at previous level
-                    sourcelist = [item for item in tretkoff['C'][level-1][i]] + []
-                    entry = [[] for _ in xrange(len(sourcelist[2]))]
-#                    entry = []
+                    sourcelist = [n for n in tretkoff['C'][level-1][i]] + []
+#                    entry = [[] for _ in xrange(len(sourcelist[2]))]
+                    entry = []
 
                     # construct a new vertex at thsi level for every
                     # branch leaving the vertex at the previous level
@@ -252,15 +260,14 @@ def tretkoff_table(hurwitz_system):
                         # a2 = originating vertex
                         # a3 = branches to future vertices
                         # a4 = label in the graph
-                        a1 = sourcelist[2][j]
+                        a1 = sourcelist[2][j] + []
                         a2 = sourcelist[0]
                         a3 = []
                         a4 = sourcelist[3] + [j]
 
                         if a1[0] != 'stop':
                             # (order is important)
-                            newlist = reorder_cycle(sourcelist[2][j][1],
-                                                    sourcelist[0])
+                            newlist = reorder_cycle(a1[1],sourcelist[0])
 
                             # for each label in the cycle from the
                             # originating vertex, (which was moved to
@@ -279,6 +286,7 @@ def tretkoff_table(hurwitz_system):
                                 # min spanning tree. determine what
                                 # type of edge it is
                                 else:
+# XXX ?
                                     a3.append(['stop',nlk])
                                     # 'edge' denotes a branch pointing
                                     # at an endpoint of the graph
@@ -290,13 +298,18 @@ def tretkoff_table(hurwitz_system):
                                         # it by a q-endpoint
                                         final_edges.append(edge)
                                         q_edges.append(edge)
-                                        tretkoff['q'][q_counter] = [
-                                            ['stop',nlk],
-                                            a1,
-                                            [],
-                                            a4 + [k-1],
-                                        ]
+                                        l = [['stop',nlk]]
+                                        l.extend(a1)
+                                        l.append([])
+                                        l.append(a4+[k-1])
+                                        tretkoff['q'][q_counter] = l
                                         q_counter += 1
+#                                         tretkoff['q'][q_counter] = [
+#                                             ['stop',nlk],
+#                                             a1,
+#                                             [],
+#                                             a4 + [k-1],
+#                                         ]
                                     else:
                                         # this branch has occured
                                         # before. Find out where and
@@ -308,12 +321,18 @@ def tretkoff_table(hurwitz_system):
                                         # cycle
                                         if edge in q_edges:
                                             p_counter = q_edges.index(edge)
-                                            tretkoff['p'][p_counter] = [
-                                                a1,
-                                                a2,
-                                                a3,
-                                                a4 + [k-1],
-                                            ]
+                                            l = a1
+                                            l.extend(a2)
+                                            l.append(a3)
+                                            l.append(a4+[k-1])
+                                            tretkoff['p'][p_counter] = l
+#                                             tretkoff['p'][p_counter] = [
+#                                                 a1,
+#                                                 a2,
+#                                                 a3,
+#                                                 a4 + [k-1],
+#                                             ]
+
                                         #endif edge in q_edges
                                     #endif edge not in final_edges
                                 #endif newlist[k] not in used_sheets labels
@@ -321,13 +340,13 @@ def tretkoff_table(hurwitz_system):
                         #endif a1[0] != 'stop'
 
                         # create the new vertex
-                        entry[j] = [item for item in [a1,a2,a3,a4]]
-#                        entry.append([a1,a2,a3,a4])
-#                        assert len(entry) == len(sourcelist[2])
+#                        entry[j] = [item for item in [a1,a2,a3,a4]]
+                        entry.append([a1,a2,a3,a4])
 
                     #endfor j in range(len(sourcelist)
 
                     # add / replace the new vertex to the graph
+                    assert len(entry) == len(sourcelist[2])
                     tretkoff['C'][level][i] = [item for item in entry]
 
                 #endif tretkoff['C'][level-1][i][2] != []:
@@ -397,12 +416,18 @@ def tretkoff_table(hurwitz_system):
                                         # it by a q-endpoint
                                         final_edges.append(edge)
                                         if len(ckb1[1]) != 1:
-                                            tretkoff['q'][q_counter] = [
-                                                ['stop',ckb1],
-                                                b1,
-                                                [],
-                                                b4 + [k-startingindex],
-                                            ]
+                                            l = [['stop',ckb1]]
+                                            l.append(b1)
+                                            l.append([])
+                                            l.append(b4+[k-startingindex])
+
+#                                             tretkoff['q'][q_counter] = [
+#                                                 ['stop',ckb1],
+#                                                 b1,
+#                                                 [],
+#                                                 b4 + [k-startingindex],
+#                                             ]
+                                            tretkoff['q'][q_counter] = l
                                             q_edges.append(edge)
                                             q_counter += 1
                                     else:
@@ -416,12 +441,17 @@ def tretkoff_table(hurwitz_system):
                                         # cycle
                                         if edge in q_edges:
                                             p_counter = q_edges.index(edge)
-                                            tretkoff['p'][p_counter] = [
-                                                b1,
-                                                b2,
-                                                b3,
-                                                b4 + [k-startingindex],
-                                            ]
+                                            l = [b1]
+                                            l.extend(b2)
+                                            l.append(b3)
+                                            l.append(b4 + [k-startingindex])
+#                                             tretkoff['p'][p_counter] = [
+#                                                 b1,
+#                                                 b2,
+#                                                 b3,
+#                                                 b4 + [k-startingindex],
+#                                             ]
+                                            tretkoff['p'][p_counter] = l
                                         #fi
                                     #fi
                                 #fi
@@ -448,12 +478,19 @@ def tretkoff_table(hurwitz_system):
                                         # it by a q-endpoint
                                         final_edges.append(edge)
                                         if len(ckb1[1]) != 1:
-                                            tretkoff['q'][q_counter] = [
-                                                ['stop',ckb1],
-                                                b1,
-                                                [],
-                                                b4 + [k+t-startingindex],
-                                            ]
+                                            l = [['stop',ckb1]]
+                                            l.append(b1)
+                                            l.append([])
+                                            l.append(b4+[k+t-startingindex])
+
+#                                             tretkoff['q'][q_counter] = [
+#                                                 ['stop',ckb1],
+#                                                 b1,
+#                                                 [],
+#                                                 b4 + [k+t-startingindex],
+#                                             ]
+                                            tretkoff['q'][q_counter] = l
+
                                     else:
                                         # this branch has occured
                                         # before. find out where and
@@ -464,12 +501,19 @@ def tretkoff_table(hurwitz_system):
                                         # lead to a cycle
                                         if edge in q_edges:
                                             p_counter = q_edges.index(edge)
-                                            tretkoff['p'][p_counter] = [
-                                                b1,
-                                                b2,
-                                                b3,
-                                                b4 + [k+t-startingindex],
-                                            ]
+                                            l = [b1]
+                                            l.extend(b2)
+                                            l.append(b3)
+                                            l.append(b4 + [k+t-startingindex])
+
+#                                             tretkoff['p'][p_counter] = [
+#                                                 b1,
+#                                                 b2,
+#                                                 b3,
+#                                                 b4 + [k+t-startingindex],
+#                                             ]
+                                            tretkoff['p'][p_counter] = l
+
                                         #end if edge in q_edge
                                     #end if edge not in final_edges
                                 #end if ckb1 not in used_bpt_labels
