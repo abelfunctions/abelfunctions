@@ -156,6 +156,121 @@ def frobenius_transform(A,g):
     return alpha
         
 
+def tretkoff_graph(hurwitz_system):
+    """
+    """
+    base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
+    covering_number = len(base_sheets)
+    t = len(branch_points)
+    
+    # initialize graph
+    C = nx.DiGraph()
+    C.add_node((0,0))
+    C.node[(0,0)]['final'] = False
+
+    # collect all of the nodes that we must visit
+    unused_sheet_labels = range(covering_number)
+    unused_sheet_labels.remove(0)
+    unused_branch_point_labels = [ 
+        (branch_points[i], find_cycle(monodromy[i],j)) 
+        for j in xrange(covering_number)
+        for i in xrange(t)
+        ]
+
+    # breadth-first graph growing
+    level = 1
+    while len(unused_sheet_labels) + len(unused_branch_point_labels) != 0:
+        # get all endpoints
+        endpoints = [n for n in C.nodes() 
+                     if len(C.successors(n)) == 0 and not C.node[n]['final']]
+        for node in endpoints:
+            # if odd level: 
+            #
+            # node = (n,k)
+            #
+            # add branch points (bpt,pi) where pi is the cycle of the
+            # permutation at bpt containing the node sheet.
+            if level % 2:
+                n,k = node
+
+                # for each branch point, find the branch point labels
+                # with permutations containing sheet n and add an
+                # appropriate (bpt,pi) edge. Note that pi is reordered
+                # such that n appears first.
+                for i in xrange(t):
+                    bpt = branch_points[i]
+                    pi  = find_cycle(monodromy[i],n)
+
+                    # remove the node from the unused branch point
+                    # labels list if we haven't used it yet
+                    if (bpt,pi) in unused_branch_point_labels:
+                        unused_branch_point_labels.remove((bpt,pi))
+
+                    # we store cycles associated with the node n such
+                    # that n appears first in the cycle
+                    pi = tuple(reorder_cycle(pi,n))
+
+                    # finally, add the edge. if the corresponding permutation
+                    # is the identity then add the "final" marker to the
+                    # node
+                    C.add_edge(node,(bpt,pi))
+                    if len(pi) == 1:
+                        C.node[(bpt,pi)]['final'] = True
+                    else:
+                        C.node[(bpt,pi)]['final'] = False
+                        
+
+            # if even level:
+            #
+            # node = (bpt,pi)
+            #
+            # add sheets (n,k) where n is the sheet and k is number of
+            # times one need to go around bpt in order to get to sheet
+            # n. Also simply the index of n in pi after reordering
+            # such that the predecessor of (bpt,p1) occurs first in
+            # the permutation
+            else:
+                bpt,pi = node
+
+                # for each sheet appearing in the cycle corresponding to
+                # chosen branch point, add a node containing the sheet
+                # as well as the number of times one must go around the
+                # branch point in order to get to this sheet.
+                for k in xrange(1,len(pi)):
+                    n = pi[k]
+                    
+                    # remove the sheet from the unused sheet list if
+                    # we haven't visited the sheet yet and add the
+                    # edge to the graph. If, on the other hand, it has
+                    # been used, then mark the node as "final"
+                    if n in unused_sheet_labels:
+                        unused_sheet_labels.remove(n)
+                        C.add_edge(node,(n,k))
+                        C.node[(n,k)]['final'] = False
+                    else:
+                        C.node[(n,k)]['final'] = True
+
+                    # add the directed edge to the graph
+                    
+        
+        # increment the level
+        level += 1
+
+
+#     # by now we have a non-tree that connects every sheet to every other
+#     # sheet by means of the branch point. We compute the minimal spanning 
+#     # tree and build the p and q paths by looking at which edges were
+#     # removed from the original graph
+#     S = nx.bfs_tree(C,(0,0)) # min spanning tree
+#     removed_edges = [edge for edge in C if edge not in S.edges()]
+#     for edge in removed_edges:
+        
+
+    return C,S
+    
+
+
+
 
 def tretkoff_table(hurwitz_system):
     """
@@ -174,9 +289,6 @@ def tretkoff_table(hurwitz_system):
     - a Tretkoff table encoding the c-cycle data.
     """
     base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
-    
-    # XXX USE BRANCH POINT INDICES INSTEAD FOR EASE OF READNIG XXX
-    #branch_points = range(len(branch_points))
 
     # the number of sheets of the Riemann surface
     covering_number = len(base_sheets)
@@ -191,8 +303,7 @@ def tretkoff_table(hurwitz_system):
          for i in xrange(t) ]
     
     # initial construction of first circle: from sheet zero go to all
-    # branchpoints on sheet one which are not fixed points
-    finished = False
+    # branchpoints on sheet zero which are not fixed points
     startseq = []
     for i in xrange(t):
         if len(c[i][0][1]) != 1:
@@ -206,7 +317,7 @@ def tretkoff_table(hurwitz_system):
     # vitied_labels keeps track of which sheets we've already visited
     used_sheet_labels = [0]
     
-    # used_bpt_labels keepst rack of which preimages of branch points
+    # used_bpt_labels keeps track of which preimages of branch points
     # (cycles) we've used already. this includes one cycles, which are
     # terminal points
     used_bpt_labels = [c[i][0] for i in xrange(t)]
@@ -215,333 +326,306 @@ def tretkoff_table(hurwitz_system):
             if len(c[i][j][1]) == 1:
                 used_bpt_labels.append(c[i][j])
 
-    # Main Loop: 'level' keeps track of which level from the root C0
+    # Main Loop: 'level' keeps track of which level from the root C[0]
     # we are on in the graph. 'final_edges' holds the final edges in
-    # the graph, as in the notation of [TT]. 'q_edges'....XXXX.
+    # the graph, as in the notation of [TT]. 
     # 'q_counter' keeps track of the final points
     #
     # tretkoff['C'][level] consists of a list of data:
     #
     # * level even:
-    #    sheet number, 
-    
+    #    sheet number,     
     level = 1
     final_edges = []
     q_edges = []
     q_counter = 0
+    finished = False
     while not finished:
         finished = True
-        # previous = number of branches from the previous level to the
-        # current level
+
+        # previous = number of branches from the previous level
+        # pointing to this level. the number of vertices at this level
+        # equals the number of branches originating at the previous
+        # level and pointing to this level
         previous = len(tretkoff['C'][level-1])
+        tretkoff['C'][level] = [[]]*previous
         
-        # odd levels correspond to sheets
-        if (level % 2):
-            # number of vertices at this level equals the number of
-            # branches originating at the previous level and pointing
-            # to this level
-            tretkoff['C'][level] = [[] for _ in xrange(previous)]
+        # odd levels correpond to sheets
+        if level % 2:
             for i in xrange(previous):
                 # it's possible that a vertex at the previous level
-                # doesn't point to this level. This occurs in the case
-                # when the vertex is a final vertex. In that case,
-                # nothing corresponds to that vertex at this level.
-                if tretkoff['C'][level-1][i][2] != []:
+                # doesn't point to this level. (i.e. it's a final
+                # vertex). In that case, nothing corresponds to that
+                # vertex at this level
+                verts_to_here = tretkoff['C'][level-1][i][2]
+                if verts_to_here != []:
                     finished = False
-                    # sourcelist = vertex at previous level
-                    sourcelist = [n for n in tretkoff['C'][level-1][i]] + []
-#                    entry = [[] for _ in xrange(len(sourcelist[2]))]
+
+                    # sourcelist = vertex at the previous level
+                    sourcelist = [src for src in tretkoff['C'][level-1][i]]
                     entry = []
 
-                    # construct a new vertex at thsi level for every
-                    # branch leaving the vertex at the previous level
+                    # constuct a new vertex at this level for every branch
+                    # leaving the vertex at the previous level
                     for j in xrange(len(sourcelist[2])):
                         # a1 = new vertex
                         # a2 = originating vertex
                         # a3 = branches to future vertices
-                        # a4 = label in the graph
-                        a1 = sourcelist[2][j] + []
+                        # a4 = label in the graph. Which path to follow
+                        # starting from the root to get here.
+                        a1 = sourcelist[2][j]
                         a2 = sourcelist[0]
                         a3 = []
-                        a4 = sourcelist[3] + [j]
+                        a4 = [node for node in sourcelist[3]]
+                        a4.append(j)
 
+                        # if the new vertex is not final: then add the
+                        # appropriate sheets
                         if a1[0] != 'stop':
-                            # (order is important)
-                            newlist = reorder_cycle(a1[1],sourcelist[0])
+                            # reorder the cycle such that the
+                            # originating sheet number, a2, appears
+                            # first in the cycle / permutation
+                            # appearing in branch point a1
+                            newlist = reorder_cycle(a1[1],a2)
 
                             # for each label in the cycle from the
-                            # originating vertex, (which was moved to
-                            # the front of the cycle) check if we need
-                            # to add an edge to the graph.
-                            for k in range(1,len(newlist)):
+                            # originating vertex check if we need to
+                            # add an edge to the graph
+                            for k in xrange(1,len(newlist)):
                                 nlk = newlist[k]
-                                # sheet has not been visited. add it
-                                # to the min spanning tree
+
                                 if nlk not in used_sheet_labels:
+                                    # the sheet corresponding to moving around
+                                    # the branch point k times has not been
+                                    # visited yet.  update the "branches to
+                                    # future vertices list.
                                     a3.append(nlk)
                                     used_sheet_labels.append(nlk)
-                                # sheet has been visited. this means
-                                # that we would be adding an edge that
-                                # we would otherwise take out of the
-                                # min spanning tree. determine what
-                                # type of edge it is
                                 else:
-# XXX ?
+                                    # this sheet as already been
+                                    # visited. mark this vertex as
+                                    # final (using stop). also, check
+                                    # if the corresponding edge is a
+                                    # q-edge or a p-edge
                                     a3.append(['stop',nlk])
-                                    # 'edge' denotes a branch pointing
-                                    # at an endpoint of the graph
-                                    edge = [nlk,a1]
+                                    edge = (nlk,a1)
+
                                     if edge not in final_edges:
-                                        # it's the first time this
-                                        # edge occurs: add it to the
-                                        # list of final edges and mark
-                                        # it by a q-endpoint
+                                        # add a q-edge
                                         final_edges.append(edge)
                                         q_edges.append(edge)
-                                        l = [['stop',nlk]]
-                                        l.extend(a1)
-                                        l.append([])
-                                        l.append(a4+[k-1])
-                                        tretkoff['q'][q_counter] = l
+                                        tretkoff['q'][q_counter] = [
+                                            ['stop',nlk],
+                                            a1,
+                                            [],
+                                            a4 + [k-1]
+                                            ]
                                         q_counter += 1
-#                                         tretkoff['q'][q_counter] = [
-#                                             ['stop',nlk],
-#                                             a1,
-#                                             [],
-#                                             a4 + [k-1],
-#                                         ]
                                     else:
-                                        # this branch has occured
-                                        # before. Find out where and
-                                        # give it the corresponding
-                                        # p-endpoint. If this is
-                                        # possible it only occured
-                                        # because of a final edge
-                                        # which does not lead to a
-                                        # cycle
                                         if edge in q_edges:
+                                            # add a p-edge
                                             p_counter = q_edges.index(edge)
-                                            l = a1
-                                            l.extend(a2)
-                                            l.append(a3)
-                                            l.append(a4+[k-1])
-                                            tretkoff['p'][p_counter] = l
-#                                             tretkoff['p'][p_counter] = [
-#                                                 a1,
-#                                                 a2,
-#                                                 a3,
-#                                                 a4 + [k-1],
-#                                             ]
+                                            tretkoff['p'][p_counter] = [
+                                                a1,
+                                                a2,
+                                                a3,
+                                                a4 + [k-1]
+                                                ]
+                            
+#                             print "=== level, j,k =", level, j, k
+#                             for key,val in tretkoff['p'].iteritems():
+#                                 print key
+#                                 print val
+#                             print "================"
 
-                                        #endif edge in q_edges
-                                    #endif edge not in final_edges
-                                #endif newlist[k] not in used_sheets labels
-                            #endfor k in range(1,len(newlist))
-                        #endif a1[0] != 'stop'
-
-                        # create the new vertex
-#                        entry[j] = [item for item in [a1,a2,a3,a4]]
+                        # create a new vertex
                         entry.append([a1,a2,a3,a4])
 
-                    #endfor j in range(len(sourcelist)
+                    # add the vertex "entry" to the graph
+                    tretkoff['C'][level][i] = entry
+                    
 
-                    # add / replace the new vertex to the graph
-                    assert len(entry) == len(sourcelist[2])
-                    tretkoff['C'][level][i] = [item for item in entry]
-
-                #endif tretkoff['C'][level-1][i][2] != []:
-            #endfor i in xrange(previous)
-        #endif (level % 2)
+        # event levels correspond to pre-images of branch points
         else:
-            # even levels correspond to pre-images of branch points:
-            # number of vertices at this level equals the number of
-            # branches originating at the previous level and point to
-            # this level
-            tretkoff['C'][level] = [[] for _ in xrange(previous)]
             for i in xrange(previous):
                 # it's possible that a vertex at the previous level
-                # doesn't point to this level, i.e. it is a final
-                # vertex. in that case, nothing corresponds to that
-                # vetex at this level.
-                if tretkoff['C'][level-1][i][2] != []:
+                # doesn't point to this level. (i.e. it's a final
+                # vertex). In that case, nothing corresponds to that
+                # vertex at this level
+                verts_to_here = tretkoff['C'][level-1][i][2]
+                if verts_to_here != []:
                     finished = False
-                    # sourcelist = vertex at previous level
-                    sourcelist = tretkoff['C'][level-1][i] + []
-                    # construct a new vertex at this level for every
-                    # branch leaving the vertex at the previous level
-                    entry = [[] for _ in xrange(len(sourcelist[2]))]
-#                    entry = []
+
+                    # sourcelist = vertex at the previous level
+                    sourcelist = [src for src in tretkoff['C'][level-1][i]]
+                    entry = []
+
+                    # constuct a new vertex at this level for every branch
+                    # leaving the vertex at the previous level
                     for j in xrange(len(sourcelist[2])):
                         # b1 = new vertex
                         # b2 = originating vertex
-                        # b3 = branches for future 
-                        # b4 = level in the graph. which path to
-                        #      follow starting form the root to 
-                        #      get here
+                        # b3 = branches to future vertices
+                        # b4 = label in the graph. Which path to follow
+                        # starting from the root to get here.
                         b1 = sourcelist[2][j]
                         b2 = sourcelist[0]
                         b3 = []
-                        b4 = sourcelist[3] + [j]
-                        
-                        # Note: the order in whihc the sheets are
-                        # visited is important. it is obviously given
-                        # by the monodromy permutation related to each
-                        # branch oint. as a consequence, the following
-                        # is split into two parts which need to be
-                        # done in order: first the sheets that are
-                        # next in the permutation, then the sheets in
-                        # the permutation preceeding the current one
-#                        if b1[0] != 'stop':                        
-                        if not isinstance(b1,list):
-                            startingindex = branch_points.index(b2[0])
-                            for k in range(startingindex+1,t):
-                                ckb1 = c[k][b1]
-                                if ckb1 not in used_bpt_labels:
-                                    # the preimage of the branchpoint
-                                    # has not been used. add it.
-                                    if len(ckb1[1]) != 1:
-                                        b3.append(ckb1)
-                                        used_bpt_labels.append(ckb1)
-                                else:
-                                    # the preimage of the branchpoint
-                                    # has been used.
-                                    b3.append(['stop',ckb1])
-                                    # 'edge' denotes a branch pointing
-                                    # at an endpoint on the graph
-                                    edge = [b1,ckb1]
-                                    if edge not in final_edges:
-                                        # it's the first time this
-                                        # edge occurs: add it tothe
-                                        # list of final edges and mark
-                                        # it by a q-endpoint
-                                        final_edges.append(edge)
-                                        if len(ckb1[1]) != 1:
-                                            l = [['stop',ckb1]]
-                                            l.append(b1)
-                                            l.append([])
-                                            l.append(b4+[k-startingindex])
+                        b4 = [node for node in sourcelist[3]]
+                        b4.append(j)
 
-#                                             tretkoff['q'][q_counter] = [
-#                                                 ['stop',ckb1],
-#                                                 b1,
-#                                                 [],
-#                                                 b4 + [k-startingindex],
-#                                             ]
-                                            tretkoff['q'][q_counter] = l
+
+                        # Note: the order in which the sheets are visited is
+                        # important. It is obviously given by the monodromy
+                        # permutation related to each branch point. As a
+                        # consequnce, the following is split into two parts
+                        # which need to be done in order: first, the sheets
+                        # that are next in the permutation, then the sheets in
+                        # the permuration preceeding the current one.
+
+                        # XXX Stupid Maple syntax. Just making sure
+                        if isinstance(b1,list):
+                            stopping = True if b1[0] == 'stop' else False
+                        else:
+                            stopping = True if b1 == 'stop' else False
+
+                        if not stopping:
+                            # find the index of the branch point and, for each
+                            # following branch point, check if the branch
+                            # point has already been used
+                            starting_index = branch_points.index(b2[0])
+                            for k in xrange(starting_index+1,t):
+                                ckb1 = c[k][b1]
+
+                                if ckb1 not in used_bpt_labels:
+                                    # the pre-image of the branch point has
+                                    # not been used. add to the list of future
+                                    # vertices and update the used bpt list
+                                    b3.append(ckb1)
+                                    used_bpt_labels.append(ckb1)
+                                else:
+                                    # the pre-image of the branch
+                                    # point *has* been used. mark this
+                                    # vertex as final (using
+                                    # 'stop'). also, check if the
+                                    # corresp.  edge is a q-edge or a
+                                    # p-edge
+                                    b3.append(['stop',ckb1])
+                                    edge = (b1,ckb1)
+
+                                    if edge not in final_edges:
+                                        # add a q-edge
+                                        final_edges.append(edge)
+
+                                        if len(ckb1[1]) != 1:
+                                            # if the branch point is not a
+                                            # final vertex (in that its
+                                            # permutation is not the
+                                            # identity), then add to the
+                                            # q-list
+                                            tretkoff['q'][q_counter] = [
+                                                ['stop',ckb1],
+                                                b1,
+                                                [],
+                                                b4 + [k-starting_index]
+                                                ]
                                             q_edges.append(edge)
                                             q_counter += 1
                                     else:
-                                        # this branch has occured
-                                        # before. find out where and
-                                        # give it the corresponding
-                                        # p-endpoint. if this is
-                                        # possible, it only occured
-                                        # because of a final edge
-                                        # which does not lead to a
-                                        # cycle
                                         if edge in q_edges:
+                                            # add a p-edge
                                             p_counter = q_edges.index(edge)
-                                            l = [b1]
-                                            l.extend(b2)
-                                            l.append(b3)
-                                            l.append(b4 + [k-startingindex])
-#                                             tretkoff['p'][p_counter] = [
-#                                                 b1,
-#                                                 b2,
-#                                                 b3,
-#                                                 b4 + [k-startingindex],
-#                                             ]
-                                            tretkoff['p'][p_counter] = l
-                                        #fi
-                                    #fi
-                                #fi
-                            #od
-                            for k in xrange(startingindex):
+                                            tretkoff['p'][p_counter] = [
+                                                b1,
+                                                b2,
+                                                b3,
+                                                b4 + [k-starting_index]
+                                                ]
+
+                            # now attack branch points preceeding the
+                            # current one
+                            for k in xrange(starting_index):
                                 ckb1 = c[k][b1]
+
                                 if ckb1 not in used_bpt_labels:
-                                    # the preimage of the branchpoint
-                                    # has not been used
-                                    if len(ckb1[1]) != 1:
-                                        b3.append(ckb1)
-                                        used_bpt_labels.append(ckb1)
+                                    # the pre-image of the branch point has
+                                    # not been used. add to the list of future
+                                    # vertices and update the used bpt list
+                                    b3.append(ckb1)
+                                    used_bpt_labels.append(ckb1)
                                 else:
-                                    # the primeage of the branchpoint
-                                    # has been used
-                                    b3.append(['stop', ckb1])
-                                    # 'edge' denotes a branch pointing
-                                    # at an endpoint of the graph
-                                    edge = [b1, ckb1]
+                                    # the pre-image of the branch
+                                    # point *has* been used. mark this
+                                    # vertex as final (using
+                                    # 'stop'). also, check if the
+                                    # corresp.  edge is a q-edge or a
+                                    # p-edge
+                                    b3.append(['stop',ckb1])
+                                    edge = (b1,ckb1)
+
                                     if edge not in final_edges:
-                                        # it's the first time this
-                                        # edge occurs: add it to the
-                                        # list of final edges and mark
-                                        # it by a q-endpoint
+                                        # add a q-edge
                                         final_edges.append(edge)
+
                                         if len(ckb1[1]) != 1:
-                                            l = [['stop',ckb1]]
-                                            l.append(b1)
-                                            l.append([])
-                                            l.append(b4+[k+t-startingindex])
-
-#                                             tretkoff['q'][q_counter] = [
-#                                                 ['stop',ckb1],
-#                                                 b1,
-#                                                 [],
-#                                                 b4 + [k+t-startingindex],
-#                                             ]
-                                            tretkoff['q'][q_counter] = l
-
+                                            # if the branch point is not a
+                                            # final vertex (in that its
+                                            # permutation is not the
+                                            # identity), then add to the
+                                            # q-list
+                                            tretkoff['q'][q_counter] = [
+                                                ['stop',ckb1],
+                                                b1,
+                                                [],
+                                                b4 + [k+t-starting_index]
+                                                ]
+                                            q_edges.append(edge)
+                                            q_counter += 1
                                     else:
-                                        # this branch has occured
-                                        # before. find out where and
-                                        # give it the corresponding
-                                        # p-endpoint. If is possible,
-                                        # it only occured becuase of a
-                                        # final edge which does not
-                                        # lead to a cycle
                                         if edge in q_edges:
+                                            # add a p-edge
                                             p_counter = q_edges.index(edge)
-                                            l = [b1]
-                                            l.extend(b2)
-                                            l.append(b3)
-                                            l.append(b4 + [k+t-startingindex])
+                                            tretkoff['p'][p_counter] = [
+                                                b1,
+                                                b2,
+                                                b3,
+                                                b4 + [k+t-starting_index]
+                                                ]
 
-#                                             tretkoff['p'][p_counter] = [
-#                                                 b1,
-#                                                 b2,
-#                                                 b3,
-#                                                 b4 + [k+t-startingindex],
-#                                             ]
-                                            tretkoff['p'][p_counter] = l
+#                                             print "\t=== p_ctr =", p_counter
+#                                             print "\t=== t['p'] ="
+#                                             print tretkoff['p']
 
-                                        #end if edge in q_edge
-                                    #end if edge not in final_edges
-                                #end if ckb1 not in used_bpt_labels
-                            #od
-                        #fi
+#                             print "=== level, j,k =", level, j, k
+#                             for key,val in tretkoff['p'].iteritems():
+#                                 print key
+#                                 print val
+#                             print "==============="
+
+
                         # create a new vertex
-                        entry[j] = [item for item in [a1,a2,a3,a4]]
-#                        entry.append([a1,a2,a3,a4])
-#                        assert len(entry) == len(sourcelist[2])
-                    #od
-                    # add the new vertex to the graph
-                    tretkoff['C'][level][i] = [item for item in entry]
-                #fi 
-            #od 
-        #fi 
-        # don't bunch the vertices together according
-        # to their origin. All vertices are treated equal.
-        # i.e. flatten the list
-        tretkoff['C'][level] = [vertex for vertex_list in tretkoff['C'][level]
-                                for vertex in vertex_list]
+                        entry.append([b1,b2,b3,b4])
+
+                    # add the vertex "entry" to the graph
+                    tretkoff['C'][level][i] = entry
+
+
+        # don't bunch the vertices together according to their origin.
+        # all vertices are treated equal. (i.e. flatten the list of
+        # new vertices)
+        vertices = tretkoff['C'][level]
+        tretkoff['C'][level] = [item for sublist in vertices
+                                for item in sublist]
         level += 1
-    #od
-    # How many levels with new information are there? This excludes the last
-    # level which contains only final points.
-    tretkoff['depth'] = level - 2
-    
-    # How many cycles are generated by the spanning tree?
+            
+
+    # how many levels of new information are there? this excludes the
+    # last level which only contains the final points.
+    tretkoff['depth'] = level-2
+
+    # how many cycles are generated by the spanning tree?
     tretkoff['numberofcycles'] = q_counter
+
     return tretkoff
 
 
@@ -837,7 +921,6 @@ if __name__=='__main__':
 
 
     f = f2
-
     hom = homology(f,x,y)
     for key,value in hom.iteritems():
         print key
