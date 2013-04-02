@@ -216,9 +216,10 @@ deriv_prod(double* dpr, double* dpi,
            int g)
 {
 
-    double nmintshift[g];
-    double term_real, term_imag;
+    double *nmintshift;
+    nmintshift = (double*)malloc(g*sizeof(double));
 
+    double term_real, term_imag;
     //Note that total_real + total_imag*i = 1 + 0i = 1
     double total_real = 1;
     double total_imag = 0;
@@ -317,9 +318,6 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     intshift = (double*)malloc(g*sizeof(double));
     fracshift = (double*)malloc(g*sizeof(double));
 
-    // shift = Yinv*y;
-    // intshift = round(shift)
-    // fracshift = shift - intshift
     double sum;
     for (k = 0; k < g; k++) {
         sum = 0;
