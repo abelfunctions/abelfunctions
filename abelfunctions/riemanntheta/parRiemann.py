@@ -1,6 +1,6 @@
 """
 Grady Williams
-January 3, 2013
+April 1, 2013
 
 Parallel program for computing the value of the Riemann Theta Function at 
 multiple points. Returns a list of complex values.
@@ -23,7 +23,7 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
 
-def compute_v(X, Yinv, T, Z, S, g):
+def compute_v(X, Yinv, T, Z, S, g, derivs = False, nderivs = 0, derivs = np.zeros(1)):
     S = np.array(S)
     x = Z.real
     y = Z.imag
@@ -35,6 +35,10 @@ def compute_v(X, Yinv, T, Z, S, g):
     S = np.require(S, dtype = np.double, requirements=['A','W','O','C'])
     x = np.require(x, dtype = np.double, requirements=['A','W','O','C'])
     y = np.require(y, dtype = np.double, requirements=['A','W','O','C'])
+    if (derivs):
+        deriv_real = np.require(derivs.real, dtype = np.double, requirements=['A','W','O', 'C'])
+        deriv_imag = np.require(derivs.imag, dtype = np.double, requirements=['A', 'W', 'O', 'C'])
+        nderivs = np.double(nderivs)
 
     #Number of integer points to sum over
     N = S.size/g
@@ -56,11 +60,14 @@ def compute_v(X, Yinv, T, Z, S, g):
     xd = cuda.mem_alloc(x.nbytes)
     yd = cuda.mem_alloc(y.nbytes)
     Sd = cuda.mem_alloc(S.nbytes)
+    if (derivs):
+        deriv_reald = cuda.mem_alloc(deriv_real.nbytes)
+        deriv_imagd = cuda.mem_alloc(deriv_imag.nbytes)
     
     #Prepare the first kernel for execution
     TILEHEIGHT = 32
     TILEWIDTH = 16
-    partial_sums, Xd, Yinvd, Td  = func1(TILEWIDTH, TILEHEIGHT, g)
+    partial_sums, partial_sums_derivs, Xd, Yinvd, Td  = func1(TILEWIDTH, TILEHEIGHT, g)
     reduction = func2()
     BLOCKSIZE = (TILEWIDTH, TILEHEIGHT, 1)
     GRIDSIZE = (N//TILEWIDTH + 1,K//TILEHEIGHT + 1, 1)
@@ -80,16 +87,20 @@ def compute_v(X, Yinv, T, Z, S, g):
     K = np.int32(K)
     g = np.int32(g)
     
-    partial_sums(fsum_reald, fsum_imagd, xd, yd, Sd, g, N, K,
-         block = BLOCKSIZE,
-         grid = GRIDSIZE
-         )
-
+    if (not derivs):
+        partial_sums(fsum_reald, fsum_imagd, xd, yd, Sd, g, N, K,
+                     block = BLOCKSIZE,
+                     grid = GRIDSIZE
+                     )
+    else:
+        partial_sums_derivs(fsum_reald, fsum_imagd, deriv_reald, deriv_imagd, nderivs, xd, yd, Sd, g, N, K,
+                     block = BLOCKSIZE,
+                     grid = GRIDSIZE
+                     )        
     cuda.Context.synchronize()
     
     """
     Now we perform GPU sum reduction on the imaginary and real parts
-    TEST
     """
     out_real = cuda.mem_alloc(fsum_real.nbytes)
     out_imag = cuda.mem_alloc(fsum_imag.nbytes)
@@ -243,9 +254,80 @@ __device__ double exppart(int g, double* Sd_s,
   return 2 * M_PI * exppart;
 }
 
+/**********************************************************************
+
+Derivative Product
+
+Computes: 
+                   ___
+                   | |    2*pi*I <d, n-intshift>
+	           | |
+	       d in derivs
+
+=                  ___
+                   | |    2*pi*I <d, n-round(shift)>
+	           | |
+	       d in derivs
+=                  ___
+                   | |    2*pi*I <d, n-round(Yinv*y)>
+	           | |
+	       d in derivs
+************************************************************************/
+__device__ double deriv_prod(int g, double* Sd_s, double* yd_s, double* dpr, double* dpi,
+                             double* deriv_real, double* deriv_imag, int nderivs)
+{
+  int tdx = threadIdx.x;
+  int tdy = threadIdx.y;
+
+  double total_real = 1;
+  double total_imag = 0;
+
+  int i,j,k;
+  for (i = 0; i < nderivs; i++){
+    term real = 0;
+    term imag = 0;
+    for (j = 0; j < g; j++){
+      double intshift_i = 0;
+      for (k = 0; k < g; k++){
+        shift += Yinvd[i*g + k] * yd_s[ty*g + k];
+      }
+      intshift = round(shift);
+      nmintshift = Sd_s[tx*g + j] - intshift;
+      term_real += deriv_real[j + g*i] * nmintshift;
+      term_imag += deriv_imag[j + g*i] * nmintshift;
+    }
+  
+    total_real = total_real * term_real - total_imag * term_imag;
+    total_imag = total_real * term_imag + total_imag * term_real;
+  }
+  
+    //Computes: (2*pi*i)^(nderivs) * (total_real + total_imag*i)
+    double pi_mult = pow(2*M_PI, nderivs);
+    /*Determines what the result of i^nderivs is, and performs the 
+      correct multiplication afterwards.*/
+    if (nderivs % 4 == 0) {
+        dpr[0] = pi_mult*total_real;
+        dpi[0] = pi_mult*total_imag;
+    }
+    else if (nderivs % 4 == 1) {
+        dpr[0] = -pi_mult * total_imag;
+        dpi[0] = pi_mult * total_real;
+    }
+    else if (nderivs % 4 == 2) {
+        dpr[0] = -pi_mult * total_real;
+	dpi[0] = -pi_mult * total_imag;
+    }
+    else if (nderivs % 4 == 3) {
+        dpr[0] = pi_mult * total_imag;
+        dpi[0] = -pi_mult * total_real;
+    }
+}
+
+
+
 /***********************************************************************
 
-Kernel Function
+Finite Sum Without Derivatives Kernel Function
 
 ************************************************************************/
 __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
@@ -296,10 +378,70 @@ __global__ void riemann_theta(double* fsum_reald, double* fsum_imagd,
   }
 }
 
+/************************************************************************************
+
+Finite Sum with Derivatives Kernel Function
+
+************************************************************************************/
+__global__ void riemann_theta_derivatives(double* fsum_reald, double* fsum_imagd,
+		      double* xd, double* yd, double* Sd, double* deriv_real,
+		      double* deriv_imag, int nderivs, int g, int N, int K)
+{
+  /*Built in variables to be used, br is block row, bc is
+  block column, and similiarly for tr and tc.*/
+  int bx = blockIdx.x;
+  int by = blockIdx.y;
+  int tx = threadIdx.x;
+  int ty = threadIdx.y;
+
+  __shared__ double Sd_s[TILEWIDTH * GENUS];
+  __shared__ double xd_s[TILEHEIGHT * GENUS];
+  __shared__ double yd_s[TILEHEIGHT * GENUS];
+
+  /*Determine n_1, the start of the summation vector,
+  the full vector is of the form n_1, n_2, ..., n_g*/
+  int n_start = (bx * TILEWIDTH + tx) * g;
+  /*Now n = S[n_start], S[n_start + 1], ..., S[n_start + (g - 1)]*/
+
+  /*Determine z the point of evaluation*/
+  int z_start = (by * TILEHEIGHT + ty) * g;
+  /*Now x = (x[z_start], x[z_start + 1], ... , x[z_start + (g-1)],
+  and similiarly for y.*/
+
+  /*Load data into shared arrays*/
+  int i;
+  for (i = 0; i < g; i++) {
+    Sd_s[tx*g + i] = Sd[n_start + i];
+    xd_s[ty*g + i] = xd[z_start + i];
+    yd_s[ty*g + i] = yd[z_start + i];
+  }
+
+  __syncthreads();
+
+  if (n_start < N*g && z_start < K*g) {
+    /*Compute the "cosine" and "sine" parts of the summand*/
+    double dpr[0];
+    double dpi[0];
+    dpr[0] = 0;
+    dpi[0] = 0;
+    double ept, npt, cpt, spt;
+    ept = exppart(g,Sd_s, xd_s, yd_s);
+    npt = exp(normpart(g, Sd_s, yd_s));
+    cpt = npt * cos(ept);
+    spt = npt * sin(ept);
+    deriv_prod(g, Sd_s, yd_s, dpr, dpi, deriv_real, deriv_imag, nderivs);
+    fsum_reald[n_start/g + z_start/g * N] = dpr[0] * cpt - dpi[0] * spt;
+    fsum_imagd[n_start/g + z_start/g * N] = dpi[0] * cpt + dpr[0] * spt;
+  }
+}
+
+
+
 
 """ %(g, TILEHEIGHT, TILEWIDTH)
     mod = SourceModule(template)
     func = mod.get_function("riemann_theta")
+    deriv_func = mod.get_function("riemann_theta_derivatives")
     Xd = mod.get_global("Xd")[0]
     Yinvd = mod.get_global("Yinvd")[0]
     Td = mod.get_global("Td")[0]
