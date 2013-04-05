@@ -23,7 +23,7 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
 
-def compute_v(X, Yinv, T, Z, S, g, derivs = False, nderivs = 0, derivs = np.zeros(1)):
+def compute_v(X, Yinv, T, Z, S, g, nderivs, derivs):
     S = np.array(S)
     x = Z.real
     y = Z.imag
@@ -35,11 +35,11 @@ def compute_v(X, Yinv, T, Z, S, g, derivs = False, nderivs = 0, derivs = np.zero
     S = np.require(S, dtype = np.double, requirements=['A','W','O','C'])
     x = np.require(x, dtype = np.double, requirements=['A','W','O','C'])
     y = np.require(y, dtype = np.double, requirements=['A','W','O','C'])
-    if (derivs):
+    if (nderivs > 0):
         deriv_real = np.require(derivs.real, dtype = np.double, requirements=['A','W','O', 'C'])
         deriv_imag = np.require(derivs.imag, dtype = np.double, requirements=['A', 'W', 'O', 'C'])
-        nderivs = np.double(nderivs)
-
+        nderivs = np.int32(nderivs)
+        print nderivs
     #Number of integer points to sum over
     N = S.size/g
     #Number of points to calculate the function at
@@ -60,7 +60,7 @@ def compute_v(X, Yinv, T, Z, S, g, derivs = False, nderivs = 0, derivs = np.zero
     xd = cuda.mem_alloc(x.nbytes)
     yd = cuda.mem_alloc(y.nbytes)
     Sd = cuda.mem_alloc(S.nbytes)
-    if (derivs):
+    if (nderivs > 0):
         deriv_reald = cuda.mem_alloc(deriv_real.nbytes)
         deriv_imagd = cuda.mem_alloc(deriv_imag.nbytes)
     
@@ -81,19 +81,22 @@ def compute_v(X, Yinv, T, Z, S, g, derivs = False, nderivs = 0, derivs = np.zero
     cuda.memcpy_htod(xd, x)
     cuda.memcpy_htod(yd, y)
     cuda.memcpy_htod(Sd, S)
+    if (nderivs > 0):
+        cuda.memcpy_htod(deriv_reald, deriv_real)
+        cuda.memcpy_htod(deriv_imagd, deriv_imag)
 
     #Make all scalars into numpy data types
     N = np.int32(N)
     K = np.int32(K)
     g = np.int32(g)
     
-    if (not derivs):
+    if (nderivs == 0):
         partial_sums(fsum_reald, fsum_imagd, xd, yd, Sd, g, N, K,
                      block = BLOCKSIZE,
                      grid = GRIDSIZE
                      )
     else:
-        partial_sums_derivs(fsum_reald, fsum_imagd, deriv_reald, deriv_imagd, nderivs, xd, yd, Sd, g, N, K,
+        partial_sums_derivs(fsum_reald, fsum_imagd, xd, yd, Sd, deriv_reald, deriv_imagd, nderivs, g, N, K,
                      block = BLOCKSIZE,
                      grid = GRIDSIZE
                      )        
@@ -128,6 +131,7 @@ def compute_v(X, Yinv, T, Z, S, g, derivs = False, nderivs = 0, derivs = np.zero
     cuda.memcpy_dtoh(fsum_imag, fsum_imagd)
     
     fsums = fsum_real[:K] + fsum_imag[:K]*1.0j
+    print "Returning"
     return fsums
 
 def compute_u(z, Yinv, g):
@@ -273,26 +277,26 @@ Computes:
 	           | |
 	       d in derivs
 ************************************************************************/
-__device__ double deriv_prod(int g, double* Sd_s, double* yd_s, double* dpr, double* dpi,
+__device__ void deriv_prod(int g, double* Sd_s, double* yd_s, double* dpr, double* dpi,
                              double* deriv_real, double* deriv_imag, int nderivs)
 {
-  int tdx = threadIdx.x;
-  int tdy = threadIdx.y;
+  int tx = threadIdx.x;
+  int ty = threadIdx.y;
 
   double total_real = 1;
   double total_imag = 0;
 
   int i,j,k;
   for (i = 0; i < nderivs; i++){
-    term real = 0;
-    term imag = 0;
+    double term_real = 0;
+    double term_imag = 0;
     for (j = 0; j < g; j++){
-      double intshift_i = 0;
+      double shift_j = 0;
       for (k = 0; k < g; k++){
-        shift += Yinvd[i*g + k] * yd_s[ty*g + k];
+        shift_j += Yinvd[j*g + k] * yd_s[ty*g + k];
       }
-      intshift = round(shift);
-      nmintshift = Sd_s[tx*g + j] - intshift;
+      double intshift = round(shift_j);
+      double nmintshift = Sd_s[tx*g + j] - intshift;
       term_real += deriv_real[j + g*i] * nmintshift;
       term_imag += deriv_imag[j + g*i] * nmintshift;
     }
@@ -305,19 +309,19 @@ __device__ double deriv_prod(int g, double* Sd_s, double* yd_s, double* dpr, dou
     double pi_mult = pow(2*M_PI, nderivs);
     /*Determines what the result of i^nderivs is, and performs the 
       correct multiplication afterwards.*/
-    if (nderivs % 4 == 0) {
+    if (nderivs %% 4 == 0) {
         dpr[0] = pi_mult*total_real;
         dpi[0] = pi_mult*total_imag;
     }
-    else if (nderivs % 4 == 1) {
+    else if (nderivs %% 4 == 1) {
         dpr[0] = -pi_mult * total_imag;
         dpi[0] = pi_mult * total_real;
     }
-    else if (nderivs % 4 == 2) {
+    else if (nderivs %% 4 == 2) {
         dpr[0] = -pi_mult * total_real;
 	dpi[0] = -pi_mult * total_imag;
     }
-    else if (nderivs % 4 == 3) {
+    else if (nderivs %% 4 == 3) {
         dpr[0] = pi_mult * total_imag;
         dpi[0] = -pi_mult * total_real;
     }
@@ -420,8 +424,8 @@ __global__ void riemann_theta_derivatives(double* fsum_reald, double* fsum_imagd
 
   if (n_start < N*g && z_start < K*g) {
     /*Compute the "cosine" and "sine" parts of the summand*/
-    double dpr[0];
-    double dpi[0];
+    double dpr[1];
+    double dpi[1];
     dpr[0] = 0;
     dpi[0] = 0;
     double ept, npt, cpt, spt;
@@ -435,9 +439,6 @@ __global__ void riemann_theta_derivatives(double* fsum_reald, double* fsum_imagd
   }
 }
 
-
-
-
 """ %(g, TILEHEIGHT, TILEWIDTH)
     mod = SourceModule(template)
     func = mod.get_function("riemann_theta")
@@ -445,7 +446,7 @@ __global__ void riemann_theta_derivatives(double* fsum_reald, double* fsum_imagd
     Xd = mod.get_global("Xd")[0]
     Yinvd = mod.get_global("Yinvd")[0]
     Td = mod.get_global("Td")[0]
-    return (func, Xd, Yinvd, Td)
+    return (func, deriv_func, Xd, Yinvd, Td)
     
 def func2():
     mod = SourceModule("""

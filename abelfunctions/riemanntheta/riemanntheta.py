@@ -350,7 +350,7 @@ class RiemannTheta_Function:
         elif len(deriv) == 2:
             # solve for left-hand side
             L             = self.deriv_accuracy_radius
-            prodnormderiv = prod([la.norm(d) for d in deriv])
+            prodnormderiv = np.prod([la.norm(d) for d in deriv])
 
             eps  = prec
             lhs  = (eps*(r/2.0)**g) / (2*Pi*g*prodnormderiv*normTinv**2)
@@ -440,7 +440,7 @@ class RiemannTheta_Function:
 Tinv, z, g, R)
         # compute oscillatory and exponential terms
         if gpu and batch:
-            v = parRiemann.compute_v(X, Yinv, T, z, S, g)
+            v = parRiemann.compute_v(X, Yinv, T, z, S, g, len(deriv), deriv)
         elif (len(deriv) > 0):
             v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
@@ -519,13 +519,13 @@ if __name__=="__main__":
             a.append(z2)
             a.append(z3)
             a.append(z4)
+        print 'hi'
         start1 = time.clock()
-        print theta.value_at_point(a, Omega, gpu=True, batch=True, prec=1e-12)[57000:57005]
+        print theta.value_at_point(a, Omega, batch=True, prec=1e-12)[57000:57005]
         print("GPU time to perform calculation: " + str(time.clock() - start1))
         start2 = time.clock()
-
-        print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)[1730:1735]
-        print("CPU time to do same calculation: " + str(time.clock() - start2))
+        #print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)[1730:1735]
+        #print("CPU time to do same calculation: " + str(time.clock() - start2))
 
     print
     print "Derivative Tests:"
@@ -536,7 +536,7 @@ if __name__=="__main__":
     print theta.value_at_point(y, Omega, deriv = [[1,0]])
     print "0 - 146.49i"
     print
-    print "For [[1,0] , [1,0]]: "
+    print "For [[1,0] , [0,1]]: "
     print theta.value_at_point(y, Omega, deriv = [[1,0], [0,1]])
     print "0 + 0i" 
     print
@@ -552,6 +552,12 @@ if __name__=="__main__":
     print theta.value_at_point(y, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]])
     print "41743.92 + 0i" 
     print
+    print ("GPU Derivative Test")
+    l = []
+    for x in range(5):
+        l.append(y)
+    print theta.value_at_point(l, Omega, deriv = [[1,0],[0,1]], batch=True)
+    
    
     print "Test #3"
     import pylab as p
@@ -573,4 +579,5 @@ if __name__=="__main__":
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
                        
+
 
