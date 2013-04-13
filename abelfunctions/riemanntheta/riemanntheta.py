@@ -439,13 +439,17 @@ class RiemannTheta_Function:
                 S = self.integer_points(Yinv, T, 
 Tinv, z, g, R)
         # compute oscillatory and exponential terms
+        #If computer is GPU capable and batch is set to true do computations on the 
+        #gpu, parRiemann decides if it is computing derivatives or not.
         if gpu and batch:
             v = parRiemann.compute_v(X, Yinv, T, z, S, g, len(deriv), deriv)
-        elif (len(deriv) > 0):
+        #Otherwise send the arguments to the approriate cython program (derivatives or 
+        #no derivatives.
+        elif len(deriv) > 0:
             v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
             v = riemanntheta_cy.finite_sum(X, Yinv, T, z, S, g, batch)
-            
+        #Compute the exponential part of the function.
         if (gpu and batch):
             u = parRiemann.compute_u(z, Yinv, g)
         elif (batch):
@@ -519,7 +523,6 @@ if __name__=="__main__":
             a.append(z2)
             a.append(z3)
             a.append(z4)
-        print 'hi'
         start1 = time.clock()
         print theta.value_at_point(a, Omega, batch=True, prec=1e-12)[57000:57005]
         print("GPU time to perform calculation: " + str(time.clock() - start1))
