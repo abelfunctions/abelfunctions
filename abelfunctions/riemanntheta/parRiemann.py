@@ -39,7 +39,6 @@ def compute_v(X, Yinv, T, Z, S, g, nderivs, derivs):
         deriv_real = np.require(derivs.real, dtype = np.double, requirements=['A','W','O', 'C'])
         deriv_imag = np.require(derivs.imag, dtype = np.double, requirements=['A', 'W', 'O', 'C'])
         nderivs = np.int32(nderivs)
-        print nderivs
     #Number of integer points to sum over
     N = S.size/g
     #Number of points to calculate the function at
@@ -85,6 +84,7 @@ def compute_v(X, Yinv, T, Z, S, g, nderivs, derivs):
         cuda.memcpy_htod(deriv_reald, deriv_real)
         cuda.memcpy_htod(deriv_imagd, deriv_imag)
 
+    start = time.clock() 
     #Make all scalars into numpy data types
     N = np.int32(N)
     K = np.int32(K)
@@ -131,7 +131,8 @@ def compute_v(X, Yinv, T, Z, S, g, nderivs, derivs):
     cuda.memcpy_dtoh(fsum_imag, fsum_imagd)
     
     fsums = fsum_real[:K] + fsum_imag[:K]*1.0j
-    print "Returning"
+    print "TIMING"
+    print time.clock() - start
     return fsums
 
 def compute_u(z, Yinv, g):
