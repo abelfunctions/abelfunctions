@@ -105,7 +105,7 @@ import time
 
 gpu_capable = True
 try:
-    import parRiemann
+    from riemanntheta_cuda import RiemannThetaCuda
 except ImportError:
     gpu_capable = False
 
@@ -176,7 +176,8 @@ class RiemannTheta_Function:
         self._T         = None
         self._Tinv      = None
         self._prec      = 1e-8
-
+        if (gpu_capable):
+            self.parRiemann = RiemannThetaCuda(32, 16) 
 
     def lattice(self):
         r"""
@@ -392,6 +393,29 @@ class RiemannTheta_Function:
 
         return rad
 
+    def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv):
+        recache_omega = not np.array_equal(self._Omega, Omega)
+        recache_prec = self._prec != prec
+        # check if we've already computed the uniform radius and intpoints
+        if (recache_omega or recache_prec):
+            self._prec = prec
+            self._rad = self.radius(T, prec, deriv=deriv)
+            origin = [0]*g
+            self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
+                                                  g, self._rad)
+        if (gpu_capable):
+            self.parRiemann.cache_intpoints(self._intpoints)
+            if (self._Omega is None or not g == self._Omega.shape[0]):
+                self.parRiemann.compile(g)
+                self.parRiemann.cache_omega_real(X)
+                self.parRiemann.cache_omega_imag(Yinv, T)
+            else:
+                if (not np.array_equal(self._Omega.real, Omega.real)):
+                    self.parRiemann.cache_omega_real(X)
+                if (not np.array_equal(self._Omega.imag, Omega.imag)):
+                    self.parRiemann.cache_omega_imag(Yinv, T)
+        self._Omega = Omega
+    
 
     def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
         r"""
@@ -403,55 +427,45 @@ class RiemannTheta_Function:
         g = Omega.shape[0]
         pi = np.pi
 
-        # perform some simple cacheing on the matrices
+        #Process all of the matrices into numpy matrices
         X = np.matrix(Omega.real)
         Y = np.matrix(Omega.imag)
         Yinv = np.matrix(la.inv(Y))
         T = np.matrix(la.cholesky(Y))
         Tinv = np.matrix(la.inv(T))
-            
+        deriv = np.array(deriv)
+        
+        #Do recacheing if necessary
+        self.recache(Omega, X, Y, Yinv, T, g, prec, deriv, Tinv)
+
         # extract real and imaginary parts of input z
         length = 1
         if batch:
             length = len(z)
         z = np.array(z).reshape((length, g))
 
-        # convert derivatives to vector type       
-        deriv = np.array(deriv)
-
         # compute integer points: check for uniform approximation
         if self.uniform:
-            # check if we've already computed the uniform radius and intpoints
-            if (not np.array_equal(self._Omega, Omega) or self._prec != prec):
-                self._Omega = Omega
-                self._prec = prec
-                self._rad = self.radius(T, prec, deriv=deriv)
-                origin          = [0]*g
-                self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
-                                                      g, self._rad)
             R = self._rad
             S = self._intpoints
-        else:
-            if(batch):
+        elif(batch):
                 raise Exception("Can't compute pointwise approximation for multiple points.\nUse uniform approximation or call the function seperately for each point.")
-            else:
-                R = self.radius(T, prec, deriv=deriv)
-                S = self.integer_points(Yinv, T, 
+        else:
+            R = self.radius(T, prec, deriv=deriv)
+            S = self.integer_points(Yinv, T, 
 Tinv, z, g, R)
         # compute oscillatory and exponential terms
-        #If computer is GPU capable and batch is set to true do computations on the 
-        #gpu, parRiemann decides if it is computing derivatives or not.
-        if gpu and batch:
-            v = parRiemann.compute_v(X, Yinv, T, z, S, g, len(deriv), deriv)
-        #Otherwise send the arguments to the approriate cython program (derivatives or 
-        #no derivatives.
-        elif len(deriv) > 0:
+        if gpu and batch and len(deriv) > 0:
+            v = self.parRiemann.compute_v_with_derivs(z, deriv)
+        elif gpu and batch:
+            v = self.parRiemann.compute_v_without_derivs(z)
+        elif (len(deriv) > 0):
             v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
             v = riemanntheta_cy.finite_sum(X, Yinv, T, z, S, g, batch)
         #Compute the exponential part of the function.
         if (gpu and batch):
-            u = parRiemann.compute_u(z, Yinv, g)
+            u = self.parRiemann.compute_u()
         elif (batch):
             K = len(z)
             u = np.zeros(K)
