@@ -30,12 +30,12 @@ class RiemannThetaCuda:
     Initializes the riemanntheta_cuda object. The main job of __init__ is to 
     compile and store the cuda functions which will be needed later.
     """
-    def __init__(tileheight, tilewidth):
+    def __init__(self, tileheight, tilewidth):
         self.tileheight = tileheight
         self.tilewidth = tilewidth
         #Declares global variables to be determined later
-        self.finite_sum_without_derivs = none
-        self.finite_sum_with_derivs = none
+        self.finite_sum_without_derivs = None
+        self.finite_sum_with_derivs = None
         self.Xd = None
         self.Td = None
         self.Yinv_vd = None
@@ -47,23 +47,23 @@ class RiemannThetaCuda:
         self.g = None
         self.yd = None
         #Compiles a cuda sum-reduction function and stores it for later use
-        self.reduction = func2()
+        self.reduction = self.func2()
         
 
     """
     Compiles func1() and func3() based on g. Note that this function is called every time 
     that g changes
     """
-    def compile(g):
+    def compile(self, g):
         self.g=g
         (self.finite_sum_without_derivs, self.finite_sum_with_derivs,
-         self.Xd, self.Yinv_vd, self.Td) = func1(self.tilewidth, self.tileheght, g)
-         self.dot_prod, self.Yinv_ud = func3(g, self.tileheight)
+         self.Xd, self.Yinv_vd, self.Td) = self.func1(self.tilewidth, self.tileheight, g)
+        self.dot_prod, self.Yinv_ud = self.func3(g, self.tileheight)
 
     """
     Stores the real part of Omega a gpuarray in constant memory.
     """
-    def cache_omega_real(X):
+    def cache_omega_real(self, X):
         X = np.require(X, dtype = np.double, requirements=['A','W','O','C'])
         Xd = gpuarray.to_gpu(X)
         cuda.memcpy_dtod(self.Xd, Xd.ptr, Xd.nbytes)
@@ -72,7 +72,7 @@ class RiemannThetaCuda:
     Stores the imaginary part of Omega, and the cholesky decomposition of the imaginary part
     of omega as gpuarrays in constant memory
     """
-    def cache_omega_imag(Yinv, T):
+    def cache_omega_imag(self, Yinv, T):
         Yinv = np.require(Yinv, dtype = np.double, requirements=['A','W','O','C'])
         T = np.require(T, dtype = np.double, requirements=['A','W','O','C'])
         Yinvd = gpuarray.to_gpu(Yinv)
@@ -80,11 +80,13 @@ class RiemannThetaCuda:
         cuda.memcpy_dtod(self.Td, Td.ptr, Td.nbytes)
         cuda.memcpy_dtod(self.Yinv_vd, Yinvd.ptr, Yinvd.nbytes)
         cuda.memcpy_dtod(self.Yinv_ud, Yinvd.ptr, Yinvd.nbytes)
+        test = gpuarray.zeros(self.g * self.g, dtype = np.double)
+        cuda.memcpy_dtod(test.ptr, self.Yinv_ud, Yinvd.nbytes)
 
     """
     Stores the list of integer points as a gpuarray
     """
-    def cache_intpoints(S):
+    def cache_intpoints(self, S):
         S = np.require(S, dtype = np.double, requirements=['A','W','O','C'])
         self.Sd = gpuarray.to_gpu(S)
 
@@ -92,7 +94,11 @@ class RiemannThetaCuda:
     Computes the oscillatory part of the riemann-theta function without any derivatives
     across many different points. Z is the set of points to compute across.
     """
-    def compute_v_without_derivs(Z):
+    def compute_v_without_derivs(self, Z):
+        print "TIMING"
+        print
+        print "Initialization"
+        start = time.clock()
         #Turn the numpy set Z into gpuarrays
         x = Z.real
         y = Z.imag
@@ -100,32 +106,45 @@ class RiemannThetaCuda:
         y = np.require(y, dtype = np.double, requirements=['A','W','O','C'])
         xd = gpuarray.to_gpu(x)
         yd = gpuarray.to_gpu(y)
+        self.yd = yd
         #Detemine N = the number of integer points to sum over and
         #         K = the number of values to compute the function at
         N = self.Sd.size/self.g
-        K = Z.szie/self.g
+        K = Z.size/self.g
         #Create room on the gpu for the real and imaginary finite sum calculations
-        fsum_reald = gpuarray.zeros(N, dtype=np.double)
-        fsum_imagd = gpuarray.zeros(N, dtype=np.double)
+        fsum_reald = gpuarray.zeros(N*K, dtype=np.double)
+        fsum_imagd = gpuarray.zeros(N*K, dtype=np.double)
         #Make all scalars into numpy data types
         Nd = np.int32(N)
         Kd = np.int32(K)
         gd = np.int32(self.g)
         blocksize = (self.tilewidth, self.tileheight, 1)
         gridsize = (N//self.tilewidth + 1, K//self.tileheight + 1, 1)
+        print time.clock() - start
+        start = time.clock()
+        print "Finite Sum Computation"
         self.finite_sum_without_derivs(fsum_reald, fsum_imagd, xd, yd, 
                      self.Sd, gd, Nd, Kd,
                      block = blocksize,
                      grid = gridsize)
         cuda.Context.synchronize()
-        fsums_real, fsums_imag = sum_reduction(fsum_reald, fsum_outd)
-        return fsums_real + 1.0j*fsums_imag
+        print time.clock() - start
+        print "Reduction"
+        start = time.clock()
+        fsums_real, fsums_imag = self.sum_reduction(fsum_reald, fsum_imagd, N, K, Kd, Nd)
+        print time.clock() - start
+        print "Final Addition"
+        start = time.clock()
+        A = fsums_real + 1.0j*fsums_imag
+        print time.clock() - start
+        return A
+        
 
     """
     Computes the oscillatory part of the riemann-theta function with derivatives
     across many different points. Z is the set of points to compute across.
     """
-    def compute_v_with_derivs(Z, derivs):
+    def compute_v_with_derivs(self, Z, derivs):
         #Turn the numpy set Z into gpuarrays
         x = Z.real
         y = Z.imag
@@ -146,8 +165,8 @@ class RiemannThetaCuda:
         N = self.Sd.size/self.g
         K = Z.size/self.g
         #Create room on the gpu for the real and imaginary finite sum calculations
-        fsum_reald = gpuarray.zeros(N, dtype=np.double)
-        fsum_imagd = gpuarray.zeros(N, dtype=np.double)
+        fsum_reald = gpuarray.zeros(N*K, dtype=np.double)
+        fsum_imagd = gpuarray.zeros(N*K, dtype=np.double)
         #Make all scalars into numpy data types
         Nd = np.int32(N)
         Kd = np.int32(K)
@@ -159,7 +178,7 @@ class RiemannThetaCuda:
                      block = blocksize,
                      grid = gridsize)
         cuda.Context.synchronize()
-        fsums_real, fsums_imag = sum_reduction(fsum_reald, fsum_outd)
+        fsums_real, fsums_imag = self.sum_reduction(fsum_reald, fsum_imagd, N, K, Kd, Nd)
         return fsums_real + 1.0j*fsums_imag
 
 
@@ -167,15 +186,15 @@ class RiemannThetaCuda:
     #all the partial sums of all the values of Z. The function returns approximations
     #of the real and imaginary parts of the riemann theta function for every point in
     #Z
-    def sum_reduction(fsum_reald, fsum_imagd, N, K, Kd, Nd):
-        out_real = gpuarray.zeros(K*N)
-        out_imag = gpuarray.zeros(K*N)
+    def sum_reduction(self, fsum_reald, fsum_imagd, N, K, Kd, Nd):
+        out_real = gpuarray.zeros(K*N, dtype = np.double)
+        out_imag = gpuarray.zeros(K*N, dtype = np.double)
         while (N > 1):
             J = (N - 1)//16 + 1
             gridsize = (J, (K-1)//32 + 1, 1)
-            reduction(fsum_reald, out_real, Nd, Kd, 
+            self.reduction(fsum_reald, out_real, Nd, Kd, 
                       block = (16,32,1), grid = gridsize)
-            reduction(fsum_imagd, out_imag, Nd, Kd,
+            self.reduction(fsum_imagd, out_imag, Nd, Kd,
                       block = (16,32,1), grid = gridsize)
             N = J
             Nd = np.int32(N)
@@ -196,13 +215,13 @@ class RiemannThetaCuda:
         fsums_imag = fsums_imag[:K]
         return fsums_real, fsums_imag
 
-    def compute_u():
+    def compute_u(self):
         yd = self.yd
-        y_len = len(y)
-        ud = gpuarray.zeros(y_len)
-        blocksize = (g, 32, 1)
+        y_len = len(yd)
+        ud = gpuarray.zeros(y_len, dtype = np.double)
+        blocksize = (self.g, 32, 1)
         gridsize = (1, (y_len - 1)//32 + 1,1)
-        dotter(yd, ud, np.int32(g), np.int32(y_len), 
+        self.dot_prod(yd, ud, np.int32(self.g), np.int32(y_len), 
                block = blocksize, grid = gridsize)
         cuda.Context.synchronize()
         u = ud.get()
@@ -222,7 +241,7 @@ class RiemannThetaCuda:
     (func3) Is a function for computing the exponential part of the riemanntheta function
     """
         
-    def func1(TILEWIDTH, TILEHEIGHT, g):
+    def func1(self, TILEWIDTH, TILEHEIGHT, g):
         template = """
 
     #include <stdlib.h>
@@ -509,7 +528,7 @@ class RiemannThetaCuda:
         Td = mod.get_global("Td")[0]
         return (func, deriv_func, Xd, Yinvd, Td)
 
-    def func2():
+    def func2(self):
         mod = SourceModule("""
     __global__ void reduction_kernel(double *A_d, double *A_outd, int x_len, int y_len, int POINTS)
     {
@@ -551,7 +570,7 @@ class RiemannThetaCuda:
 
         return mod.get_function("reduction_kernel")
 
-    def func3(g, TILEHEIGHT):
+    def func3(self, g, TILEHEIGHT):
         template = """
 
     #include <stdlib.h>
