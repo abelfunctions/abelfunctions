@@ -95,10 +95,6 @@ class RiemannThetaCuda:
     across many different points. Z is the set of points to compute across.
     """
     def compute_v_without_derivs(self, Z):
-        print "TIMING"
-        print
-        print "Initialization"
-        start = time.clock()
         #Turn the numpy set Z into gpuarrays
         x = Z.real
         y = Z.imag
@@ -120,25 +116,14 @@ class RiemannThetaCuda:
         gd = np.int32(self.g)
         blocksize = (self.tilewidth, self.tileheight, 1)
         gridsize = (N//self.tilewidth + 1, K//self.tileheight + 1, 1)
-        print time.clock() - start
-        start = time.clock()
-        print "Finite Sum Computation"
         self.finite_sum_without_derivs(fsum_reald, fsum_imagd, xd, yd, 
                      self.Sd, gd, Nd, Kd,
                      block = blocksize,
                      grid = gridsize)
         cuda.Context.synchronize()
-        print time.clock() - start
-        print "Reduction"
-        start = time.clock()
-        fsums_real, fsums_imag = self.sum_reduction(fsum_reald, fsum_imagd, N, K, Kd, Nd)
-        print time.clock() - start
-        print "Final Addition"
-        start = time.clock()
-        A = fsums_real + 1.0j*fsums_imag
-        print time.clock() - start
-        return A
-        
+        fsums_real = self.sum_reduction(fsum_reald, N, K, Kd, Nd)
+        fsums_imag = self.sum_reduction(fsum_imagd, N, K, Kd, Nd)
+        return fsums_real + 1.0j*fsums_imag
 
     """
     Computes the oscillatory part of the riemann-theta function with derivatives
@@ -178,7 +163,8 @@ class RiemannThetaCuda:
                      block = blocksize,
                      grid = gridsize)
         cuda.Context.synchronize()
-        fsums_real, fsums_imag = self.sum_reduction(fsum_reald, fsum_imagd, N, K, Kd, Nd)
+        fsums_real = self.sum_reduction(fsum_reald, N, K, Kd, Nd)
+        fsums_imag = self.sum_reduction(fsum_imagd, N, K, Kd, Nd)
         return fsums_real + 1.0j*fsums_imag
 
 
@@ -186,41 +172,35 @@ class RiemannThetaCuda:
     #all the partial sums of all the values of Z. The function returns approximations
     #of the real and imaginary parts of the riemann theta function for every point in
     #Z
-    def sum_reduction(self, fsum_reald, fsum_imagd, N, K, Kd, Nd):
-        out_real = gpuarray.zeros(K*N, dtype = np.double)
-        out_imag = gpuarray.zeros(K*N, dtype = np.double)
+    def sum_reduction(self, fsum, N, K, Kd, Nd):
+        out = gpuarray.zeros(K*N, dtype = np.double)
+        blockheight = 32
+        blockwidth = 16
         while (N > 1):
-            J = (N - 1)//16 + 1
-            gridsize = (J, (K-1)//32 + 1, 1)
-            self.reduction(fsum_reald, out_real, Nd, Kd, 
-                      block = (16,32,1), grid = gridsize)
-            self.reduction(fsum_imagd, out_imag, Nd, Kd,
-                      block = (16,32,1), grid = gridsize)
+            J = (N - 1)//blockwidth + 1
+            gridsize = (J, (K-1)//blockheight + 1, 1)
+            self.reduction(fsum, out, Nd, Kd, 
+                      block = (blockwidth,blockheight,1), grid = gridsize)
             N = J
             Nd = np.int32(N)
             cuda.Context.synchronize()
-            temp = fsum_reald
-            fsum_reald = out_real
-            out_real = temp
-            temp = fsum_imagd
-            fsum_imagd = out_imag
-            out_imag = temp
+            temp = fsum
+            fsum = out
+            out = temp
         #Get the real and imaginary parts from the GPU
-        fsums_real = fsum_reald.get()
-        fsums_imag = fsum_imagd.get()
+        fsum_final = fsum.get()
         #We only care about the first K elements since 
         #that's where the summation function puts the 
         #values.
-        fsums_real = fsums_real[:K]
-        fsums_imag = fsums_imag[:K]
-        return fsums_real, fsums_imag
+        fsum_final = fsum_final[:K]
+        return fsum_final
 
     def compute_u(self):
         yd = self.yd
         y_len = len(yd)
         ud = gpuarray.zeros(y_len, dtype = np.double)
-        blocksize = (self.g, 32, 1)
-        gridsize = (1, (y_len - 1)//32 + 1,1)
+        blocksize = (self.g, self.tileheight, 1)
+        gridsize = (1, (y_len - 1)//self.tileheight + 1,1)
         self.dot_prod(yd, ud, np.int32(self.g), np.int32(y_len), 
                block = blocksize, grid = gridsize)
         cuda.Context.synchronize()
@@ -530,6 +510,10 @@ class RiemannThetaCuda:
 
     def func2(self):
         mod = SourceModule("""
+
+   #define BLOCKWIDTH 16
+   #define BLOCKHEIGHT 32
+
     __global__ void reduction_kernel(double *A_d, double *A_outd, int x_len, int y_len, int POINTS)
     {
       int tdx = threadIdx.x;
@@ -537,32 +521,31 @@ class RiemannThetaCuda:
       int bdx = blockIdx.x;
       int bdy = blockIdx.y;
 
-      int x_ind = bdx*16 + tdx;
-      int y_ind = bdy*32 + tdy;
+      int x_ind = bdx*BLOCKWIDTH + tdx;
+      int y_ind = bdy*BLOCKHEIGHT + tdy;
 
-      __shared__ double data[16*32];
-      data[16*tdy + tdx] = 0;
+      __shared__ double data[BLOCKWIDTH * BLOCKHEIGHT];
+      data[BLOCKWIDTH*tdy + tdx] = 0;
 
       if (x_ind < x_len && y_ind < y_len) {
-        data[tdy*16 + tdx] = A_d[y_ind*x_len + x_ind];
+        data[tdy*BLOCKWIDTH + tdx] = A_d[y_ind*x_len + x_ind];
       }
       __syncthreads();
 
-      for (int i = 1; i < 16; i *= 2) {
-        if (tdx % (2*i) == 0) {
-          data[16*tdy + tdx] += data[16*tdy + tdx + i];
-
+      for (int i = BLOCKWIDTH/2; i > 0; i >>= 1) {
+        if (tdx < i) {
+          data[BLOCKWIDTH*tdy + tdx] += data[BLOCKWIDTH*tdy + tdx + i];
         }
         __syncthreads();
       }
 
       if (tdx == 0) {
-        int newLength = (x_len - 1)/16 + 1;
-        A_outd[y_ind*newLength + bdx] = data[16*tdy];
+        int newLength = (x_len - 1)/BLOCKWIDTH + 1;
+        A_outd[y_ind*newLength + bdx] = data[BLOCKWIDTH*tdy];
       }
 
       if (gridDim.x == 1) {
-        A_outd[y_ind] = data[16*tdy];
+        A_outd[y_ind] = data[BLOCKWIDTH*tdy];
       }
     }
 

@@ -393,6 +393,9 @@ class RiemannTheta_Function:
 
         return rad
 
+    """
+    Performs simple recacheing of matrices, also prepares gpu for processing if necessary
+    """
     def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv):
         recache_omega = not np.array_equal(self._Omega, Omega)
         recache_prec = self._prec != prec
@@ -415,9 +418,32 @@ class RiemannTheta_Function:
                 if (not np.array_equal(self._Omega.imag, Omega.imag)):
                     self.parRiemann.cache_omega_imag(Yinv, T)
         self._Omega = Omega
+
+    """
+    Handles gpu processing of data sets which are too large to fit into the memory of the gpu
+    at once
+    """
+    def gpu_process(self, Z, deriv, gpu_max, length):
+        v = np.array([])
+        u = np.array([])
+        #divide the set z into as many partitions as necessary
+        num_partitions = (length-1)//(gpu_max) + 1
+        for i in range(0, num_partitions):
+            #determine the starting and stopping points of the partition
+            p_start = (i)*gpu_max
+            p_stop = min(length, (i+1)*gpu_max)
+            if (len(deriv) > 0):
+                v_p = self.parRiemann.compute_v_with_derivs(Z[p_start: p_stop, :], deriv)
+            else:
+                v_p = self.parRiemann.compute_v_without_derivs(Z[p_start: p_stop, :])
+            u_p = self.parRiemann.compute_u()
+            u = np.concatenate((u, u_p))
+            v = np.concatenate((v, v_p))
+        return u,v
+ 
     
 
-    def exp_and_osc_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
+    def exp_and_osc_at_point(self, z, Omega, batch = False, prec=1e-9, deriv=[], gpu=gpu_capable, gpu_max = 500000):
         r"""
         Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
         (Or a given directional derivative of `\theta`.) That is, compute 
@@ -443,7 +469,6 @@ class RiemannTheta_Function:
         if batch:
             length = len(z)
         z = np.array(z).reshape((length, g))
-
         # compute integer points: check for uniform approximation
         if self.uniform:
             R = self._rad
@@ -455,7 +480,9 @@ class RiemannTheta_Function:
             S = self.integer_points(Yinv, T, 
 Tinv, z, g, R)
         # compute oscillatory and exponential terms
-        if gpu and batch and len(deriv) > 0:
+        if gpu and (length > gpu_max):
+            u,v = self.gpu_process(z, deriv, gpu_max, length)
+        elif gpu and batch and len(deriv) > 0:
             v = self.parRiemann.compute_v_with_derivs(z, deriv)
         elif gpu and batch:
             v = self.parRiemann.compute_v_without_derivs(z)
@@ -463,8 +490,10 @@ Tinv, z, g, R)
             v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
             v = riemanntheta_cy.finite_sum(X, Yinv, T, z, S, g, batch)
-            
-        if (gpu and batch):
+        if (length > gpu_max):
+            #u already computed
+            pass
+        elif (gpu and batch):
             u = self.parRiemann.compute_u()
         elif (batch):
             K = len(z)
@@ -474,8 +503,7 @@ Tinv, z, g, R)
                 val = pi*np.dot(w, Yinv*w.T).item(0,0)
                 u[i] = val
         else:
-            u = pi*np.dot(z.imag,Yinv * z.imag.T).item(0,0)
-
+            u = pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
         return u,v
 
     def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
@@ -531,13 +559,12 @@ if __name__=="__main__":
     
     if (gpu_capable):
         a = []
-        for x in range(100000):
+        for x in range(200000):
             a.append(z0)
             a.append(z1)
             a.append(z2)
             a.append(z3)
             a.append(z4)
-        print 'hi'
         start1 = time.clock()
         print theta.value_at_point(a, Omega, batch=True, prec=1e-12)[57000:57005]
         print("GPU time to perform calculation: " + str(time.clock() - start1))
@@ -574,7 +601,7 @@ if __name__=="__main__":
     l = []
     for x in range(5):
         l.append(y)
-    print theta.value_at_point(l, Omega, deriv = [[1,0],[0,1]], batch=True)
+    print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
     
    
     print "Test #3"
