@@ -177,7 +177,7 @@ class RiemannTheta_Function:
         self._Tinv      = None
         self._prec      = 1e-8
         if (gpu_capable):
-            self.parRiemann = RiemannThetaCuda() 
+            self.parRiemann = RiemannThetaCuda(32, 16) 
 
     def lattice(self):
         r"""
@@ -393,7 +393,7 @@ class RiemannTheta_Function:
 
         return rad
 
-    def recache(Omega, X, Y, Yinv, T, g):
+    def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv):
         recache_omega = not np.array_equal(self._Omega, Omega)
         recache_prec = self._prec != prec
         # check if we've already computed the uniform radius and intpoints
@@ -403,17 +403,17 @@ class RiemannTheta_Function:
             origin = [0]*g
             self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                   g, self._rad)
-        if (recache_omega and gpu_capable):
-            parRiemann.cache_intpoints(self._intpoints)
-            if (not g == self._Omega):
-                parRiemann.compile(g)
-                parRiemann.cache_omega_real(X)
-                parRiemann.cache_omega_imag(Yinv, T)
+        if (gpu_capable):
+            self.parRiemann.cache_intpoints(self._intpoints)
+            if (self._Omega is None or not g == self._Omega.shape[0]):
+                self.parRiemann.compile(g)
+                self.parRiemann.cache_omega_real(X)
+                self.parRiemann.cache_omega_imag(Yinv, T)
             else:
                 if (not np.array_equal(self._Omega.real, Omega.real)):
-                    parRiemann.cache_omega_real(X)
+                    self.parRiemann.cache_omega_real(X)
                 if (not np.array_equal(self._Omega.imag, Omega.imag)):
-                    parRIemann.cache_omega_imag(Yinv, T)
+                    self.parRiemann.cache_omega_imag(Yinv, T)
         self._Omega = Omega
     
 
@@ -427,7 +427,7 @@ class RiemannTheta_Function:
         g = Omega.shape[0]
         pi = np.pi
 
-        #Process all of the matrices into usable form
+        #Process all of the matrices into numpy matrices
         X = np.matrix(Omega.real)
         Y = np.matrix(Omega.imag)
         Yinv = np.matrix(la.inv(Y))
@@ -436,7 +436,7 @@ class RiemannTheta_Function:
         deriv = np.array(deriv)
         
         #Do recacheing if necessary
-        recache(Omega, X, Y, Yinv, T, g)
+        self.recache(Omega, X, Y, Yinv, T, g, prec, deriv, Tinv)
 
         # extract real and imaginary parts of input z
         length = 1
@@ -456,16 +456,16 @@ class RiemannTheta_Function:
 Tinv, z, g, R)
         # compute oscillatory and exponential terms
         if gpu and batch and len(deriv) > 0:
-            v = parRiemann.compute_v_with_derivs(z, deriv)
-        elif gpu and batch
-            v = parRiemann.compute_v_without_derivs(z)
+            v = self.parRiemann.compute_v_with_derivs(z, deriv)
+        elif gpu and batch:
+            v = self.parRiemann.compute_v_without_derivs(z)
         elif (len(deriv) > 0):
             v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
             v = riemanntheta_cy.finite_sum(X, Yinv, T, z, S, g, batch)
             
         if (gpu and batch):
-            u = parRiemann.compute_u()
+            u = self.parRiemann.compute_u()
         elif (batch):
             K = len(z)
             u = np.zeros(K)
