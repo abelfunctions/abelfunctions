@@ -216,9 +216,10 @@ deriv_prod(double* dpr, double* dpi,
            int g)
 {
 
-    double nmintshift[g];
-    double term_real, term_imag;
+    double *nmintshift;
+    nmintshift = (double*)malloc(g*sizeof(double));
 
+    double term_real, term_imag;
     //Note that total_real + total_imag*i = 1 + 0i = 1
     double total_real = 1;
     double total_imag = 0;
@@ -317,9 +318,6 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     intshift = (double*)malloc(g*sizeof(double));
     fracshift = (double*)malloc(g*sizeof(double));
 
-    // shift = Yinv*y;
-    // intshift = round(shift)
-    // fracshift = shift - intshift
     double sum;
     for (k = 0; k < g; k++) {
         sum = 0;
@@ -364,111 +362,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     free(shift);
     free(intshift);
     free(fracshift);     
-
 }
-
-/******************************************************************************
-  integer_points
-
-  Compute the set U_R of the integeral points needed to compute the Riemann 
-  theta function to the given precision.
-******************************************************************************/
-/*
-int
-integer_points(double* intpoints, 
-	       double* Yinv, 
-	       double* T, 
-	       double* Tinv, 
-	       double* x, 
-	       double* y, 
-	       int g, 
-	       double R, 
-	       bool use_uniform)
-{
-  // determine center of ellipsoid
-  double* c     = (double*) malloc(g*sizeof(double));
-  double* intc  = (double*) malloc(g*sizeof(double));
-  double* leftc = (double*) malloc(g*sizeof(double));
-  int i,j,k;
-
-
-  if (use_uniform)
-    {
-      for (i=0; i<g; i++)
-	{
-	  c[i]     = 0; 
-	  intc[i]  = 0; 
-	  leftc[i] = 0;
-	}
-    }
-  else
-    {
-      // c = Yinv * y; intc = round(c); leftc = c - intc
-      cblas_dgemv(CblasRowMajor, CblasNoTrans,
-		  g, g, 1.0, Yinv,
-		  g, y, 1, 0, c, 1);
-      for (i=0; i<g; i++)
-	{
-	  intc[i]  = round(c[i]); 
-	  leftc[i] = c[i] - intc[i];
-	}
-    }
-  
-  // recursively call find_integer_points
-  find_integer_points(intpoints, T, start, c, g, R);
-
-  // free allocated memory
-  free(c);
-  free(intc);
-  free(leftc);
-}
-
-
-int
-find_integer_points(double* intpoints, 
-		    double* T, 
-		    double* start,
-		    double* c,
-		    int g,
-		    int gcurr,
-		    double R,
-		    int total_intpoints)
-{
-  int a, b;
-  a = (int) ceil(c[gcurr]-R/T[gcurr*g+gcurr-1]);
-  b = (int) ceil(c[gcurr]+R/T[gcurr*g+gcurr-1]);
-
-  // check if we reached the edge of the ellipsoid
-  if (a >= b)
-    return 0;
-
-  // last dimension reached: append points to every
-  // element of start
-  //
-  // In Python:
-  //
-  //     [np.append([i],start) for i in range(a,b+1)]
-  //
-  // so add the vectors of the form [a,start[0],...,start[gcurr-1]], ..., 
-  // [b,start[0],...,start[gcurr-1]].
-  //
-  if (gcurr == 0)
-    {
-      total_intpoints += b-a;
-      intpoints = (double*) realloc(intpoints, total_intpoints*sizeof(double));
-    }
-
-
-  // compute new shifts, radii, start, and recurse
-  //double* newT = malloc(
-  int newg;
-  newg = g-1;
-
-  free(newT);
-  free(newTinv);
-  
-}
-*/
 
 #ifdef __cplusplus
 }

@@ -119,6 +119,5 @@ def find_int_points(int g, c, R, T):
                 stack.append((newStart, g - 1, newc, newR[0]))
         if (len(stack) == 0):
             FINISHED = True
-
     return points
                  
