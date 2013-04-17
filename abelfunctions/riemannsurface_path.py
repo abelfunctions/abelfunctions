@@ -504,38 +504,11 @@ class RiemannSurfacePath():
 
         seg, dseg = self._path_segments[t_floor]
         if dxdt:
-            return self._num_path_segments * dseg(t_seg)
+# XXX
+#            return self._num_path_segments * dseg(t_seg)
+            return dseg(t_seg)
         else:
             return seg(t_seg)
-
-
-
-#     def _add_checkpoint(self, ti, Pi):
-#         """
-#         Adds the checkpoint Pi = {xi = x(ti), yi = y(x(ti))} to the
-#         inner cache. If the max cache size is reached then the first
-#         key tj found that is less than ti is removed from the
-#         checkpoint cache.
-#         """
-#         self._checkpoints[ti] = Pi
-#         self._cache_size += 1
-
-#         # pop an item from the cache
-#         if self._cache_size > self._max_cache_size:
-#             for tj in self._checkpoints.iterkeys():
-#                 if tj < ti:
-#                     self._checkpoints.pop(tj)
-#                     self._cache_size -= 1
-#                     break
-
-
-#     def _clear_checkpoints(self):
-#         """
-#         Empties the checkpoint cache.
-#         """
-#         self._checkpoints.clear()
-#         self._checkpoints = { 0:self.P0 }
-#         self._cache_size = 1
 
 
     def __call__(self, t, dxdt=False):
@@ -610,13 +583,12 @@ class RiemannSurfacePath():
                       for yappj in yapp]
                 ti = tip1
                 xi = xip1
-                dt = min(2*dt,maxdt)                
-#                dt = dt if ti+dt <= t else t-ti
+                dt = min(2*dt,maxdt)
             else:
                 dt *= 0.5
 
         if dxdt:
-            return (xi,tuple(yi)), self.get_x(t,dxdt=True)
+            return (xi,tuple(yi)), self.get_x(ti,dxdt=True)
         else:
             return (xi,tuple(yi))
 

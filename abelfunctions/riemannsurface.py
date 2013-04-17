@@ -57,7 +57,6 @@ class RiemannSurface(object):
     def monodromy_graph(self):
         """
         """
-        #base_point, base_sheets, branch_points, mon, G = self.monodromy()
         return self.monodromy()[4]
 
 
@@ -82,13 +81,7 @@ class RiemannSurface(object):
 
 
     def homology(self):
-        hom = homology(self.f, self.x, self.y)
-
-#         # these are the output from Maple:
-#         hom['cycles'][0] = [0,(-2,1),1,(-1,-1)]
-#         hom['cycles'][1] = [0,(-2,1),1,(1,-1)]        
-
-        return hom
+        return homology(self.f, self.x, self.y)
 
 
     def holomorphic_differentials(self):
@@ -100,9 +93,6 @@ class RiemannSurface(object):
         """
         f,x,y = self.f,self.x,self.y
         dfdy = sympy.diff(f,y)
-
-        # XXX Hard coded for now
-#        return [x*y/dfdy, x**3/dfdy]        
         return [1/y]
 
 
@@ -162,7 +152,6 @@ class RiemannSurface(object):
         # to the rotation number. Add these segments to the list of
         # path segemnts.
         for (bpt, rot) in cycles[i][1::2]:
-            # XXX
             bpt_index = [key for key,data in G.nodes(data=True)
                          if abs(data['value']-bpt) < 1e-15][0]
             bpt_path_segments = path_around_branch_point(G, bpt_index, rot)
@@ -194,29 +183,16 @@ class RiemannSurface(object):
         # probably a good idea since it allows for good checkpointing.
         def integrand(t,omega,path):
             (xi,yi),dxdt = path(t, dxdt=True)
-            return omega(xi,yi[0]) * dxdt  # follow the base fibre
+            return omega(xi,yi[0]) * dxdt # follow the base fibre
 
         val = numpy.complex(0)
         val_real = numpy.double(0)
         val_imag = numpy.double(0)
-        n   = numpy.int(path._num_path_segments)
+        n = numpy.int(path._num_path_segments)
         for k in xrange(n):
             k = numpy.double(k)
-#             val += sympy.mpmath.quadgl(lambda t: integrand(t,omega,path), 
-#                                        [k/n,(k+1)/n])
-#             val_real += scipy.integrate.quad(
-#                 lambda t: scipy.real(integrand(t,omega,path)),
-#                 k/n,(k+1)/n
-#                 )
 
-#             val_imag += scipy.integrate.quad(
-#                 lambda t: scipy.imag(integrand(t,omega,path)),
-#                 k/n,(k+1)/n
-#                 )
-        
-#         return val_real + 1.0j*val_imag
-
-            tpts = numpy.linspace(k/n,(k+1)/n,64)
+            tpts = numpy.linspace(k/n,(k+1)/n,128)
             fpts = [integrand(tpt,omega,path) for tpt in tpts]
             val += scipy.integrate.trapz(tpts,fpts)
 
@@ -238,13 +214,12 @@ class RiemannSurface(object):
         lincombs = self.homology()['linearcombination']
         n_cycles = len(self.homology()['cycles'])
         c_cycles = [self.c_cycle(i) for i in range(n_cycles)]
+        
         differentials = self.holomorphic_differentials()
         g = self.genus()
         x = self.x
         y = self.y
 
-        # XXX temporary...still need to figure out good way to do
-        # this...
         A = []
         B = []
         for i in xrange(g):
@@ -253,7 +228,6 @@ class RiemannSurface(object):
             Bi = []
             for j in xrange(g):
                 lincomb  = lincombs[j]
-                # XXX check that len(lincomb) == n_cycles
                 integral = sum(
                     lincomb[k]*self.integrate(omega,x,y,c_cycles[k]) 
                     for k in xrange(n_cycles) if lincomb[k] != 0

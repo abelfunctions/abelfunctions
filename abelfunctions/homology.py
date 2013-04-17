@@ -37,7 +37,7 @@ def find_cycle(pi, j):
     cycles = pi._cycles
     for cycle in cycles:
         if j in cycle:
-            return reorder_cycle(cycle, min(cycle))
+            return tuple(reorder_cycle(cycle, min(cycle))) #XXX tuple
 
 
 def smallest(l):
@@ -160,69 +160,91 @@ def tretkoff_graph(hurwitz_system):
     """
     """
     base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
+
+    # initialize graph
+    C = nx.Graph()
+    C.add_node(0)
+    C.node[0]['final'] = False
+    C.node[0]['label'] = '$%d$'%(0)
+    C.node[0]['level'] = 0
+    C.node[0]['order'] = 0
+    C.node[0]['pos'] = (0,0)
+
+    # collect all of the nodes that we must visit.
     covering_number = len(base_sheets)
     t = len(branch_points)
-    
-    # initialize graph
-    C = nx.DiGraph()
-    C.add_node((0,0))
-    C.node[(0,0)]['final'] = False
-
-    # collect all of the nodes that we must visit
-    unused_sheet_labels = range(covering_number)
-    unused_sheet_labels.remove(0)
-    unused_branch_point_labels = [ 
-        (branch_points[i], find_cycle(monodromy[i],j)) 
+    visited_sheets = [0]
+    visited_branch_places = [
+        (branch_points[i],find_cycle(monodromy[i],j))
         for j in xrange(covering_number)
         for i in xrange(t)
+        if len(find_cycle(monodromy[i],j)) == 1
         ]
 
     # breadth-first graph growing
     level = 1
-    while len(unused_sheet_labels) + len(unused_branch_point_labels) != 0:
-        # get all endpoints
-        endpoints = [n for n in C.nodes() 
-                     if len(C.successors(n)) == 0 and not C.node[n]['final']]
+    endpoints = [0]
+    final_edges = []
+    while len(endpoints) > 0:
+        # obtain the endpoints on the previous level that are not final
+        # and sort by their "succession" order
+        endpoints = [n for n,data in C.nodes_iter(data=True) 
+                     if data['level'] == level-1]
+        endpoints = sorted(endpoints, key = lambda n: C.node[n]['order'])
+        order_counter = 0
+
         for node in endpoints:
-            # if odd level: 
-            #
-            # node = (n,k)
+            # if odd level: the endpoints are sheets
             #
             # add branch points (bpt,pi) where pi is the cycle of the
             # permutation at bpt containing the node sheet.
             if level % 2:
-                n,k = node
+                n = node
 
-                # for each branch point, find the branch point labels
-                # with permutations containing sheet n and add an
-                # appropriate (bpt,pi) edge. Note that pi is reordered
-                # such that n appears first.
-                for i in xrange(t):
+                # determine which branch points to add. in the initial
+                # case, add all branch points. for all subsequent
+                # sheets add all branch points other than the one that
+                # brought us to this sheet
+                if n == 0: branch_point_indices = range(t)
+                else:
+                    bpt,pi = C.neighbors(node)[0]
+                    ind = branch_points.index(bpt)
+                    branch_point_indices = range(ind+1,t) + range(ind)
+                    
+                # for each branch point, other than the one
+                # corresponding to the current sheet, find the branch
+                # point labels with permutations containing sheet n
+                # and add an appropriate (bpt,pi) edge. Note that pi
+                # is reordered such that n appears first.
+                for i in branch_point_indices:
                     bpt = branch_points[i]
-                    pi  = find_cycle(monodromy[i],n)
+                    pi = find_cycle(monodromy[i],n)
+                    succ = (bpt,pi)
 
-                    # remove the node from the unused branch point
-                    # labels list if we haven't used it yet
-                    if (bpt,pi) in unused_branch_point_labels:
-                        unused_branch_point_labels.remove((bpt,pi))
-
-                    # we store cycles associated with the node n such
-                    # that n appears first in the cycle
-                    pi = tuple(reorder_cycle(pi,n))
-
-                    # finally, add the edge. if the corresponding permutation
-                    # is the identity then add the "final" marker to the
-                    # node
-                    C.add_edge(node,(bpt,pi))
-                    if len(pi) == 1:
-                        C.node[(bpt,pi)]['final'] = True
+                    # determine if the edge should be added. If the
+                    # branch place is final (if the cycle is fixed)
+                    # then determine if it's a q-edge or p-edge
+                    edge = (node,succ)
+                    if succ in visited_branch_places:
+                        if edge not in final_edges and len(pi) > 1:
+                            final_edges.append(edge)
                     else:
-                        C.node[(bpt,pi)]['final'] = False
+                        #
+                        # XXX should we "normalize" the cycle by having
+                        # it start with the smallest sheet number
+                        #
+                        visited_branch_places.append(succ)
+                        if len(pi) > 0:
+                            C.add_edge(node,succ)
+
+                            C.node[succ]['label'] = '$b_%d, %s$'%(i,pi)
+                            C.node[succ]['level'] = level
+                            C.node[succ]['order'] = order_counter
+                            C.node[succ]['pos'] = (level,order_counter-(t-1)/2.0)
+                            order_counter += 1
                         
 
-            # if even level:
-            #
-            # node = (bpt,pi)
+            # if even level: the endpoints are 
             #
             # add sheets (n,k) where n is the sheet and k is number of
             # times one need to go around bpt in order to get to sheet
@@ -231,11 +253,13 @@ def tretkoff_graph(hurwitz_system):
             # the permutation
             else:
                 bpt,pi = node
+                n = C.neighbors(node)[0]        # C is always a tree.
+                pi = reorder_cycle(pi,n)
 
-                # for each sheet appearing in the cycle corresponding to
-                # chosen branch point, add a node containing the sheet
-                # as well as the number of times one must go around the
-                # branch point in order to get to this sheet.
+                # for each sheet appearing in the cycle corresponding
+                # to chosen branch point, add a node corresponding to
+                # this sheet. Store how many times one must go around
+                # this branch point in order to reach this sheet.
                 for k in xrange(1,len(pi)):
                     n = pi[k]
                     
@@ -243,16 +267,23 @@ def tretkoff_graph(hurwitz_system):
                     # we haven't visited the sheet yet and add the
                     # edge to the graph. If, on the other hand, it has
                     # been used, then mark the node as "final"
-                    if n in unused_sheet_labels:
-                        unused_sheet_labels.remove(n)
-                        C.add_edge(node,(n,k))
-                        C.node[(n,k)]['final'] = False
+                    succ = n
+                    edge = (succ,node)
+                    if n in visited_sheets:
+                        if edge not in final_edges:
+                            final_edges.append(edge)
                     else:
-                        C.node[(n,k)]['final'] = True
+                        visited_sheets.append(n)
+                        C.add_edge(node,succ)
 
-                    # add the directed edge to the graph
-                    
-        
+                        C.node[succ]['label'] = '$%d$'%(n)
+                        C.node[succ]['level'] = level
+                        C.node[succ]['order'] = order_counter
+                        C.node[succ]['nrots'] = k
+                        C.node[succ]['pos'] = (level,order_counter-(n-1)/2.0)
+                        order_counter += 1
+
+
         # increment the level
         level += 1
 
@@ -264,9 +295,14 @@ def tretkoff_graph(hurwitz_system):
 #     S = nx.bfs_tree(C,(0,0)) # min spanning tree
 #     removed_edges = [edge for edge in C if edge not in S.edges()]
 #     for edge in removed_edges:
-        
 
-    return C,S
+    print "\nfinal edges (%d):"%(len(final_edges))
+    for edge in final_edges: 
+        print 'edge = %s'%(str(edge))
+        print '\t(order = %d)'%(C.node[edge[1]]['order'])
+        print '\t(level = %d)'%(C.node[edge[1]]['level'])
+
+    return C
     
 
 
@@ -419,6 +455,7 @@ def tretkoff_table(hurwitz_system):
                                             a1,
                                             [],
                                             a4 + [k-1]
+#                                            a4 + [k]
                                             ]
                                         q_counter += 1
                                     else:
@@ -430,13 +467,8 @@ def tretkoff_table(hurwitz_system):
                                                 a2,
                                                 a3,
                                                 a4 + [k-1]
+#                                                a4 + [k]
                                                 ]
-                            
-#                             print "=== level, j,k =", level, j, k
-#                             for key,val in tretkoff['p'].iteritems():
-#                                 print key
-#                                 print val
-#                             print "================"
 
                         # create a new vertex
                         entry.append([a1,a2,a3,a4])
@@ -528,6 +560,7 @@ def tretkoff_table(hurwitz_system):
                                                 b1,
                                                 [],
                                                 b4 + [k-starting_index]
+#                                                b4 + [k-starting_index-1]
                                                 ]
                                             q_edges.append(edge)
                                             q_counter += 1
@@ -540,6 +573,7 @@ def tretkoff_table(hurwitz_system):
                                                 b2,
                                                 b3,
                                                 b4 + [k-starting_index]
+#                                                b4 + [k-starting_index-1]
                                                 ]
 
                             # now attack branch points preceeding the
@@ -578,6 +612,7 @@ def tretkoff_table(hurwitz_system):
                                                 b1,
                                                 [],
                                                 b4 + [k+t-starting_index]
+#                                                b4 + [k+t-starting_index-1]
                                                 ]
                                             q_edges.append(edge)
                                             q_counter += 1
@@ -590,18 +625,8 @@ def tretkoff_table(hurwitz_system):
                                                 b2,
                                                 b3,
                                                 b4 + [k+t-starting_index]
+#                                                b4 + [k+t-starting_index-1]
                                                 ]
-
-#                                             print "\t=== p_ctr =", p_counter
-#                                             print "\t=== t['p'] ="
-#                                             print tretkoff['p']
-
-#                             print "=== level, j,k =", level, j, k
-#                             for key,val in tretkoff['p'].iteritems():
-#                                 print key
-#                                 print val
-#                             print "==============="
-
 
                         # create a new vertex
                         entry.append([b1,b2,b3,b4])
@@ -721,6 +746,7 @@ def homology_basis(tretkoff_table):
     root. Then we follow the path from the root to pi. These paths are
     pasted together and their overlap around the root is removed.
     """
+    pdb.set_trace()
     c = []
     for i in xrange(tretkoff_table['numberofcycles']):
         pi = tretkoff_table['p'][i]
@@ -728,7 +754,7 @@ def homology_basis(tretkoff_table):
         ppath = pi[3][:-1]
         qpath = qi[3]
 
-        for Z in range(2):
+        for Z in xrange(2):
             part = [0]  # XXX
             k = 0
             vertex = tretkoff_table['C'][0][0]
@@ -738,10 +764,10 @@ def homology_basis(tretkoff_table):
                 loc2 = 0
                 
                 if loc1 > 0:                  # XXX
-                    for m in range(loc1):     # XXX
+                    for m in xrange(loc1):     # XXX
                         loc2 += len(tretkoff_table['C'][k][m][2])
 
-                loc2 += j
+                loc2 += (j) #XXX
                 k += 1
                 vertex = tretkoff_table['C'][k][loc2]
 
@@ -917,12 +943,19 @@ if __name__=='__main__':
     f8 = (x**6)*y**3 + 2*x**3*y - 1
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
-    f11= y**2 - x*(x-1)*(x-2)*(x-3)  # simple genus two hyperelliptic
+    f11= y**2 - (x**2+1)*(x**2-1)*(4*x**2+1)  # simple genus two hyperelliptic
+    f12 = y**7-x*(x-1)**2
 
 
     f = f2
-    hom = homology(f,x,y)
-    for key,value in hom.iteritems():
-        print key
-        print value
-        print
+    hs = monodromy(f,x,y)
+    C = tretkoff_graph(hs)
+    labels = dict((n,C.node[n]['label']) for n in C.nodes())
+    pos = dict((n,C.node[n]['pos']) for n in C.nodes())
+    nx.draw(C, pos=pos, labels=labels, hold=False, font_size=16)
+
+#     hom = homology(f,x,y)
+#     for key,value in hom.iteritems():
+#         print key
+#         print value
+#         print
