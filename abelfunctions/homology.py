@@ -1,12 +1,12 @@
 """
 Homology
 """
-
 import numpy
 import scipy
 import sympy
 import networkx as nx
 
+from operator import itemgetter
 from abelfunctions.monodromy import Permutation, monodromy
 from abelfunctions.singularities import genus
 
@@ -27,17 +27,11 @@ def find_cycle(pi, j):
     """
     if isinstance(pi, list):
         pi = Permutation(pi)
-
-#     cycle = [j]
-#     k = pi(j)
-#     while k != j:
-#         cycle.append(k) # update the cycle
-#         k = pi(k)       # iterate
-        
+                
     cycles = pi._cycles
     for cycle in cycles:
         if j in cycle:
-            return tuple(reorder_cycle(cycle, min(cycle))) #XXX tuple
+            return tuple(reorder_cycle(cycle, min(cycle)))
 
 
 def smallest(l):
@@ -60,7 +54,7 @@ def smallest(l):
 def reorder_cycle(c, j=None):
     """
     Returns a cycle (as a list) with the element "j" occuring first. If
-    "j" isn't provided then assume
+    "j" isn't provided then assume sorting by the smallest element
     """
     n = len(c)
     try:
@@ -154,23 +148,33 @@ def frobenius_transform(A,g):
             B[:,j]     = B[:,j] + pivot * B[:,i]
 
     return alpha
-        
+
 
 def tretkoff_graph(hurwitz_system):
     """
+    There are two types of nodes:
+
+    - sheets: (integer) these occur on the even levels
+
+    - branch places: (complex, permutation) the first elements is the
+    projection of the place in the complex x-plane. the second element
+    is a cycle appearing in the monodromy element. (places above a branch
+    point are in 1-1 correspondence with the cycles of the permuation) these
+    occur on the odd levels
     """
     base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
 
-    # initialize graph
+    # initialize graph with base point: the zero sheet
     C = nx.Graph()
     C.add_node(0)
     C.node[0]['final'] = False
     C.node[0]['label'] = '$%d$'%(0)
     C.node[0]['level'] = 0
-    C.node[0]['order'] = 0
-    C.node[0]['pos'] = (0,0)
+    C.node[0]['order'] = [0]
 
-    # collect all of the nodes that we must visit.
+    # keep track of sheets and branch places that we've already
+    # visited. initialize with the zero sheet and all branch places
+    # with a stationary cycle (a cycle with one element)
     covering_number = len(base_sheets)
     t = len(branch_points)
     visited_sheets = [0]
@@ -181,635 +185,187 @@ def tretkoff_graph(hurwitz_system):
         if len(find_cycle(monodromy[i],j)) == 1
         ]
 
-    # breadth-first graph growing
-    level = 1
+    level = 0
     endpoints = [0]
     final_edges = []
     while len(endpoints) > 0:
-        # obtain the endpoints on the previous level that are not final
-        # and sort by their "succession" order
-        endpoints = [n for n,data in C.nodes_iter(data=True) 
-                     if data['level'] == level-1]
-        endpoints = sorted(endpoints, key = lambda n: C.node[n]['order'])
+        # obtain the endpoints on the previous level that are not
+        # final and sort by their "succession" order".
+        endpoints = sorted([n for n,d in C.nodes_iter(data=True) 
+                     if d['level'] == level],
+                     key=lambda n: C.node[n]['order'][-1])
+        
         order_counter = 0
+        
+        # print "level =", level
+        # print "endpoints ="
+        # print endpoints
 
         for node in endpoints:
-            # if odd level: the endpoints are sheets
+            # determine the successors for this node. we use a
+            # different method depending on what level we're on:
             #
-            # add branch points (bpt,pi) where pi is the cycle of the
-            # permutation at bpt containing the node sheet.
-            if level % 2:
-                n = node
+            # if on an even level (on a sheet): the successors
+            # are branch places. these are the places other than the one
+            # that is the predecessor to this node.
+            #
+            # if on an odd level (on a branch place): the successors are
+            # sheets. these sheets are simply the sheets found in the branch
+            # place whose order is determined by the predecessor sheet.
+            ###################################################################
+            if level % 2 == 0:
+                current_sheet = node
 
                 # determine which branch points to add. in the initial
                 # case, add all branch points. for all subsequent
                 # sheets add all branch points other than the one that
                 # brought us to this sheet
-                if n == 0: branch_point_indices = range(t)
+                if current_sheet == 0:
+                    branch_point_indices = range(t)
                 else:
-                    bpt,pi = C.neighbors(node)[0]
+                    bpt,pi = C.neighbors(current_sheet)[0]
                     ind = branch_points.index(bpt)
                     branch_point_indices = range(ind+1,t) + range(ind)
-                    
-                # for each branch point, other than the one
-                # corresponding to the current sheet, find the branch
-                # point labels with permutations containing sheet n
-                # and add an appropriate (bpt,pi) edge. Note that pi
-                # is reordered such that n appears first.
-                for i in branch_point_indices:
-                    bpt = branch_points[i]
-                    pi = find_cycle(monodromy[i],n)
-                    succ = (bpt,pi)
 
-                    # determine if the edge should be added. If the
-                    # branch place is final (if the cycle is fixed)
-                    # then determine if it's a q-edge or p-edge
-                    edge = (node,succ)
+                # for each branch place connecting the curent sheet to other
+                # sheets, add a final edge if we've already visited the place
+                # or connect it to the graph, otherwise.
+                for idx in branch_point_indices:
+                    bpt = branch_points[idx]
+                    pi = find_cycle(monodromy[idx],current_sheet)
+                    succ = (bpt,pi)
+                    edge = (node,succ) # final edges point from sheets to bpts
+                    
+                    # determine whether or not this is a successor or a
+                    # "final" vertex
                     if succ in visited_branch_places:
                         if edge not in final_edges and len(pi) > 1:
                             final_edges.append(edge)
-                    else:
-                        #
-                        # XXX should we "normalize" the cycle by having
-                        # it start with the smallest sheet number
-                        #
+                    elif len(pi) > 0:
                         visited_branch_places.append(succ)
-                        if len(pi) > 0:
-                            C.add_edge(node,succ)
+                        C.add_edge(node,succ)
+                        C.node[succ]['label'] = '$b_%d, %s$'%(idx,pi)
+                        C.node[succ]['level'] = level+1
+                        C.node[succ]['nrots'] = None
+                        C.node[succ]['order'] = C.node[node]['order'] + \
+                                                [order_counter]
+                                                
+                    # the counter is over all succesors of all current
+                    # sheets at the current level (as opposed to just
+                    # successors of this sheet)
+                    order_counter += 1
 
-                            C.node[succ]['label'] = '$b_%d, %s$'%(i,pi)
-                            C.node[succ]['level'] = level
-                            C.node[succ]['order'] = order_counter
-                            C.node[succ]['pos'] = (level,order_counter-(t-1)/2.0)
-                            order_counter += 1
-                        
-
-            # if even level: the endpoints are 
-            #
-            # add sheets (n,k) where n is the sheet and k is number of
-            # times one need to go around bpt in order to get to sheet
-            # n. Also simply the index of n in pi after reordering
-            # such that the predecessor of (bpt,p1) occurs first in
-            # the permutation
+            ###################################################################
             else:
-                bpt,pi = node
-                n = C.neighbors(node)[0]        # C is always a tree.
-                pi = reorder_cycle(pi,n)
+                current_place = node
+                bpt,pi = current_place
 
-                # for each sheet appearing in the cycle corresponding
-                # to chosen branch point, add a node corresponding to
-                # this sheet. Store how many times one must go around
-                # this branch point in order to reach this sheet.
-                for k in xrange(1,len(pi)):
-                    n = pi[k]
-                    
-                    # remove the sheet from the unused sheet list if
-                    # we haven't visited the sheet yet and add the
-                    # edge to the graph. If, on the other hand, it has
-                    # been used, then mark the node as "final"
-                    succ = n
-                    edge = (succ,node)
-                    if n in visited_sheets:
+                # C is always a tree. obtain the previous node (which
+                # is the source sheet) since we order cycles with the
+                # source sheet appearing first.
+                #
+                # we also try to minimize the number of rotations performed
+                # by allowing reverse rotations.
+                n = len(pi)
+                previous_sheet = C.neighbors(current_place)[0]
+                pi = reorder_cycle(pi,previous_sheet)
+                                
+                for idx in range(1,n):
+                    next_sheet = pi[idx]
+                    succ = next_sheet
+                    edge = (succ,node) # final edges point from sheets to bpts
+
+                    if next_sheet in visited_sheets:
                         if edge not in final_edges:
                             final_edges.append(edge)
                     else:
-                        visited_sheets.append(n)
-                        C.add_edge(node,succ)
+                        visited_sheets.append(next_sheet)
+                        C.add_edge(succ,node)
+                        C.node[succ]['label'] = '$%d$'%(next_sheet)
+                        C.node[succ]['level'] = level+1
+                        C.node[succ]['nrots'] = idx if idx < n/2 else n-idx
+                        C.node[succ]['order'] = C.node[node]['order'] + \
+                                                [order_counter]
+                                                
+                    # the counter is over all succesors of all current
+                    # branch places at the current level (as opposed
+                    # to just successors of this branch place)
+                    order_counter += 1
 
-                        C.node[succ]['label'] = '$%d$'%(n)
-                        C.node[succ]['level'] = level
-                        C.node[succ]['order'] = order_counter
-                        C.node[succ]['nrots'] = k
-                        C.node[succ]['pos'] = (level,order_counter-(n-1)/2.0)
-                        order_counter += 1
-
-
-        # increment the level
+        # we are done adding succesors to all endpoints at this
+        # level. level up!
         level += 1
 
-
-#     # by now we have a non-tree that connects every sheet to every other
-#     # sheet by means of the branch point. We compute the minimal spanning 
-#     # tree and build the p and q paths by looking at which edges were
-#     # removed from the original graph
-#     S = nx.bfs_tree(C,(0,0)) # min spanning tree
-#     removed_edges = [edge for edge in C if edge not in S.edges()]
-#     for edge in removed_edges:
-
-    print "\nfinal edges (%d):"%(len(final_edges))
-    for edge in final_edges: 
-        print 'edge = %s'%(str(edge))
-        print '\t(order = %d)'%(C.node[edge[1]]['order'])
-        print '\t(level = %d)'%(C.node[edge[1]]['level'])
-
-    return C
-    
+    # the tretkoff graph is constructed. return the final edge. we
+    # also return the graph since it contains ordering and
+    # rotational data
+    return C, final_edges
 
 
-
-
-def tretkoff_table(hurwitz_system):
+def intersection_matrix(C, final_edges):
     """
-    Encodes data from a given Hurwitz system into a graph that
-    represents the corresponding Riemann Surface. 
-
-    A spanning tree of this graph produces a finite set of cycles
-    which contains a basis for the homology of the Riemann
-    surface. The particular way in which this is done allows the
-    determination of the intersection numbers of the cycles.
+    Compute the intersection matrix of the c-cycles from the
+    Tretkoff graph and final edge data output by `tretkoff_graph()`.
 
     Input:
-    - a Hurwitz system
-    
-    Output:
-    - a Tretkoff table encoding the c-cycle data.
+
+    - C: (networkx.Graph) Tretkoff graph
+
+    - final_edges: each edge corresponds to a c-cycle on the Riemann surface
     """
-    base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
+    def intersection_number(ei,ej):
+        """
+        Returns the intersection number of two edges of the Tretkoff graph.
 
-    # the number of sheets of the Riemann surface
-    covering_number = len(base_sheets)
+        Note: Python is smart and uses lexicographical ordering on lists
+        which is exactly what we need.
+        """
+        ei_start,ei_end = map(lambda n: C.node[n]['order'], ei)
+        ej_start,ej_end = map(lambda n: C.node[n]['order'], ej)
 
-    # the number of branch points
-    t = len(branch_points)
-
-    # the branch points together with their permutations, using the
-    # notation of Tretkoff and Tretkoff
-    c = [[ [branch_points[i], find_cycle(monodromy[i],j)] 
-           for j in xrange(covering_number) ]
-         for i in xrange(t) ]
-    
-    # initial construction of first circle: from sheet zero go to all
-    # branchpoints on sheet zero which are not fixed points
-    startseq = []
-    for i in xrange(t):
-        if len(c[i][0][1]) != 1:
-            startseq.append(c[i][0])
+        # if the starting node of ei lies before the starting node of ej
+        # then simply return the negation of (ej o ei)
+        if ei_start > ej_start:
+            return (-1)*intersection_number(ej,ei)
+        # otherwise, we need to check the relative ordering of the
+        # ending nodes of the edges with the starting nodes.
         else:
-            startseq.append(['stop',c[i][0]])
-    
-    # initialize Tretkoff table:
-    tretkoff = {'C':{0:[[0,[],startseq,[]]]}, 'q':{}, 'p':{}}
-    
-    # vitied_labels keeps track of which sheets we've already visited
-    used_sheet_labels = [0]
-    
-    # used_bpt_labels keeps track of which preimages of branch points
-    # (cycles) we've used already. this includes one cycles, which are
-    # terminal points
-    used_bpt_labels = [c[i][0] for i in xrange(t)]
-    for i in xrange(t):
-        for j in xrange(covering_number):
-            if len(c[i][j][1]) == 1:
-                used_bpt_labels.append(c[i][j])
-
-    # Main Loop: 'level' keeps track of which level from the root C[0]
-    # we are on in the graph. 'final_edges' holds the final edges in
-    # the graph, as in the notation of [TT]. 
-    # 'q_counter' keeps track of the final points
-    #
-    # tretkoff['C'][level] consists of a list of data:
-    #
-    # * level even:
-    #    sheet number,     
-    level = 1
-    final_edges = []
-    q_edges = []
-    q_counter = 0
-    finished = False
-    while not finished:
-        finished = True
-
-        # previous = number of branches from the previous level
-        # pointing to this level. the number of vertices at this level
-        # equals the number of branches originating at the previous
-        # level and pointing to this level
-        previous = len(tretkoff['C'][level-1])
-        tretkoff['C'][level] = [[]]*previous
-        
-        # odd levels correpond to sheets
-        if level % 2:
-            for i in xrange(previous):
-                # it's possible that a vertex at the previous level
-                # doesn't point to this level. (i.e. it's a final
-                # vertex). In that case, nothing corresponds to that
-                # vertex at this level
-                verts_to_here = tretkoff['C'][level-1][i][2]
-                if verts_to_here != []:
-                    finished = False
-
-                    # sourcelist = vertex at the previous level
-                    sourcelist = [src for src in tretkoff['C'][level-1][i]]
-                    entry = []
-
-                    # constuct a new vertex at this level for every branch
-                    # leaving the vertex at the previous level
-                    for j in xrange(len(sourcelist[2])):
-                        # a1 = new vertex
-                        # a2 = originating vertex
-                        # a3 = branches to future vertices
-                        # a4 = label in the graph. Which path to follow
-                        # starting from the root to get here.
-                        a1 = sourcelist[2][j]
-                        a2 = sourcelist[0]
-                        a3 = []
-                        a4 = [node for node in sourcelist[3]]
-                        a4.append(j)
-
-                        # if the new vertex is not final: then add the
-                        # appropriate sheets
-                        if a1[0] != 'stop':
-                            # reorder the cycle such that the
-                            # originating sheet number, a2, appears
-                            # first in the cycle / permutation
-                            # appearing in branch point a1
-                            newlist = reorder_cycle(a1[1],a2)
-
-                            # for each label in the cycle from the
-                            # originating vertex check if we need to
-                            # add an edge to the graph
-                            for k in xrange(1,len(newlist)):
-                                nlk = newlist[k]
-
-                                if nlk not in used_sheet_labels:
-                                    # the sheet corresponding to moving around
-                                    # the branch point k times has not been
-                                    # visited yet.  update the "branches to
-                                    # future vertices list.
-                                    a3.append(nlk)
-                                    used_sheet_labels.append(nlk)
-                                else:
-                                    # this sheet as already been
-                                    # visited. mark this vertex as
-                                    # final (using stop). also, check
-                                    # if the corresponding edge is a
-                                    # q-edge or a p-edge
-                                    a3.append(['stop',nlk])
-                                    edge = (nlk,a1)
-
-                                    if edge not in final_edges:
-                                        # add a q-edge
-                                        final_edges.append(edge)
-                                        q_edges.append(edge)
-                                        tretkoff['q'][q_counter] = [
-                                            ['stop',nlk],
-                                            a1,
-                                            [],
-                                            a4 + [k-1]
-#                                            a4 + [k]
-                                            ]
-                                        q_counter += 1
-                                    else:
-                                        if edge in q_edges:
-                                            # add a p-edge
-                                            p_counter = q_edges.index(edge)
-                                            tretkoff['p'][p_counter] = [
-                                                a1,
-                                                a2,
-                                                a3,
-                                                a4 + [k-1]
-#                                                a4 + [k]
-                                                ]
-
-                        # create a new vertex
-                        entry.append([a1,a2,a3,a4])
-
-                    # add the vertex "entry" to the graph
-                    tretkoff['C'][level][i] = entry
-                    
-
-        # event levels correspond to pre-images of branch points
-        else:
-            for i in xrange(previous):
-                # it's possible that a vertex at the previous level
-                # doesn't point to this level. (i.e. it's a final
-                # vertex). In that case, nothing corresponds to that
-                # vertex at this level
-                verts_to_here = tretkoff['C'][level-1][i][2]
-                if verts_to_here != []:
-                    finished = False
-
-                    # sourcelist = vertex at the previous level
-                    sourcelist = [src for src in tretkoff['C'][level-1][i]]
-                    entry = []
-
-                    # constuct a new vertex at this level for every branch
-                    # leaving the vertex at the previous level
-                    for j in xrange(len(sourcelist[2])):
-                        # b1 = new vertex
-                        # b2 = originating vertex
-                        # b3 = branches to future vertices
-                        # b4 = label in the graph. Which path to follow
-                        # starting from the root to get here.
-                        b1 = sourcelist[2][j]
-                        b2 = sourcelist[0]
-                        b3 = []
-                        b4 = [node for node in sourcelist[3]]
-                        b4.append(j)
-
-
-                        # Note: the order in which the sheets are visited is
-                        # important. It is obviously given by the monodromy
-                        # permutation related to each branch point. As a
-                        # consequnce, the following is split into two parts
-                        # which need to be done in order: first, the sheets
-                        # that are next in the permutation, then the sheets in
-                        # the permuration preceeding the current one.
-
-                        # XXX Stupid Maple syntax. Just making sure
-                        if isinstance(b1,list):
-                            stopping = True if b1[0] == 'stop' else False
-                        else:
-                            stopping = True if b1 == 'stop' else False
-
-                        if not stopping:
-                            # find the index of the branch point and, for each
-                            # following branch point, check if the branch
-                            # point has already been used
-                            starting_index = branch_points.index(b2[0])
-                            for k in xrange(starting_index+1,t):
-                                ckb1 = c[k][b1]
-
-                                if ckb1 not in used_bpt_labels:
-                                    # the pre-image of the branch point has
-                                    # not been used. add to the list of future
-                                    # vertices and update the used bpt list
-                                    b3.append(ckb1)
-                                    used_bpt_labels.append(ckb1)
-                                else:
-                                    # the pre-image of the branch
-                                    # point *has* been used. mark this
-                                    # vertex as final (using
-                                    # 'stop'). also, check if the
-                                    # corresp.  edge is a q-edge or a
-                                    # p-edge
-                                    b3.append(['stop',ckb1])
-                                    edge = (b1,ckb1)
-
-                                    if edge not in final_edges:
-                                        # add a q-edge
-                                        final_edges.append(edge)
-
-                                        if len(ckb1[1]) != 1:
-                                            # if the branch point is not a
-                                            # final vertex (in that its
-                                            # permutation is not the
-                                            # identity), then add to the
-                                            # q-list
-                                            tretkoff['q'][q_counter] = [
-                                                ['stop',ckb1],
-                                                b1,
-                                                [],
-                                                b4 + [k-starting_index]
-#                                                b4 + [k-starting_index-1]
-                                                ]
-                                            q_edges.append(edge)
-                                            q_counter += 1
-                                    else:
-                                        if edge in q_edges:
-                                            # add a p-edge
-                                            p_counter = q_edges.index(edge)
-                                            tretkoff['p'][p_counter] = [
-                                                b1,
-                                                b2,
-                                                b3,
-                                                b4 + [k-starting_index]
-#                                                b4 + [k-starting_index-1]
-                                                ]
-
-                            # now attack branch points preceeding the
-                            # current one
-                            for k in xrange(starting_index):
-                                ckb1 = c[k][b1]
-
-                                if ckb1 not in used_bpt_labels:
-                                    # the pre-image of the branch point has
-                                    # not been used. add to the list of future
-                                    # vertices and update the used bpt list
-                                    b3.append(ckb1)
-                                    used_bpt_labels.append(ckb1)
-                                else:
-                                    # the pre-image of the branch
-                                    # point *has* been used. mark this
-                                    # vertex as final (using
-                                    # 'stop'). also, check if the
-                                    # corresp.  edge is a q-edge or a
-                                    # p-edge
-                                    b3.append(['stop',ckb1])
-                                    edge = (b1,ckb1)
-
-                                    if edge not in final_edges:
-                                        # add a q-edge
-                                        final_edges.append(edge)
-
-                                        if len(ckb1[1]) != 1:
-                                            # if the branch point is not a
-                                            # final vertex (in that its
-                                            # permutation is not the
-                                            # identity), then add to the
-                                            # q-list
-                                            tretkoff['q'][q_counter] = [
-                                                ['stop',ckb1],
-                                                b1,
-                                                [],
-                                                b4 + [k+t-starting_index]
-#                                                b4 + [k+t-starting_index-1]
-                                                ]
-                                            q_edges.append(edge)
-                                            q_counter += 1
-                                    else:
-                                        if edge in q_edges:
-                                            # add a p-edge
-                                            p_counter = q_edges.index(edge)
-                                            tretkoff['p'][p_counter] = [
-                                                b1,
-                                                b2,
-                                                b3,
-                                                b4 + [k+t-starting_index]
-#                                                b4 + [k+t-starting_index-1]
-                                                ]
-
-                        # create a new vertex
-                        entry.append([b1,b2,b3,b4])
-
-                    # add the vertex "entry" to the graph
-                    tretkoff['C'][level][i] = entry
-
-
-        # don't bunch the vertices together according to their origin.
-        # all vertices are treated equal. (i.e. flatten the list of
-        # new vertices)
-        vertices = tretkoff['C'][level]
-        tretkoff['C'][level] = [item for sublist in vertices
-                                for item in sublist]
-        level += 1
-            
-
-    # how many levels of new information are there? this excludes the
-    # last level which only contains the final points.
-    tretkoff['depth'] = level-2
-
-    # how many cycles are generated by the spanning tree?
-    tretkoff['numberofcycles'] = q_counter
-
-    return tretkoff
-
-
-
-def tretkoff_list(tretkoff_table):
-    """
-    Determines a sequence of p_i and q_i symbols which are used later
-    to determine the intersection indices of the cycles of the
-    homology.
-    """
-    def cmp(l1,l2):
-        """l1 < l2 if the words formed from ..."""
-        j1 = len(l1)
-        j2 = len(l2)
-        if j1 <= j2:
-            i = 0
-            while i <= j1:
-                if l1[i] != l2[i]:
-                    return (l1[i] < l2[i])  # check this since cmp \in {-1,0,1}
-                i += 1
-        else:
-            return not cmp(l2,l1)
-    
-    n = tretkoff_table['numberofcycles']
-    result = []
-
-    lijst = [ tretkoff_table['p'][i][3] for i in xrange(n) ]
-    lijst.extend( [ tretkoff_table['q'][i][3] for i in xrange(n) ] )
-    
-    # check this since cmp \in {-1,0,1}
-    lijst.sort(cmp=cmp)
-    for e in lijst:
-        j = lijst.index(e)
-        # result:=result,`if`(j>n,q[j-n],p[j])
-        result.append(tretkoff_table['q'][j-n] if j >= n   #XXX
-                      else tretkoff_table['p'][j])
-
-    return result
-
-
-
-def make_cycle(a,b):
-    """
-    This procedure removes the common parts of two lists before
-    putting them together to create a cycle.
-    """
-    H = -1
-    while a[H+1] == b[H+1]: H += 1
-
-    A = [a[i] for i in xrange(H,len(a))]
-    B = [b[i] for i in range(H+1,len(b)-1)]
-    B.reverse()    
-    A.extend(B)
-    cycle = reorder_cycle(A)
-
-    return cycle
-
-
-def intersection_matrix(lijlist, elements):
-    """
-    Computes the intersection matrix, K, of the c-cycles given the pi/qi
-    points. The ordering of the pi's and qi's determines the entry in the
-    intersection matrix: -1, 0, or 1.
-    """
-    length = len(lijlist)
-    dim    = length / 2
-    K      = numpy.zeros((dim,dim), dtype=numpy.int)
-    a      = [lij for lij in lijlist]
-
-    for i in xrange(dim-1):
-        a = reorder_cycle(a,elements[i])
-        qi = a.index(elements[i+dim])
-
-        for j in range(i+1,dim):
-            pj = a.index(elements[j])
-            qj = a.index(elements[j+dim])
-            
-            if   (pj<qi) and (qi<qj): K[i,j] = 1
-            elif (qj<qi) and (qi<pj): K[i,j] = -1
-            else:                     K[i,j] = 0
-
-    return K - K.T
-
-
-
-def homology_basis(tretkoff_table):
-    """
-    This procedure does not really determine a basis for the
-    homology. It determines a finite set containing a basis. Some
-    elements in the set may be dependent in the homology, however.
-
-    The cycle is found by following the path that leads to qi from the
-    root. Then we follow the path from the root to pi. These paths are
-    pasted together and their overlap around the root is removed.
-    """
-    pdb.set_trace()
-    c = []
-    for i in xrange(tretkoff_table['numberofcycles']):
-        pi = tretkoff_table['p'][i]
-        qi = tretkoff_table['q'][i]
-        ppath = pi[3][:-1]
-        qpath = qi[3]
-
-        for Z in xrange(2):
-            part = [0]  # XXX
-            k = 0
-            vertex = tretkoff_table['C'][0][0]
-            for j in ppath if Z == 0 else qpath:
-                part.append(vertex[2][j])
-                loc1 = tretkoff_table['C'][k].index(vertex)
-                loc2 = 0
-                
-                if loc1 > 0:                  # XXX
-                    for m in xrange(loc1):     # XXX
-                        loc2 += len(tretkoff_table['C'][k][m][2])
-
-                loc2 += (j) #XXX
-                k += 1
-                vertex = tretkoff_table['C'][k][loc2]
-
-            if Z == 0:
-                ppart = part
+            if ej_start < ei_end < ej_end:
+                return 1
+            elif (ej_end < ei_end < ej_start) or (ej_start < ei_start <ej_end):
+                return -1
             else:
-                qpart = part
-
-        # By construction, the last element of qpart should be a ['stop',sheet]
-        # tuple. Replace this tuple with the sheet number it contains since
-        # we don't need to keep track of 'stop's anymore.
-        qpart[-1] = qpart[-1][1]
-        c.append( make_cycle(ppart, qpart) )
-
-    return c
+                return 0
+            
+        raise ValueError('Unable to determine intersection index of ' + \
+                         'edge %s with edge %s'%(ei,ej))
 
 
+    # the intersection matrix is anti-symmetric, so we only determine
+    # the intersection numbers of the upper triangle
+    num_final_edges = len(final_edges)
+    K = numpy.zeros((num_final_edges, num_final_edge), dtype=numpy.int)
+    for i in range(num_final_edges):
+        ei = final_edges[i]
+        for j in range(i+1,num_final_edges):
+            ej = final_edges[j]
+            K[i,j] = intersection_number(ei,ej)
 
-def reform_cycle(cycle):
+    # obtain the intersection numbers below the diagonal
+    K = K - K.T
+    return K
+
+
+def create_cycles_from_final_edges(C, final_edges):
     """
-    Rewrite a cycle in a specific form.
+    Returns the c-cycles of the Riemann surface.
 
-    The odd entries in the output list are sheet numbers. The even
-    entries are lists with two elements: the first is the location of
-    the branch point in the complex plane, the second indicates how
-    many times one needs to go around the branch point (in the
-    positive direction) to get to the next sheet.
+    Input:
 
-    Input: 
+    - C: the Tretkoff graph
 
-    A cycle of the form
-
-        [s_0, (b_{i_0}, pi_{i_0}), s_1, (b_{i_1}, pi_{i_1}), ...]
-
-    where "s_k" is a sheet number, "b_{i_k}" is the {i_k}'th branch
-    point, and "pi_{i_k}" is the corresponding sheet permutation
-    associated with the branch point.
-
-    It is assumed that each of these sheet / branch point pairs
-    appear uniquely in this cycle since the input is recieved from
-    the function "compress_cycle()".
-
+    - final_edges: a list of the final edges of the Tretkoff graph
+    
     Output:
     
     A list of the form
@@ -820,45 +376,28 @@ def reform_cycle(cycle):
     point, and "n_{i_k}" is the number of times and direction to go
     about branch point "b_{i_k}".
     """
-    n = len(cycle)
-    lijst = cycle[:]  # make a copy, not a pointer to the same list
-    for i in xrange(n/2):
-        # Grab the current sheet (a) + branch point pair (b).
-        a = lijst[2*i]
-        b = lijst[2*i+1]
+    c_cycles = []
 
-        # If we're at the end of the cycle then wrap around to get the
-        # "next" sheet. Otherwise, the next sheet is the element
-        # following.
-        if (2*i+1) == (n-1):
-            c = lijst[0]
-        else:
-            c = lijst[2*i+2]
-        
-        # Branch points are of the form (branch point number/index,
-        # sheet permutation). "a" and "c" are the source and target
-        # sheets, respectively. Find where these sheets are located in
-        # the permutation and find the distance between the two
-        # sheets. This distance is equal to the number of times and
-        # direction one must go around the given branch point in order
-        # to get from sheet a to sheet c. Of all ways to go around the
-        # branch point to get from sheet a to c the one with the
-        # fewest number of rotations is selected.
-        pos1 = b[1].index(a)
-        pos2 = b[1].index(c)
-        mini = min( [abs(pos2-pos1), pos2-pos1+len(b[1]), 
-                     abs(pos2-pos1-len(b[1]))] )
+    # recall that the edges have a direction: edge[0] is the starting
+    # node and edge[1] is the ending node. This determines the
+    # direction of the c-cycle.
+    for edge in final_edges:
+        # obtain the vertices on the Tretkoff graph starting from the
+        # base place, going through the edge, and then back to the
+        # base_place
+        path_to_edge = nx.shortest_path(C,0,edge[0])
+        path_from_edge = nx.shortest_path(C,edge[1],0)
+        path = path_to_edge + edge + path_from_edge
 
-        if abs(pos2-pos1) == mini:        around = pos2-pos1
-        elif pos2-pos1+len(b[2]) == mini: around = pos2-pos1+len(b[1])
-        else:                             around = pos2-pos1-len(b[1])
-            
-        # Replace the permutation with the number of times 
-        b = (b[0], around)
-        lijst[2*i+1] = b
+        # the path information is currently of the form:
+        #
+        # [0, .., s_j, (b_{i_j}, pi_{i_j}), ...]
+        #
+        # (each odd element is a branch place - permutation pair.
+        # Use the
+        c_cycles.append(path)
 
-    return lijst
-
+    return c_cycles
 
 
 
@@ -927,6 +466,59 @@ def homology(*args, **kwds):
     return canonical_basis(*args, **kwds)
 
 
+def plot_homology(C,final_edges):
+    try:
+        import networkx as nx
+        import matplotlib.pyplot as plt
+    except:
+        raise
+
+    edges = C.edges()
+    labels = dict([(n,d['label']) for n,d in C.nodes(data=True)])
+
+    # compute positions
+    pos = {0:(0,0)}
+    level = 1
+    prev_points = [0]
+    level_points = [0]
+    N_prev = 1
+    while len(level_points) > 0:
+        level_points = sorted([n for n,d in C.nodes(data=True)
+                               if d['level'] == level],
+                               key = lambda n: C.node[n]['order'])
+        
+        N = len(level_points)
+        for k in range(N):
+            node = level_points[k]
+            pred = [p for p in C.neighbors(node)
+                    if C.node[p]['level'] < level][0]
+
+            # complex position distributed evenly about unit circle
+            theta = numpy.double(k)/N
+            z = numpy.exp(1.0j*numpy.pi*theta)
+
+            # cluster by predecessor location
+
+            # scale by level
+            z *= level
+            
+            pos[node] = (z.real, z.imag)
+
+        level += 1
+        N_prev = N
+        prev_points = level_points[:]
+            
+
+    # draw it
+    nx.draw_networkx_nodes(C, pos)
+    nx.draw_networkx_edges(C, pos, edgelist=edges, width=2)
+    nx.draw_networkx_edges(C, pos, edgelist=final_edges,
+                           edge_color='b', style='dashed')
+    nx.draw_networkx_labels(C, pos, labels=labels, font_size=16)
+    
+    plt.show()
+
+
 
 if __name__=='__main__':
     from sympy.abc import x,y
@@ -944,18 +536,14 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     f11= y**2 - (x**2+1)*(x**2-1)*(4*x**2+1)  # simple genus two hyperelliptic
-    f12 = y**7-x*(x-1)**2
+    f12 = x**4 + y**4 - 1
 
 
-    f = f2
+    f = f12
     hs = monodromy(f,x,y)
-    C = tretkoff_graph(hs)
+    C, final_edges = tretkoff_graph(hs)
     labels = dict((n,C.node[n]['label']) for n in C.nodes())
-    pos = dict((n,C.node[n]['pos']) for n in C.nodes())
-    nx.draw(C, pos=pos, labels=labels, hold=False, font_size=16)
 
-#     hom = homology(f,x,y)
-#     for key,value in hom.iteritems():
-#         print key
-#         print value
-#         print
+    plot_homology(C,final_edges)
+
+

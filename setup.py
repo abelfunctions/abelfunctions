@@ -14,6 +14,8 @@ custom directory <dir>, use
     python setup.py --prefix=<dir>
 """
 
+__version__ = '0.9'
+
 from distutils.core import setup, Command
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
@@ -22,7 +24,7 @@ import os
 import os.path
 import numpy
 
-import abelfunctions
+#import abelfunctions
 
 class clean(Command):
     """
@@ -134,7 +136,7 @@ Department of Applied Mathematics at the University of Washington.'''
 
 setup(
     name = 'abelfunctions',
-    version = abelfunctions.__version__,
+    version = __version__,
     description = 'Python library for computing with Abelian functions',
     long_description = long_description,
     author = 'Chris Swierczewski',
