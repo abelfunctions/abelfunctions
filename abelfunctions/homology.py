@@ -552,61 +552,61 @@ def homology(f,x,y):
 
     c_cycles = compute_c_cycles(C, final_edges)
     a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
-    return C, a_cycles, b_cycles
+    return a_cycles, b_cycles
 
 
 
-def plot_homology(C,final_edges):
-    try:
-        import networkx as nx
-        import matplotlib.pyplot as plt
-    except:
-        raise
+# def plot_homology(C,final_edges):
+#     try:
+#         import networkx as nx
+#         import matplotlib.pyplot as plt
+#     except:
+#         raise
 
-    edges = C.edges()
-    labels = dict([(n,d['label']) for n,d in C.nodes(data=True)])
+#     edges = C.edges()
+#     labels = dict([(n,d['label']) for n,d in C.nodes(data=True)])
 
-    # compute positions
-    pos = {0:(0,0)}
-    level = 1
-    prev_points = [0]
-    level_points = [0]
-    N_prev = 1
-    while len(level_points) > 0:
-        level_points = sorted([n for n,d in C.nodes(data=True)
-                               if d['level'] == level],
-                               key = lambda n: C.node[n]['order'])
+#     # compute positions
+#     pos = {0:(0,0)}
+#     level = 1
+#     prev_points = [0]
+#     level_points = [0]
+#     N_prev = 1
+#     while len(level_points) > 0:
+#         level_points = sorted([n for n,d in C.nodes(data=True)
+#                                if d['level'] == level],
+#                                key = lambda n: C.node[n]['order'])
         
-        N = len(level_points)
-        for k in range(N):
-            node = level_points[k]
-            pred = [p for p in C.neighbors(node)
-                    if C.node[p]['level'] < level][0]
+#         N = len(level_points)
+#         for k in range(N):
+#             node = level_points[k]
+#             pred = [p for p in C.neighbors(node)
+#                     if C.node[p]['level'] < level][0]
 
-            # complex position distributed evenly about unit circle
-            theta = numpy.double(k)/N
-            z = numpy.exp(1.0j*numpy.pi*theta)
+#             # complex position distributed evenly about unit circle
+#             theta = numpy.double(k)/N
+#             z = numpy.exp(1.0j*numpy.pi*theta)
 
-            # cluster by predecessor location
+#             # cluster by predecessor location
 
-            # scale by level
-            z *= level
+#             # scale by level
+#             z *= level
             
-            pos[node] = (z.real, z.imag)
+#             pos[node] = (z.real, z.imag)
 
-        level += 1
-        N_prev = N
-        prev_points = level_points[:]
+#         level += 1
+#         N_prev = N
+#         prev_points = level_points[:]
             
 
-    # draw it
-    nx.draw_networkx_nodes(C, pos)
-    nx.draw_networkx_edges(C, pos, edgelist=edges, width=2)
-    nx.draw_networkx_edges(C, pos, edgelist=final_edges,
-                           edge_color='b', style='dashed')
-    nx.draw_networkx_labels(C, pos, labels=labels, font_size=16)
+#     # draw it
+#     nx.draw_networkx_nodes(C, pos)
+#     nx.draw_networkx_edges(C, pos, edgelist=edges, width=2)
+#     nx.draw_networkx_edges(C, pos, edgelist=final_edges,
+#                            edge_color='b', style='dashed')
+#     nx.draw_networkx_labels(C, pos, labels=labels, font_size=16)
     
-    plt.show()
+#     plt.show()
 
 
 
