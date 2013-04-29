@@ -82,14 +82,14 @@ def frobenius_transform(A,g):
     matrix alpha.
     """
     if not isinstance(A,numpy.matrix):
-        B = numpy.matrix(A, dtype=numpy.int)
+        K = numpy.matrix(A, dtype=numpy.int)
     else:
-        B = A
-    dim = B.shape[0]
+        L = A
+    dim = K.shape[0]
 
     # the rand of an antisymmetric matrix is always even and is equal
     # to 2g in this case
-    alpha = numpy.eye(dim, dtype=numpy.int)
+    T = numpy.eye(dim, dtype=numpy.int)
     
     # create the block below the diagonal. make zeros everywhere else
     # in the first g columns
@@ -98,56 +98,71 @@ def frobenius_transform(A,g):
         # and columns
         counter = dim-1
 
-        while numpy.all( B[(g+i):,i] == numpy.zeros(dim-(g+i)) ):
-            alpha[[i,counter],:] = alpha[[counter,i],:]
-            B[:,[i,counter]]     = B[:,[counter,i]]
-            B[[i,counter],:]     = B[[counter,i],:]
+        while numpy.all( K[(g+i):,i] == numpy.zeros(dim-(g+i)) ):
+            T[[i,counter],:] = T[[counter,i],:]
+            K[:,[i,counter]] = K[:,[counter,i]]
+            K[[i,counter],:] = K[[counter,i],:]
             counter -= 1
         
-        if B[i+g,i] == 0:
+        if K[i+g,i] == 0:
             # if the pivot element is zero then change rows to make it
             # non-zero
             k = i+g+1
-            while B[i+g,i] == 0:
-                if B[k,i] != 0:
-                    pivot = -1/B[k,i];
+            while K[i+g,i] == 0:
+                if K[k,i] != 0:
+                    pivot = -1/K[k,i];
 
-                    alpha[k,:]      *= pivot                     # scale row
-                    alpha[[k,i+g],:] = alpha[[i+g,k],:]          # swap rows
+                    T[k,:]      *= pivot                         # scale row
+                    T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
 
-                    B[k,:]      *= pivot                         # scale row
-                    B[[k,i+g],:] = B[[i+g,k],:]                  # swap rows
-                    B[:,k]      *= pivot                         # scale column
-                    B[:,[k,i+g]] = B[:,[i+g,k]]                  # swap columns
+                    K[k,:]      *= pivot                         # scale row
+                    K[[k,i+g],:] = K[[i+g,k],:]                  # swap rows
+                    K[:,k]      *= pivot                         # scale column
+                    K[:,[k,i+g]] = K[:,[i+g,k]]                  # swap columns
                     
                 k += 1
         else:
             # otherwise, if the pivot element is non-zero then scale
             # it so it's equal to -1
-            pivot = -1/B[i+g,i]
-            alpha[i+g,:] *= pivot
-            B[i+g,:]     *= pivot
-            B[:,i+g]     *= pivot
+            pivot = -1/K[i+g,i]
+            T[i+g,:] *= pivot
+            K[i+g,:] *= pivot
+            K[:,i+g] *= pivot
 
         for j in range(i,i+g) + range(i+g+1,dim):
             # use the pivot to create zeros in the rows above it and below it
-            pivot = -B[j,i]/B[i+g,i]
-            alpha[j,:] += pivot * alpha[i+g,:]
-            B[j,:]     += pivot * B[i+g,:]
-            B[:,j]     += pivot * B[:,i+g]
+            pivot = -K[j,i]/K[i+g,i]
+            T[j,:] += pivot * T[i+g,:]
+            K[j,:] += pivot * K[i+g,:]
+            K[:,j] += pivot * K[:,i+g]
 
     for i in xrange(g):
         # the block aboce the diagonal is already there. use it to
         # create zeros everywhere else in teh second block of g
         # columns. automatically all other coluns are then zero,
-        # because the rank of B is only 2g
+        # because the rank of the intersection matrix K is only 2g
         for j in range(i+g+1,dim): #XXX check dims
-            pivot = -B[j,i+g]
-            alpha[j,:] = alpha[j] + pivot * alpha[i,:]
-            B[j,:]     = B[j,:] + pivot * B[i,:]
-            B[:,j]     = B[:,j] + pivot * B[:,i]
+            pivot = -K[j,i+g]
+            T[j,:] = T[j] + pivot * T[i,:]
+            K[j,:] = K[j,:] + pivot * K[i,:]
+            K[:,j] = K[:,j] + pivot * K[:,i]
 
-    return alpha
+
+    # sanity check: did the Frobenius transform produce the correct
+    # result?  T * K * T.T = J where J has the gxg identity I in the
+    # top right block and -I in the lower left block (the Jacobian
+    # matrix)
+    J = numpy.dot(numpy.dot(T, K), T.T)
+    for i in xrange(g):
+        for j in xrange(g):
+            if j==i+g and i<g:   val = 1
+            elif i==j+g and j<g: val = -1
+            else:                val = 0
+
+            if J[i,j] != val:
+                raise Error("Could not compute Frobenuis transform of " + \
+                            "intersection matrix.")
+    return T
 
 
 def tretkoff_graph(hurwitz_system):
@@ -283,7 +298,7 @@ def tretkoff_graph(hurwitz_system):
                         C.add_edge(succ,node)
                         C.node[succ]['label'] = '$%d$'%(next_sheet)
                         C.node[succ]['level'] = level+1
-                        C.node[succ]['nrots'] = idx if idx < n/2 else n-idx
+                        C.node[succ]['nrots'] = idx if idx <= n/2 else idx-n
                         C.node[succ]['order'] = C.node[node]['order'] + \
                                                 [order_counter]
                                                 
@@ -302,7 +317,7 @@ def tretkoff_graph(hurwitz_system):
     return C, final_edges
 
 
-def intersection_matrix(C, final_edges):
+def intersection_matrix(tretkoff_graph, final_edges, g):
     """
     Compute the intersection matrix of the c-cycles from the
     Tretkoff graph and final edge data output by `tretkoff_graph()`.
@@ -312,7 +327,12 @@ def intersection_matrix(C, final_edges):
     - C: (networkx.Graph) Tretkoff graph
 
     - final_edges: each edge corresponds to a c-cycle on the Riemann surface
+
+    - g: the expected genus of the riemann surface as given by
+      singularities.genus()
     """
+    C = tretkoff_graph
+    
     def intersection_number(ei,ej):
         """
         Returns the intersection number of two edges of the Tretkoff graph.
@@ -325,7 +345,9 @@ def intersection_matrix(C, final_edges):
 
         # if the starting node of ei lies before the starting node of ej
         # then simply return the negation of (ej o ei)
-        if ei_start > ej_start:
+        if ei_start == ej_start or ei_end == ej_end:
+            return 0
+        elif ei_start > ej_start:
             return (-1)*intersection_number(ej,ei)
         # otherwise, we need to check the relative ordering of the
         # ending nodes of the edges with the starting nodes.
@@ -344,7 +366,7 @@ def intersection_matrix(C, final_edges):
     # the intersection matrix is anti-symmetric, so we only determine
     # the intersection numbers of the upper triangle
     num_final_edges = len(final_edges)
-    K = numpy.zeros((num_final_edges, num_final_edge), dtype=numpy.int)
+    K = numpy.zeros((num_final_edges, num_final_edges), dtype=numpy.int)
     for i in range(num_final_edges):
         ei = final_edges[i]
         for j in range(i+1,num_final_edges):
@@ -353,10 +375,17 @@ def intersection_matrix(C, final_edges):
 
     # obtain the intersection numbers below the diagonal
     K = K - K.T
+
+    # sanity_check: make sure the intersection matrix predicts the
+    # same genus that the genus formula otuputs
+    rank = numpy.linalg.matrix_rank(K)
+    if rank/2 != g:
+        raise ValueError("Found inconsistent genus in homolgy " + \
+                         "intersection matrix.")
     return K
 
 
-def create_cycles_from_final_edges(C, final_edges):
+def compute_c_cycles(tretkoff_graph, final_edges):
     """
     Returns the c-cycles of the Riemann surface.
 
@@ -376,6 +405,7 @@ def create_cycles_from_final_edges(C, final_edges):
     point, and "n_{i_k}" is the number of times and direction to go
     about branch point "b_{i_k}".
     """
+    C = tretkoff_graph
     c_cycles = []
 
     # recall that the edges have a direction: edge[0] is the starting
@@ -387,21 +417,116 @@ def create_cycles_from_final_edges(C, final_edges):
         # base_place
         path_to_edge = nx.shortest_path(C,0,edge[0])
         path_from_edge = nx.shortest_path(C,edge[1],0)
-        path = path_to_edge + edge + path_from_edge
+        path = path_to_edge + path_from_edge 
 
         # the path information is currently of the form:
         #
         # [0, .., s_j, (b_{i_j}, pi_{i_j}), ...]
         #
-        # (each odd element is a branch place - permutation pair.
-        # Use the
+        # (each odd element is a branch place - permutation pair.)
+        # replace with the roatational data stored in the graph
+        for n in range(1,len(path),2):
+            branch_place = path[n]
+
+            # update the path entry (remember, Python uses references
+            # to lists) if we are traveling the return path then
+            # reverse the rotations.
+            if n < len(path_to_edge):
+                next_sheet = path[n+1]
+                nrots = C.node[next_sheet]['nrots']
+            else:
+                prev_sheet = path[n-1]
+                nrots = - C.node[prev_sheet]['nrots']
+            path[n] = (branch_place[0], nrots)
+
         c_cycles.append(path)
 
     return c_cycles
 
 
 
-def canonical_basis(f,x,y):
+
+def reverse_cycle(cycle):
+    """
+    Returns the reversed cycle. Note that rotation numbers around
+    branch points are correctly computed.
+    """
+    rev_cycle = list(reversed(cycle))
+    for n in range(1,len(cycle),2):
+        rev_cycle[n] = (rev_cycle[n][0], -rev_cycle[n][1])
+    return rev_cycle
+
+
+
+def compress_cycle(cycle, tretkoff_graph, monodromy_graph):
+    """
+    Given a cycle, the Tretkoff graph, and the monodromy graph, return a
+    shortened equivalent cycle.
+    """
+    N = len(cycle)
+    n = 1
+    while n < (N-2):
+        curr_sheet = cycle[n-1]
+        curr_place = cycle[n]
+        next_sheet = cycle[n+1]
+        next_place = cycle[n+2]
+
+        # if two successive branch points are the same then delete one
+        # of them and sum the number of rotations. 
+        if curr_place[0] == next_place[0]:
+            cycle[n] = (curr_place[0], curr_place[1] + next_place[1])
+            cycle.pop(n+1)
+            cycle.pop(n+1)
+            N -= 2
+        else:
+            n += 2
+        
+    return cycle
+
+
+
+def compute_ab_cycles(c_cycles, linear_combinations, g,
+                      tretkoff_graph, monodromy_graph):
+    """
+    Returns the a- and b-cycles of the Riemann surface given the
+    intermediate 'c-cycles' and linear combinations matrix.
+
+    Input:
+
+    - c_cycles
+
+    - linear_combinations: output of the Frobenius transform of the 
+    """
+    lincomb = linear_combinations
+    M,N = lincomb.shape
+    
+    a_cycles = []
+    b_cycles = []
+
+    for i in range(g):
+        a = []
+        b = []
+        for j in range(N):
+            cij = lincomb[i,j]
+            c = c_cycles[j] if cij >= 0 else reverse_cycle(c_cycles[j])
+            a.extend(abs(cij)*c[:-1])
+
+            cij = lincomb[i+g,j]
+            c = c_cycles[j] if cij >= 0 else reverse_cycle(c_cycles[j])
+            b.extend(abs(cij)*c[:-1])
+
+        a = a + [0]
+        b = b + [0]
+        a = compress_cycle(a, tretkoff_graph, monodromy_graph)
+        b = compress_cycle(b, tretkoff_graph, monodromy_graph)
+        
+        a_cycles.append(a)
+        b_cycles.append(b)
+
+    return a_cycles, b_cycles
+
+
+def homology(f,x,y):
     """
     Given a plane representation of a Riemann surface, that is, a
     complex plane algebraic curve, return a canonical basis for the
@@ -411,59 +536,24 @@ def canonical_basis(f,x,y):
     hurwitz_system = monodromy(f,x,y)
     base_point, base_sheets, branch_points, mon, G = hurwitz_system
 
-    # compute key data elements
-    # - t_table: path data from Tretkoff graph
-    # - t_basis: a collection of cycles generated from the Tretkoff table.
-    #            the homology cycles are formed by a linear comb of these
-    # - t_list:  a ordering of the pi/qi symbols used to dermine the
-    #            intersection matric of the t_basis cycles
-    t_table = tretkoff_table(hurwitz_system)
-    t_basis = homology_basis(t_table)
-    t_list  = tretkoff_list(t_table)
-    
-    c = len(t_list) / 2
-    t_matrix = intersection_matrix(t_list, 
-                                   [t_table['p'][i] for i in xrange(c)] + \
-                                   [t_table['q'][i] for i in xrange(c)])
-
-    # sanity check: make sure intersection matrix produces the same genus
-    rank = numpy.linalg.matrix_rank(t_matrix)
-    if rank/2 != g:
-        raise ValueError("Found inconsistent genus in homolgy " + \
-                         "intersection matrix.")
-    
-    alpha = frobenius_transform(t_matrix,g)
-
-    # sanity check: did the Frobenius transform produce the correct result?
-    # alpha * t_matrix * alpha.T = J where J has the gxg identity I in the
-    # top right block and -I in the lower left block
+    # compute primary data elements:
     #
-    # XXX move this code to frobenius_transform???
-    t_matrix_check = numpy.dot(numpy.dot(alpha, t_matrix), alpha.T)
-    for i in xrange(c):
-        for j in xrange(c):
-            if j==i+g and i<g:   val = 1
-            elif i==j+g and j<g: val = -1
-            else:                val = 0
+    # * tretkoff_graph gives us the key combinatorial data
+    #
+    # * intersection_matrix takes this data and tells us how
+    #   the c-cycles intersect
+    #
+    # * the frobenius_transform of the intersection matrix
+    #   gives us which linear combinations of the c_cycles we
+    #   need to obtain the a- and b-cycles
+    C, final_edges = tretkoff_graph(hurwitz_system)
+    K = intersection_matrix(C, final_edges, g)
+    T = frobenius_transform(K,g)
 
-            if t_matrix_check[i,j] != val:
-                raise Error("Could not compute Frobenuis transform of " + \
-                            "intersection matrix.")
+    c_cycles = compute_c_cycles(C, final_edges)
+    a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
+    return C, a_cycles, b_cycles
 
-    # place results in a dictionary
-    c = {}
-    c['basepoint'] = base_point
-    c['sheets'] = base_sheets
-    c['genus'] = g
-    c['cycles'] = map(reform_cycle, t_basis)
-    c['linearcombination'] = alpha[:2*g,:]
-
-    return c
-
-
-
-def homology(*args, **kwds):
-    return canonical_basis(*args, **kwds)
 
 
 def plot_homology(C,final_edges):
@@ -522,6 +612,7 @@ def plot_homology(C,final_edges):
 
 if __name__=='__main__':
     from sympy.abc import x,y
+    from networkx import graphviz_layout
     
     f0 = y**3 - 2*x**3*y - x**8  # Klein curve
 
@@ -541,9 +632,32 @@ if __name__=='__main__':
 
     f = f12
     hs = monodromy(f,x,y)
-    C, final_edges = tretkoff_graph(hs)
-    labels = dict((n,C.node[n]['label']) for n in C.nodes())
+    g = int(genus(f,x,y))
 
-    plot_homology(C,final_edges)
+    print("\nBranch points...")
+    for bpt in hs[2]: print bpt
+
+    print("\nComputing Tretkoff Graph...")
+    C, final_edges = tretkoff_graph(hs)
+    print("Final edges:")
+    for e in final_edges: print e
+
+    print("\nComputing c-cycles...")
+    c_cycles = compute_c_cycles(C, final_edges)
+    for c in c_cycles: print c
+
+    print("\nComputing intersection matrix and lincombs...")
+    K = intersection_matrix(C, final_edges, g)
+    T = frobenius_transform(K,g)
+    J = numpy.dot(numpy.dot(T,K),T.T)
+    print("K =\n%s\n\nT =\n%s\n\nJ =\n%s"%(K,T,J))
+
+    print("\nComputing a- and b-cycles")
+    a,b = compute_ab_cycles(c_cycles, T, g, C, None)
+    print("a-cycles:")
+    for ai in a: print ai
+
+    print("b-cycles:")
+    for bi in b: print bi
 
 
