@@ -23,7 +23,7 @@ defined by the infinite series
 
     \theta( z | \Omega ) = \sum_{ n \in \ZZ^g } e^{ 2 \pi i \left( \tfrac{1}{2} n \cdot \Omega n + n \cdot z \right) }
 
-It is holomorphic in both `z` and `\Omega`. It is quasiperiodic in `z`
+It is holomorphic in both `z` y and `\Omega`. It is quasiperiodic in `z`
 with respect to the lattice `\{ M + \Omega N | M,N \in \ZZ^g \}`,
 meaning that `\theta(z|\Omega)` is periodic upon translation of `z` by
 vectors in `\ZZ^g` and periodic up to a multiplicative exponential
@@ -102,6 +102,7 @@ import riemanntheta_cy
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 import time
+from lattice_reduction import lattice_reduce
 
 gpu_capable = True
 try:
@@ -296,8 +297,7 @@ class RiemannTheta_Function:
 
         # compute the length of the shortest lattice vector
         #U  = qflll(T)
-	U = T
-        A  = U*T
+	A = lattice_reduce(T)
         r  = min(la.norm(A[:,i]) for i in range(int(g)))
         normTinv = la.norm(la.inv(T))
 
