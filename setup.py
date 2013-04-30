@@ -104,10 +104,13 @@ packages = [
 
 ext_modules = [
     Extension('abelfunctions.riemanntheta.riemanntheta_cy',
-              sources = ["abelfunctions/riemanntheta/riemanntheta_cy.pyx",
-                         "abelfunctions/riemanntheta/riemanntheta.c"],
-              include_dirs = [np.get_include()]
-              )
+              sources = ['abelfunctions/riemanntheta/riemanntheta_cy.pyx',
+                         'abelfunctions/riemanntheta/riemanntheta.c'],
+              include_dirs = [np.get_include()]),
+    Extension('abelfunctions.riemanntheta.lattice_reduction', 
+              sources = ['abelfunctions/riemanntheta/lattice_reduction.pyx', 
+                         'abelfunctions/riemanntheta/lll_reduce.c'],
+              include_dirs = [np.get_include()])
     ]
     
 
