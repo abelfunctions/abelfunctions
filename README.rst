@@ -30,18 +30,17 @@ To begin using Abelfunctions from this directory start python and run::
 Prerequisites
 -------------
 
-Abelfunctions can be used either with the Enthought Python Distribution (EPD)
-or Sage. If using EPD, Abelfunctions needs the following libraries / software 
-installed:
+abelfunctions runs well with either the Enthought Python Distribution 
+(http://enthought.com/products/epd.php) or Sage (http://www.sagemath.org).
+Specifically, abelfunctions requires the following Python packages
 
-* PARI/GP: to install, obtain the most recent::
+  * numpy
+  * scipy
+  * sympy
+  * networkx	      
 
-  $ curl -O http://pari.math.u-bordeaux.fr/pub/pari/unix/pari.tgz
-  $ tar xzf pari.tgz
-  $ cd pari
-  $ ./Configure
-  $ make all
-  # make install
+Plotting / visual routines will require matplotlib, in addition.
+
 
 Installation
 ------------
