@@ -31,17 +31,18 @@ Prerequisites
 -------------
 
 Abelfunctions can be used either with the Enthought Python Distribution (EPD)
-or Sage. If using EPD, Abelfunctions needs the following libraries / software 
-installed:
+or Sage. However, it only requires the following Python packages:
 
-* PARI/GP: to install, obtain the most recent::
+* gcc (or equivalent)
+* numpy
+* scipy
+* sympy
+* networkx
+* matplotlib
+* Cython
 
-  $ curl -O http://pari.math.u-bordeaux.fr/pub/pari/unix/pari.tgz
-  $ tar xzf pari.tgz
-  $ cd pari
-  $ ./Configure
-  $ make all
-  # make install
+Optionally, the NVIDIA CUDA compiler is needed to compile the high-performance
+CUDA code used in RiemannTheta.
 
 Installation
 ------------
