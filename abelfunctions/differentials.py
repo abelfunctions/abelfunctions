@@ -107,16 +107,54 @@ if __name__=='__main__':
     from sympy.abc import x,y
 
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    # number of differentials does not match
+    
     f2 = y**3 + 2*x**3*y - x**7
+    # [x**3/(2*x**3 + 3*y**2), x*y/(2*x**3 + 3*y**2)]
+    
     f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    # number of diffs does not match
+    
     f4 = y**2 + x**3 - x**2
+    # number of diffs does not match
+    # [1]
+        
     f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-    f6 = y**4 - y**2*x + x**2
+    # number of diffs does not match
+    # [x*y**2, x*y, y**3, y**2]
+    # should be
+    # x**2 + y**2
+    
     f7 = y**3 - (x**3 + y)**2 + 1
+    # does not terminate
+    
     f8 = x**6*y**3 + 2*x**3*y - 1
+    # genus zero
+    
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    # (genus 9!)
+    # [x**5/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**4/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**3/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**2*y/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**2/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x*y/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  y/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  1/(2*x**7 + 3*y**2 + 6*y + 3)]
+        
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
-    f11= y**3 - x**3*y + 2*x**7
+    # [x*y/(4*x**3*y**3 + 2*x**3 + 8*x**2*y),
+    #  x/(4*x**3*y**3 + 2*x**3 + 8*x**2*y),
+    #  1/(4*x**3*y**3 + 2*x**3 + 8*x**2*y)]
+      
+    
+    f12 = y**3 - x**3*y + 2*x**7
+    # [x**3/(-x**3 + 3*y**2), x*y/(-x**3 + 3*y**2)]
+    
+    f13 = x**4 + y**4 - 1
+    # (fast! no singular points)
+    # [x/(4*y**3), 1/(4*y**2), 1/(4*y**3)]
 
     fs = [f1,f2,f3,f4,f5,f6,f9,f10]
     fs = [f11]
