@@ -18,30 +18,33 @@ from abelfunctions.utilities import cached_function
 
 import pdb
 
-def mnuk_conditions(f,x,y,b,P):
+def mnuk_conditions(f,u,v,b,P):
     """
     Determine the Mnuk conditions on the coefficients, c, of the general
     adjoint polynomial P at the point x=0.
 
     Note: it is assume t
     """
-    if isinstance(b,int): b = sympy.S(b)
     numer, denom = b.ratsimp().as_numer_denom()
 
     # reduce b*P modulo f
-    expr = numer.as_poly(x)*P.as_poly(x)
-    Q,R = sympy.polytools.reduced(expr.as_poly(y), [sympy.poly(f,y)])
+    expr = (numer*P).as_poly(v,u)
+    Q,R = sympy.polytools.reduced(expr, [sympy.poly(f,v,u)])
 
     # divide by the largest power of x appearing in the denominator.
     # this is sufficient since we've shifted the curve and its
-    # singularity to appear at 
-    denom = sympy.poly(denom, x)
-    try:    mult = sympy.roots(denom)[0]
-    except: mult = 0
-    rem = expr.as_poly(x).rem(sympy.poly(x**mult,x))
-    coeffs = rem.as_poly(x,y).coeffs()
+    # singularity to appear at
+    try:
+        mult = sympy.roots(denom.as_poly(u))[sympy.S(0)]
+    except KeyError:
+        mult = 0
 
-    return coeffs
+    R = R.as_poly(u,v)
+    coeffs = R.coeffs()
+    monoms = R.monoms()
+    conditions = [coeff for coeff,monom in zip(coeffs,monoms)
+                  if monom[0] < mult]
+    return conditions
 
 
 def differentials(f,x,y):
@@ -72,12 +75,14 @@ def differentials(f,x,y):
     # and center at u=0. determine the conditions on P
     S = singularities(f,x,y)
     conditions = []
-    for (alpha, beta, gamma),(m,delta,r) in S:
-        g,u,v,u0,v0 = _transform(f,x,y,(alpha,beta,gamma))
-        b = integral_basis(g,u,v)
+    for singular_pt,(m,delta,r) in S:
+        g,u,v,u0,v0      = _transform(f,x,y,singular_pt)
+        Ptilde,u,v,u0,v0 = _transform(P,x,y,singular_pt)
         g = g.subs(u,u+u0)
+        
+        b = integral_basis(g,u,v)
         for bi in b:
-            conditions_bi = mnuk_conditions(g,u,v,bi.subs(u,u+u0),P)
+            conditions_bi = mnuk_conditions(g,u,v,bi,Ptilde)
             conditions.extend(conditions_bi)
 
     # solve the system of equations and retreive monomials contained
@@ -91,7 +96,6 @@ def differentials(f,x,y):
     g = genus(f,x,y)
     if g != len(differentials):
         raise AssertionError("Number of differentials does not match genus.")
-
 
     return [differential/sympy.diff(f,y) for differential in differentials]
 
@@ -116,8 +120,21 @@ if __name__=='__main__':
 
     fs = [f1,f2,f3,f4,f5,f6,f9,f10]
     fs = [f11]
-    
-    for f in fs:
-        print "Curve: f(x,y) = %s"%(f)
-        print differentials(f,x,y)
 
+    f = f11
+    
+    import cProfile, pstats
+    cProfile.run(
+        'D = differentials(f,x,y)',
+        'differentials.profile',
+        )
+    p = pstats.Stats('differentials.profile')
+    p.strip_dirs()
+    p.sort_stats('time').print_stats(15)
+    p.sort_stats('cumulative').print_stats(15)
+    p.sort_stats('calls').print_stats(15)
+
+    print "\nDifferentials:"
+    for omega in D:
+        sympy.pretty_print(omega)
+        print
