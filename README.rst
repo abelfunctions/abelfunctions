@@ -72,6 +72,6 @@ Installation
 Authors
 -------
 
-Chris Swierczewski <cswiercz@gmail.com>
-Grady Williams
+* Chris Swierczewski <cswiercz@gmail.com>
+* Grady Williams
 
