@@ -103,6 +103,10 @@ from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
+from siegel import siegel
+
+#For testing purposes only
+from lattice_plotter import *
 
 gpu_capable = True
 try:
@@ -510,10 +514,13 @@ Tinv, z, g, R)
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if batch is True.
         """
-
+        
         exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, prec=prec,
                                                        deriv=deriv, gpu=gpu,batch=batch)
-
+        
+        print "-------Exp and Osc---------"
+        print exp_part, osc_part
+        print
         return np.exp(exp_part) * osc_part
 
     def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
@@ -622,7 +629,32 @@ if __name__=="__main__":
     Z = V.reshape(60,60).real
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
-    plt.show()
-                       
+    #plt.show()
+
+    print "Siegel Test"
+    Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]])
+    x = 1.0,0
+    Om, mod = siegel(Omega, 2)
+    print theta.value_at_point(x, Omega)
+    g = 2
+    c = mod[g:, :g]
+    d = mod[g:, g:]
+    print "mod check"
+    print mod
+    print c
+    print d
+    z_trans_inv = np.dot(c, Omega) + d
+    z_trans = la.inv(z_trans_inv)
+    print z_trans
+    print la.det(z_trans)
+    det_part = np.sqrt(la.det(z_trans_inv))
+    expon_part = np.exp(np.pi*1.j*np.dot(np.dot(x,z_trans),np.dot(c,x)))
+    z = np.dot(z_trans,x)
+    print z
+    print
+    print "---------------------------"
+    s = theta.value_at_point(z, Om)
+    print s/(det_part*expon_part)
+    
 
 
