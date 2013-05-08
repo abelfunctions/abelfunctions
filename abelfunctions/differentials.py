@@ -26,7 +26,7 @@ def mnuk_conditions(f,u,v,b,P):
     Note: it is assume t
     """
     numer, denom = b.ratsimp().as_numer_denom()
-
+    
     # reduce b*P modulo f
     expr = (numer*P).as_poly(v,u)
     Q,R = sympy.polytools.reduced(expr, [sympy.poly(f,v,u)])
@@ -76,21 +76,27 @@ def differentials(f,x,y):
     S = singularities(f,x,y)
     conditions = []
     for singular_pt,(m,delta,r) in S:
+        # recenter the curve and adjoint polynomial at the
+        # singular point: find the affine plane u,v such that
+        # the singularity occurs at u=0
         g,u,v,u0,v0      = _transform(f,x,y,singular_pt)
+        g = g.subs(u,u+u0)        
         Ptilde,u,v,u0,v0 = _transform(P,x,y,singular_pt)
-        g = g.subs(u,u+u0)
-        
+        Ptilde = Ptilde.subs(u,u+u0)
+
+        # compute the intergral basis at the recentered singular point
+        # and determine the Mnuk conditions of the adjoint polynomial
         b = integral_basis(g,u,v)
         for bi in b:
             conditions_bi = mnuk_conditions(g,u,v,bi,Ptilde)
             conditions.extend(conditions_bi)
 
-    # solve the system of equations and retreive monomials contained
-    # in the general solution
+    # solve the system of equations and retreive the coefficents of the c_ij's
+    # contained in the general solution
     c = [item for sublist in c for item in sublist]
-    sols = sympy.solve(conditions, c)
-    P = P.subs(sols).as_poly(x,y)
-    differentials = [x**i * y**j for (i,j) in P.monoms()]
+    sols = sympy.solve(conditions, c)    
+    P = P.subs(sols).as_poly(*c)
+    differentials = [coeff for coeff in P.coeffs() if coeff != 0]
 
     # sanity check: the number of differentials matches the genus
     g = genus(f,x,y)
@@ -107,23 +113,19 @@ if __name__=='__main__':
     from sympy.abc import x,y
 
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    # number of differentials does not match
+    # []
     
     f2 = y**3 + 2*x**3*y - x**7
     # [x**3/(2*x**3 + 3*y**2), x*y/(2*x**3 + 3*y**2)]
     
     f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
-    # number of diffs does not match
+    # does not match genus
     
     f4 = y**2 + x**3 - x**2
-    # number of diffs does not match
-    # [1]
+    # []
         
     f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-    # number of diffs does not match
-    # [x*y**2, x*y, y**3, y**2]
-    # should be
-    # x**2 + y**2
+    # [x**2 + y**2]
     
     f7 = y**3 - (x**3 + y)**2 + 1
     # does not terminate
@@ -156,10 +158,8 @@ if __name__=='__main__':
     # (fast! no singular points)
     # [x/(4*y**3), 1/(4*y**2), 1/(4*y**3)]
 
-    fs = [f1,f2,f3,f4,f5,f6,f9,f10]
-    fs = [f11]
 
-    f = f11
+    f = f5
     
     import cProfile, pstats
     cProfile.run(
