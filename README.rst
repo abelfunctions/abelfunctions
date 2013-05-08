@@ -41,6 +41,20 @@ Specifically, abelfunctions requires the following Python packages
 
 Plotting / visual routines will require matplotlib, in addition.
 
+=======
+Abelfunctions can be used either with the Enthought Python Distribution (EPD)
+or Sage. However, it only requires the following Python packages:
+
+  * gcc (or equivalent)
+  * numpy
+  * scipy
+  * sympy
+  * networkx
+  * matplotlib
+  * Cython
+
+Optionally, the NVIDIA CUDA compiler is needed to compile the high-performance
+CUDA code used in RiemannTheta.
 
 Installation
 ------------
