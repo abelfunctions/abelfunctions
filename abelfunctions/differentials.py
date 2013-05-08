@@ -13,82 +13,38 @@ import sympy
 import sympy.mpmath as mpmath
 
 from abelfunctions.integralbasis import integral_basis
-from abelfunctions.singularities import singularities, _transform
+from abelfunctions.singularities import singularities, _transform, genus
 from abelfunctions.utilities import cached_function
 
+import pdb
 
-
-def _eliminate_higher_orders(h,x,y,deg,expr):
+def mnuk_conditions(f,u,v,b,P):
     """
-    Given a rational function `h = h(x,y) \in C(x)[y]`, replace all powers
-    of `y**deg` with `expr`.
-    """    
-    m = sympy.degree(h,y)
-    h = h.expand()
-    hred = sympy.S(0)
+    Determine the Mnuk conditions on the coefficients, c, of the general
+    adjoint polynomial P at the point x=0.
 
-    for term in h.as_ordered_terms():
-        term_deg = sympy.degree(term,y)
-        term = term.replace(sympy.Pow, 
-                            lambda arg, pow: arg**(pow-deg)*expr
-                            if arg == y and pow >= deg 
-                            else arg**pow)
-        hred += term
-
-    return hred.expand()
-
-
-
-def _solve_for_leading_y(f,x,y):
+    Note: it is assume t
     """
-    Given `f(x,y) = a_n(x) * y**n + ... + a_0(x)`, return
+    numer, denom = b.ratsimp().as_numer_denom()
     
-        (-a_{n-1}(x) - ... - a_o(x)) / a_n(x)
+    # reduce b*P modulo f
+    expr = (numer*P).as_poly(v,u)
+    Q,R = sympy.polytools.reduced(expr, [sympy.poly(f,v,u)])
 
-    """
-    n = sympy.degree(f,y)
-    sol = sympy.S(0)
-    a_n = sympy.S(1)
+    # divide by the largest power of x appearing in the denominator.
+    # this is sufficient since we've shifted the curve and its
+    # singularity to appear at
+    try:
+        mult = sympy.roots(denom.as_poly(u))[sympy.S(0)]
+    except KeyError:
+        mult = 0
 
-    for term in f.expand().as_ordered_terms():
-        if sympy.degree(term,y) == n:
-            a_n = term.coeff(y**n)
-        else:
-            sol -= term
-
-    return sol/a_n
-            
-
-def _adjoint_monomials(f,x,y,bi,P,c):
-    """
-    Obtain the adjoint monomials corresponding to the integral basis
-    element bi. This is done by demanding that
-
-        bi * P
-
-    be a polynomial where
-
-        P = sum( c_{ij} x**i y**j )
-    """
-    f = f.expand()
-    n = sympy.degree(f,y)
-    d = f.as_poly().total_degree()
-
-    rhs = _solve_for_leading_y(f,x,y)
-    Pi = bi * P
-    Pi = _eliminate_higher_orders(Pi,x,y,n,rhs)
-
-    p = sympy.Wild('p')
-    q = sympy.Wild('q')
-    coeff = sympy.Wild('coeff')
-
-    monoms = set([])
-    for term in Pi.as_ordered_terms(): 
-        if sympy.degree(x) < 0:
-            # strips out the cij from the monomial
-            cij = term.as_independent(x,y)[0].free_symbols.pop()
-            i,j = c[cij]
-            monoms.add(x**i*y**j)
+    R = R.as_poly(u,v)
+    coeffs = R.coeffs()
+    monoms = R.monoms()
+    conditions = [coeff for coeff,monom in zip(coeffs,monoms)
+                  if monom[0] < mult]
+    return conditions
 
 
 def differentials(f,x,y):
@@ -102,32 +58,50 @@ def differentials(f,x,y):
     
     - x,y: the independent and dependent variables, respectively.
     """
-    d = f.as_poly().total_degree()
+    # compute the "total degree" (Poly.total_degree doesn't give the
+    # desired result). This is the largest monomial degree in the sum
+    # of the degrees in both x and y.
+    d = max(map(sum,f.as_poly(x,y).monoms()))
     n = sympy.degree(f,y)
 
-    # coeffiecients and general adjoint polynomial
-    c_arr = sympy.symarray('c',(d-3,d-3)).tolist()
-    c = dict( (cij,(c_arr.index(ci),ci.index(cij))) 
-              for ci in c_arr for cij in ci )
-    P = sum( c_arr[i][j]*x**i*y**j 
-             for i in range(d-3) for j in range(d-3) if i+j <= d-3)
+    # define the "generalized" adjoint polynomial.
+    c = sympy.symarray('c',(d-2,d-2)).tolist()
+    P = sum( c[i][j] * x**i * y**j 
+             for i in range(d-2) for j in range(d-2)
+             if i+j <= d-3)
 
+    # for each singular point [x:y:z] = [alpha:beta:gamma], map f onto
+    # the "most convenient and appropriate" affine subspace, (u,v),
+    # and center at u=0. determine the conditions on P
     S = singularities(f,x,y)
-    differentials = set([])
-    for (alpha, beta, gamma), (m,delta,r) in S:
-        g,u,v,u0,v0 = _transform(f,x,y,(alpha,beta,gamma))
+    conditions = []
+    for singular_pt,(m,delta,r) in S:
+        # recenter the curve and adjoint polynomial at the
+        # singular point: find the affine plane u,v such that
+        # the singularity occurs at u=0
+        g,u,v,u0,v0      = _transform(f,x,y,singular_pt)
+        g = g.subs(u,u+u0)        
+        Ptilde,u,v,u0,v0 = _transform(P,x,y,singular_pt)
+        Ptilde = Ptilde.subs(u,u+u0)
 
-#        if delta > m*(m-1)/2:
-        if True:
-            # Use integral basis method.
-            b = integral_basis(g,u,v)
-            for bi in b:
-                monoms = _adjoint_monomials(f,x,y,bi,P,c)
-                differentials.add(monom for monom in monoms) 
-        else:
-            # Use Puiseux series method
-            b = integral_basis(g,u,v)
+        # compute the intergral basis at the recentered singular point
+        # and determine the Mnuk conditions of the adjoint polynomial
+        b = integral_basis(g,u,v)
+        for bi in b:
+            conditions_bi = mnuk_conditions(g,u,v,bi,Ptilde)
+            conditions.extend(conditions_bi)
 
+    # solve the system of equations and retreive the coefficents of the c_ij's
+    # contained in the general solution
+    c = [item for sublist in c for item in sublist]
+    sols = sympy.solve(conditions, c)    
+    P = P.subs(sols).as_poly(*c)
+    differentials = [coeff for coeff in P.coeffs() if coeff != 0]
+
+    # sanity check: the number of differentials matches the genus
+    g = genus(f,x,y)
+    if g != len(differentials):
+        raise AssertionError("Number of differentials does not match genus.")
 
     return [differential/sympy.diff(f,y) for differential in differentials]
 
@@ -139,31 +113,66 @@ if __name__=='__main__':
     from sympy.abc import x,y
 
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    # []
+    
     f2 = y**3 + 2*x**3*y - x**7
+    # [x**3/(2*x**3 + 3*y**2), x*y/(2*x**3 + 3*y**2)]
+    
     f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    # does not match genus
+    
     f4 = y**2 + x**3 - x**2
-    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-    f6 = y**4 - y**2*x + x**2
-    f7 = y**3 - (x**3 + y)**2 + 1
-    f8 = x**6*y**3 + 2*x**3*y - 1
-    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
-
-    f = f7
-
-#     for f in fs:
-#         print '\nCurve:'
-#         sympy.pprint(fs)
-
-#         print '\nSingularities:'
-#         S = singularities(f,x,y)
-#         for (alpha,beta,gamma),(m,delta,r) in S:
-#             print '\nSingular Point:'
-#             sympy.pprint((alpha,beta,gamma))
-#             sympy.pprint((m,delta,r))
-
-#             print '\nTransformed Curve:'
-#             g,u,v,u0,v0 = _transform(f,x,y,(alpha,beta,gamma)) 
-#             sympy.pprint(g)
-            
+    # []
         
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+    # [x**2 + y**2]
+    
+    f7 = y**3 - (x**3 + y)**2 + 1
+    # does not terminate
+    
+    f8 = x**6*y**3 + 2*x**3*y - 1
+    # genus zero
+    
+    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    # (genus 9!)
+    # [x**5/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**4/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**3/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**2*y/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x**2/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x*y/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  x/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  y/(2*x**7 + 3*y**2 + 6*y + 3),
+    #  1/(2*x**7 + 3*y**2 + 6*y + 3)]
+        
+    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+    # [x*y/(4*x**3*y**3 + 2*x**3 + 8*x**2*y),
+    #  x/(4*x**3*y**3 + 2*x**3 + 8*x**2*y),
+    #  1/(4*x**3*y**3 + 2*x**3 + 8*x**2*y)]
+      
+    
+    f12 = y**3 - x**3*y + 2*x**7
+    # [x**3/(-x**3 + 3*y**2), x*y/(-x**3 + 3*y**2)]
+    
+    f13 = x**4 + y**4 - 1
+    # (fast! no singular points)
+    # [x/(4*y**3), 1/(4*y**2), 1/(4*y**3)]
+
+
+    f = f5
+    
+    import cProfile, pstats
+    cProfile.run(
+        'D = differentials(f,x,y)',
+        'differentials.profile',
+        )
+    p = pstats.Stats('differentials.profile')
+    p.strip_dirs()
+    p.sort_stats('time').print_stats(15)
+    p.sort_stats('cumulative').print_stats(15)
+    p.sort_stats('calls').print_stats(15)
+
+    print "\nDifferentials:"
+    for omega in D:
+        sympy.pretty_print(omega)
+        print

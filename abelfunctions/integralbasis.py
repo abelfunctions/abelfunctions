@@ -179,7 +179,7 @@ def integral_basis(f,x,y):
     # Main Loop
     #
     a = [sympy.Dummy('a%d'%k) for k in xrange(n)]
-    b = [1]
+    b = [sympy.S(1)]
     for d in range(1,n):
         bd = y*b[-1]
 
