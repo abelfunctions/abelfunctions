@@ -99,11 +99,12 @@ import numpy as np
 import scipy as sp
 import scipy.linalg as la
 import riemanntheta_cy
-from scipy.special import gamma, gammaincc, gammainccinv
+from scipy.special import gamma, gammaincc, gammainccinv,gammaincinv
 from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
 from siegel import siegel
+from riemanntheta_misc import finite_sum as old_program
 
 #For testing purposes only
 from lattice_plotter import *
@@ -210,6 +211,72 @@ class RiemannTheta_Function:
         return NotImplementedError()
 
 
+    def find_int_points(self,g, c, R, T,start):
+        r"""
+        Recursion function for computing the integer points needed in
+        each coordinate direction.
+
+        INPUT:
+        - ``g`` -- the genus. recursively used to determine integer
+        points along each axis.
+
+        - ``c`` -- center of integer point computation. `0 \in \CC^g`
+        is used when using the uniform approximation.
+
+        - ``R`` -- the radius of the ellipsoid along the current axis.
+
+        - ``start`` -- the starting integer point for each recursion
+        along each axis.
+
+        OUTPUT:
+
+        - ``intpoints`` -- (list) a list of all of the integer points
+        inside the bounding ellipsoid along a single axis
+
+        ... todo::
+ 
+        Recursion can be memory intensive in Python. For genus `g<30`
+        this is a reasonable computation but can be sped up by
+        writing a loop instead.
+        """
+        print R
+        print T
+        a = int( np.ceil((c[g] - R/(np.sqrt(np.pi)*T[g,g])))) 
+        b = int( np.floor((c[g] + R/(np.sqrt(np.pi)*T[g,g]))))
+        print
+        print "++++++++++++++++++++++++++++"
+        print "Dimension: "
+        print g
+        print "a:"
+        print a
+        print "b:"
+        print b
+        print "================================="
+        # check if we reached the edge of the ellipsoid
+        if not a < b: return np.array([])
+        # last dimension reached: append points
+        if g == 0:
+            return np.array([np.append([i],start) for i in xrange(a,b+1)])
+        #
+        # compute new shifts, radii, start, and recurse
+        #
+        newg = g-1
+        newT = T[:(newg+1),:(newg+1)]
+        newTinv = la.inv(newT)
+        pts = []
+        for n in range(a, b+1):
+            chat = c[:newg+1]
+            that = T[:newg+1,g]
+            newc = chat - (np.dot(newTinv, that)*(n - c[g]))
+            print "new c"
+            print newc
+            newR = np.sqrt(R**2 - np.pi*(T[g,g] * (n - c[g]))**2) # XXX
+            newstart = np.append(start, [n])
+            newpts = self.find_int_points(newg,newc,newR,newT,newstart)
+            pts = np.append(pts,newpts)
+        return pts
+
+
     def integer_points(self, Yinv, T, Tinv, z, g, R):
         """
         The set, `U_R`, of the integral points needed to compute Riemann 
@@ -274,7 +341,11 @@ class RiemannTheta_Function:
             c     = Yinv * y
             intc  = c.round()
             leftc = c - intc
-        return riemanntheta_cy.find_int_points(g-1, leftc, R, T)
+        int_points = self.find_int_points(g-1,leftc,R,T,[])
+        return int_points
+
+    def test(self):
+        print "WTF"
 
     def radius(self, T, prec, deriv=[]):
         r"""
@@ -309,13 +380,15 @@ class RiemannTheta_Function:
         # solve for the radius using:
         #   * Theorem 3 of [CRTF] (no derivative)
         #   * Theorem 5 of [CRTF] (first order derivative)
-        #   * Theorem 7 of [CRTF] (second order derivative)
+        #   * Theorem 7 of [CRTF] (second order derivative
         if len(deriv) == 0:
             eps  = prec
             lhs  = eps * (2.0/g) * (r/2.0)**g * gamma(g/2.0)
             ins  = gammainccinv(g/2.0,lhs)
             R    = np.sqrt(ins) + r/2.0
-            rad  = max( R, (np.sqrt(2*g)+r)/2.0 )
+            print "radius"
+            rad  = max( R, (np.sqrt(2*g)+r)/2.0)
+            print rad
         elif len(deriv) == 1:
             # solve for left-hand side
             L         = self.deriv_accuracy_radius
@@ -401,6 +474,8 @@ class RiemannTheta_Function:
     Performs simple recacheing of matrices, also prepares gpu for processing if necessary
     """
     def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv):
+        print self._Omega
+        print Omega
         recache_omega = not np.array_equal(self._Omega, Omega)
         recache_prec = self._prec != prec
         # check if we've already computed the uniform radius and intpoints
@@ -408,8 +483,19 @@ class RiemannTheta_Function:
             self._prec = prec
             self._rad = self.radius(T, prec, deriv=deriv)
             origin = [0]*g
+            print "HI"
             self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                   g, self._rad)
+            print len(self._intpoints)/2
+            #print self._intpoints
+            for i in range(len(self._intpoints)/2):
+                plt.scatter(self._intpoints[2*i],self._intpoints[2*i + 1])
+            plt.ylim((-20,20))
+            plt.xlim((-20,20))
+            plt.axhline()
+            plt.axvline()
+            plt.show()
+            plot_ellipsoid(Y, self._rad)
         if (gpu_capable):
             self.parRiemann.cache_intpoints(self._intpoints)
             if (self._Omega is None or not g == self._Omega.shape[0]):
@@ -507,7 +593,7 @@ Tinv, z, g, R)
                 val = pi*np.dot(w, Yinv*w.T).item(0,0)
                 u[i] = val
         else:
-            u = pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
+            u = np.pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
         return u,v
 
     def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
@@ -518,9 +604,6 @@ Tinv, z, g, R)
         exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, prec=prec,
                                                        deriv=deriv, gpu=gpu,batch=batch)
         
-        print "-------Exp and Osc---------"
-        print exp_part, osc_part
-        print
         return np.exp(exp_part) * osc_part
 
     def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
@@ -553,8 +636,7 @@ if __name__=="__main__":
     print theta.value_at_point(z1,Omega)
     print "-438.94 + 0.00056160*I"
     print
-
-
+    """
     print "Batch Test"
     z0 = np.array([0, 0])
     z1 = np.array([1.0j,1.0j])
@@ -630,31 +712,45 @@ if __name__=="__main__":
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     #plt.show()
+    """
 
     print "Siegel Test"
-    Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]])
-    x = 1.0,0
-    Om, mod = siegel(Omega, 2)
-    print theta.value_at_point(x, Omega)
-    g = 2
+    Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]],dtype=np.complex)
+    #print "Determinant of Omega"
+    #print la.det(Omega)
+    #print "-----------------"
+    x = np.array([1.0,0],dtype=np.double)
+    #print "x: "
+    #print x
+    #print "------------"
+    Om, mod, r = siegel(Omega, 2)
+    #print theta.value_at_point(x, Omega,prec=.01)
+    """
+    g = 2 
+    print "print c and d"
     c = mod[g:, :g]
     d = mod[g:, g:]
-    print "mod check"
-    print mod
     print c
+    print
     print d
+    print
+    print "--------------"
     z_trans_inv = np.dot(c, Omega) + d
     z_trans = la.inv(z_trans_inv)
+    print "z_trans:"
     print z_trans
-    print la.det(z_trans)
+    print "--------------"
+    print "square root of determinant"
     det_part = np.sqrt(la.det(z_trans_inv))
+    print det_part
     expon_part = np.exp(np.pi*1.j*np.dot(np.dot(x,z_trans),np.dot(c,x)))
+    print expon_part
     z = np.dot(z_trans,x)
+    print "Printing new z..."
     print z
-    print
     print "---------------------------"
     s = theta.value_at_point(z, Om)
     print s/(det_part*expon_part)
-    
+"""    
 
 
