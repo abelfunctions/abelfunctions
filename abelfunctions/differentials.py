@@ -18,18 +18,18 @@ from abelfunctions.utilities import cached_function
 
 import pdb
 
-def mnuk_conditions(f,u,v,b,P):
+def mnuk_conditions(f,u,v,b,P,c):
     """
     Determine the Mnuk conditions on the coefficients, c, of the general
     adjoint polynomial P at the point x=0.
 
     Note: it is assume t
     """
-    numer, denom = b.ratsimp().as_numer_denom()
+    numer, denom = b.as_numer_denom()
     
     # reduce b*P modulo f
-    expr = (numer*P).as_poly(v,u)
-    Q,R = sympy.polytools.reduced(expr, [sympy.poly(f,v,u)])
+    expr = numer.as_poly(v,u,*c) * P.as_poly(v,u,*c, domain='QQ')
+    q,r = sympy.polytools.reduced(expr,[sympy.poly(f,v,u,*c)])
 
     # divide by the largest power of x appearing in the denominator.
     # this is sufficient since we've shifted the curve and its
@@ -39,9 +39,9 @@ def mnuk_conditions(f,u,v,b,P):
     except KeyError:
         mult = 0
 
-    R = R.as_poly(u,v)
-    coeffs = R.coeffs()
-    monoms = R.monoms()
+    r = r.as_poly(u,v)
+    coeffs = r.coeffs()
+    monoms = r.monoms()
     conditions = [coeff for coeff,monom in zip(coeffs,monoms)
                   if monom[0] < mult]
     return conditions
@@ -69,6 +69,7 @@ def differentials(f,x,y):
     P = sum( c[i][j] * x**i * y**j 
              for i in range(d-2) for j in range(d-2)
              if i+j <= d-3)
+    c = [cij for ci in c for cij in ci]
 
     # for each singular point [x:y:z] = [alpha:beta:gamma], map f onto
     # the "most convenient and appropriate" affine subspace, (u,v),
@@ -88,19 +89,18 @@ def differentials(f,x,y):
         # and determine the Mnuk conditions of the adjoint polynomial
         b = integral_basis(g,u,v)
         for bi in b:
-            conditions_bi = mnuk_conditions(g,u,v,bi,Ptilde)
+            conditions_bi = mnuk_conditions(g,u,v,bi,Ptilde,c)
             conditions.extend(conditions_bi)
 
     # solve the system of equations and retreive the coefficents of the c_ij's
     # contained in the general solution
-    c = [item for sublist in c for item in sublist]
     sols = sympy.solve(conditions, c)    
     P = P.subs(sols).as_poly(*c)
     differentials = [coeff for coeff in P.coeffs() if coeff != 0]
 
     # sanity check: the number of differentials matches the genus
     g = genus(f,x,y)
-    if g != len(differentials):
+    if g != -1 and g != len(differentials):
         raise AssertionError("Number of differentials does not match genus.")
 
     return [differential/sympy.diff(f,y) for differential in differentials]
@@ -126,6 +126,8 @@ if __name__=='__main__':
         
     f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
     # [x**2 + y**2]
+
+    f6 = y**4 - y**2*x + x**2
     
     f7 = y**3 - (x**3 + y)**2 + 1
     # does not terminate
@@ -158,8 +160,7 @@ if __name__=='__main__':
     # (fast! no singular points)
     # [x/(4*y**3), 1/(4*y**2), 1/(4*y**3)]
 
-
-    f = f5
+    f = f2
     
     import cProfile, pstats
     cProfile.run(
@@ -168,9 +169,7 @@ if __name__=='__main__':
         )
     p = pstats.Stats('differentials.profile')
     p.strip_dirs()
-    p.sort_stats('time').print_stats(15)
-    p.sort_stats('cumulative').print_stats(15)
-    p.sort_stats('calls').print_stats(15)
+    p.sort_stats('cumulative').print_stats(20)
 
     print "\nDifferentials:"
     for omega in D:
