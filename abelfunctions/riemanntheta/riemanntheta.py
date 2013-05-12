@@ -104,7 +104,6 @@ from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
 from siegel import siegel
-from riemanntheta_misc import finite_sum as old_program
 
 #For testing purposes only
 from lattice_plotter import *
@@ -380,9 +379,7 @@ class RiemannTheta_Function:
             lhs  = eps * (2.0/g) * (r/2.0)**g * gamma(g/2.0)
             ins  = gammainccinv(g/2.0,lhs)
             R    = np.sqrt(ins) + r/2.0
-            print "radius"
             rad  = max( R, (np.sqrt(2*g)+r)/2.0)
-            print rad
         elif len(deriv) == 1:
             # solve for left-hand side
             L         = self.deriv_accuracy_radius
@@ -468,8 +465,6 @@ class RiemannTheta_Function:
     Performs simple recacheing of matrices, also prepares gpu for processing if necessary
     """
     def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv):
-        print self._Omega
-        print Omega
         recache_omega = not np.array_equal(self._Omega, Omega)
         recache_prec = self._prec != prec
         # check if we've already computed the uniform radius and intpoints
@@ -477,19 +472,8 @@ class RiemannTheta_Function:
             self._prec = prec
             self._rad = self.radius(T, prec, deriv=deriv)
             origin = [0]*g
-            print "HI"
             self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                   g, self._rad)
-            print len(self._intpoints)/2
-            #print self._intpoints
-            for i in range(len(self._intpoints)/2):
-                plt.scatter(self._intpoints[2*i],self._intpoints[2*i + 1])
-            plt.ylim((-20,20))
-            plt.xlim((-20,20))
-            plt.axhline()
-            plt.axvline()
-            plt.show()
-            plot_ellipsoid(Y, self._rad)
         if (gpu_capable):
             self.parRiemann.cache_intpoints(self._intpoints)
             if (self._Omega is None or not g == self._Omega.shape[0]):
@@ -630,7 +614,7 @@ if __name__=="__main__":
     print theta.value_at_point(z1,Omega)
     print "-438.94 + 0.00056160*I"
     print
-    """
+
     print "Batch Test"
     z0 = np.array([0, 0])
     z1 = np.array([1.0j,1.0j])
@@ -705,8 +689,7 @@ if __name__=="__main__":
     Z = V.reshape(60,60).real
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
-    #plt.show()
-    """
+    plt.show()
 
     print "Siegel Test"
     Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]],dtype=np.complex)
@@ -719,10 +702,6 @@ if __name__=="__main__":
     #print "------------"
     Om, mod, r = siegel(Omega, 2)
     print theta.value_at_point(x, Omega)
-    print
-    print
-    T = la.cholesky(Omega.imag)
-    print T
     """
     g = 2 
     print "print c and d"
