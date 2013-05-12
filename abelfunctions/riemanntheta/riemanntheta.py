@@ -239,24 +239,20 @@ class RiemannTheta_Function:
         this is a reasonable computation but can be sped up by
         writing a loop instead.
         """
-        print R
-        print T
-        a = int( np.ceil((c[g] - R/(np.sqrt(np.pi)*T[g,g])))) 
-        b = int( np.floor((c[g] + R/(np.sqrt(np.pi)*T[g,g]))))
-        print
-        print "++++++++++++++++++++++++++++"
-        print "Dimension: "
-        print g
-        print "a:"
-        print a
-        print "b:"
-        print b
-        print "================================="
+        a_ = c[g] - R/(np.sqrt(np.pi)*T[g,g]) 
+        b_ = c[g] + R/(np.sqrt(np.pi)*T[g,g])
+        a = np.ceil(a_)
+        b = np.floor(b_)
         # check if we reached the edge of the ellipsoid
-        if not a < b: return np.array([])
+        if not a <= b: return np.array([])
         # last dimension reached: append points
         if g == 0:
-            return np.array([np.append([i],start) for i in xrange(a,b+1)])
+            points = np.array([])
+            for i in range(a, b+1):
+                #Note that this algorithm works backwards on the coordinates,
+                #the last coordinate found is x1 if our coordinates are {x1,x2, ... xn}
+                points = np.append(np.append([i],start), points)
+            return points
         #
         # compute new shifts, radii, start, and recurse
         #
@@ -268,10 +264,8 @@ class RiemannTheta_Function:
             chat = c[:newg+1]
             that = T[:newg+1,g]
             newc = chat - (np.dot(newTinv, that)*(n - c[g]))
-            print "new c"
-            print newc
             newR = np.sqrt(R**2 - np.pi*(T[g,g] * (n - c[g]))**2) # XXX
-            newstart = np.append(start, [n])
+            newstart = np.append([n],start)
             newpts = self.find_int_points(newg,newc,newR,newT,newstart)
             pts = np.append(pts,newpts)
         return pts
@@ -724,7 +718,11 @@ if __name__=="__main__":
     #print x
     #print "------------"
     Om, mod, r = siegel(Omega, 2)
-    #print theta.value_at_point(x, Omega,prec=.01)
+    print theta.value_at_point(x, Omega)
+    print
+    print
+    T = la.cholesky(Omega.imag)
+    print T
     """
     g = 2 
     print "print c and d"
