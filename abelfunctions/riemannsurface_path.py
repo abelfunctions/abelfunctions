@@ -664,7 +664,6 @@ class RiemannSurfacePath():
         """
         deg = self.deg
 
-
         fig = plt.figure()
 
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
@@ -708,32 +707,23 @@ class RiemannSurfacePath():
             matplotlib.axes3d.Axes3D.plot()
 
         """
-        P_pts = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
-        x_pts, y_pts = zip(*P_pts)
-
-        x_re = [x.real for x in x_pts]
-        x_im = [x.imag for x in x_pts]
-        y_re = [y.real for y in y_pts]
-        y_im = [y.imag for y in y_pts]
+        P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
+        x_re, x_im, y_re, y_im = self.decompose_points(P)
+        zeros = numpy.zeros_like(x_re)
+        tspace = numpy.linspace(0,1,len(x_re))
 
         fig = plt.figure(figsize=plt.figaspect(0.5))
+        for i in xrange(self.deg):
+            ax = fig.add_subplot(1, self.deg, i+1, projection='3d')
+            ax.plot(y_re[i], y_im[i], tspace, 'g')
+            ax.plot(y_re[i], y_im[i], zeros, color='grey')
 
-        # Axis #1: real part of path
-        y_re_min = min(y_re)
-        z = [y_re_min]*Npts
-        ax1 = fig.add_subplot(2,1,1,projection='3d')
-        ax1.plot(x_re,x_im,z,*args,**kwds)
-        ax1.plot(x_re,x_im,y_re,*args,**kwds)
-
-        # Axis #1: real part of path
-        y_im_min = min(y_im)
-        z = [y_im_min]*Npts
-        ax2 = fig.add_subplot(2,1,2,projection='3d')
-        ax2.plot(x_re,x_im,z,*args,**kwds)
-        ax2.plot(x_re,x_im,y_im,*args,**kwds)
+            ax.plot((y_re[i][0], y_re[i][0]),
+                    (y_im[i][0], y_im[i][0]),
+                    (0,1), color='grey', linestyle='--')
 
         fig.show()
-
+        
 
 
     def plot_path_segments(self, t0=0, t1=1, Npts=64, show_numbers=False,
@@ -799,10 +789,12 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f = f2
+    f12 = x**4 + y**4 - 1
+
+    f = f12
 
     print "=== (computing monodromy graph) ==="
-    bpt = 5
+    bpt = 0
     G = monodromy_graph(f,x,y)
     path_segments = path_around_branch_point(G,bpt,1)
 #    path_segments = path_around_infinity(G,1)

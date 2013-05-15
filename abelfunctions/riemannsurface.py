@@ -294,31 +294,38 @@ if __name__ == '__main__':
     print "\n\tRS: computing cycles"
     cycles = X.cycles()
 
-    print "\n\tRS: period matrix"
-    A,B = X.period_matrix()
-    Omega = numpy.dot(la.inv(A),B)
-    print "\n\tA = "
-    print A
-    print "\n\tB = "
-    print B
-    print "\n\tOmega (abelfunctions)"
-    print Omega
-    print
 
-    # f11 matrix:
-    M_A = numpy.matrix([[1.078257j]],dtype=numpy.complex)
-    M_B = numpy.matrix([[-1.685750+1.078257j]], dtype=numpy.complex)
+    print "\n\tRS: computing paths"
+    paths = X.cycle_paths()
+
+    print "\n\tRS: plotting a path"
+    paths[0].plot3d()
+
+#     print "\n\tRS: period matrix"
+#     A,B = X.period_matrix()
+#     Omega = numpy.dot(la.inv(A),B)
+#     print "\n\tA = "
+#     print A
+#     print "\n\tB = "
+#     print B
+#     print "\n\tOmega (abelfunctions)"
+#     print Omega
+#     print
+
+#     # f11 matrix:
+#     M_A = numpy.matrix([[1.078257j]],dtype=numpy.complex)
+#     M_B = numpy.matrix([[-1.685750+1.078257j]], dtype=numpy.complex)
     
-#     # f2 matrix:
-#     A = numpy.matrix([[-1.8495720-0.60096222j,1.1430983+1.573339933j],
-#                       [-.71617632+.98573195j, -1.1587974-.37651605j]],
-#                      dtype=numpy.complex)
-#     B = numpy.matrix([[-1.412947298+0.0j,-2.556045689+1.573339862j],
-#                       [-3.749947262+0.0j,-2.591149960-.3765160905j]],
-#                      dtype=numpy.complex)
+# #     # f2 matrix:
+# #     A = numpy.matrix([[-1.8495720-0.60096222j,1.1430983+1.573339933j],
+# #                       [-.71617632+.98573195j, -1.1587974-.37651605j]],
+# #                      dtype=numpy.complex)
+# #     B = numpy.matrix([[-1.412947298+0.0j,-2.556045689+1.573339862j],
+# #                       [-3.749947262+0.0j,-2.591149960-.3765160905j]],
+# #                      dtype=numpy.complex)
 
-    M_Omega = numpy.dot(la.inv(M_A),M_B)    
-    print "\tOmega (maple)\n"
-    print M_Omega
+#     M_Omega = numpy.dot(la.inv(M_A),M_B)    
+#     print "\tOmega (maple)\n"
+#     print M_Omega
 
 
