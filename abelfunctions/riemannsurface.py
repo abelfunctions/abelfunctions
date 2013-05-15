@@ -16,6 +16,7 @@ from abelfunctions.riemannsurface_path import (
     )
 from abelfunctions.riemannsurface_point import RiemannSurfacePoint
 from abelfunctions.singularities import genus
+from abelfunctions.differentials import differentials
 from abelfunctions.utilities import cached_function
 
 
@@ -46,8 +47,7 @@ class RiemannSurface(object):
         to calculate the coordinates `(x0,y0)`.
         """
         return RiemannSurfacePoint(self,x0,y0)
-    
-
+ 
     def monodromy(self):
         """
         """
@@ -88,12 +88,14 @@ class RiemannSurface(object):
         """ 
         Returns the basis of holomorphic differentials defined on the
         Riemann surface.
-
-        NOTE: NOT IMPLEMENTED
         """
-        f,x,y = self.f,self.x,self.y
-        dfdy = sympy.diff(f,y)
-        return [1/y]
+        return differentials(self.f, self.x, self.y)
+
+    def differentials(self):
+        """
+        Alias for RiemannSurface.holomorphic_differentials().
+        """
+        return self.holomorphic_differentials()
 
 
     def genus(self):
@@ -103,26 +105,14 @@ class RiemannSurface(object):
         return genus(self.f, self.x, self.y)
 
 
-    def a_cycle(self, i):
+    def cycles(self):
         """
-        Returns the ith a_cycle as an array of interpolating points
-        starting from and ending at the basepoint of the Riemann
-        surface.
         """
-        pass
-
+        return self.homology()
     
-    def b_cycle(self, i):
-        """
-        Returns the ith b_cycle as an array of interpolating points
-        starting from and ending at the basepoint of the Riemann
-        surface.
-        """
-        pass
-
 
     @cached_function
-    def c_cycle(self, i):
+    def cycle_paths(self):
         """
         Returns a path in the complex x-plane of the x-points in the
         monodromy path.
@@ -140,29 +130,36 @@ class RiemannSurface(object):
         # get the cycle data from homology: each c-cycle is a list of
         # alternating sheet numbers s_k and branch point / number of
         # rotations tuples (b_{i_k}, n_k)
-        cycles  = self.homology()['cycles']
+        a_cycles, b_cycles = self.homology()
+        cycles = a_cycles + b_cycles
         
         G = self.monodromy_graph()
         root = G.node[0]['root']
-        path_segments = []
+        
+        cycle_paths = []
+        for cycle in cycles:
+            path_segments = []
 
-        # For each (branch point, rotation number) pair appearing in
-        # the cycle compute the path segments the complex x-plane
-        # going around the given branch points a number of times equal
-        # to the rotation number. Add these segments to the list of
-        # path segemnts.
-        for (bpt, rot) in cycles[i][1::2]:
-            bpt_index = [key for key,data in G.nodes(data=True)
-                         if abs(data['value']-bpt) < 1e-15][0]
-            bpt_path_segments = path_around_branch_point(G, bpt_index, rot)
-            path_segments.extend(bpt_path_segments)
+            # For each (branch point, rotation number) pair appearing in
+            # the cycle compute the path segments the complex x-plane
+            # going around the given branch points a number of times equal
+            # to the rotation number. Add these segments to the list of
+            # path segemnts.
+            for (bpt, rot) in cycle[1::2]:
+                bpt_index = [key for key,data in G.nodes(data=True)
+                             if abs(data['value']-bpt) < 1e-15][0]
+                bpt_path_segments = path_around_branch_point(G, bpt_index, rot)
+                path_segments.extend(bpt_path_segments)
 
-        # Construct the RiemannSurfacePath
-        x0 = self.base_point()
-        y0 = self.base_lift()
-        gamma = RiemannSurfacePath(self, (x0,y0), path_segments=path_segments)
+            # Construct the RiemannSurfacePath and append to path list
+            x0 = self.base_point()
+            y0 = self.base_lift()
+            gamma = RiemannSurfacePath(self, (x0,y0),
+                                       path_segments=path_segments)
 
-        return gamma
+            cycle_paths.append(gamma)
+
+        return cycle_paths
 
 
     def integrate(self, omega, x, y, path):
@@ -211,9 +208,7 @@ class RiemannSurface(object):
         homology data to determine which linear combination of
         c-cycles integrals gives the a- and b-cycles integrals.
         """
-        lincombs = self.homology()['linearcombination']
-        n_cycles = len(self.homology()['cycles'])
-        c_cycles = [self.c_cycle(i) for i in range(n_cycles)]
+        cycles = self.cycle_paths()
         
         differentials = self.holomorphic_differentials()
         g = self.genus()
@@ -227,20 +222,12 @@ class RiemannSurface(object):
             Ai = []
             Bi = []
             for j in xrange(g):
-                lincomb  = lincombs[j]
-                integral = sum(
-                    lincomb[k]*self.integrate(omega,x,y,c_cycles[k]) 
-                    for k in xrange(n_cycles) if lincomb[k] != 0
-                    )
+                integral = self.integrate(omega,x,y,cycles[j]) 
                 Ai.append(integral)
-
-                lincomb  = lincombs[j+g]
-                integral = sum(
-                    lincomb[k]*self.integrate(omega,x,y,c_cycles[k]) 
-                    for k in xrange(n_cycles) if lincomb[k] != 0
-                    )
+                
+                integral = self.integrate(omega,x,y,cycles[j+g])
                 Bi.append(integral)
-
+                
             A.append(Ai)
             B.append(Bi)
 
@@ -275,9 +262,10 @@ if __name__ == '__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1  # genus 3
 
     f11= y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
+    f12 = x**4 + y**4 - 1
 
 
-    f = f11
+    f = f12
     X = RiemannSurface(f,x,y)
 
 
@@ -296,16 +284,15 @@ if __name__ == '__main__':
     for m in mon: print m
 
     print "\n\tRS: homology"
-    hom = X.homology()
-    print "genus:"
-    print hom['genus']
-    print "cycles:"
-    for c in hom['cycles']: print c
-    print "lincomb:"
-    print hom['linearcombination']
+    a_cycles, b_cycles = X.homology()
+    for a in a_cycles:
+        print a
+    print
+    for b in b_cycles:
+        print b
 
     print "\n\tRS: computing cycles"
-    gamma = [X.c_cycle(i) for i in xrange(len(hom['cycles']))]
+    cycles = X.cycles()
 
     print "\n\tRS: period matrix"
     A,B = X.period_matrix()

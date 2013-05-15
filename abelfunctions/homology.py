@@ -9,6 +9,7 @@ import networkx as nx
 from operator import itemgetter
 from abelfunctions.monodromy import Permutation, monodromy
 from abelfunctions.singularities import genus
+from abelfunctions.utilities import cached_function
 
 import pdb
 
@@ -526,6 +527,7 @@ def compute_ab_cycles(c_cycles, linear_combinations, g,
     return a_cycles, b_cycles
 
 
+@cached_function
 def homology(f,x,y):
     """
     Given a plane representation of a Riemann surface, that is, a
