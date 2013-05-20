@@ -348,6 +348,28 @@ def path_around_infinity(G, rot, types='numpy'):
     return path_segments
 
 
+def parameterize_differential(omega, x, y, path):
+    """
+    Returns a Numpy-vectorized function omega(t) parameterized on the
+    path.
+    
+    Let \omega be a holomorphic differential and \gamma a path on the
+    Riemann surface. Then
+
+        \int_\gamma omega = \int_0^1 omega(x(t), y(x(t))) x'(t)dt
+
+    This function returns the integrand
+
+        omega(x(t),y(x(t))) x'(t)
+    """
+    omega = sympy.lambdify([x,y], omega, 'numpy')
+    def integrand(t):
+        (xi,yi), dxdt = path(t,dxdt=True)
+        return omega(xi,yi[0]) * dxdt
+
+    return numpy.vectorize(integrand, otypes=[numpy.complex])
+    
+
 
 class RiemannSurfacePath():
     """
@@ -504,9 +526,8 @@ class RiemannSurfacePath():
 
         seg, dseg = self._path_segments[t_floor]
         if dxdt:
-# XXX
-#            return self._num_path_segments * dseg(t_seg)
-            return dseg(t_seg)
+            return self._num_path_segments * dseg(t_seg)
+#            return dseg(t_seg)
         else:
             return seg(t_seg)
 
@@ -789,23 +810,23 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f12 = x**4 + y**4 - 1
+#     f12 = x**4 + y**4 - 1
 
-    f = f12
+#     f = f12
 
-    print "=== (computing monodromy graph) ==="
-    bpt = 0
-    G = monodromy_graph(f,x,y)
-    path_segments = path_around_branch_point(G,bpt,1)
-#    path_segments = path_around_infinity(G,1)
+#     print "=== (computing monodromy graph) ==="
+#     bpt = 0
+#     G = monodromy_graph(f,x,y)
+#     path_segments = path_around_branch_point(G,bpt,1)
+# #    path_segments = path_around_infinity(G,1)
 
-    print "===   (obtaining base place)    ==="
-    base_point = G.node[0]['basepoint']
-    base_sheets = G.node[0]['baselift']
-    x0,y0 = base_point, base_sheets
+#     print "===   (obtaining base place)    ==="
+#     base_point = G.node[0]['basepoint']
+#     base_sheets = G.node[0]['baselift']
+#     x0,y0 = base_point, base_sheets
     
-    print "===     (constructing path)     ==="
-    gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
+#     print "===     (constructing path)     ==="
+#     gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
 
-    print "===        (plotting)           ==="
-    gamma.plot(Npts=256)
+#     print "===        (plotting)           ==="
+#     gamma.plot(Npts=256)

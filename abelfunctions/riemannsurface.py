@@ -13,6 +13,7 @@ from abelfunctions.homology import homology
 from abelfunctions.riemannsurface_path import (
     path_around_branch_point,
     RiemannSurfacePath,
+    parameterize_differential,
     )
 from abelfunctions.riemannsurface_point import RiemannSurfacePoint
 from abelfunctions.singularities import genus
@@ -174,24 +175,20 @@ class RiemannSurface(object):
         - `path`: a RiemannSurfacePath defined on the Riemann surface
         """
         x0,y0 = path(0)
-        omega = sympy.lambdify((x,y), omega, 'numpy')
+        omega = parameterize_differential(omega, x, y, path)
         
-        # Numerically integrate over each path segment. This is most
-        # probably a good idea since it allows for good checkpointing.
-        def integrand(t,omega,path):
-            (xi,yi),dxdt = path(t, dxdt=True)
-            return omega(xi,yi[0]) * dxdt # follow the base fibre
+        # n = path._num_path_segments
+        # val = numpy.complex(0)
+        # for k in xrange(n):
+        #     k = numpy.double(k)
 
-        val = numpy.complex(0)
-        val_real = numpy.double(0)
-        val_imag = numpy.double(0)
-        n = numpy.int(path._num_path_segments)
-        for k in xrange(n):
-            k = numpy.double(k)
-
-            tpts = numpy.linspace(k/n,(k+1)/n,128)
-            fpts = [integrand(tpt,omega,path) for tpt in tpts]
-            val += scipy.integrate.trapz(tpts,fpts)
+        #     tpts = numpy.linspace(k/n,(k+1)/n,128)
+        #     fpts = omega(tpts)
+        #     val += scipy.integrate.trapz(tpts,fpts)
+        
+        tpts = numpy.linspace(0,1,512)
+        opts = omega(tpts)
+        val = scipy.integrate.trapz(tpts, opts)
 
         return val
 
@@ -265,7 +262,7 @@ if __name__ == '__main__':
     f12 = x**4 + y**4 - 1
 
 
-    f = f12
+    f = f10
     X = RiemannSurface(f,x,y)
 
 
@@ -295,37 +292,16 @@ if __name__ == '__main__':
     cycles = X.cycles()
 
 
-    print "\n\tRS: computing paths"
-    paths = X.cycle_paths()
+#    print "\n\tRS: computing paths"
+#    paths = X.cycle_paths()
 
-    print "\n\tRS: plotting a path"
-    paths[0].plot3d()
-
-#     print "\n\tRS: period matrix"
-#     A,B = X.period_matrix()
-#     Omega = numpy.dot(la.inv(A),B)
-#     print "\n\tA = "
-#     print A
-#     print "\n\tB = "
-#     print B
-#     print "\n\tOmega (abelfunctions)"
-#     print Omega
-#     print
-
-#     # f11 matrix:
-#     M_A = numpy.matrix([[1.078257j]],dtype=numpy.complex)
-#     M_B = numpy.matrix([[-1.685750+1.078257j]], dtype=numpy.complex)
-    
-# #     # f2 matrix:
-# #     A = numpy.matrix([[-1.8495720-0.60096222j,1.1430983+1.573339933j],
-# #                       [-.71617632+.98573195j, -1.1587974-.37651605j]],
-# #                      dtype=numpy.complex)
-# #     B = numpy.matrix([[-1.412947298+0.0j,-2.556045689+1.573339862j],
-# #                       [-3.749947262+0.0j,-2.591149960-.3765160905j]],
-# #                      dtype=numpy.complex)
-
-#     M_Omega = numpy.dot(la.inv(M_A),M_B)    
-#     print "\tOmega (maple)\n"
-#     print M_Omega
-
-
+    print "\n\tRS: period matrix"
+    A,B = X.period_matrix()
+    Omega = numpy.dot(la.inv(A),B)
+    print "\n\tA = "
+    print A
+    print "\n\tB = "
+    print B
+    print "\n\tOmega (abelfunctions)"
+    print Omega
+    print
