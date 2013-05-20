@@ -641,7 +641,168 @@ def puiseux(f, x, y, a, nterms=sympy.oo, degree_bound=sympy.oo,
     
     return series
 
+
+
+class PuiseuxSeries(object):
+    """
+    Represents a non-parametric Puiseux series in (x-alpha).
+    """
+    def __init__(self, data, alpha, order, var):
+        """
+        """
+        # remove any zero entires
+        zero = sympy.S(0)
+        for exp,coeff in data.iteritems():
+            if coeff == zero:
+                data.pop(exp)
+
+        self.d = data
+        self.alpha = alpha
+        self.order = order
+
+        if var is None: self.var = sympy.Symbol('x')
+        else:           self.var = var
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return str(self._to_expr())
+
+    def __hash__(self):
+        return hash(tuple(self.d.items()))
+
+    
+    def valuation(self):
+        """
+        Returns the valuation of the Puiseux series.
+        """
+        return min(exp for exp,coeff in self.d.items())
+
+
+    ###########################################################################
+    ########################## Operator Overloading ###########################
+    ###########################################################################
+    def _get_dict(self, other):
+        """
+        Returns a dictionary representing the (exponent, coefficient) pairs
+        of the Puiseux series expansion of `other`.
+
+        If `other` is a `PuiseuxSeries` then we take the minimum order
+        of `other` and self. If `other is a SymPy expression then we
+        compute the Taylor series in (x-alpha) of other up to `self.order`.
+        """
+        # if other is a Puiseux series (also centered at self.alpha)
+        # then the order of the new puiseux series is the smaller of
+        # the two
+        if isinstance(other, PuiseuxSeries):
+            if self.alpha != other.alpha:
+                raise ValueError("Puiseux series must be centered at " + \
+                                 "the same point.")         
+            order = min(self.order, other.order)
+            d = other.d
+
+        # if other is a SymPy Expr then compute the series expansion
+        # of other up to self's order and store the exponent, coeff
+        # pairs in d
+        elif isinstance(other, sympy.Expr):
+            d = {}
+            order = self.order
+         
+            s = sympy.series(other, self.var, x0=self.alpha, n=None)
+            for term in s:
+                # we have to shift because SymPy has trouble
+                # collecting expressions such as c*(x-a) in terms of
+                # (x-a). Example: 1-x should be -1*(x-1) but SymPy
+                # cannot detect this.
+                term = term.subs(x,x+self.alpha)
+                coeff, exp = term.as_coeff_exponent(self.var)
+                if exp < order:
+                    d[exp] = coeff
+                else:
+                    break
+
+        return order,d
+    
+
+    def __neg__(self):
+        data = dict( (exp,-coeff) for exp,coeff in self.d.iteritems() )
+        order = self.order
+        return PuiseuxSeries(data, self.alpha, order, self.var)
+        
+        
+    def __add__(self, other):
+        order,d = self._get_dict(other)
+        
+        data = {}
+        for exp in set(self.d)|set(d):
+            if exp < order:
+                coeff = sympy.simplify(self.d.get(exp,0) + d.get(exp,0))
+                data[exp] = coeff
+        
+        return PuiseuxSeries(data, self.alpha, order, self.var)
+
+
+    def __sub__(self, other):
+        return self.__add__(-other)
+
+
+    def __mul__(self, other):
+        order,d = self._get_dict(other)
+
+        data = {}
+        for exp1, coeff1 in self.d.iteritems():
+            for exp2, coeff2 in d.iteritems():
+                exp = exp1 + exp2
+
+                # don't spend time computing if order is too large
+                if exp < order:
+                    coeff = sympy.simplify(coeff1*coeff2)
+                    try: 
+                        coeff = sympy.simplify(coeff * data[exp])
+                    except KeyError:
+                        data[exp] = coeff
+
+        return PuiseuxSeries(data, self.alpha, order, self.var)
+
+    def __div__(self, other):
+        return self.__mul__(1/other)
+
+
+    def __pow__(self, e, z=None):
+        """
+        Perform multinomial expansion and return terms of order less than
+        `self.order`.
+        """
+        data = {}
+        exps,coeffs = zip(*(self.d.items()))
+        m = len(exps)
+
+        print "EXPONENT:",e
+
+        multinoms = sympy.multinomial.multinomial_coefficients_iterator(m,int(e))
+        for k,mcoeff in multinoms:
+            exp = sum( expi*ki for expi,ki in zip(exps,k) )
             
+            if exp < self.order:
+                try:
+                    coeff = sympy.simplify(
+                        mcoeff * sympy.prod(ci**ki for ci,ki in zip(coeffs,k))
+                        ) 
+                    coeff = sympy.simplify(coeff + data[exp])                
+                except KeyError:
+                    data[exp] = coeff
+            
+        return PuiseuxSeries(data, self.alpha, self.order, self.var)
+
+    ###########################################################################
+    ###################### Coercion to SymPy Data Types #######################
+    ###########################################################################
+    def _to_expr(self):
+        return sympy.S(0) + sum(coeff*(self.var-self.alpha)**exp
+                                for exp,coeff in self.d.iteritems())
+
+
 """
 TESTS
 """
@@ -660,43 +821,7 @@ if __name__ == "__main__":
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f  = f7
-    a  = 0
-    N  = 0
-
-    print "Curve:\n"
-    sympy.pprint(f)
-
-    P = puiseux(f,x,y,0,N,parametric=True)
-    sympy.pprint(P)
-    
-#     sympy.pprint("\nT series:")
-#     PT = puiseux(f,x,y,a,nterms=N,parametric=T,version='rational')
-#     sympy.pprint(PT)
-
-#     sympy.pprint("\nx series:")
-#     Px = puiseux(f,x,y,a,nterms=N,parametric=False,version='rational')
-#     sympy.pprint(Px)
-
-#     print "Testing factorization:\n"
-#     ff = sympy.S(1)
-#     for p in Px: ff *= y-p
-#     sympy.pprint((f-ff).expand(force=True).collect(x-a))
-
-
-#     import cProfile, pstats
-#     cProfile.run(
-#     "P = puiseux(f,x,y,a,degree_bound=N,parametric=False,version='rational')"
-#     ,'puiseux.profile')
-#     p = pstats.Stats('puiseux.profile')
-#     p.strip_dirs()
-#     p.sort_stats('time').print_stats(15)
-#     p.sort_stats('cumulative').print_stats(15)
-#     p.sort_stats('calls').print_stats(15)
-   
-#     print "\nPuiseux Expansions at x =", a
-#     for Y in P:
-#         print "Expansion:"
-#         sympy.pretty_print(Y)
-#         print
-
+    I = sympy.I
+    R = sympy.Rational
+    data = {R(1,2):I, R(2,2):3, R(3,2): (1+I)/2}
+    P = PuiseuxSeries(data, 1, 4, x)
