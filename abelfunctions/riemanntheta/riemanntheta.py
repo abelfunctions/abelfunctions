@@ -103,10 +103,9 @@ from scipy.special import gamma, gammaincc, gammainccinv,gammaincinv
 from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
-from siegel import siegel
-
+from box_points import riemanntheta_high_dim
 #For testing purposes only
-from lattice_plotter import *
+#from lattice_plotter import *
 
 gpu_capable = True
 try:
@@ -472,6 +471,7 @@ class RiemannTheta_Function:
             self._prec = prec
             self._rad = self.radius(T, prec, deriv=deriv)
             origin = [0]*g
+            print "Finding integer points"
             self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                   g, self._rad)
         if (gpu_capable):
@@ -669,8 +669,21 @@ if __name__=="__main__":
     for x in range(5):
         l.append(y)
     print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
+
+    print "Box Points Test"
+    z = np.array([0,0,0,0,0,0,0,0])
+    Om = 1.j * np.identity(8)
+    X = Om.real
+    Y = Om.imag
+    Yinv = la.inv(Y)
+    T = la.cholesky(Y)
+    g = 8
+    rad = theta._rad
+    print "printing radius"
+    print rad
+    print riemanntheta_high_dim(X, Yinv, T, [z], g, rad)
+    print theta(z,Om)
     
-   
     print "Test #3"
     import pylab as p
     from mpl_toolkits.mplot3d import Axes3D
@@ -691,6 +704,7 @@ if __name__=="__main__":
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
 
+    """
     print "Siegel Test"
     Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]],dtype=np.complex)
     #print "Determinant of Omega"
@@ -702,7 +716,6 @@ if __name__=="__main__":
     #print "------------"
     Om, mod, r = siegel(Omega, 2)
     print theta.value_at_point(x, Omega)
-    """
     g = 2 
     print "print c and d"
     c = mod[g:, :g]
