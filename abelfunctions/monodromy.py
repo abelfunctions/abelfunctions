@@ -32,7 +32,7 @@ class Permutation(object):
 
     Examples::
     We create the permutation ``p = 1->1, 2->4, 3->2, 4->3``.
-    
+
         >>> p = Permutation([0,3,1,2])
 
     We can multiply permutations together. Let ``q`` be the transposition
@@ -46,14 +46,14 @@ class Permutation(object):
         [3, 0, 1, 2]
 
     Permutations can act on lists.
-    
+
         >>> p.action(['a','b','c','d'])
         ['a', 'd', 'b', 'c']
     """
     def __init__(self,l):
         """
         Construct a Permutation object. If the input "l" is a list of
-        ints then set self.list to "l". Otherwise, cycle notation is assumed 
+        ints then set self.list to "l". Otherwise, cycle notation is assumed
         if l[0] is itself a list.
         """
         if isinstance(l,list):
@@ -129,7 +129,7 @@ class Permutation(object):
 
     def __getitem__(self, key):
         return self._list.__getitem__(key)
-    
+
     def __contains__(self, item):
         return self._list.__contains__(item)
 
@@ -152,7 +152,8 @@ class Permutation(object):
         if isinstance(i,int) and 0 <= i < len(self):
             return self[i]
         else:
-            raise TypeError, "i (= %s) must be an integer between %s and %s" %(i,0,len(self)-1)
+            raise TypeError, "i (= %s) must be an integer between " \
+                             "%s and %s" %(i,0,len(self)-1)
 
 
     def is_identity(self):
@@ -187,28 +188,28 @@ class Permutation(object):
             l[self(i)] = i
 
         return Permutation(l)
-        
+
 
 
 def matching_permutation(a, b):
     """
-    Returns the permutation ``p`` that matches the elements of the list 
-    `a` to those of `b` as closely as possible. That is 
+    Returns the permutation ``p`` that matches the elements of the list
+    `a` to those of `b` as closely as possible. That is
     `b ~= p.action(a)``. The elements of the two lists nedd not be the
     same but will try to match them as closely as possible.
-    
+
     EXAMPLES::
     If the two lists contain the same elements then ``matching_permutation``
     simply returns permutation defining the rearrangement.::
-        
+
         >>> a = [6,-5,9]
         >>> b = [9,6,-5]
         >>> p = matching_permutation(a,b); p
         [3, 1, 2]
-        
-    ``matching_permutation`` will attempt to find such a permutation even if 
+
+    ``matching_permutation`` will attempt to find such a permutation even if
     the elements of the two lists are not exactly the same.::
-        
+
         >>> a = [1.1,7.2,-3.9]
         >>> b = [-4,1,7]
         >>> p = matching_permutation(a,b); p
@@ -222,7 +223,7 @@ def matching_permutation(a, b):
 
     perm = [-1]*N
     eps  = 0.5*min([abs(a[i]-a[j]) for i in range(N) for j in range(i)])
-    
+
     for i in xrange(N):
         for j in xrange(N):
             dist = abs(a[i] - b[j])
@@ -231,8 +232,9 @@ def matching_permutation(a, b):
                 break
 
     if -1 in perm:
-        raise ValueError, "Could not compute matching permutation between %s and %s." %(a,b)
-            
+        raise ValueError, "Could not compute matching permutation " \
+                          "between %s and %s." %(a,b)
+
     return Permutation(perm)
 
 
@@ -240,7 +242,7 @@ def matching_permutation(a, b):
 
 def prim_fringe(G, weight_function=lambda e: 1, starting_vertex=None):
     """
-    Computes a minimal spanning tree of the graph G. Variant of Prim's 
+    Computes a minimal spanning tree of the graph G. Variant of Prim's
     algorithm with optional starting vertex. Based on Sage's implementation.
     """
     if starting_vertex is None:
@@ -322,10 +324,10 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
 
     - value: the discriminant point (as a point in the complex plane)
 
-    - radius: the radius of the monodromy path circle about the 
+    - radius: the radius of the monodromy path circle about the
               discriminant point
 
-    - type: the 'type' of the vertex ('simple', 'node', 'vpoint', 
+    - type: the 'type' of the vertex ('simple', 'node', 'vpoint',
             'vpoint node') using the definitions of [FSK]
 
     - root: the index of the root vertex. This is the vertex that is
@@ -354,7 +356,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
 
     A NewtorkX graph containing the above data.
 
-    Note: 
+    Note:
 
     This graph is modified by `monodromy()`
     """
@@ -369,7 +371,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     key = lambda z: 100*sympy.mpmath.re(z) - sympy.mpmath.im(z)
     cmp = lambda z: sympy.mpmath.arg(z-b0)
     bd  = min(disc_pts, key=key)
-    base_radius = min( [sympy.mpmath.absmax(bd - bi) for bi in disc_pts 
+    base_radius = min( [sympy.mpmath.absmax(bd - bi) for bi in disc_pts
                         if bi != bd] + [10] ) * kappa / 2.0
 
     b0 = bd - base_radius
@@ -380,7 +382,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     # to something that outputs mpc type roots
     p = sympy.poly(f.subs(x,b0), y)
     coeffs = p.all_coeffs()
-    coeffs_b0 = map(lambda c: c.evalf(subs={x:b0}, 
+    coeffs_b0 = map(lambda c: c.evalf(subs={x:b0},
                                       n = sympy.mpmath.mp.dps), coeffs)
     coeffs_b0 = map(lambda z: sympy.mpmath.mp.mpc(*(z.as_real_imag())),
                     coeffs_b0)
@@ -394,7 +396,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     G = nx.complete_graph(n)
     weight_function = lambda e: \
         sympy.mpmath.fabs(disc_pts[e[1]]-disc_pts[e[0]])
-    spanning_tree = prim_fringe(G, weight_function=weight_function, 
+    spanning_tree = prim_fringe(G, weight_function=weight_function,
                                 starting_vertex=bd_index)
     G = nx.DiGraph()
     G.add_edges_from(spanning_tree)
@@ -409,7 +411,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
         radius = rho * kappa / 2.0
 
         # store useful data to graph
-        G.node[i]['pos']        = (sympy.mpmath.re(disc_pt), 
+        G.node[i]['pos']        = (sympy.mpmath.re(disc_pt),
                                    sympy.mpmath.im(disc_pt))
         G.node[i]['value']      = disc_pt
         G.node[i]['radius']     = radius
@@ -435,7 +437,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     # Comptues the vertex types as defined in [FKS]:
     #
     # * 'node'     -- a parent vertex of the graph with multiple children
-    # * 'v-point'  -- a vertex of special type described in Section 3 of 
+    # * 'v-point'  -- a vertex of special type described in Section 3 of
     #                 [FKS]. Travel to successor vertices don't necessarily
     #                 require going "underneath" a v-point
     # * 'endpoint' -- a childless vertex
@@ -453,7 +455,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
             # check for 'v-point': when a path contains a sequence of
             # edges of the form [..., bj^(I)], [bj^(I), ...] where I
             # is a matching index.
-            if e_left[1] == e_right[0]:                
+            if e_left[1] == e_right[0]:
                 left_index  = G.edge[e_left[0]][e_left[1]]['index']
                 right_index = G.edge[e_right[0]][e_right[1]]['index']
 
@@ -539,12 +541,12 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
 
     # (0) Gather special nodes
     root = G.node[0]['root']
-    nodes = [n for n,data in G.nodes(data=True) 
+    nodes = [n for n,data in G.nodes(data=True)
              if data['type']=='node']
-    vpoints = [n for n,data in G.nodes(data=True) 
+    vpoints = [n for n,data in G.nodes(data=True)
                if data['type']=='v-point']
-    endpoints = [n for n,deg in G.out_degree_iter() if deg == 0]    
-    vpoint_nodes = [n for n,data in G.nodes(data=True) 
+    endpoints = [n for n,deg in G.out_degree_iter() if deg == 0]
+    vpoint_nodes = [n for n,data in G.nodes(data=True)
                     if data['type']=='v-point node']
 
     # caching...
@@ -579,7 +581,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     #    data field 'string'. if none can be found then move to next
     #    special point.
     # 2. when a special vertex has enough filled strings,
-    special_vertices = [n for n,data in G.nodes(data=True) 
+    special_vertices = [n for n,data in G.nodes(data=True)
                         if data['type']!='simple']
     N = len(special_vertices)
     n = 0;
@@ -633,7 +635,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
                 # point. Let rest of algorithm take care of
                 # sorting
                 G.node[v]['type'] = 'v-point'
-                succ = [w for w in G.successors(v) 
+                succ = [w for w in G.successors(v)
                         if G[v][w]['index'][0] == uv_ind[1]]
                 pts = succ + [v]
 
@@ -670,7 +672,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     # then, from this data, compute the conjugates of each node in the
     # graph.
     N = len(disc_pts)
-    position_tree = [v for v in G.node[root]['string']]    
+    position_tree = [v for v in G.node[root]['string']]
     while N > 0:
         # grab the largest element in the tree
         m = max(position_tree)
@@ -704,7 +706,7 @@ def show_paths(G):
 
     # plot the location of the base_point
     a = G.node[0]['basepoint']
-    ax.plot(sympy.re(a), sympy.im(a), color='r', 
+    ax.plot(sympy.re(a), sympy.im(a), color='r',
             marker='o', markersize=10)
 
     for i in G.nodes():
@@ -715,7 +717,7 @@ def show_paths(G):
         ax.add_patch(circle)
 
         # mark the node number
-        ax.text(pos[0], pos[1], '%d'%i, 
+        ax.text(pos[0], pos[1], '%d'%i,
                 horizontalalignment='center', verticalalignment='center')
 
         # for each connected discriminant point, draw the line
@@ -724,7 +726,7 @@ def show_paths(G):
             index       = G[i][k]['index']
             next_pos    = G.node[k]['pos']
             next_radius = G.node[k]['radius']
-            x    = (pos[0] + index[0]*radius, 
+            x    = (pos[0] + index[0]*radius,
                     next_pos[0] + index[1]*next_radius)
             y    = (pos[1], next_pos[1])
             line = Line2D(x,y)
@@ -740,11 +742,11 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     """
     Returns information about the monodromy group of the Riemann
     surface associated with the plane complex algebraic curve ``f(x,y)
-    = 0``. 
+    = 0``.
 
     In particular, `monodromy()` returns the Hurwitz system of
     ``f(x,y) = 0``, which consistes of the data
-    
+
     - base point: the base point of the monodromy group
 
     - base sheets: the ordered sheets / lift ``y = \{
@@ -824,9 +826,6 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
         else:
             raise ValueError('Contradictory permutation at infinity.')
 
-
-    
-
     return base_point, base_sheets, branch_points, mon, G
 
 
@@ -850,7 +849,7 @@ if __name__=='__main__':
     a = Permutation([[1,2],[0,3]])
     b = Permutation([[0],[1,2],[3]])
     c = Permutation([[0,3],[1],[2]])
-    
+
     print 'a    ', a
     print 'b    ', b
     print 'c    ', c
@@ -859,7 +858,7 @@ if __name__=='__main__':
     print 'a*c  ',a*c
     print 'a*b*c',a*b*c
     print '== id',(a*b*c).is_identity()
-    
+
 #     f = f2
 
 #     print "Computing monodromy graph of", f
@@ -873,7 +872,7 @@ if __name__=='__main__':
 #     print "Computing monodromy of", f
 #     mon = monodromy(f,x,y)
 #     base_point, base_sheets, branch_points, m, G = mon
-   
+
 #     import cProfile, pstats
 #     cProfile.run('mon = M.monodromy()','monodromy.profile')
 #     p = pstats.Stats('monodromy.profile')
