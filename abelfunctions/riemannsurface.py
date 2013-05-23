@@ -22,7 +22,6 @@ from abelfunctions.utilities import cached_function
 
 
 import pdb
-        
 
 class RiemannSurface(object):
     """
@@ -86,7 +85,7 @@ class RiemannSurface(object):
 
 
     def holomorphic_differentials(self):
-        """ 
+        """
         Returns the basis of holomorphic differentials defined on the
         Riemann surface.
         """
@@ -110,18 +109,17 @@ class RiemannSurface(object):
         """
         """
         return self.homology()
-    
 
     @cached_function
     def cycle_paths(self):
         """
         Returns a path in the complex x-plane of the x-points in the
         monodromy path.
-        
+
         Input:
 
         - i: the index of the c-cycle
-        
+
         Output:
 
         - a RiemannSurfacePath parameterizing the c-cycle
@@ -133,10 +131,10 @@ class RiemannSurface(object):
         # rotations tuples (b_{i_k}, n_k)
         a_cycles, b_cycles = self.homology()
         cycles = a_cycles + b_cycles
-        
+
         G = self.monodromy_graph()
         root = G.node[0]['root']
-        
+
         cycle_paths = []
         for cycle in cycles:
             path_segments = []
