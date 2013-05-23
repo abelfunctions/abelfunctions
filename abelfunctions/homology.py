@@ -166,6 +166,7 @@ def frobenius_transform(A,g):
     return T
 
 
+
 def tretkoff_graph(hurwitz_system):
     """
     There are two types of nodes:
@@ -346,16 +347,17 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
 
         # if the starting node of ei lies before the starting node of ej
         # then simply return the negation of (ej o ei)
-        if ei_start == ej_start or ei_end == ej_end:
+        if ei_start == ej_start or ei_end == ej_end: #XXX
             return 0
         elif ei_start > ej_start:
             return (-1)*intersection_number(ej,ei)
         # otherwise, we need to check the relative ordering of the
         # ending nodes of the edges with the starting nodes.
         else:
-            if ej_start < ei_end < ej_end:
+            if ((ej_start < ei_end < ej_end) or (ej_end < ej_start < ei_end) 
+                or (ei_start < ej_end < ej_start)):
                 return 1
-            elif (ej_end < ei_end < ej_start) or (ej_start < ei_start <ej_end):
+            elif (ej_end < ei_end < ej_start):
                 return -1
             else:
                 return 0
@@ -632,7 +634,7 @@ if __name__=='__main__':
     f12 = x**4 + y**4 - 1
 
 
-    f = f12
+    f = f4
     hs = monodromy(f,x,y)
     g = int(genus(f,x,y))
 
