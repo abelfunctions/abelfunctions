@@ -45,18 +45,18 @@ def newton(df,xip1,yij):
 
     return yij
 
-    
+
 def smale_beta(df,xip1,yij):
     return numpy.abs( df[0](xip1,yij)/df[1](xip1,yij) )
 
 
 def smale_gamma(df,xip1,yij,deg):
     df1 = df[1](xip1,yij)
-    bounds = [ numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./k-1.) 
+    bounds = [ numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./k-1.)
                for k in xrange(2,deg+1) ]
     return max(bounds)
 
-    
+
 def smale_alpha(df,xip1,yij,deg):
     return smale_beta(df,xip1,yij) * smale_gamma(df,xip1,yij,deg)
 
@@ -106,7 +106,7 @@ def _path_segments_from_path_data(path_data, circle_data, types='numpy'):
         (z0,z1)
 
         or
-        
+
         (R,w,arg,d)
 
         containing information about how to get to the final circle of
@@ -277,11 +277,11 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
 
 def path_around_infinity(G, rot, types='numpy'):
     """
-    Returns a list of labmda functions paramterizing the path starting 
+    Returns a list of labmda functions paramterizing the path starting
     from the base point and going around infinity.
 
-    Input: 
-    
+    Input:
+
     - G: the "monodromy graph", as computed by monodromy_graph()
 
     - bpt: the index of the target branch point
@@ -314,7 +314,7 @@ def path_around_infinity(G, rot, types='numpy'):
     radius = 0
     for node,data in G.nodes(data=True):
         node_value = data['value']
-        node_radius = data['radius']        
+        node_radius = data['radius']
 
         current_radius = abs(node_value) + node_radius
         radius = current_radius if current_radius > radius else radius
@@ -349,7 +349,7 @@ def parameterize_differential(omega, x, y, path):
     """
     Returns a Numpy-vectorized function omega(t) parameterized on the
     path.
-    
+
     Let \omega be a holomorphic differential and \gamma a path on the
     Riemann surface. Then
 
@@ -379,7 +379,9 @@ def color_plot_collection(x,y,cmap=matplotlib.cm.Greys, **kwds):
     # create the line collection
     Npts = len(x)
     tspace = numpy.linspace(0,1,Npts)
-    lc = LineCollection(segments, cmap=cmap, norm=matplotlib.pyplot.Normalize(0,1), **kwds)
+    lc = LineCollection(segments, cmap=cmap,
+                        norm=matplotlib.pyplot.Normalize(0,1),
+                        **kwds)
     lc.set_array(tspace)
 
     return lc
@@ -413,7 +415,7 @@ class RiemannSurfacePath():
         use. Options include
 
           * `'numpy'`: use `numpy.complex` data types
-          
+
           * `'mpmath'`: use `sympy.mpmath.mp.mpc` data types
         """
         if isinstance(RS,tuple):
@@ -441,7 +443,8 @@ class RiemannSurfacePath():
         # algebraic curve. used in performing the Taylor step in the
         # analytic continuation
         self.df = [
-            sympy.lambdify((self.x,self.y),sympy.diff(self.f,self.y,k),self.types) 
+            sympy.lambdify((self.x,self.y),sympy.diff(self.f,self.y,k),
+                           self.types)
             for k in xrange(self.deg+1)
             ]
 
@@ -701,7 +704,8 @@ class RiemannSurfacePath():
         Additional keywords are sent to matplotlib.pyplot.plot().
         """
         tpts = numpy.linspace(t0,t1,Npts)
-        xpts = numpy.array([self.get_x(ti) for ti in tpts], dtype=numpy.complex)
+        xpts = numpy.array([self.get_x(ti) for ti in tpts],
+                           dtype=numpy.complex)
         xre = xpts.real
         xim = xpts.imag
 
@@ -756,7 +760,7 @@ class RiemannSurfacePath():
             yimmin = yimmin if yimmin < min(yim) else min(yim)
             yremax = yremax if yremax > max(yre) else max(yre)
             yimmax = yimmax if yimmax > max(yim) else max(yim)
-            
+
 
         # plot checkpoints
         xre, xim, yre, yim = self.decompose_points(C)
@@ -800,13 +804,13 @@ class RiemannSurfacePath():
                     (0,1), color='grey', linestyle='--')
 
         fig.show()
-        
+
 
 
     def plot_path_segments(self, t0=0, t1=1, Npts=64, show_numbers=False,
                            *args,**kwds):
         """
-        Plot 
+        Plot
         """
         t_pts = sympy.mpmath.linspace(t0,t1,Npts)
         x_pts = map(self.get_x,t_pts)
@@ -889,7 +893,7 @@ if __name__=='__main__':
         ]
     x0 = z1
     y0 = polyroots(f,x,y,x0)
-    
+
     print "===     (constructing path)     ==="
     gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
     print gamma(0)
