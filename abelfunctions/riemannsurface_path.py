@@ -16,8 +16,12 @@ import numpy
 import scipy
 import sympy
 import networkx as nx
-import matplotlib.pyplot as plt
 
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.patches import Circle
+from matplotlib.collections import LineCollection
 
 import pdb
 
@@ -25,42 +29,36 @@ import pdb
 def factorial(n):
     return reduce(lambda a,b: a*b, xrange(1,n+1))
 
-def smale_gamma(df,n,x,y):
-    """
-    Smale's gamma function.
-    """
-    mags = []
-    for k in xrange(2,n+1):
-        foo = (df[k](x,y)/df[1](x,y))/factorial(k)
-        foo = numpy.abs(foo)**(1.0/(k-1.0))
-        mags.append(foo)
-    return max(mags)
 
-def smale_beta(df,x,y):
-    """
-    Smale's beta function.
-    """
-    return numpy.abs(df[0](x,y)/df[1](x,y))
+def newton(df,xip1,yij):
+    step = 1
+    while numpy.abs(step) > 1e-15:
+        # check if Df is invertible. (If not, then we are at a
+        # critical point.)
+        df1 = df[1](xip1,yij)
+        if numpy.abs(df1) < 1e-15:
+            return yij
 
-def smale_alpha(df,n,x,y):
-    """
-    Smale's alpha function. Used to determine if Newton's method will
-    converge to a y-root.
-    """
-    return beta(df,x,y) * gamma(df,n,x,y)
+        # Newton iterate
+        step = df[0](xip1,yij)/df1
+        yij -= step
+
+    return yij
+
+    
+def smale_beta(df,xip1,yij):
+    return numpy.abs( df[0](xip1,yij)/df[1](xip1,yij) )
 
 
-def smale_newton(f,dfdy,xip1,y):
-    eps = 1e-15
-    maxsteps = 10
-    for _ in xrange(maxsteps):
-        step = f(xip1,y)/dfdy(xip1,y)
-        if numpy.abs(step) < eps:
-            break
-        else:
-            y -= step
-    return y
+def smale_gamma(df,xip1,yij,deg):
+    df1 = df[1](xip1,yij)
+    bounds = [ numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./k-1.) 
+               for k in xrange(2,deg+1) ]
+    return max(bounds)
 
+    
+def smale_alpha(df,xip1,yij,deg):
+    return smale_beta(df,xip1,yij) * smale_gamma(df,xip1,yij,deg)
 
 
 def polyroots(f,x,y,xi,types='numpy'):
@@ -95,7 +93,6 @@ def polyroots(f,x,y,xi,types='numpy'):
         return (poly.r).tolist()
 
     return sympy.mpmath.polyroots(coeffs)
-
 
 
 def _path_segments_from_path_data(path_data, circle_data, types='numpy'):
@@ -164,7 +161,7 @@ def _path_segments_from_path_data(path_data, circle_data, types='numpy'):
         if len(datum) == 2:
             z0,z1 = map(cast_type,datum)
             seg = lambda t,z0=z0,z1=z1: z0*t + z1*(1-t)
-            dseg = lambda t,z0=z0,z1=z1: z0-z1
+            Dseg = lambda t,z0=z0,z1=z1: z0-z1
         else:
             R,w,arg,d = map(cast_type,datum)
             seg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
@@ -368,7 +365,26 @@ def parameterize_differential(omega, x, y, path):
         return omega(xi,yi[0]) * dxdt
 
     return numpy.vectorize(integrand, otypes=[numpy.complex])
-    
+
+
+def color_plot_collection(x,y,cmap=matplotlib.cm.Greys, **kwds):
+    """
+    Plots the x- and y-data with the color map cmap applied
+    along the resulting curve.
+    """
+    # rearrange the data into point tuples
+    points = numpy.array([x, y]).T.reshape(-1,1,2)
+    segments = numpy.concatenate([points[:-1], points[1:]], axis=1)
+
+    # create the line collection
+    Npts = len(x)
+    tspace = numpy.linspace(0,1,Npts)
+    lc = LineCollection(segments, cmap=cmap, norm=matplotlib.pyplot.Normalize(0,1), **kwds)
+    lc.set_array(tspace)
+
+    return lc
+
+
 
 
 class RiemannSurfacePath():
@@ -419,18 +435,15 @@ class RiemannSurfacePath():
         self.P0 = (CC(P0[0]), map(CC,P0[1]))
         self.deg = sympy.degree(self.f,self.y)
         self.types = types
+        self.alpha0 = CC(13.0 - 2.0*numpy.sqrt(17.0))/4.0
 
         # construct fast, type-cast lambda functions from the
         # algebraic curve. used in performing the Taylor step in the
         # analytic continuation
-        dfdx = sympy.diff(self.f,self.x).expand()
-        dfdy = sympy.diff(self.f,self.y).expand()
-        self._f = sympy.lambdify((self.x,self.y), self.f, self.types)
-        self.dfdx = sympy.lambdify((self.x,self.y), dfdx, self.types)
-        self.dfdy = sympy.lambdify((self.x,self.y), dfdy, self.types)
-        self.dfs = [sympy.lambdify((self.x,self.y),
-                                   sympy.diff(self.f,self.y,k), self.types) 
-                    for k in xrange(self.deg+1)]
+        self.df = [
+            sympy.lambdify((self.x,self.y),sympy.diff(self.f,self.y,k),self.types) 
+            for k in xrange(self.deg+1)
+            ]
 
         # path data
         self._path_segments     = path_segments
@@ -453,11 +466,13 @@ class RiemannSurfacePath():
         """
         Compute
         """
-        ppseg = 4
+        ppseg = 7
         if self.types == 'mpmath':
-            t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments)
+            t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments,
+                                          endpoint=False)
         else:
-            t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments)
+            t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments,
+                                   endpoint=False)
 
         tim1 = 0
         Pim1 = self.P0
@@ -536,78 +551,80 @@ class RiemannSurfacePath():
         return self.analytically_continue(t,dxdt=dxdt)
 
 
+    def step(self,ti,tip1,yi):
+        """
+        An analytic continuation step of the y-roots of f(x,y) from xi to
+        xip1.
+
+        In the event that the conditions for Newton-based continuation are
+        not satisfied the step function is called recursively to an
+        earlier point.
+
+        TODO: write a clean, non-recursive version of this algorithm
+        """
+        df = self.df
+        deg = self.deg
+        xi = self.get_x(ti)
+        xip1 = self.get_x(tip1)
+
+        # raise error if step size is too small
+        if numpy.abs(xip1-xi) < 1e-15:
+            raise ValueError("Analytic continuation failed.")
+
+        # first determine if the y-root guesses are 'approximate
+        # solutions'. if one of them is not then refine the step
+        for yij in yi:
+            if smale_alpha(df,xip1,yij,deg) > self.alpha0:
+                # not an approximate solution. refine and return
+                return self.step(ti,(ti+tip1)/2.0,yi)
+
+        # next, determine if the approximate solutions will converge to
+        # different associated solutions
+        for j in xrange(deg):
+            yij = yi[j]
+            for k in xrange(j+1,deg):
+                yik = yi[k]
+                betaij = smale_beta(df,xip1,yij)
+                betaik = smale_beta(df,xip1,yik)
+
+                if numpy.abs(yij-yik) < 2*(betaij+betaik):
+                    # approximate solutions don't lead to distinct
+                    # roots. refine and return
+                    return self.step(ti,(ti+tip1)/2.0,yi)
+
+        # finally, since we know that we have approximate solutions that will
+        # converge to difference associated solutions we will Netwon iterate
+        yip1 = [ newton(df,xip1,yij) for yij in yi ]
+
+        # return the t-point that we were able to step to as well as
+        # the y-roots lying above that t-point
+        return tip1, yip1
+
+
+
     def analytically_continue(self, t, dxdt=False, Npts=8, checkpoint=None):
         """
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point.
         """
-        n = self.deg
-        alpha0 = (13.0 - 2.0*numpy.sqrt(17.0))/4.0
-        
+#        pdb.set_trace()
 
         # checkpointing allows us to start our analytic continuation
         # from a point further along the path from t=0
-        if checkpoint:
-            t0,(xi,yi) = checkpoint
-        else:
-            t0,(xi,yi) = self._nearest_checkpoint(t)
+        if checkpoint: t0,(xi,yi) = checkpoint
+        else:          t0,(xi,yi) = self._nearest_checkpoint(t)
 
         # main loop
-        maxdt = (t-t0)/Npts
-        dt = maxdt
+        dt = numpy.double(t-t0)/Npts
         ti = t0
         while ti < t:
-            # iterate and approximate
             tip1 = ti + dt
-            xip1 = self.get_x(tip1)
-            yapp = [yij for yij in yi]
+            ti,yi = self.step(ti,tip1,yi)
 
-            # we have to check quadratic basin stuff for _every_ root
-            # simultaneously or else we might have a branch jump
-            are_approximate_solutions = True                
-            beta_yapp = [smale_beta(self.dfs,xip1,yappj) for yappj in yapp]
-            for j in xrange(n):
-                # check if our guess is in the quadratic convergence basin
-                gammaj = smale_gamma(self.dfs,n,xip1,yapp[j])
-                alphaj = beta_yapp[j] * gammaj
-                if alphaj >= alpha0:
-                    are_approximate_solutions = False
-                    break
-
-            # only perform separated basins detection if the roots are
-            # close enough
-            separated_basins = True
-            if are_approximate_solutions:
-                # now that we know the solutions are approximate solutions, we
-                # use the basin radius formula to ensure that each approximate
-                # root is within only one quadradic convergence basin.
-                for j in xrange(n):
-                    betaj = beta_yapp[j]
-                    for k in xrange(n):
-                        if j != k:
-                            dist = numpy.abs(yapp[j] - yapp[k])
-                            betak = beta_yapp[k]
-
-                            # use triangle inequality to guarantee separation
-                            # since we don't know what the actual roots are
-                            if dist <= 2*(betaj + betak):
-                                separated_basins = False
-                                break
-
-            # raise warning if it looks like something went wrong
-            if dt < 1e-15:
-                raise Warning("Smallest adaptive refinement level " + \
-                              "reached during analytic continuation.")
-
-            if are_approximate_solutions and separated_basins:
-                yi = [smale_newton(self.dfs[0],self.dfs[1],xip1,yappj) 
-                      for yappj in yapp]
-                ti = tip1
-                xi = xip1
-                dt = min(2*dt,maxdt)
-            else:
-                dt *= 0.5
-
+        # we optionally return the derivative x'(ti). this is used
+        # when computing integrals of differentials parameterized
+        # on the path
+        xi = self.get_x(ti)
         if dxdt:
             return (xi,tuple(yi)), self.get_x(ti,dxdt=True)
         else:
@@ -670,6 +687,33 @@ class RiemannSurfacePath():
         return x_re, x_im, y_re, y_im
 
 
+    def plot_xpath(self, t0=0, t1=1, Npts=64, **kwds):
+        """
+        Plots the path in teh complex x-plane.
+
+        Inputs:
+
+        - t0,t1: (default: 0,1) starting and ending points on the
+          parameterized path.
+
+        - Npts: (default: 64) number of interpolating points to plot.
+
+        Additional keywords are sent to matplotlib.pyplot.plot().
+        """
+        tpts = numpy.linspace(t0,t1,Npts)
+        xpts = numpy.array([self.get_x(ti) for ti in tpts], dtype=numpy.complex)
+        xre = xpts.real
+        xim = xpts.imag
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        lc = color_plot_collection(xre, xim, cmap=cm.Blues, **kwds)
+        ax.add_collection(lc)
+        ax.axis('tight')
+
+        fig.show()
+
+
     def plot(self, t0=0, t1=1, Npts=64, **kwds):
         """
         Plots the path in the complex x- and y-planes.
@@ -690,25 +734,37 @@ class RiemannSurfacePath():
         P = self.sample_uniform(t0=t0,t1=t1,Npts=Npts)
         C = [Pi for ti,Pi in self._checkpoints]
 
-        # plot chosen interpolating points
-        x_ax = fig.add_subplot(1,deg+1,1)
-        x_re, x_im, y_re, y_im = self.decompose_points(P)
-        x_ax.plot(x_re, x_im, '-', **kwds)
-        x_ax.plot(x_re[-1], x_im[-1], 'k.', markersize=30)
-        x_ax.plot(x_re[0], x_im[0], 'r.', markersize=20)
+        # plot x-points in the complex plane
+        xax = fig.add_subplot(1,deg+1,1)
+        xre, xim, yre, yim = self.decompose_points(P)
+        lc = color_plot_collection(xre,xim,cmap=cm.Blues,**kwds)
+        xax.add_collection(lc)
+        xax.axis('tight')
+
+        # plot each y-path in the complex plane
+        yremin = numpy.Inf
+        yremax = -numpy.Inf
+        yimmin = numpy.Inf
+        yimmax = -numpy.Inf
         for j in xrange(deg):
-            y_ax = fig.add_subplot(1,deg+1,j+2)
-            y_ax.plot(y_re[j], y_im[j], 'g-', **kwds)
-            y_ax.plot(y_re[j][-1], y_im[j][-1], 'k.', markersize=30)
-            y_ax.plot(y_re[j][0], y_im[j][0], 'r.', markersize=20)
+            yax = fig.add_subplot(1,deg+1,j+2)
+            lc = color_plot_collection(yre,yim,cmap=cm.Greens,**kwds)
+            yax.add_collection(lc)
+
+            # adjust axes
+            yremin = yremin if yremin < min(yre) else min(yre)
+            yimmin = yimmin if yimmin < min(yim) else min(yim)
+            yremax = yremax if yremax > max(yre) else max(yre)
+            yimmax = yimmax if yimmax > max(yim) else max(yim)
+            
 
         # plot checkpoints
-        x_re, x_im, y_re, y_im = self.decompose_points(C)
-        x_ax.plot(x_re, x_im, 'k.', **kwds)
+        xre, xim, yre, yim = self.decompose_points(C)
+        xax.plot(xre, xim, 'k.', **kwds)
         for j in xrange(deg):
-            y_ax = fig.add_subplot(1,deg+1,j+2)
-            y_ax.plot(y_re[j], y_im[j], 'k.', **kwds)
-
+            yax = fig.add_subplot(1,deg+1,j+2)
+            yax.plot(yre[j], yim[j], 'k.', **kwds)
+            yax.axis([yremin,yremax,yimmin,yimmax])
 
         fig.show()
 
@@ -750,6 +806,7 @@ class RiemannSurfacePath():
     def plot_path_segments(self, t0=0, t1=1, Npts=64, show_numbers=False,
                            *args,**kwds):
         """
+        Plot 
         """
         t_pts = sympy.mpmath.linspace(t0,t1,Npts)
         x_pts = map(self.get_x,t_pts)
@@ -774,6 +831,7 @@ class RiemannSurfacePath():
 
 def plot_fibre(f,x,y,branch_point):
     """
+    Plot
     """
     from monodromy import monodromy_graph
     G = monodromy_graph(f,x,y)
@@ -810,9 +868,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-#     f12 = x**4 + y**4 - 1
-
-#     f = f12
+    f = y**3 - x**3*y + x**7
 
 #     print "=== (computing monodromy graph) ==="
 #     bpt = 0
@@ -824,9 +880,20 @@ if __name__=='__main__':
 #     base_point = G.node[0]['basepoint']
 #     base_sheets = G.node[0]['baselift']
 #     x0,y0 = base_point, base_sheets
-    
-#     print "===     (constructing path)     ==="
-#     gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
 
-#     print "===        (plotting)           ==="
-#     gamma.plot(Npts=256)
+    z1 = 0.3
+    z2 = 0.4
+    path_segments = [
+        (lambda t,z1=z1,z2=z2: z1*(1-t) + z2*t,
+         lambda t,z1=z2,z2=z2: z2-z1),
+        ]
+    x0 = z1
+    y0 = polyroots(f,x,y,x0)
+    
+    print "===     (constructing path)     ==="
+    gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
+    print gamma(0)
+
+    print "===        (plotting)           ==="
+#    gamma.plot_xpath(Npts=64, linewidth=3)
+    gamma.plot(Npts=64, linewidth=3)
