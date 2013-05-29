@@ -10,7 +10,7 @@ multiple points. Returns a list of complex values.
 Prepares the variables for computation on a GPU,
 
 X = real part of the Omega matrix
-Yinv = The inverser of the imaginary part of the Omega matrix
+Yinv = The inverse of the imaginary part of the Omega matrix
 T = Cholesky Decomposition of Omega
 Z = List of points to compute the function at
 S = List of integer points to sum over
@@ -226,7 +226,7 @@ class RiemannThetaCuda:
         
     def func1(self, TILEWIDTH, TILEHEIGHT, g):
         template = """
-
+ 
     #include <stdlib.h>
     #include <stdio.h>
     #include <math.h>
