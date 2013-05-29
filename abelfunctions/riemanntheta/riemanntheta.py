@@ -548,7 +548,7 @@ class RiemannTheta_Function:
             S = self.integer_points(Yinv, T, 
 Tinv, z, g, R)
         # compute oscillatory and exponential terms
-        if gpu and (length > gpu_max):
+        if gpu and batch and (length > gpu_max):
             u,v = self.gpu_process(z, deriv, gpu_max, length)
         elif gpu and batch and len(deriv) > 0:
             v = self.parRiemann.compute_v_with_derivs(z, deriv)
@@ -558,7 +558,7 @@ Tinv, z, g, R)
             v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
             v = riemanntheta_cy.finite_sum(X, Yinv, T, z, S, g, batch)
-        if (length > gpu_max):
+        if (length > gpu_max and gpu):
             #u already computed
             pass
         elif (gpu and batch):
@@ -625,19 +625,26 @@ if __name__=="__main__":
     print
     
     if (gpu_capable):
-        a = []
-        for x in range(200000):
-            a.append(z0)
-            a.append(z1)
-            a.append(z2)
-            a.append(z3)
-            a.append(z4)
+        a = np.random.rand(2000000)
+        b = np.random.rand(2000000)
+        c = max(b)
+        b = 1.j*b/(1.0*c)
+        a = a + b
+        print a.size
+        a = a.reshape(1000000, 2)
+        print a
+        #for x in range(200000):
+        #    a[10*x:10*x+2] = z0
+        #    a[5*x + 1] = z1
+        #    a[5*x + 2] = z2
+        #    a[5*x + 3] = z3
+        #    a[5*x + 4] = z4
         start1 = time.clock()
-        print theta.value_at_point(a, Omega, batch=True, prec=1e-12)[57000:57005]
+        print theta.value_at_point(a, Omega, batch=True, prec=1e-12)
         print("GPU time to perform calculation: " + str(time.clock() - start1))
         start2 = time.clock()
-        #print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)[1730:1735]
-        #print("CPU time to do same calculation: " + str(time.clock() - start2))
+        print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)
+        print("CPU time to do same calculation: " + str(time.clock() - start2))
 
     print
     print "Derivative Tests:"
@@ -669,20 +676,6 @@ if __name__=="__main__":
     for x in range(5):
         l.append(y)
     print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
-
-    print "Box Points Test"
-    z = np.array([0,0,0,0,0,0,0,0])
-    Om = 1.j * np.identity(8)
-    X = Om.real
-    Y = Om.imag
-    Yinv = la.inv(Y)
-    T = la.cholesky(Y)
-    g = 8
-    rad = theta._rad
-    print "printing radius"
-    print rad
-    print riemanntheta_high_dim(X, Yinv, T, [z], g, rad)
-    print theta(z,Om)
     
     print "Test #3"
     import pylab as p
