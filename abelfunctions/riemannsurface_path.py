@@ -457,7 +457,7 @@ class RiemannSurfacePath():
         # the path and store in memory. This is done so one doesn't
         # have to analytically continue from the base point every time
         # you want to find a point on the path
-        self._checkpoints = [(0,self.P0)]
+        self._checkpoints = [(0,tuple(self.P0))]
         self._initialize_checkpoints()
 
 
@@ -467,16 +467,16 @@ class RiemannSurfacePath():
 
     def _initialize_checkpoints(self):
         """
-        Compute
+        Analytically continue along the entire path recording the value
+        of the roots at equally-spaced "checkpoints" along the path.
         """
-        ppseg = 7
+        ppseg = 15
         if self.types == 'mpmath':
             t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments,
                                           endpoint=False)
         else:
             t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments,
                                    endpoint=False)
-
         tim1 = 0
         Pim1 = self.P0
         for ti in t_pts[1:]:
@@ -496,11 +496,10 @@ class RiemannSurfacePath():
         analytic continuation then checkpoint data is saved in a cache
         making future analytic continuations potentially faster.
         """
+        # scan the list of checkpoints for the closest checkpoint.
+        # occuring before t.
         tim1 = 0
         Pim1 = self.P0
-
-        # _checkpoints is a dictionary with keys ti and values points
-        # on the path. By constuction, the checkpoints are ordered.
         for ti, Pi in self._checkpoints:
             if ti >= t:
                 return (tim1, Pim1)
@@ -508,10 +507,8 @@ class RiemannSurfacePath():
                 tim1 = ti
                 Pim1 = Pi
 
-        # no suitable checkpoint found: either no checkpoints are
-        # available or something wrong happened. Return the first
-        # point of the path
-        return self._checkpoints[0]
+        # use last point as checkpoint if a successor isn't found
+        return ti, Pi
 
 
     def get_x(self, t, dxdt=False):
@@ -544,8 +541,8 @@ class RiemannSurfacePath():
 
         seg, dseg = self._path_segments[t_floor]
         if dxdt:
-            return self._num_path_segments * dseg(t_seg)
-#            return dseg(t_seg)
+#            return self._num_path_segments * dseg(t_seg)
+            return dseg(t_seg)
         else:
             return seg(t_seg)
 
@@ -610,17 +607,23 @@ class RiemannSurfacePath():
         Analytically continue along the path to the given `t` in the
         interval [0,1]. self(0) returns the starting point.
         """
-#        pdb.set_trace()
-
         # checkpointing allows us to start our analytic continuation
         # from a point further along the path from t=0
         if checkpoint: t0,(xi,yi) = checkpoint
         else:          t0,(xi,yi) = self._nearest_checkpoint(t)
 
+        # if the requested point is close to a checkpoint then do not
+        # analytically continue
+        if abs(t-t0) < 1e-15:
+            if dxdt:
+                return (xi,tuple(yi)), self.get_x(t,dxdt=True)
+            else:
+                return (xi,tuple(yi))
+
         # main loop
         dt = numpy.double(t-t0)/Npts
         ti = t0
-        while ti < t:
+        while ti + dt < t:
             tip1 = ti + dt
             ti,yi = self.step(ti,tip1,yi)
 
@@ -635,7 +638,7 @@ class RiemannSurfacePath():
 
 
 
-    def sample_uniform(self, t0=0, t1=1, Npts=64, dxdt=False):
+    def sample_uniform(self, Npts=64, t0=0, t1=1, dxdt=False):
         """
         Return a uniform sample on the path.
         """
@@ -648,7 +651,7 @@ class RiemannSurfacePath():
         return P
 
 
-    def sample_clenshaw_curtis(self, t0=0, t1=1, Npts=64, dxdt=False):
+    def sample_clenshaw_curtis(self, Npts=64, t0=0, t1=1, dxdt=False):
         """
         Return a Clenshaw-Curtis sample (also referred to as a Chebysheb or
         cosine distribution sample) on the path.
@@ -677,7 +680,7 @@ class RiemannSurfacePath():
 
             { xi.real }, { xi.imag }, { yi.real }, { yi.imag }.
         """
-        x, y = zip(*P)
+        x,y = zip(*P)
         x_re = [xi.real for xi in x]
         x_im = [xi.imag for xi in x]
 
@@ -690,9 +693,9 @@ class RiemannSurfacePath():
         return x_re, x_im, y_re, y_im
 
 
-    def plot_xpath(self, t0=0, t1=1, Npts=64, **kwds):
+    def plot_xpath(self, Npts=64, t0=0, t1=1, **kwds):
         """
-        Plots the path in teh complex x-plane.
+        Plots the path in the complex x-plane.
 
         Inputs:
 
@@ -718,7 +721,7 @@ class RiemannSurfacePath():
         fig.show()
 
 
-    def plot(self, t0=0, t1=1, Npts=64, **kwds):
+    def plot(self, Npts=64, t0=0, t1=1, **kwds):
         """
         Plots the path in the complex x- and y-planes.
 
@@ -752,17 +755,22 @@ class RiemannSurfacePath():
         yimmax = -numpy.Inf
         for j in xrange(deg):
             yax = fig.add_subplot(1,deg+1,j+2)
-            lc = color_plot_collection(yre,yim,cmap=cm.Greens,**kwds)
+            lc = color_plot_collection(yre[j],yim[j],cmap=cm.Greens,**kwds)
             yax.add_collection(lc)
 
             # adjust axes
-            yremin = yremin if yremin < min(yre) else min(yre)
-            yimmin = yimmin if yimmin < min(yim) else min(yim)
-            yremax = yremax if yremax > max(yre) else max(yre)
-            yimmax = yimmax if yimmax > max(yim) else max(yim)
+            yremin = yremin if yremin < min(yre[j]) else min(yre[j])
+            yimmin = yimmin if yimmin < min(yim[j]) else min(yim[j])
+            yremax = yremax if yremax > max(yre[j]) else max(yre[j])
+            yimmax = yimmax if yimmax > max(yim[j]) else max(yim[j])
 
 
         # plot checkpoints
+        scale_factor = 1.1
+        yremin *= scale_factor
+        yimmin *= scale_factor
+        yremax *= scale_factor
+        yimmax *= scale_factor
         xre, xim, yre, yim = self.decompose_points(C)
         xax.plot(xre, xim, 'k.', **kwds)
         for j in xrange(deg):
@@ -774,7 +782,7 @@ class RiemannSurfacePath():
 
 
 
-    def plot3d(self, t0=0, t1=1, Npts=128, *args, **kwds):
+    def plot3d(self, Npts=64, t0=0, t1=1, *args, **kwds):
         """
         Plots the path in the complex x- and y-planes.
 
@@ -807,7 +815,7 @@ class RiemannSurfacePath():
 
 
 
-    def plot_path_segments(self, t0=0, t1=1, Npts=64, show_numbers=False,
+    def plot_path_segments(self, Npts=64, t0=0, t1=1, show_numbers=False,
                            *args,**kwds):
         """
         Plot
@@ -851,7 +859,7 @@ def plot_fibre(f,x,y,branch_point):
 
 
 if __name__=='__main__':
-    print 
+    print
     print "============================"
     print "=== Riemann surface path ==="
     print "============================"
@@ -885,8 +893,8 @@ if __name__=='__main__':
 #     base_sheets = G.node[0]['baselift']
 #     x0,y0 = base_point, base_sheets
 
-    z1 = 0.3
-    z2 = 0.4
+    z1 = 0.1
+    z2 = 0.65
     path_segments = [
         (lambda t,z1=z1,z2=z2: z1*(1-t) + z2*t,
          lambda t,z1=z2,z2=z2: z2-z1),
@@ -900,4 +908,9 @@ if __name__=='__main__':
 
     print "===        (plotting)           ==="
 #    gamma.plot_xpath(Npts=64, linewidth=3)
-    gamma.plot(Npts=64, linewidth=3)
+#    gamma.plot(Npts=64, linewidth=3)
+    P = gamma.sample_uniform(32)
+    xx,yy = zip(*P)
+    y0,y1,y2 = zip(*yy)
+    plt.plot(xx,y0,'ro-', xx,y1,'go-', xx,y2,'bo-')
+    plt.show()

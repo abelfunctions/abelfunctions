@@ -487,10 +487,9 @@ def compress_cycle(cycle, tretkoff_graph, monodromy_graph):
 	    n += 2
 
     # Compression #2: delete cycle elements with zero rotations
-    for n in range(len(cycle)-1,step=2):
+    for n in range(0,len(cycle)-1,2):
         sheet = cycle[n]
         branch = cycle[n+1]
-
 
     return cycle
 

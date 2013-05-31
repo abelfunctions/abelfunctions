@@ -47,7 +47,7 @@ class RiemannSurface(object):
         to calculate the coordinates `(x0,y0)`.
         """
         return RiemannSurfacePoint(self,x0,y0)
- 
+
     def monodromy(self):
         """
         """
@@ -161,11 +161,11 @@ class RiemannSurface(object):
         return cycle_paths
 
 
-    def integrate(self, omega, x, y, path):
+    def integrate(self, omega, x, y, path, **kwds):
         """
         Integrates the differential `omega`, defined on the
         Riemann surface, on the RiemannSurfacePath `path`.
-        
+
         Input:
 
         - `omega,x,y`: a Sympy funciton in the variables `x` and `y`
@@ -174,19 +174,20 @@ class RiemannSurface(object):
         """
         x0,y0 = path(0)
         omega = parameterize_differential(omega, x, y, path)
-        
-        # n = path._num_path_segments
-        # val = numpy.complex(0)
-        # for k in xrange(n):
-        #     k = numpy.double(k)
 
-        #     tpts = numpy.linspace(k/n,(k+1)/n,128)
-        #     fpts = omega(tpts)
-        #     val += scipy.integrate.trapz(tpts,fpts)
-        
-        tpts = numpy.linspace(0,1,512)
-        opts = omega(tpts)
-        val = scipy.integrate.trapz(tpts, opts)
+        n = path._num_path_segments
+        val = numpy.complex(0)
+
+        for k in xrange(n):
+            k = numpy.double(k)
+            #re = scipy.integrate.quad(lambda t: omega(t).real,k/n,(k+1)/n)[0]
+            #im = scipy.integrate.quad(lambda t: omega(t).imag,k/n,(k+1)/n)[0]
+            t = numpy.linspace(k/n,(k+1.0)/n,64)
+            o = omega(t)
+            re = scipy.integrate.trapz(t,o.real)
+            im = scipy.integrate.trapz(t,o.imag)
+
+            val += re + 1.0j*im
 
         return val
 
@@ -195,7 +196,7 @@ class RiemannSurface(object):
         """
         Returns the period matrix `\tau = (A \; B)` where `A_{ij}` is
         the integral of the `j`th holomorphic differential basis element
-        about the cycle `a_i`. (`B` is defined in the same way about the 
+        about the cycle `a_i`. (`B` is defined in the same way about the
         `b`-cycles.)
 
         Note: this function computes the integrals of the
@@ -204,7 +205,7 @@ class RiemannSurface(object):
         c-cycles integrals gives the a- and b-cycles integrals.
         """
         cycles = self.cycle_paths()
-        
+
         differentials = self.holomorphic_differentials()
         g = self.genus()
         x = self.x
@@ -217,12 +218,12 @@ class RiemannSurface(object):
             Ai = []
             Bi = []
             for j in xrange(g):
-                integral = self.integrate(omega,x,y,cycles[j]) 
+                integral = self.integrate(omega,x,y,cycles[j])
                 Ai.append(integral)
-                
+
                 integral = self.integrate(omega,x,y,cycles[j+g])
                 Bi.append(integral)
-                
+
             A.append(Ai)
             B.append(Bi)
 
@@ -260,7 +261,7 @@ if __name__ == '__main__':
     f12 = x**4 + y**4 - 1
 
 
-    f = f10
+    f = f12
     X = RiemannSurface(f,x,y)
 
 
