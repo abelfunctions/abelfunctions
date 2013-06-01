@@ -80,8 +80,6 @@ class RiemannThetaCuda:
         cuda.memcpy_dtod(self.Td, Td.ptr, Td.nbytes)
         cuda.memcpy_dtod(self.Yinv_vd, Yinvd.ptr, Yinvd.nbytes)
         cuda.memcpy_dtod(self.Yinv_ud, Yinvd.ptr, Yinvd.nbytes)
-        test = gpuarray.zeros(self.g * self.g, dtype = np.double)
-        cuda.memcpy_dtod(test.ptr, self.Yinv_ud, Yinvd.nbytes)
 
     """
     Stores the list of integer points as a gpuarray
@@ -124,6 +122,11 @@ class RiemannThetaCuda:
                      block = blocksize,
                      grid = gridsize)
         cuda.Context.synchronize()
+        print "Printing correct fsums:"
+        print fsum_reald
+        print "-----------------------"
+        print fsum_imagd
+        print "+++++++++++++++++++++++"
         fsums_real = self.sum_reduction(fsum_reald, N, K, Kd, Nd)
         fsums_imag = self.sum_reduction(fsum_imagd, N, K, Kd, Nd)
         return fsums_real + 1.0j*fsums_imag
