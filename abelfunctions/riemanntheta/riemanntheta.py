@@ -599,8 +599,6 @@ Tinv, z, g, R)
                 u[i] = val
         else:
             u = np.pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
-            print "The value of U:"
-            print u
         return u,v
 
     def siegel_exp_and_osc(self, z, Omega, prec=1e-8, deriv=[],gpu=gpu_capable,batch=False):
@@ -683,14 +681,13 @@ if __name__=="__main__":
     OMEGAS = []
     I = 1.j
     t_vals = np.linspace(1,0,10)
-    for t in range(0,1):
+    for t in t_vals:
         a = np.array([[-0.5*t + I, 0.5*t*(1-I), -0.5*t*(1 + I)],
                       [0.5*t*(1-I), I, 0],
                       [-0.5*t*(1+I), 0, I]])
-        OMEGAS.append(np.identity(3)*1.j)
+        OMEGAS.append(a)
     length = len(OMEGAS)
-    #theta.multiple_omega_process(z, OMEGAS, 3)
-    print len(theta._intpoints)
+    theta.multiple_omega_process(z, OMEGAS, 3)
     start = time.clock()
     V = []
     for i in range(length):
