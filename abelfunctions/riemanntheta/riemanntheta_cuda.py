@@ -10,7 +10,7 @@ multiple points. Returns a list of complex values.
 Prepares the variables for computation on a GPU,
 
 X = real part of the Omega matrix
-Yinv = The inverser of the imaginary part of the Omega matrix
+Yinv = The inverse of the imaginary part of the Omega matrix
 T = Cholesky Decomposition of Omega
 Z = List of points to compute the function at
 S = List of integer points to sum over
@@ -80,15 +80,16 @@ class RiemannThetaCuda:
         cuda.memcpy_dtod(self.Td, Td.ptr, Td.nbytes)
         cuda.memcpy_dtod(self.Yinv_vd, Yinvd.ptr, Yinvd.nbytes)
         cuda.memcpy_dtod(self.Yinv_ud, Yinvd.ptr, Yinvd.nbytes)
-        test = gpuarray.zeros(self.g * self.g, dtype = np.double)
-        cuda.memcpy_dtod(test.ptr, self.Yinv_ud, Yinvd.nbytes)
 
     """
     Stores the list of integer points as a gpuarray
     """
-    def cache_intpoints(self, S):
-        S = np.require(S, dtype = np.double, requirements=['A','W','O','C'])
-        self.Sd = gpuarray.to_gpu(S)
+    def cache_intpoints(self, S, gpu_already = False):
+        if (not gpu_already):
+            S = np.require(S, dtype = np.double, requirements=['A','W','O','C'])
+            self.Sd = gpuarray.to_gpu(S)
+        else:
+            self.Sd = S
 
     """
     Computes the oscillatory part of the riemann-theta function without any derivatives
@@ -121,6 +122,11 @@ class RiemannThetaCuda:
                      block = blocksize,
                      grid = gridsize)
         cuda.Context.synchronize()
+        print "Printing correct fsums:"
+        print fsum_reald
+        print "-----------------------"
+        print fsum_imagd
+        print "+++++++++++++++++++++++"
         fsums_real = self.sum_reduction(fsum_reald, N, K, Kd, Nd)
         fsums_imag = self.sum_reduction(fsum_imagd, N, K, Kd, Nd)
         return fsums_real + 1.0j*fsums_imag
@@ -174,8 +180,8 @@ class RiemannThetaCuda:
     #Z
     def sum_reduction(self, fsum, N, K, Kd, Nd):
         out = gpuarray.zeros(K*N, dtype = np.double)
-        blockheight = 32
-        blockwidth = 16
+        blockheight = self.tileheight
+        blockwidth = self.tilewidth
         while (N > 1):
             J = (N - 1)//blockwidth + 1
             gridsize = (J, (K-1)//blockheight + 1, 1)
@@ -223,7 +229,7 @@ class RiemannThetaCuda:
         
     def func1(self, TILEWIDTH, TILEHEIGHT, g):
         template = """
-
+ 
     #include <stdlib.h>
     #include <stdio.h>
     #include <math.h>
@@ -509,10 +515,10 @@ class RiemannThetaCuda:
         return (func, deriv_func, Xd, Yinvd, Td)
 
     def func2(self):
-        mod = SourceModule("""
+        template = """
 
-   #define BLOCKWIDTH 16
-   #define BLOCKHEIGHT 32
+   #define BLOCKWIDTH %d
+   #define BLOCKHEIGHT %d
 
     __global__ void reduction_kernel(double *A_d, double *A_outd, int x_len, int y_len, int POINTS)
     {
@@ -549,8 +555,8 @@ class RiemannThetaCuda:
       }
     }
 
-    """)
-
+    """%(self.tilewidth, self.tileheight)
+        mod = SourceModule(template)
         return mod.get_function("reduction_kernel")
 
     def func3(self, g, TILEHEIGHT):
