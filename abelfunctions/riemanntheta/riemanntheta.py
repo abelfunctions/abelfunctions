@@ -115,7 +115,7 @@ except ImportError:
     gpu_capable = False
 
 
-class RiemannTheta_Function:
+class RiemannTheta_Function(object):
     r"""
     Creates an instance of the Riemann theta function parameterized by a
     Riemann matrix ``Omega``, directional derivative ``derivs``, and
@@ -238,6 +238,8 @@ class RiemannTheta_Function:
         this is a reasonable computation but can be sped up by
         writing a loop instead.
         """
+        print c
+        print g
         a_ = c[g] - R/(np.sqrt(np.pi)*T[g,g]) 
         b_ = c[g] + R/(np.sqrt(np.pi)*T[g,g])
         a = np.ceil(a_)
@@ -262,7 +264,7 @@ class RiemannTheta_Function:
         for n in range(a, b+1):
             chat = c[:newg+1]
             that = T[:newg+1,g]
-            newc = chat - (np.dot(newTinv, that)*(n - c[g]))
+            newc = (chat.T - (np.dot(newTinv, that)*(n - c[g]))).T
             newR = np.sqrt(R**2 - np.pi*(T[g,g] * (n - c[g]))**2) # XXX
             newstart = np.append([n],start)
             newpts = self.find_int_points(newg,newc,newR,newT,newstart)
@@ -522,11 +524,11 @@ class RiemannTheta_Function:
         pi = np.pi
 
         #Process all of the matrices into numpy matrices
-        X = np.matrix(Omega.real)
-        Y = np.matrix(Omega.imag)
-        Yinv = np.matrix(la.inv(Y))
-        T = np.matrix(la.cholesky(Y))
-        Tinv = np.matrix(la.inv(T))
+        X = np.array(Omega.real)
+        Y = np.array(Omega.imag)
+        Yinv = np.array(la.inv(Y))
+        T = np.array(la.cholesky(Y))
+        Tinv = np.array(la.inv(T))
         deriv = np.array(deriv)
         
         #Do recacheing if necessary
@@ -572,8 +574,48 @@ Tinv, z, g, R)
                 u[i] = val
         else:
             u = np.pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
+            print "The value of U:"
+            print u
         return u,v
 
+    def siegel_exp_and_osc(self, z, Omega, prec=1e-8, deriv=[],gpu=gpu_capable,batch=False):
+        g = Omega.shape[0]
+        pi = np.pi
+        z = np.array(z, dtype=np.complex)
+
+        #Process all of the matrices into numpy arrays
+        Omega = np.array(Omega, dtype=np.complex)
+        #Perform the siegel transformation
+        Om, mod = siegel(Omega, g)
+        a = mod[:g, :g].astype(np.double)
+        b = mod[:g, g:].astype(np.double)
+        c = mod[g:, :g].astype(np.double)
+        d = mod[g:, g:].astype(np.double)
+        print "Returned Omega"
+        print Om
+        print
+        print "Calculated Omega"
+        print np.dot((np.dot(a,Omega) + b), la.inv(np.dot(c,Omega) + d))
+        print
+        C_orig = np.dot(c,Omega)+d
+        C = la.inv(np.dot(c,Omega)+d)
+        new_z = np.dot(C, z)
+        u,v = self.exp_and_osc_at_point(new_z,Om)
+        determinant_part = np.sqrt(la.det(C_orig))
+        print "shift:"
+        shift_part = np.pi*1.0j*np.dot(np.dot(z,C),np.dot(c,z))
+        print shift_part
+        return (1.0/(determinant_part))*np.exp(-shift_part)*v
+        
+    def characteristic(self, chars, z, Omega):
+        alpha, beta = chars[0], chars[1]
+        shift = np.dot(Omega, alpha) + beta
+        z = z + shift
+        u,v = self.exp_and_osc_at_point(z, Omega)
+        exp_shift = 2*np.pi*1.0j*(.5*np.dot(alpha,np.dot(Omega,alpha)) + np.dot(alpha,np.dot(Omega,alpha)))
+        return np.exp(u - exp_shift)*v
+
+         
     def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
         r"""
         Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if batch is True.
@@ -603,12 +645,12 @@ if __name__=="__main__":
     theta = RiemannTheta
     z = np.array([0,0])
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
-
+    
     print "Test #1:"
     print theta.value_at_point(z,Omega)
     print "1.1654 - 1.9522e-15*I"
     print 
-    
+    print theta._intpoints
     print "Test #2:"
     z1 = np.array([1.0j,1.0j])
     print theta.value_at_point(z1,Omega)
@@ -686,48 +728,44 @@ if __name__=="__main__":
     Z = X + Y*1.0j
     Z = Z.flatten()
     U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
-    Z = V.reshape(60,60).real
+    Z = (V.reshape(60,60)).imag
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
 
+    SIZE = 100
+    x = np.linspace(-7,7,SIZE)
+    y = np.linspace(-7,7,SIZE)
+    X,Y = p.meshgrid(x,y)
+    Z = X + Y*1.j
+    Z = X + Y*1.j
+    Z = Z.flatten()
+    w = np.array([[1.j]])
+    print w
+    U,V = theta.exp_and_osc_at_point(Z, w, batch = True)
+    print theta._intpoints
+    Z = (V.reshape(100,100)).real
+    plt.contourf(X,Y,Z,7,antialiased=True)
+    plt.show()
+
+    omega = np.identity(3)*1.j
+    z = np.array([0,0,0])
+    theta.value_at_point(z, omega)
+    """
     print "Siegel Test"
     Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]],dtype=np.complex)
+    Om = 1.j*np.array([[8,7],[7,8]])
+    print Om
     #print "Determinant of Omega"
     #print la.det(Omega)
     #print "-----------------"
-    x = np.array([1.0,0],dtype=np.double)
-    #print "x: "
-    #print x
-    #print "------------"
-    Om, mod, r = siegel(Omega, 2)
-    print theta.value_at_point(x, Omega)
+    x = np.array([0,0])
+    print "Calculating original"
+    val_orig = theta.exp_and_osc_at_point(x,Om, prec = 1e-12)[1]
+    print val_orig
+    print "Calculating Siegel"
+    val_sigel = theta.siegel_exp_and_osc(x,Om, prec = 1e-12)
+    print val_sigel
+    print "Absolute Error"
+    print np.abs(val_orig - val_sigel)
     """
-    g = 2 
-    print "print c and d"
-    c = mod[g:, :g]
-    d = mod[g:, g:]
-    print c
-    print
-    print d
-    print
-    print "--------------"
-    z_trans_inv = np.dot(c, Omega) + d
-    z_trans = la.inv(z_trans_inv)
-    print "z_trans:"
-    print z_trans
-    print "--------------"
-    print "square root of determinant"
-    det_part = np.sqrt(la.det(z_trans_inv))
-    print det_part
-    expon_part = np.exp(np.pi*1.j*np.dot(np.dot(x,z_trans),np.dot(c,x)))
-    print expon_part
-    z = np.dot(z_trans,x)
-    print "Printing new z..."
-    print z
-    print "---------------------------"
-    s = theta.value_at_point(z, Om)
-    print s/(det_part*expon_part)
-"""    
-
-
