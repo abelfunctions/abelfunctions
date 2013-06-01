@@ -104,6 +104,7 @@ from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
 from box_points import riemanntheta_high_dim
+from riemanntheta_omegas import RiemannThetaOmegas
 #For testing purposes only
 #from lattice_plotter import *
 
@@ -237,8 +238,19 @@ class RiemannTheta_Function:
         this is a reasonable computation but can be sped up by
         writing a loop instead.
         """
+        print "++++++++++++++++++++"
+        print "c"
+        print c
+        print g
+        print "T"
+        print T[g,g]
         a_ = c[g] - R/(np.sqrt(np.pi)*T[g,g]) 
         b_ = c[g] + R/(np.sqrt(np.pi)*T[g,g])
+        print "a"
+        print a_
+        print "b"
+        print b_
+        print "-----------"
         a = np.ceil(a_)
         b = np.floor(b_)
         # check if we reached the edge of the ellipsoid
@@ -261,7 +273,8 @@ class RiemannTheta_Function:
         for n in range(a, b+1):
             chat = c[:newg+1]
             that = T[:newg+1,g]
-            newc = chat - (np.dot(newTinv, that)*(n - c[g]))
+            newc = (chat.T - (np.dot(newTinv, that)*(n - c[g]))).T
+            print newc
             newR = np.sqrt(R**2 - np.pi*(T[g,g] * (n - c[g]))**2) # XXX
             newstart = np.append([n],start)
             newpts = self.find_int_points(newg,newc,newR,newT,newstart)
@@ -335,9 +348,6 @@ class RiemannTheta_Function:
             leftc = c - intc
         int_points = self.find_int_points(g-1,leftc,R,T,[])
         return int_points
-
-    def test(self):
-        print "WTF"
 
     def radius(self, T, prec, deriv=[]):
         r"""
@@ -471,7 +481,6 @@ class RiemannTheta_Function:
             self._prec = prec
             self._rad = self.radius(T, prec, deriv=deriv)
             origin = [0]*g
-            print "Finding integer points"
             self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
                                                   g, self._rad)
         if (gpu_capable):
@@ -508,10 +517,41 @@ class RiemannTheta_Function:
             u = np.concatenate((u, u_p))
             v = np.concatenate((v, v_p))
         return u,v
- 
-    
 
-    def exp_and_osc_at_point(self, z, Omega, batch = False, prec=1e-9, deriv=[], gpu=gpu_capable, gpu_max = 500000):
+
+    def multiple_omega_process(self, z, Omegas, g, derivs = [], prec = 1e-8):
+        start = time.clock()
+        Xs = []
+        Ts = []
+        Yinvs = []
+        min_val = -1
+        for om in Omegas:
+            Xs.append(om.real)
+            T = la.cholesky(om.imag)
+            Yinv = la.inv(om.imag)
+            Ts.append(T)
+            Yinvs.append(Yinv)
+            r = self.radius(T, prec, deriv=derivs)
+            eig = min(la.eigvals(om.imag/(r**2)))
+            if (eig < min_val or min_val < 0):
+                min_val = eig.real
+        c = np.zeros((g,1))
+        T = np.identity(g)*min_val
+        S = self.find_int_points(g-1, c, 1.0, T, [])
+        tester = RiemannThetaOmegas(32, 16)
+        tester.compile(g)
+        tester.cache_intpoints(S)
+        tester.cache_z(z)
+        print "Printing Length of Integer Points"
+        print len(S)
+        start = time.clock()
+        v = tester.compute_v_without_derivs(Xs, Yinvs, Ts)
+        print "Time used by cuda riemann theta"
+        print time.clock() - start
+        print v
+
+
+    def exp_and_osc_at_point(self, z, Omega, batch = False, omega_batch = False, prec=1e-8, deriv=[], gpu=gpu_capable, gpu_max = 500000):
         r"""
         Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
         (Or a given directional derivative of `\theta`.) That is, compute 
@@ -605,10 +645,36 @@ if __name__=="__main__":
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    print theta.value_at_point(z,Omega)
+    print theta.value_at_point([z],Omega, batch = True)
     print "1.1654 - 1.9522e-15*I"
     print 
-    
+    #print theta.exp_and_osc_at_point(z,Omega)[1]
+    print
+    print "Multiple Omegas Tests"
+    print "--------------------------------"
+    z = np.array([0,0,0])
+    OMEGAS = []
+    I = 1.j
+    t_vals = np.linspace(1,0,10)
+    for t in range(0,1):
+        a = np.array([[-0.5*t + I, 0.5*t*(1-I), -0.5*t*(1 + I)],
+                      [0.5*t*(1-I), I, 0],
+                      [-0.5*t*(1+I), 0, I]])
+        OMEGAS.append(np.identity(3)*1.j)
+    length = len(OMEGAS)
+    #theta.multiple_omega_process(z, OMEGAS, 3)
+    print len(theta._intpoints)
+    start = time.clock()
+    V = []
+    for i in range(length):
+        V.append(theta.exp_and_osc_at_point(z,OMEGAS[i])[1])
+        print len(theta._intpoints)
+    v = np.array(V)
+    print v
+    print time.clock() - start
+    print "---------------------------"
+
+    """
     print "Test #2:"
     z1 = np.array([1.0j,1.0j])
     print theta.value_at_point(z1,Omega)
@@ -642,9 +708,9 @@ if __name__=="__main__":
         start1 = time.clock()
         print theta.value_at_point(a, Omega, batch=True, prec=1e-12)
         print("GPU time to perform calculation: " + str(time.clock() - start1))
-        start2 = time.clock()
-        print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)
-        print("CPU time to do same calculation: " + str(time.clock() - start2))
+        #start2 = time.clock()
+        #print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)
+        #print("CPU time to do same calculation: " + str(time.clock() - start2))
 
     print
     print "Derivative Tests:"
@@ -684,19 +750,19 @@ if __name__=="__main__":
     from matplotlib.ticker import LinearLocator, FormatStrFormatter
     import matplotlib.pyplot as plt
 
-    print "\tCalculating theta..."
-    SIZE = 60
-    x = np.linspace(0,1,SIZE)
-    y = np.linspace(0,5,SIZE)
-    X,Y = p.meshgrid(x,y)
-    Z = X + Y*1.0j
-    Z = Z.flatten()
-    U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
-    Z = V.reshape(60,60).real
-    print "\tPlotting..."
-    plt.contourf(X,Y,Z,7,antialiased=True)
-    plt.show()
-
+    #print "\tCalculating theta..."
+    #SIZE = 60
+    #x = np.linspace(0,1,SIZE)
+    #y = np.linspace(0,5,SIZE)
+    #X,Y = p.meshgrid(x,y)
+    #Z = X + Y*1.0j
+    #Z = Z.flatten()
+    #U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
+    #Z = V.reshape(60,60).real
+    #print "\tPlotting..."
+    #plt.contourf(X,Y,Z,7,antialiased=True)
+    #plt.show()
+    """
     """
     print "Siegel Test"
     Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]],dtype=np.complex)

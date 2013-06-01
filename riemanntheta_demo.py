@@ -200,6 +200,19 @@ def plt_second_deriv():
     U,V = theta.exp_and_osc_at_point([[0, z*1.0j] for z in Z], Omega, deriv=k, batch=True)
     plt.plot(Z, V.real)
     plt.show()
+
+def plt_explosion(SIZE):
+    theta = RiemannTheta
+    Omega = np.matrix([[1.690983006 + .951056516*1.0j, 1.5 + .363271264*1.0j],
+                       [1.5 + .363271264*1.0j, 1.309016994 + .951056516*1.0j]])
+    X,Y = np.mgrid[-1:1:SIZE*1.0j, -1:1:SIZE*1.0j]
+    Z = X + Y*1.0j
+    Z = Z.flatten()
+    U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
+    V = np.exp(U)*V
+    V = V.reshape(SIZE,SIZE)
+    s = surf(X, Y, np.absolute(V), warp_scale = 'auto')
+    savefig("explosion.eps")
     
 def get_r1_vals(SIZE, gpu):
     theta = RiemannTheta

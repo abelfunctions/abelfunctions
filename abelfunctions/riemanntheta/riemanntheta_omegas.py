@@ -27,6 +27,13 @@ the list of integer points stored on the device.
 A 's' suffix implies plurality
 """
 
+import time
+import numpy as np
+import pycuda.driver as cuda
+import pycuda.autoinit
+from pycuda.compiler import SourceModule
+from pycuda import gpuarray
+
 class RiemannThetaOmegas:
 
     """
@@ -34,8 +41,8 @@ class RiemannThetaOmegas:
     compile and store the cuda function which will be needed later.
     """
     def __init__(self, tileheight, tilewidth):
-        self.tileheight = tileheight
-        self.tilewidth = tilewidth
+        self.tileheight = 8
+        self.tilewidth = 64
         #Declares global variables to be determined later
         self.xd = None
         self.yd = None
@@ -51,8 +58,8 @@ class RiemannThetaOmegas:
     """
     def compile(self, g):
         self.g=g
-        (self.finite_sum_without_derivs, self.finite_sum_with_derivs) 
-        = self.func1(self.tilewidth, self.tileheight, g)
+        (self.finite_sum_without_derivs, self.finite_sum_with_derivs, 
+        self.xd, self.yd) = self.func1(g, self.tilewidth,self.tileheight)
 
     """
     Stores the list of integer points as a gpuarray
@@ -70,8 +77,10 @@ class RiemannThetaOmegas:
     def cache_z(self, z):
         x = np.require(z.real, dtype = np.double, requirements = ['A','W','O','C'])
         y = np.require(z.imag, dtype = np.double, requirements = ['A','W','O','C'])
-        self.xd = gpuarray.to_gpu(x)
-        self.yd = gpuarray.to_gpu(y)
+        xd = gpuarray.to_gpu(x)
+        yd = gpuarray.to_gpu(y)
+        cuda.memcpy_dtod(self.xd, xd.ptr, xd.nbytes)
+        cuda.memcpy_dtod(self.yd, yd.ptr, yd.nbytes)
 
     def compute_v_without_derivs(self, Xs, Yinvs, Ts):
         #Turn the parts of omega into gpuarrays
@@ -95,13 +104,13 @@ class RiemannThetaOmegas:
         blocksize = (self.tilewidth, self.tileheight, 1)
         gridsize = (N//self.tilewidth + 1, K//self.tileheight + 1, 1)
         self.finite_sum_without_derivs(fsum_reald, fsum_imagd, Xs_d, Yinvs_d, Ts_d,
-                                       self.xd, self.yd, self.Sd, gd, Nd, Kd
+                                       self.Sd, gd, Nd, Kd,
                                        block = blocksize,
                                        grid = gridsize)
         cuda.Context.synchronize()
         fsums_real = self.sum_reduction(fsum_reald, N, K, Kd, Nd)
         fsums_imag = self.sum_reduction(fsum_imagd, N, K, Kd, Nd)
-        return fsums_real + 1.0j*fsum_imag
+        return fsums_real + 1.0j*fsums_imag
 
     def compute_v_with_derivs(self, Xs, Yinvs, Ts, derivs):
         #Turn the parts of omega into gpuarrays
@@ -132,14 +141,14 @@ class RiemannThetaOmegas:
         blocksize = (self.tilewidth, self.tileheight, 1)
         gridsize = (N//self.tilewidth + 1, K//self.tileheight + 1, 1)
         self.finite_sum_with_derivs(fsum_reald, fsum_imagd, Xs_d, Yinvs_d, Ts_d, 
-                                    self.xd, self.yd, self.Sd, deriv_reald, deriv_imagd, 
+                                    self.Sd, deriv_reald, deriv_imagd, 
                                     nderivs, gd, Nd, Kd,
                                     block = blocksize,
                                     grid = gridsize)
         cuda.Context.synchronize()
         fsums_real = self.sum_reduction(fsum_reald, N, K, Kd, Nd)
         fsums_imag = self.sum_reduction(fsum_imagd, N, K, Kd, Nd)
-        return fsums_real + 1.0j*fsum_imag
+        return fsums_real + 1.0j*fsums_imag
         
         
     def sum_reduction(self, fsum, N, K, Kd, Nd):
@@ -165,9 +174,8 @@ class RiemannThetaOmegas:
         fsum_final = fsum_final[:K]
         return fsum_final
 
-    def func1(self):
-        template = 
-        """
+    def func1(self, g, TILEWIDTH, TILEHEIGHT):
+        template = """
         #include <stdlib.h>
         #include <stdio.h>
         #include <math.h>
@@ -175,6 +183,9 @@ class RiemannThetaOmegas:
         #define GENUS %d
         #define TILEHEIGHT %d
         #define TILEWIDTH %d
+
+        __device__ __constant__ double xd[GENUS];
+        __device__ __constant__ double yd[GENUS];
         
         /***************************************************************************
 
@@ -191,7 +202,7 @@ class RiemannThetaOmegas:
 
         ***************************************************************************/
         
-        __device__ double normpart(int g, double* Yinvd_s, double* Td_s, double *yd_s, double* Sd_s)
+        __device__ double normpart(int g, double* Yinvd_s, double* Td_s, double* Sd_s)
         {
           int tx = threadIdx.x;
           int ty = threadIdx.y;
@@ -200,11 +211,11 @@ class RiemannThetaOmegas:
           for (i = 0; i < g; i++) {
             double sum = 0;
             for (j = 0; j < g; j++) {
-              double T_ij = Td_s[ty*g*g + j];
+              double T_ij = Td_s[ty*g*g + i*g + j];
               double n_j = Sd_s[tx*g + j];
               double shift_j = 0;
               for (k = 0; k < g; k++) {
-                shift_j += Yinvd_s[ty*g*g + g*j + k]*yd_s[k];
+                shift_j += Yinvd_s[ty*g*g + g*j + k]*yd[k];
               }
             sum += T_ij * (n_j + shift_j - round(shift_j));
             }
@@ -227,8 +238,7 @@ class RiemannThetaOmegas:
 
         ***************************************************************************/
         
-        __device__ double exppart(int g, double *Xd_s, double *Yinvd_s, double *xd_s,
-                                  double* yd_s, double* Sd_s)
+        __device__ double exppart(int g, double *Xd_s, double *Yinvd_s, double* Sd_s)
         {
           int tx = threadIdx.x;
           int ty = threadIdx.y;
@@ -238,19 +248,19 @@ class RiemannThetaOmegas:
             double n_i = Sd_s[tx*g + i];
             double shift_i = 0;
             for (k = 0; k < g; k++) {
-              shift_i += Yinvd_s[ty*g*g + i*g] * yd_s[k];
+              shift_i += Yinvd_s[ty*g*g + i*g + k] * yd[k];
             }
             double A = n_i - round(shift_i);
             double Xshift_i = 0;
             for (j = 0; j < g; j++) {
-              double X_ij = Xd_s[ty*g*g + j + i*g];
+              double X_ij = Xd_s[ty*g*g + i*g + j];
               double shift_j = 0;
               for (h = 0; h < g; h++) {
-                shift_j += Yinvd_s[ty*g*g + h + j * g] * yd_s[ty*g + h];
+                shift_j += Yinvd_s[ty*g*g + j*g + h] * yd[h];
               }
               Xshift_i += .5 * (X_ij * (Sd_s[tx*g + j] - round(shift_j)));
             }
-            double B = Xshift_i + xd_s[ty*g + i];
+            double B = Xshift_i + xd[i];
             exppart += A*B;
           }
           return 2* M_PI * exppart;
@@ -266,13 +276,12 @@ class RiemannThetaOmegas:
            | | 2*pi*I <d, n - intshift>
         d in derivs
         ****************************************************************************/
-        __device__ void deriv_prod(int g, double *Sd_s, double* yd_s, double* Yinvd_s,
+        __device__ void deriv_prod(int g, double *Sd_s, double* Yinvd_s,
                                    double* dpr, double* dpi, double* deriv_real, 
                                    double* deriv_imag, int nderivs)
         {
           int tx = threadIdx.x;
           int ty = threadIdx.y;
-          
           double total_real = 1;
           double total_imag = 0;
           
@@ -283,7 +292,7 @@ class RiemannThetaOmegas:
             for (j = 0; i < g; i++) {
               double shift_j = 0;
               for (k = 0; k < g; k++) {
-                shift_j += Yinvd_s[ty*g*g + j*g + k] * yd_s[k];
+                shift_j += Yinvd_s[ty*g*g + j*g + k] * yd[k];
               }
               double intshift = round(shift_j);
               double nmintshift = Sd_s[tx*g + j] - intshift;
@@ -324,8 +333,7 @@ class RiemannThetaOmegas:
         
         **************************************************************************/
         __global__ void riemann_theta(double *fsum_reald, double *fsum_imagd, double *Xd,
-                                      double *Yinvd, double* Td, double *xd, double *yd, 
-                                      double *Sd, int g, int N, int K)
+                                      double *Yinvd, double* Td, double *Sd, int g, int N, int K)
         {
           /*Built in variables to be used, x variable denotes the summation index
           while the y variable denotes the Omega index*/
@@ -338,14 +346,12 @@ class RiemannThetaOmegas:
           __shared__ double Xd_s[TILEHEIGHT * GENUS * GENUS];
           __shared__ double Yinvd_s[TILEHEIGHT * GENUS * GENUS];
           __shared__ double Td_s[TILEHEIGHT * GENUS * GENUS]; 
-          __shared__ double xd_s[GENUS];
-          __shared__ double yd_s[GENUS];
 
           /*Determine n_0, the start of the summation vector,
           the full vector is of the form, n_0, n_1, n_2, n_g*/
           int n_start = (bx * TILEWIDTH + tx) * g;
           /* Now n = S[n_start], S[n_start + 1], S[n_start + 2]...S[n_start + (g-1)] */
-          
+        
           /*Determine the Omega to evaluate on*/
           int omega_start = (by*TILEHEIGHT + ty)*g*g;
           /* Now omega is Omega[omega_start], ... Omega[omega_start + g*g-1]
@@ -353,20 +359,13 @@ class RiemannThetaOmegas:
           
           /*Load data into shared arrays */
           int i;
-          if (tx == 0 && ty == 0){
-            for (i = 0; i < g; i++) {
-              xd_s[i] = xd[i];
-              yd_s[i] = yd[i];
-            }
-            for (i = 0; i 
-          }
           for (i = 0; i < g; i++){
             Sd_s[tx*g + i] = Sd[n_start + i];
           }
           for (i = 0; i < g*g; i++) {
-            Xd_s[ty*g + i] = Xd[omega_start + i];
-            Yinvd_s[ty*g + i] = Yinvd[omega_start + i];
-            Td_s = Td[omega_start + i];
+            Xd_s[ty*g*g + i] = Xd[omega_start + i];
+            Yinvd_s[ty*g*g + i] = Yinvd[omega_start + i];
+            Td_s[ty*g*g + i] = Td[omega_start + i];
           }
 
           __syncthreads();
@@ -374,13 +373,13 @@ class RiemannThetaOmegas:
           if (n_start < N*g && omega_start < K*g*g) {
             /*Compute the 'cosine' and 'sine' parts of the summand*/
             double ept, npt, cpt, spt;
-            ept = exppart(g, Xd_s, Yinvd_s, xd_s, yd_s, Sd_s);
-            npt = exp(normpart(g, Yinvd_s, Td_s, yd_s, Sd_s));
+            ept = exppart(g, Xd_s, Yinvd_s, Sd_s);
+            npt = exp(normpart(g, Yinvd_s, Td_s, Sd_s));
             cpt = npt*cos(ept);
             spt = npt*sin(ept);
 
             fsum_reald[n_start/g + omega_start/g/g * N] = cpt;
-            fsum_imagd[n_start/g + omega_start/g/g * N] = stp;
+            fsum_imagd[n_start/g + omega_start/g/g * N] = spt;
           }
        }
 
@@ -390,9 +389,9 @@ class RiemannThetaOmegas:
        
        ************************************************************************/
        __global__ void riemann_theta_derivatives(double* fsum_reald, double* fsum_imagd, 
-                                                 double* Xs_d, double *Yinvs_d, double *Ts_d, 
-                                                 double *xd, double *yd, double *Sd, 
-                                                 double *deriv_reald, double *deriv_imagd, 
+                                                 double* Xd, double *Yinvd, double *Td, 
+                                                 double *Sd, double *deriv_reald, 
+                                                 double *deriv_imagd, 
                                                  int nderivs, int g, int N, int K)
         {
            /*Built in variables to be used, x variable denotes the summation index
@@ -406,8 +405,6 @@ class RiemannThetaOmegas:
           __shared__ double Xd_s[TILEHEIGHT * GENUS * GENUS];
           __shared__ double Yinvd_s[TILEHEIGHT * GENUS * GENUS];
           __shared__ double Td_s[TILEHEIGHT * GENUS * GENUS]; 
-          __shared__ double xd_s[GENUS];
-          __shared__ double yd_s[GENUS];
 
           /*Determine n_0, the start of the summation vector,
           the full vector is of the form, n_0, n_1, n_2, n_g*/
@@ -421,19 +418,13 @@ class RiemannThetaOmegas:
           
           /*Load data into shared arrays */
           int i;
-          if (tx == 0 && ty == 0){
-            for (i = 0; i < g; i++) {
-              xd_s[i] = xd[i];
-              yd_s[i] = yd[i];
-            }
-          }
           for (i = 0; i < g; i++){
             Sd_s[tx*g + i] = Sd[n_start + i];
           }
           for (i = 0; i < g*g; i++) {
-            Xd_s[ty*g + i] = Xd[omega_start + i];
-            Yinvd_s[ty*g + i] = Yinvd[omega_start + i];
-            Td_s = Td[omega_start + i];
+            Xd_s[ty*g*g + i] = Xd[omega_start + i];
+            Yinvd_s[ty*g*g + i] = Yinvd[omega_start + i];
+            Td_s[ty*g*g + i] = Td[omega_start + i];
           }
 
           __syncthreads();
@@ -445,13 +436,13 @@ class RiemannThetaOmegas:
             dpr[0] = 0;
             dpi[0] = 0;
             double ept, npt, cpt, spt;            
-            ept = exppart(g, Xd_s, Yinvd_s, xd_s, yd_s, Sd_s);
-            npt = exp(normpart(g, Yinvd_s, Td_s, yd_s, Sd_s));
+            ept = exppart(g, Xd_s, Yinvd_s, Sd_s);
+            npt = exp(normpart(g, Yinvd_s, Td_s, Sd_s));
             cpt = npt*cos(ept);
             spt = npt*sin(ept);
-            deriv_prod()
-            fsum_reald[n_start/g + omega_start/g/g * N] = cpt;
-            fsum_imagd[n_start/g + omega_start/g/g * N] = stp;
+            deriv_prod(g,Sd_s,Yinvd_s,dpr,dpi, deriv_reald,deriv_imagd, nderivs);
+            fsum_reald[n_start/g + omega_start/g/g * N] = dpr[0] * cpt - dpi[0] * spt;
+            fsum_imagd[n_start/g + omega_start/g/g * N] = dpi[0] * cpt + dpr[0] * spt;
           }
         } 
         
@@ -459,7 +450,9 @@ class RiemannThetaOmegas:
         mod = SourceModule(template)
         func = mod.get_function("riemann_theta")
         deriv_func = mod.get_function("riemann_theta_derivatives")
-        return func, deriv_func
+        xd = mod.get_global("xd")[0]
+        yd = mod.get_global("yd")[0]
+        return func, deriv_func, xd, yd
         
 
     def func2(self):
