@@ -238,24 +238,8 @@ class RiemannTheta_Function(object):
         this is a reasonable computation but can be sped up by
         writing a loop instead.
         """
-<<<<<<< HEAD
-        print c
-        print g
-=======
-        print "++++++++++++++++++++"
-        print "c"
-        print c
-        print g
-        print "T"
-        print T[g,g]
->>>>>>> 8e7675a95e8f818e98368d770b7056ebf441ec25
         a_ = c[g] - R/(np.sqrt(np.pi)*T[g,g]) 
         b_ = c[g] + R/(np.sqrt(np.pi)*T[g,g])
-        print "a"
-        print a_
-        print "b"
-        print b_
-        print "-----------"
         a = np.ceil(a_)
         b = np.floor(b_)
         # check if we reached the edge of the ellipsoid
@@ -279,10 +263,6 @@ class RiemannTheta_Function(object):
             chat = c[:newg+1]
             that = T[:newg+1,g]
             newc = (chat.T - (np.dot(newTinv, that)*(n - c[g]))).T
-<<<<<<< HEAD
-=======
-            print newc
->>>>>>> 8e7675a95e8f818e98368d770b7056ebf441ec25
             newR = np.sqrt(R**2 - np.pi*(T[g,g] * (n - c[g]))**2) # XXX
             newstart = np.append([n],start)
             newpts = self.find_int_points(newg,newc,newR,newT,newstart)
