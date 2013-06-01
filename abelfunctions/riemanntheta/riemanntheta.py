@@ -103,7 +103,6 @@ from scipy.special import gamma, gammaincc, gammainccinv,gammaincinv
 from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
-from box_points import riemanntheta_high_dim
 from riemanntheta_omegas import RiemannThetaOmegas
 #For testing purposes only
 #from lattice_plotter import *
@@ -676,9 +675,6 @@ if __name__=="__main__":
     print theta.value_at_point([z],Omega, batch = True)
     print "1.1654 - 1.9522e-15*I"
     print 
-<<<<<<< HEAD
-    print theta._intpoints
-=======
     #print theta.exp_and_osc_at_point(z,Omega)[1]
     print
     print "Multiple Omegas Tests"
@@ -706,7 +702,6 @@ if __name__=="__main__":
     print "---------------------------"
 
     """
->>>>>>> 8e7675a95e8f818e98368d770b7056ebf441ec25
     print "Test #2:"
     z1 = np.array([1.0j,1.0j])
     print theta.value_at_point(z1,Omega)
@@ -782,7 +777,6 @@ if __name__=="__main__":
     from matplotlib.ticker import LinearLocator, FormatStrFormatter
     import matplotlib.pyplot as plt
 
-<<<<<<< HEAD
     print "\tCalculating theta..."
     SIZE = 60
     x = np.linspace(0,1,SIZE)
@@ -814,7 +808,6 @@ if __name__=="__main__":
     omega = np.identity(3)*1.j
     z = np.array([0,0,0])
     theta.value_at_point(z, omega)
-=======
     #print "\tCalculating theta..."
     #SIZE = 60
     #x = np.linspace(0,1,SIZE)
@@ -827,9 +820,6 @@ if __name__=="__main__":
     #print "\tPlotting..."
     #plt.contourf(X,Y,Z,7,antialiased=True)
     #plt.show()
-    """
->>>>>>> 8e7675a95e8f818e98368d770b7056ebf441ec25
-    """
     print "Siegel Test"
     Omega = -1.0/(2 * np.pi * 1.0j) * np.array([[111.207, 96.616], [96.616, 83.943]],dtype=np.complex)
     Om = 1.j*np.array([[8,7],[7,8]])
@@ -837,7 +827,6 @@ if __name__=="__main__":
     #print "Determinant of Omega"
     #print la.det(Omega)
     #print "-----------------"
-<<<<<<< HEAD
     x = np.array([0,0])
     print "Calculating original"
     val_orig = theta.exp_and_osc_at_point(x,Om, prec = 1e-12)[1]
@@ -847,8 +836,7 @@ if __name__=="__main__":
     print val_sigel
     print "Absolute Error"
     print np.abs(val_orig - val_sigel)
-    """
-=======
+ 
     x = np.array([1.0,0],dtype=np.double)
     #print "x: "
     #print x
@@ -880,7 +868,4 @@ if __name__=="__main__":
     print "---------------------------"
     s = theta.value_at_point(z, Om)
     print s/(det_part*expon_part)
-"""    
-
-
->>>>>>> 8e7675a95e8f818e98368d770b7056ebf441ec25
+    """    
