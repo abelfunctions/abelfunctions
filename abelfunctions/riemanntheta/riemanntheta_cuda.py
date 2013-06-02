@@ -122,11 +122,6 @@ class RiemannThetaCuda:
                      block = blocksize,
                      grid = gridsize)
         cuda.Context.synchronize()
-        print "Printing correct fsums:"
-        print fsum_reald
-        print "-----------------------"
-        print fsum_imagd
-        print "+++++++++++++++++++++++"
         fsums_real = self.sum_reduction(fsum_reald, N, K, Kd, Nd)
         fsums_imag = self.sum_reduction(fsum_imagd, N, K, Kd, Nd)
         return fsums_real + 1.0j*fsums_imag

@@ -104,6 +104,7 @@ from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
 from riemanntheta_omegas import RiemannThetaOmegas
+from siegel import *
 #For testing purposes only
 #from lattice_plotter import *
 
@@ -269,7 +270,7 @@ class RiemannTheta_Function(object):
         return pts
 
 
-    def integer_points(self, Yinv, T, Tinv, z, g, R):
+    def integer_points(self, Yinv, T, z, g, R):
         """
         The set, `U_R`, of the integral points needed to compute Riemann 
         theta at the complex point $z$ to the numerical precision given
@@ -468,7 +469,7 @@ class RiemannTheta_Function(object):
             self._prec = prec
             self._rad = self.radius(T, prec, deriv=deriv)
             origin = [0]*g
-            self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
+            self._intpoints = self.integer_points(Yinv, T, origin, 
                                                   g, self._rad)
         if (gpu_capable):
             self.parRiemann.cache_intpoints(self._intpoints)
@@ -511,6 +512,43 @@ class RiemannTheta_Function(object):
         Xs = []
         Ts = []
         Yinvs = []
+        int_points = []
+        for om in Omegas:
+            om = siegel(om,3)[0]
+            Xs.append(om.real)
+            T = la.cholesky(om.imag)
+            Yinv = la.inv(om.imag)
+            Ts.append(T)
+            Yinvs.append(Yinv)
+            r = self.radius(T, prec, deriv=derivs)
+            int_points.extend(self.integer_points(Yinv, T, z, g, r))
+        #remove duplicate points from int_points
+        int_points = np.array(int_points)
+        int_points = int_points.reshape((int_points.size/g, g))
+        
+        order = np.lexsort(int_points.T)
+        int_points = int_points[order]
+        diff = np.diff(int_points,axis=0)
+        ui = np.ones(len(int_points), 'bool')
+        ui[1:] = (diff != 0).any(axis=1)
+        S = int_points[ui]
+
+        tester = RiemannThetaOmegas(32, 16)
+        tester.compile(g)
+        tester.cache_intpoints(S)
+        tester.cache_z(z)
+        print "Length of intpoints"
+        print len(S.flatten())
+        start = time.clock()
+        v = tester.compute_v_without_derivs(Xs, Yinvs, Ts)
+        return v
+
+    def multiple_omega_process1(self, z, Omegas, g, derivs = [], prec = 1e-8):
+        start = time.clock()
+        Xs = []
+        Ts = []
+        Yinvs = []
+        int_points = []
         min_val = -1
         for om in Omegas:
             Xs.append(om.real)
@@ -518,24 +556,21 @@ class RiemannTheta_Function(object):
             Yinv = la.inv(om.imag)
             Ts.append(T)
             Yinvs.append(Yinv)
-            r = self.radius(T, prec, deriv=derivs)
-            eig = min(la.eigvals(om.imag/(r**2)))
-            if (eig < min_val or min_val < 0):
-                min_val = eig.real
-        c = np.zeros((g,1))
-        T = np.identity(g)*min_val
-        S = self.find_int_points(g-1, c, 1.0, T, [])
+        m = np.identity(g)
+        c = np.zeros((g,1)) 
+        max_val = 0
+        S = self.find_int_points(g-1, c, 4.2, m, [])
+        for row in S.reshape(len(S)/g,g):
+            norm = row[0]**2 + row[1]**2 + row[2]**2
+            if (norm > max_val):
+                max_val = norm
+        #remove duplicate points from int_points
         tester = RiemannThetaOmegas(32, 16)
         tester.compile(g)
         tester.cache_intpoints(S)
         tester.cache_z(z)
-        print "Printing Length of Integer Points"
-        print len(S)
-        start = time.clock()
         v = tester.compute_v_without_derivs(Xs, Yinvs, Ts)
-        print "Time used by cuda riemann theta"
-        print time.clock() - start
-        print v
+        return v
 
 
     def exp_and_osc_at_point(self, z, Omega, batch = False, omega_batch = False, prec=1e-8, deriv=[], gpu=gpu_capable, gpu_max = 500000):
@@ -595,7 +630,7 @@ Tinv, z, g, R)
             u = np.zeros(K)
             for i in range(K):
                 w = np.array([z[i,:].imag])
-                val = pi*np.dot(w, Yinv*w.T).item(0,0)
+                val = np.pi*np.dot(w, np.dot(Yinv,w.T)).item(0,0)
                 u[i] = val
         else:
             u = np.pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
@@ -675,36 +710,44 @@ if __name__=="__main__":
     print 
     #print theta.exp_and_osc_at_point(z,Omega)[1]
     print
+    """
     print "Multiple Omegas Tests"
     print "--------------------------------"
     z = np.array([0,0,0])
     OMEGAS = []
     I = 1.j
-    t_vals = np.linspace(1,0,10)
+    t_vals = np.linspace(1,0,10000)
     for t in t_vals:
         a = np.array([[-0.5*t + I, 0.5*t*(1-I), -0.5*t*(1 + I)],
                       [0.5*t*(1-I), I, 0],
                       [-0.5*t*(1+I), 0, I]])
         OMEGAS.append(a)
     length = len(OMEGAS)
-    theta.multiple_omega_process(z, OMEGAS, 3)
+    print "Starting GPU computation"
+    start = time.clock()
+    theta.multiple_omega_process1(z, OMEGAS, 3)
+    print "Elapsed time"
+    print time.clock() - start
     start = time.clock()
     V = []
-    for i in range(length):
-        V.append(theta.exp_and_osc_at_point(z,OMEGAS[i])[1])
-        print len(theta._intpoints)
-    v = np.array(V)
-    print v
+    max_val = 0
+    for i in range(10000):
+        U,V = theta.exp_and_osc_at_point(z,OMEGAS[i])
+        S = theta._intpoints.reshape(len(theta._intpoints)/3, 3)
+        for row in S:
+            norm = np.sqrt(row[0]**2 + row[1]**2 + row[2]**2)
+            if (norm > max_val):
+                max_val = norm
+    print "Norm of max val 2:"
+    print max_val
     print time.clock() - start
-    print "---------------------------"
 
-    """
     print "Test #2:"
     z1 = np.array([1.0j,1.0j])
     print theta.value_at_point(z1,Omega)
     print "-438.94 + 0.00056160*I"
     print
-
+    """
     print "Batch Test"
     z0 = np.array([0, 0])
     z1 = np.array([1.0j,1.0j])
@@ -721,21 +764,15 @@ if __name__=="__main__":
         b = 1.j*b/(1.0*c)
         a = a + b
         print a.size
-        a = a.reshape(1000000, 2)
-        print a
-        #for x in range(200000):
-        #    a[10*x:10*x+2] = z0
-        #    a[5*x + 1] = z1
-        #    a[5*x + 2] = z2
-        #    a[5*x + 3] = z3
-        #    a[5*x + 4] = z4
+        a = a.reshape(1000000,2)
         start1 = time.clock()
         print theta.value_at_point(a, Omega, batch=True, prec=1e-12)
         print("GPU time to perform calculation: " + str(time.clock() - start1))
-        #start2 = time.clock()
-        #print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)
-        #print("CPU time to do same calculation: " + str(time.clock() - start2))
-
+        start2 = time.clock()
+        print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)
+        print("CPU time to do same calculation: " + str(time.clock() - start2))
+        
+    """
     print
     print "Derivative Tests:"
     print "Calculating directional derivatives at z = [i, 0]"
