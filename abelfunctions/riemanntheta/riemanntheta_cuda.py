@@ -52,7 +52,7 @@ class RiemannThetaCuda:
 
     """
     Compiles func1() and func3() based on g. Note that this function is called every time 
-    that g changes
+o   that g changes
     """
     def compile(self, g):
         self.g=g

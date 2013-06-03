@@ -166,7 +166,7 @@ class RiemannTheta_Function(object):
 
     """
 
-    def __init__(self, uniform=True, deriv_accuracy_radius=5):
+    def __init__(self, uniform=True, deriv_accuracy_radius=5, tileheight = 32, tilewidth = 16):
         """
         Defines parameters in constructed class instance.
         """
@@ -182,7 +182,7 @@ class RiemannTheta_Function(object):
         self._Tinv      = None
         self._prec      = 1e-8
         if (gpu_capable):
-            self.parRiemann = RiemannThetaCuda(32, 16) 
+            self.parRiemann = RiemannThetaCuda(tileheight, tilewidth) 
 
     def lattice(self):
         r"""
