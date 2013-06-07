@@ -12,6 +12,7 @@ from abelfunctions.monodromy import monodromy, show_paths
 from abelfunctions.homology import homology
 from abelfunctions.riemannsurface_path import (
     path_around_branch_point,
+    path_around_infinity,
     RiemannSurfacePath,
     parameterize_differential,
     )
@@ -145,10 +146,13 @@ class RiemannSurface(object):
             # to the rotation number. Add these segments to the list of
             # path segemnts.
             for (bpt, rot) in cycle[1::2]:
-                bpt_index = [key for key,data in G.nodes(data=True)
-                             if abs(data['value']-bpt) < 1e-15][0]
-                bpt_path_segments = path_around_branch_point(G, bpt_index, rot)
-                path_segments.extend(bpt_path_segments)
+                if bpt == sympy.oo:
+                    bpt_path_segs = path_around_infinity(G,rot)
+                else:
+                    bpt_index = [key for key,data in G.nodes(data=True)
+                                 if abs(data['value']-bpt) < 1e-15][0]
+                    bpt_path_segs = path_around_branch_point(G,bpt_index,rot)
+                path_segments.extend(bpt_path_segs)
 
             # Construct the RiemannSurfacePath and append to path list
             x0 = self.base_point()
@@ -182,8 +186,9 @@ class RiemannSurface(object):
             k = numpy.double(k)
             #re = scipy.integrate.quad(lambda t: omega(t).real,k/n,(k+1)/n)[0]
             #im = scipy.integrate.quad(lambda t: omega(t).imag,k/n,(k+1)/n)[0]
-            t = numpy.linspace(k/n,(k+1.0)/n,64)
+            t = numpy.linspace(k/n,(k+1.0)/n,32)
             o = omega(t)
+
             re = scipy.integrate.trapz(t,o.real)
             im = scipy.integrate.trapz(t,o.imag)
 
@@ -257,11 +262,11 @@ if __name__ == '__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1  # genus 3
 
-    f11= y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
+    f11 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
     f12 = x**4 + y**4 - 1
 
 
-    f = f12
+    f = f2
     X = RiemannSurface(f,x,y)
 
 

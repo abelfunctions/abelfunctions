@@ -74,18 +74,18 @@ def reorder_cycle(c, j=None):
 def frobenius_transform(A,g):
     """
     This procedure brings any intersection matrix a to its canonical
-    form by a transformation alpha * a * transpose(alpha)=b. If
+    form b by a transformation alpha * a * transpose(alpha)=b. If
     2g=rank(a) and d is the size of the square matrix a, then b has
     d-2g null rows and d-2g null columns. These are moved to the lower
     right corner. On its diagonal, b has 2 gxg null blocks. Above the
     diagonal is a gxg identity block. Below the diagonal is a gxg
-    -identity block. The output of the procedure is the transformation
-    matrix alpha.
+    negative identity block. The output of the procedure is the
+    transformation matrix alpha.
     """
     if not isinstance(A,numpy.matrix):
 	K = numpy.matrix(A, dtype=numpy.int)
     else:
-	L = A
+	K = A
     dim = K.shape[0]
 
     # the rand of an antisymmetric matrix is always even and is equal
@@ -153,7 +153,7 @@ def frobenius_transform(A,g):
     # result?  T * K * T.T = J where J has the gxg identity I in the
     # top right block and -I in the lower left block (the Jacobian
     # matrix)
-    J = numpy.dot(numpy.dot(T, K), T.T)
+    J = numpy.dot(numpy.dot(T, numpy.matrix(A)), T.T)
     for i in xrange(g):
 	for j in xrange(g):
 	    if j==i+g and i<g:   val = 1
@@ -161,8 +161,8 @@ def frobenius_transform(A,g):
 	    else:                val = 0
 
 	    if J[i,j] != val:
-		raise Error("Could not compute Frobenuis transform of " + \
-			    "intersection matrix.")
+		raise ValueError("Could not compute Frobenuis transform of " + \
+                                 "intersection matrix.")
     return T
 
 
@@ -345,14 +345,31 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
 	ei_start,ei_end = map(lambda n: C.node[n]['order'], ei)
 	ej_start,ej_end = map(lambda n: C.node[n]['order'], ej)
 
-	# if the starting node of ei lies before the starting node of ej
-	# then simply return the negation of (ej o ei)
-	if ei_start == ej_start or ei_end == ej_end: #XXX
-	    return 0
-	elif ei_start > ej_start:
-	    return (-1)*intersection_number(ej,ei)
-	# otherwise, we need to check the relative ordering of the
-	# ending nodes of the edges with the starting nodes.
+        # if the starting or ending nodes match then determine the
+	# intersection number using a differenti technique from the
+	# general case. (this part can probably be cleaned up)
+        if ei_start == ej_start:
+            if ((ei_start < ei_end < ej_end) or (ej_end < ei_start < ei_end)
+                or (ei_end < ej_end < ei_start)):
+                return 1
+            else:
+                return -1
+        elif ei_end == ej_end:
+            if ((ei_start < ej_start< ei_end) or (ej_start < ei_end < ei_start)
+                or (ei_end < ei_start < ej_start)):
+                return 1
+            else:
+                return -1
+
+        # otherwise, if the starting node of ei lies before the
+	# starting node of ej then simply return the negative of the
+	# intersection (ej o ei).
+        elif ei_start > ej_start:
+            return (-1)*intersection_number(ej,ei)
+
+	# finally, in the general case, we need to check the relative
+	# ordering of the ending nodes of the edges with the starting
+	# nodes.
 	else:
 	    if ((ej_start < ei_end < ej_end) or (ej_end < ej_start < ei_end)
 		or (ei_start < ej_end < ej_start)):
@@ -487,9 +504,18 @@ def compress_cycle(cycle, tretkoff_graph, monodromy_graph):
 	    n += 2
 
     # Compression #2: delete cycle elements with zero rotations
-    for n in range(0,len(cycle)-1,2):
+    N = len(cycle)
+    n = 0
+    while n < (N-1):
         sheet = cycle[n]
         branch = cycle[n+1]
+
+        if branch[1] == 0:
+            cycle.pop(n)
+            cycle.pop(n)
+            N -= 2
+        else:
+            n += 2
 
     return cycle
 
@@ -640,13 +666,19 @@ if __name__=='__main__':
     f11= y**2 - (x**2+1)*(x**2-1)*(4*x**2+1)  # simple genus two hyperelliptic
     f12 = x**4 + y**4 - 1
 
+    f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
-    f = f4
+
+    f = f2
+
     hs = monodromy(f,x,y)
     g = int(genus(f,x,y))
 
     print("\nBranch points...")
     for bpt in hs[2]: print bpt
+
+    print("\nMonodromy Group...")
+    for mon in hs[-2]: print mon
 
     print("\nComputing Tretkoff Graph...")
     C, final_edges = tretkoff_graph(hs)

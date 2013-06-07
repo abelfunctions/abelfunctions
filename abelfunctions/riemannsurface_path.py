@@ -360,11 +360,11 @@ def parameterize_differential(omega, x, y, path):
         omega(x(t),y(x(t))) x'(t)
     """
     omega = sympy.lambdify([x,y], omega, 'numpy')
-    def integrand(t):
+    def integrand(t,omega=omega):
         (xi,yi), dxdt = path(t,dxdt=True)
         return omega(xi,yi[0]) * dxdt
 
-    return numpy.vectorize(integrand, otypes=[numpy.complex])
+    return numpy.vectorize(integrand, otypes=[numpy.complex], excluded='omega')
 
 
 def color_plot_collection(x,y,cmap=matplotlib.cm.Greys, **kwds):
@@ -882,35 +882,113 @@ if __name__=='__main__':
 
     f = y**3 - x**3*y + x**7
 
-#     print "=== (computing monodromy graph) ==="
-#     bpt = 0
-#     G = monodromy_graph(f,x,y)
-#     path_segments = path_around_branch_point(G,bpt,1)
-# #    path_segments = path_around_infinity(G,1)
-
-#     print "===   (obtaining base place)    ==="
-#     base_point = G.node[0]['basepoint']
-#     base_sheets = G.node[0]['baselift']
-#     x0,y0 = base_point, base_sheets
-
-    z1 = 0.1
-    z2 = 0.65
-    path_segments = [
+    #
+    # path #1 construction
+    #
+    z1 = numpy.complex(-2)
+    z2 = numpy.complex(-1)
+    z3 = numpy.complex(-1.5 + 1.0j)
+    path_segments1 = [
         (lambda t,z1=z1,z2=z2: z1*(1-t) + z2*t,
-         lambda t,z1=z2,z2=z2: z2-z1),
+         lambda t,z1=z1,z2=z2: z2-z1),
+        (lambda t,z1=z2,z2=z3: z1*(1-t) + z2*t,
+         lambda t,z1=z2,z2=z3: z2-z1),
+        (lambda t,z1=z3,z2=z1: z1*(1-t) + z2*t,
+         lambda t,z1=z3,z2=z1: z2-z1),
         ]
     x0 = z1
     y0 = polyroots(f,x,y,x0)
 
-    print "===     (constructing path)     ==="
-    gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)
-    print gamma(0)
+    print "===     (constructing path #1)     ==="
+    gamma1 = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments1)
+
+    #
+    # path #2 construction
+    #
+    z1 = numpy.complex(-2)
+    z2 = numpy.complex(-1)
+    z3 = numpy.complex(-1 - 0.5j)
+    z4 = numpy.complex(-2 - 0.5j)
+    path_segments2 = [
+        (lambda t,z1=z1,z2=z2: z1*(1-t) + z2*t,
+         lambda t,z1=z1,z2=z2: z2-z1),
+        (lambda t,z1=z2,z2=z3: z1*(1-t) + z2*t,
+         lambda t,z1=z2,z2=z3: z2-z1),
+        (lambda t,z1=z3,z2=z4: z1*(1-t) + z2*t,
+         lambda t,z1=z3,z2=z4: z2-z1),
+        (lambda t,z1=z4,z2=z1: z1*(1-t) + z2*t,
+         lambda t,z1=z4,z2=z1: z2-z1),
+        ]
+    x0 = z1
+    y0 = polyroots(f,x,y,x0)
+
+    print "===     (constructing path #2)     ==="
+    gamma2 = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments2)
+
 
     print "===        (plotting)           ==="
-#    gamma.plot_xpath(Npts=64, linewidth=3)
-#    gamma.plot(Npts=64, linewidth=3)
-    P = gamma.sample_uniform(32)
-    xx,yy = zip(*P)
-    y0,y1,y2 = zip(*yy)
-    plt.plot(xx,y0,'ro-', xx,y1,'go-', xx,y2,'bo-')
-    plt.show()
+#     P = gamma2.sample_uniform(32)
+#     xx,yy = zip(*P)
+#     xx = numpy.array(xx)
+#     y0,y1,y2 = map(numpy.array,zip(*yy))
+#     plt.plot(xx.real, xx.imag, 'k',
+#              y0.real, y0.imag, 'r.-',
+#              y1.real, y1.imag, 'g.-',
+#              y2.real, y2.imag, 'b.-')
+#     plt.show()
+
+
+    print "=== computing holom diffs ==="
+    from abelfunctions.differentials import differentials
+    omega = differentials(f,x,y)
+
+    print "=== integrating along path #1 ==="
+    o = parameterize_differential(omega[0], x, y, gamma1)
+    eps = 1e-15
+
+    print("initial value: %s"%o(0))
+    print("integral:")
+    re = numpy.double(0)
+    im = numpy.double(0)
+    re_quad = numpy.double(0)
+    im_quad = numpy.double(0)
+    val = numpy.complex(0)
+    for i in range(3):
+        i = numpy.double(i)
+        re_quad += scipy.integrate.quad(lambda t: o(t).real,i/3,(i+1)/3-eps,
+                                        epsabs=1e-12)[0]
+        im_quad += scipy.integrate.quad(lambda t: o(t).imag,i/3,(i+1)/3-eps,
+                                        epsabs=1e-12)[0]
+        tt = numpy.linspace(i/3,(i+1)/3-eps,256)
+        oo = o(tt)
+        re += scipy.integrate.trapz(tt,oo.real)
+        im += scipy.integrate.trapz(tt,oo.imag)
+        val += scipy.integrate.trapz(tt,oo)
+    print("\tquad: %s"%(re_quad + 1.0*im_quad))
+    print("\ttrap: %s"%(re + 1.0*im))
+    print("\tval:  %s"%(val))
+
+    print "\n=== integrating along path #2 ==="
+    o = parameterize_differential(omega[0], x, y, gamma2)
+
+    print("initial value: %s"%o(0))
+    print("integral:")
+    re = numpy.double(0)
+    im = numpy.double(0)
+    re_quad = numpy.double(0)
+    im_quad = numpy.double(0)
+    val = numpy.complex(0)
+    for i in range(3):
+        i = numpy.double(i)
+        re_quad += scipy.integrate.quad(lambda t: o(t).real,i/3,(i+1)/3-eps,
+                                        epsabs=1e-12)[0]
+        im_quad += scipy.integrate.quad(lambda t: o(t).imag,i/3,(i+1)/3-eps,
+                                        epsabs=1e-12)[0]
+        tt = numpy.linspace(i/3,(i+1)/3-eps,256)
+        oo = o(tt)
+        re += scipy.integrate.trapz(tt,oo.real)
+        im += scipy.integrate.trapz(tt,oo.imag)
+        val += scipy.integrate.trapz(tt,oo)
+    print("\tquad: %s"%(re_quad + 1.0*im_quad))
+    print("\ttrap: %s"%(re + 1.0*im))
+    print("\tval:  %s"%(val))
