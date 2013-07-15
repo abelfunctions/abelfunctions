@@ -16,19 +16,17 @@ import numpy
 import scipy
 import sympy
 import networkx as nx
-
 import matplotlib
 import matplotlib.pyplot as plt
+
 from matplotlib import cm
 from matplotlib.patches import Circle
 from matplotlib.collections import LineCollection
 
 import pdb
 
-
 def factorial(n):
     return reduce(lambda a,b: a*b, xrange(1,n+1))
-
 
 def newton(df,xip1,yij):
     step = 1
@@ -52,8 +50,8 @@ def smale_beta(df,xip1,yij):
 
 def smale_gamma(df,xip1,yij,deg):
     df1 = df[1](xip1,yij)
-    bounds = [ numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./k-1.)
-               for k in xrange(2,deg+1) ]
+    bounds = ( numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./(k-1.0))
+               for k in xrange(2,deg+1) )
     return max(bounds)
 
 
@@ -95,6 +93,37 @@ def polyroots(f,x,y,xi,types='numpy'):
     return sympy.mpmath.polyroots(coeffs)
 
 
+def _line_path(a=None,b=None):
+    """
+    Returns a function-derivative pair (x(t), x'(t)) parameterizing a straight
+    line between the complex numbers a and b for `t \in [0,1]`.
+    """
+    return (
+        lambda t: a*(1-t) + b*t,
+        lambda t: b-a
+        )
+
+def _circle_path(R=None,w=None,arg=None,dir=None,
+                 exp=None,I=None,PI=None,rev=False):
+    """
+    Returns a function-derivative pair (x(t),x'(t)) parameterizing a semicircle
+    in the complex plane with center w, radius R, starting angle arg, and
+    direction dir.
+
+    Additional arguments determine which functions to use and whether or not to
+    compute the same path but in the reverse direction.
+    """
+    if rev:
+        return (
+            lambda t: R * exp(I*(dir*PI*(1-t) + arg)) + w,
+            lambda t: -(R*I*PI*dir) * exp(I*(dir*PI*(1-t) + arg))
+            )
+    else:
+        return (
+            lambda t: R * exp(I*(dir*PI*t + arg)) + w,
+            lambda t: (R*I*PI*dir) * exp(I*(dir*PI*t + arg))
+            )
+
 def _path_segments_from_path_data(path_data, circle_data, types='numpy'):
     """
     Take data about the x-path and returns parameterizing functions.
@@ -135,24 +164,18 @@ def _path_segments_from_path_data(path_data, circle_data, types='numpy'):
     for datum in path_data:
         if len(datum) == 2:
             z0,z1 = map(cast_type,datum)
-            seg = lambda t,z0=z0,z1=z1: z0*(1-t) + z1*t
-            dseg = lambda t,z0=z0,z1=z1: -z0+z1
+            path_part = _line_path(a=z0,b=z1)
         else:
-            R,w,arg,d = map(cast_type,datum)
-            seg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
-                R*exp(j*(d*pi*t + arg)) + w
-            dseg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
-                (R*j*d*pi)*exp(j*(d*pi*t+arg))
-        path_segments.append((seg,dseg))
+            R,w,arg,dir = map(cast_type,datum)
+            path_part = _circle_path(R=R,w=w,arg=arg,dir=dir,exp=exp,
+                                     I=j,PI=pi,rev=False)
+        path_segments.append(path_part)
 
     # Add the semicircle segments going around the branch point
     for datum in circle_data:
-        R,w,arg,d = map(cast_type,datum)
-        seg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
-            R*exp(j*(d*pi*t + arg)) + w
-        dseg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
-            (R*j*d*pi)*exp(j*(d*pi*t+arg))
-        path_segments.append((seg,dseg))
+        R,w,arg,dir = map(cast_type,datum)
+        path_part = _circle_path(R=R,w=w,arg=arg,dir=dir,exp=exp,I=j,PI=pi)
+        path_segments.append(path_part)
 
     # Add the reversed path segments leading back to the base point
     # (to reverse these paths, simply make the transformation t |-->
@@ -160,15 +183,12 @@ def _path_segments_from_path_data(path_data, circle_data, types='numpy'):
     for datum in reversed(path_data):
         if len(datum) == 2:
             z0,z1 = map(cast_type,datum)
-            seg = lambda t,z0=z0,z1=z1: z0*t + z1*(1-t)
-            Dseg = lambda t,z0=z0,z1=z1: z0-z1
+            path_part = _line_path(a=z1,b=z0)
         else:
-            R,w,arg,d = map(cast_type,datum)
-            seg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
-                R*exp(j*(d*pi*(1-t) + arg)) + w
-            dseg = lambda t,R=R,w=w,arg=arg,d=d,exp=exp,j=j,pi=pi: \
-                -(R*j*d*pi) * exp(j*(d*pi*(1-t) + arg))
-        path_segments.append((seg,dseg))
+            R,w,arg,dir = map(cast_type,datum)
+            path_part = _circle_path(R=R,w=w,arg=arg,dir=dir,exp=exp,
+                                     I=j,PI=pi,rev=True)
+        path_segments.append(path_part)
 
     return path_segments
 
@@ -270,6 +290,7 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
         ]
     circle_data = circle_data * int(abs(rot))
 
+    # turn this data into parameterized path segments (with derivatives)
     path_segments = _path_segments_from_path_data(path_data,circle_data,
                                                   types=types)
     return path_segments
@@ -340,53 +361,10 @@ def path_around_infinity(G, rot, types='numpy'):
     circle_data = [(radius,center,arg0,dir), (radius,center,arg0+pi,dir)]
     circle_data = circle_data * int(abs(rot))
 
+    # turn this data into parameterized path segments (with derivatives)
     path_segments = _path_segments_from_path_data(path_data,circle_data,
                                                   types=types)
     return path_segments
-
-
-def parameterize_differential(omega, x, y, path):
-    """
-    Returns a Numpy-vectorized function omega(t) parameterized on the
-    path.
-
-    Let \omega be a holomorphic differential and \gamma a path on the
-    Riemann surface. Then
-
-        \int_\gamma omega = \int_0^1 omega(x(t), y(x(t))) x'(t)dt
-
-    This function returns the integrand
-
-        omega(x(t),y(x(t))) x'(t)
-    """
-    omega = sympy.lambdify([x,y], omega, 'numpy')
-    def integrand(t,omega=omega):
-        (xi,yi), dxdt = path(t,dxdt=True)
-        return omega(xi,yi[0]) * dxdt
-
-    return numpy.vectorize(integrand, otypes=[numpy.complex], excluded='omega')
-
-
-def color_plot_collection(x,y,cmap=matplotlib.cm.Greys, **kwds):
-    """
-    Plots the x- and y-data with the color map cmap applied
-    along the resulting curve.
-    """
-    # rearrange the data into point tuples
-    points = numpy.array([x, y]).T.reshape(-1,1,2)
-    segments = numpy.concatenate([points[:-1], points[1:]], axis=1)
-
-    # create the line collection
-    Npts = len(x)
-    tspace = numpy.linspace(0,1,Npts)
-    lc = LineCollection(segments, cmap=cmap,
-                        norm=matplotlib.pyplot.Normalize(0,1),
-                        **kwds)
-    lc.set_array(tspace)
-
-    return lc
-
-
 
 
 class RiemannSurfacePath():
@@ -434,30 +412,37 @@ class RiemannSurfacePath():
         else:
             CC = numpy.complex
 
-        self.P0 = (CC(P0[0]), map(CC,P0[1]))
+        x0 = CC(P0[0])
+        y0 = tuple(map(CC,P0[1]))
+        self.P0 = (x0,y0)
         self.deg = sympy.degree(self.f,self.y)
         self.types = types
         self.alpha0 = CC(13.0 - 2.0*numpy.sqrt(17.0))/4.0
 
-        # construct fast, type-cast lambda functions from the
-        # algebraic curve. used in performing the Taylor step in the
-        # analytic continuation
+        # construct fast, type-cast lambda functions from the algebraic
+        # curve. used in performing the Taylor step in the analytic
+        # continuation
         self.df = [
             sympy.lambdify((self.x,self.y),sympy.diff(self.f,self.y,k),
                            self.types)
-            for k in xrange(self.deg+1)
+            for k in range(self.deg+1)
             ]
 
         # path data
+        if path_segments == None:
+            raise NotImplementedError("Automatic path construction not " + \
+                                      "available.")
         self._path_segments     = path_segments
         self._num_path_segments = len(path_segments)
 
-        # initialize the checkpoints: in each path segment
-        # analytically continue to a certain number of points along
-        # the path and store in memory. This is done so one doesn't
-        # have to analytically continue from the base point every time
-        # you want to find a point on the path
-        self._checkpoints = [(0,tuple(self.P0))]
+        # initialize the checkpoints: in each path segment analytically
+        # continue to a certain number of points along the path and store in
+        # memory. This is done so one doesn't have to analytically continue
+        # from the base point every time you want to find a point on the path
+        self._checkpoints = {}
+        for n in range(self._num_path_segments):
+            self._checkpoints[n] = []
+        self._checkpoints[0].append((0,self.P0))
         self._initialize_checkpoints()
 
 
@@ -470,23 +455,34 @@ class RiemannSurfacePath():
         Analytically continue along the entire path recording the value
         of the roots at equally-spaced "checkpoints" along the path.
         """
-        ppseg = 15
+        ppseg = 16
         if self.types == 'mpmath':
-            t_pts = sympy.mpmath.linspace(0,1,ppseg*self._num_path_segments,
-                                          endpoint=False)
+            t_pts = sympy.mpmath.linspace(0,1,ppseg,endpoint=True)
         else:
-            t_pts = numpy.linspace(0,1,ppseg*self._num_path_segments,
-                                   endpoint=False)
-        tim1 = 0
-        Pim1 = self.P0
-        for ti in t_pts[1:]:
-            Pi = self.analytically_continue(ti,Npts=8,checkpoint=(tim1,Pim1))
-            self._checkpoints.append((ti,Pi))
-            tim1 = ti
-            Pim1 = Pi
+            t_pts = numpy.linspace(0,1,ppseg,endpoint=True)
+
+        # for each path segment, analytically continue along the segment and
+        # record the checkpoints at equally spaced times.  the first checkpoint
+        # of each segment is equal to the last checkpoint of the previous
+        # segment.
+        for idx in range(self._num_path_segments):
+            path_segment = self._path_segments[idx]
+            tim1,Pim1 = self._checkpoints[idx][0]
+
+            # analytically continue along segment
+            for ti in t_pts[1:]:
+                Pi = self.analytically_continue_segment(path_segment,ti,
+                                                        checkpoint=(tim1,Pim1))
+                self._checkpoints[idx].append((ti,Pi))
+                tim1 = ti
+                Pim1 = Pi
+
+            # initialize next segment
+            if idx != (self._num_path_segments-1):
+                self._checkpoints[idx+1].append((0,Pi))
 
 
-    def _nearest_checkpoint(self, t):
+    def _nearest_checkpoint(self, path_segment_index, t):
         """
         Returns the nearest checkpoint to the input, `t`.
 
@@ -500,7 +496,7 @@ class RiemannSurfacePath():
         # occuring before t.
         tim1 = 0
         Pim1 = self.P0
-        for ti, Pi in self._checkpoints:
+        for ti, Pi in self._checkpoints[path_segment_index]:
             if ti >= t:
                 return (tim1, Pim1)
             else:
@@ -511,47 +507,12 @@ class RiemannSurfacePath():
         return ti, Pi
 
 
-    def get_x(self, t, dxdt=False):
-        """
-        Returns the x-point corresponding to t.
 
-        If the path is given in multiple path segments then some
-        scaling is performed to determine which segment the
-        corresponding x is computed from.
-        """
-        if self.types == 'mpmath':
-            floor = sympy.mpmath.floor
-            eps = sympy.mpmath.eps
-        else:
-            floor = numpy.floor
-            eps = 1.0e-16
-
-        # The entire path is parameterized by t in [0,1]. We need to
-        # determine which of the segments this t lies in.
-        t_scaled = t * self._num_path_segments
-        t_floor = floor(t_scaled)
-        t_seg = t_scaled - t_floor
-
-        # If the last point is requested (t=1) then decrement since it
-        # should just be the last segment evaluated at t=1.
-        t_floor = int(t_floor)
-        if t_floor == self._num_path_segments:
-            t_floor = -1
-            t_seg = 1 - eps
-
-        seg, dseg = self._path_segments[t_floor]
-        if dxdt:
-#            return self._num_path_segments * dseg(t_seg)
-            return dseg(t_seg)
-        else:
-            return seg(t_seg)
+    def __call__(self, t, Npts=8):
+        return self.analytically_continue(t,Npts=Npts)
 
 
-    def __call__(self, t, dxdt=False):
-        return self.analytically_continue(t,dxdt=dxdt)
-
-
-    def step(self,ti,tip1,yi):
+    def step(self, path_segment, ti, tip1, yi):
         """
         An analytic continuation step of the y-roots of f(x,y) from xi to
         xip1.
@@ -564,19 +525,22 @@ class RiemannSurfacePath():
         """
         df = self.df
         deg = self.deg
-        xi = self.get_x(ti)
-        xip1 = self.get_x(tip1)
+        xi = path_segment[0](ti)
+        xip1 = path_segment[0](tip1)
 
         # raise error if step size is too small
         if numpy.abs(xip1-xi) < 1e-15:
             raise ValueError("Analytic continuation failed.")
 
-        # first determine if the y-root guesses are 'approximate
-        # solutions'. if one of them is not then refine the step
+        # first determine if the y-root guesses are 'approximate solutions'. if
+        # one of them is not then refine the step
         for yij in yi:
             if smale_alpha(df,xip1,yij,deg) > self.alpha0:
-                # not an approximate solution. refine and return
-                return self.step(ti,(ti+tip1)/2.0,yi)
+                # not an approximate solution. take a half step and return the
+                # second half step
+                ti_half = (ti+tip1)/2.0
+                xi_half,yi_half = self.step(path_segment,ti,ti_half,yi)
+                return self.step(path_segment,ti_half,tip1,yi_half)
 
         # next, determine if the approximate solutions will converge to
         # different associated solutions
@@ -590,7 +554,9 @@ class RiemannSurfacePath():
                 if numpy.abs(yij-yik) < 2*(betaij+betaik):
                     # approximate solutions don't lead to distinct
                     # roots. refine and return
-                    return self.step(ti,(ti+tip1)/2.0,yi)
+                    ti_half = (ti+tip1)/2.0
+                    xi_half,yi_half = self.step(path_segment,ti,ti_half,yi)
+                    return self.step(path_segment,ti_half,tip1,yi_half)
 
         # finally, since we know that we have approximate solutions that will
         # converge to difference associated solutions we will Netwon iterate
@@ -598,44 +564,205 @@ class RiemannSurfacePath():
 
         # return the t-point that we were able to step to as well as
         # the y-roots lying above that t-point
-        return tip1, yip1
+        return xip1, yip1
 
 
+#     def step(self, path_segment, ti, tip1, yi):
+#         """
+#         An analytic continuation step of the y-roots of f(x,y) from xi to
+#         xip1.
 
-    def analytically_continue(self, t, dxdt=False, Npts=8, checkpoint=None):
+#         In the event that the conditions for Newton-based continuation are
+#         not satisfied the step function is called recursively to an
+#         earlier point.
+
+#         TODO: write a clean, non-recursive version of this algorithm
+#         """
+#         df = self.df
+#         deg = self.deg
+#         t = tip1
+
+#         while t <= tip1:
+#             xi = path_segment[0](ti)
+#             x = path_segment[0](t)
+
+#             # raise error if step size is too small
+#             if numpy.abs(x-xi) < 1e-15:
+#                 raise ValueError("Analytic continuation failed.")
+
+#             # first determine if the y-root guesses are 'approximate
+#             # solutions'. if one of them is not then refine the step
+#             approximate_solution = True
+#             distinct_solutions = True
+#             for yij in yi:
+#                 if smale_alpha(df,x,yij,deg) > self.alpha0:
+#                     # not an approximate solution. refine and return
+#                     #return self.step(path_segment,ti,(ti+tip1)/2.0,yi)
+#                     t = (ti+t)/2.0
+#                     approximate_solution = False
+#                     break
+
+#             if approximate_solution:
+#                 # next, determine if the approximate solutions will converge to
+#                 # different associated solutions
+#                 for j in xrange(deg):
+#                     yij = yi[j]
+#                     betaij = smale_beta(df,x,yij)
+#                     for k in xrange(j+1,deg):
+#                         yik = yi[k]
+#                         betaik = smale_beta(df,x,yik)
+
+#                         if numpy.abs(yij-yik) < 2*(betaij+betaik):
+#                             # approximate solutions don't lead to distinct
+#                             # roots. refine and return
+#                             #return self.step(path_segment,ti,(ti+tip1)/2.0,yi)
+#                             t = (ti+t)/2.0
+#                             distinct_solutions = False
+#                             break
+
+#             if approximate_solution and distinct_solutions:
+#                 # finally, since we know that we have approximate solutions
+#                 # that will converge to difference associated solutions we will
+#                 # Netwon iterate
+#                 yip1 = [ newton(df,x,yij) for yij in yi ]
+#                 if t == tip1: break
+#                 else: t = tip1
+
+#         # return the t-point that we were able to step to as well as the
+#         # y-roots lying above that t-point
+#         return tip1, yip1
+
+
+    def analytically_continue_segment(self, path_segment, t,
+                                      Npts=4, checkpoint=None):
         """
-        Analytically continue along the path to the given `t` in the
-        interval [0,1]. self(0) returns the starting point.
+        Analytically continue along a single segment of the path.
+
+        A `RiemannSurfacePath` is a piecewise differentiable path
+        composed of line segments and semi-circles. Each path segment
+        is a function $\gamma : [0,1] \to \mathbb{C}$.
+
+        Input:
+
+        - 'path_segment_index': the index of the path segment
+
+        - `t`: a value from 0 to 1.
+
+        - `Npts`: (default: 4) number of interpolating points to use
+          along the path. (The actual number of interpolating points
+          used to analytically continue is based on the adaptive
+          refinment performed using Smale's alpha theory.
+
+        - `checkpoint`: (default: None) a tuple (ti,(xi,yi)) where
+          (xi,yi) is the x-point and the y-fibre occuring at ti. If
+          provided, analytic continuation will begin from this point.
+
+        Output:
+
+        A tuple (t,(x,y)) where x = x(t) and y is the analytically
+        continued fibre.
         """
-        # checkpointing allows us to start our analytic continuation
-        # from a point further along the path from t=0
-        if checkpoint: t0,(xi,yi) = checkpoint
-        else:          t0,(xi,yi) = self._nearest_checkpoint(t)
+        # if integrating along a segment we require a checkpoint
+        # (usually at t = 0) to indicate the proper ordering of the
+        # fibre at this point along the global path
+        path_segment_index = self._path_segments.index(path_segment)
+        if checkpoint is None:
+            t0,(xi,yi) = self._nearest_checkpoint(path_segment_index,t)
+        else:
+            t0,(xi,yi) = checkpoint
 
         # if the requested point is close to a checkpoint then do not
         # analytically continue
-        if abs(t-t0) < 1e-15:
-            if dxdt:
-                return (xi,tuple(yi)), self.get_x(t,dxdt=True)
-            else:
-                return (xi,tuple(yi))
+#         dt = numpy.double(t-t0)/Npts
+#         ti = t0
+#         while ti + dt < t:
+#             tip1 = ti + dt
+#             xi,yi = self.step(path_segment,ti,tip1,yi)
+#         return xi,tuple(yi)
+        tim1 = t0
+        for ti in numpy.linspace(t0,t,Npts)[1:]:
+            xi,yi = self.step(path_segment,tim1,ti,yi)
+            tim1 = ti
+        return xi,yi
 
-        # main loop
-        dt = numpy.double(t-t0)/Npts
-        ti = t0
-        while ti + dt < t:
-            tip1 = ti + dt
-            ti,yi = self.step(ti,tip1,yi)
+    def analytically_continue(self, t, Npts=4):
+        """
+        """
+        eps = 1e-15
 
-        # we optionally return the derivative x'(ti). this is used
-        # when computing integrals of differentials parameterized
-        # on the path
-        xi = self.get_x(ti)
-        if dxdt:
-            return (xi,tuple(yi)), self.get_x(ti,dxdt=True)
-        else:
-            return (xi,tuple(yi))
+        # The entire path is parameterized by t in [0,1]. We need to
+        # determine which of the segments this t lies in.
+        t_scaled = t * self._num_path_segments
+        t_floor = numpy.floor(t_scaled)
+        t_seg = t_scaled - t_floor
 
+        # If the last point is requested (t=1) then decrement since it
+        # should just be the last segment evaluated at t=1.
+        t_floor = int(t_floor)
+        if t_floor == self._num_path_segments:
+            t_floor = -1
+            t_seg = 1 - eps
+
+        segment_index = t_floor
+        return self.analytically_continue_segment(segment_index,Npts=Npts)
+
+
+    def integrate(self,omega,x,y):
+        """
+        Integrates a differential omega = omega(x,y) along the path.
+        """
+        o = sympy.lambdify([x,y], omega, 'numpy')
+        def integrand(t,seg=None):
+            dxidt = seg[1](t)
+            xi,yi = self.analytically_continue_segment(seg,t)
+            return o(xi,yi[0]) * dxidt
+
+        # For each segment, determine the proper ordering of the roots
+        # at the start of the segment, define the integrand, and then
+        # integrate along the segment
+        re = numpy.double(0)
+        im = numpy.double(0)
+        for idx in range(self._num_path_segments):
+            seg = self._path_segments[idx]
+            re += scipy.integrate.romberg(lambda t: integrand(t,seg).real,0,1,
+                                          tol=1e-14,rtol=1e-14,divmax=10)
+            im += scipy.integrate.romberg(lambda t: integrand(t,seg).imag,0,1,
+                                          tol=1e-14,rtol=1e-14,divmax=10)
+        return re + 1.0j*im
+
+
+    def plot_differential(self,omega,x,y,Npts=64):
+        """
+        Plot the differential along the path.
+        """
+        o = sympy.lambdify([x,y],omega,'numpy')
+        ppseg = numpy.int(Npts/numpy.double(self._num_path_segments))
+        tt = numpy.linspace(0,1,ppseg)
+
+        def differential(t,seg=None):
+            xi,yi = self.analytically_continue_segment(seg,t)
+            return o(xi,yi[0])
+        differential = numpy.vectorize(differential,excluded=['seg'])
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        n = self._num_path_segments
+        for k in range(n):
+            seg = self._path_segments[k]
+            oo = differential(tt,seg=seg)
+            oo_re = oo.real
+            oo_im = oo.imag
+            ax.plot((tt+k)/n,oo_re,'r')
+            ax.plot((tt+k)/n,oo_im,'b')
+
+        ax.axis('tight')
+        ax.set_xticks(numpy.arange(n+1,dtype=numpy.double)/n,minor=False)
+        ax.grid(True)
+        fig.show()
+
+
+    def plot_integrand(self,omega,x,y,Npts=128):
+        pass
 
 
     def sample_uniform(self, Npts=64, t0=0, t1=1, dxdt=False):
@@ -647,7 +774,7 @@ class RiemannSurfacePath():
         else:
             t = numpy.linspace(t0,t1,Npts).tolist()
 
-        P = [self.analytically_continue(ti,dxdt=dxdt) for ti in t]
+        P = [self.analytically_continue(ti) for ti in t]
         return P
 
 
@@ -863,9 +990,14 @@ if __name__=='__main__':
     print "============================"
     print "=== Riemann surface path ==="
     print "============================"
+    print
+
+    import time
     import sympy
+    import cProfile
+    import pstats
+
     from sympy.abc import x,y
-    from abelfunctions.monodromy import monodromy_graph, show_paths
 
     # compute f and its derivatives with respect to y along with
     # additional data
@@ -899,96 +1031,79 @@ if __name__=='__main__':
     x0 = z1
     y0 = polyroots(f,x,y,x0)
 
-    print "===     (constructing path #1)     ==="
+    print "=== (constructing path #1) ==="
     gamma1 = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments1)
 
-    #
-    # path #2 construction
-    #
-    z1 = numpy.complex(-2)
-    z2 = numpy.complex(-1)
-    z3 = numpy.complex(-1 - 0.5j)
-    z4 = numpy.complex(-2 - 0.5j)
-    path_segments2 = [
-        (lambda t,z1=z1,z2=z2: z1*(1-t) + z2*t,
-         lambda t,z1=z1,z2=z2: z2-z1),
-        (lambda t,z1=z2,z2=z3: z1*(1-t) + z2*t,
-         lambda t,z1=z2,z2=z3: z2-z1),
-        (lambda t,z1=z3,z2=z4: z1*(1-t) + z2*t,
-         lambda t,z1=z3,z2=z4: z2-z1),
-        (lambda t,z1=z4,z2=z1: z1*(1-t) + z2*t,
-         lambda t,z1=z4,z2=z1: z2-z1),
-        ]
-    x0 = z1
-    y0 = polyroots(f,x,y,x0)
-
-    print "===     (constructing path #2)     ==="
-    gamma2 = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments2)
-
-
-    print "===        (plotting)           ==="
-#     P = gamma2.sample_uniform(32)
-#     xx,yy = zip(*P)
-#     xx = numpy.array(xx)
-#     y0,y1,y2 = map(numpy.array,zip(*yy))
-#     plt.plot(xx.real, xx.imag, 'k',
-#              y0.real, y0.imag, 'r.-',
-#              y1.real, y1.imag, 'g.-',
-#              y2.real, y2.imag, 'b.-')
-#     plt.show()
-
-
-    print "=== computing holom diffs ==="
+    print "=== (computing holomorphic differentials) ==="
     from abelfunctions.differentials import differentials
-    omega = differentials(f,x,y)
+    omega = differentials(f,x,y)[0]
+    print "omega =", omega
 
-    print "=== integrating along path #1 ==="
-    o = parameterize_differential(omega[0], x, y, gamma1)
-    eps = 1e-15
+    print "=== (plotting differential on path #1) ==="
+    gamma1.plot_differential(omega,x,y,Npts=64)
 
-    print("initial value: %s"%o(0))
-    print("integral:")
-    re = numpy.double(0)
-    im = numpy.double(0)
-    re_quad = numpy.double(0)
-    im_quad = numpy.double(0)
-    val = numpy.complex(0)
-    for i in range(3):
-        i = numpy.double(i)
-        re_quad += scipy.integrate.quad(lambda t: o(t).real,i/3,(i+1)/3-eps,
-                                        epsabs=1e-12)[0]
-        im_quad += scipy.integrate.quad(lambda t: o(t).imag,i/3,(i+1)/3-eps,
-                                        epsabs=1e-12)[0]
-        tt = numpy.linspace(i/3,(i+1)/3-eps,256)
-        oo = o(tt)
-        re += scipy.integrate.trapz(tt,oo.real)
-        im += scipy.integrate.trapz(tt,oo.imag)
-        val += scipy.integrate.trapz(tt,oo)
-    print("\tquad: %s"%(re_quad + 1.0*im_quad))
-    print("\ttrap: %s"%(re + 1.0*im))
-    print("\tval:  %s"%(val))
 
-    print "\n=== integrating along path #2 ==="
-    o = parameterize_differential(omega[0], x, y, gamma2)
+#     print "=== (integrating) ==="
+#     cProfile.run("val = gamma1.integrate(omega,x,y)",'rs_path.profile')
+#     p = pstats.Stats('rs_path.profile')
+#     p.strip_dirs()
+#     p.sort_stats('time').print_stats(12)
+#     p.sort_stats('cumulative').print_stats(12)
+#     p.sort_stats('calls').print_stats(12)
+#     print "val =", val
 
-    print("initial value: %s"%o(0))
-    print("integral:")
-    re = numpy.double(0)
-    im = numpy.double(0)
-    re_quad = numpy.double(0)
-    im_quad = numpy.double(0)
-    val = numpy.complex(0)
-    for i in range(3):
-        i = numpy.double(i)
-        re_quad += scipy.integrate.quad(lambda t: o(t).real,i/3,(i+1)/3-eps,
-                                        epsabs=1e-12)[0]
-        im_quad += scipy.integrate.quad(lambda t: o(t).imag,i/3,(i+1)/3-eps,
-                                        epsabs=1e-12)[0]
-        tt = numpy.linspace(i/3,(i+1)/3-eps,256)
-        oo = o(tt)
-        re += scipy.integrate.trapz(tt,oo.real)
-        im += scipy.integrate.trapz(tt,oo.imag)
-        val += scipy.integrate.trapz(tt,oo)
-    print("\tquad: %s"%(re_quad + 1.0*im_quad))
-    print("\ttrap: %s"%(re + 1.0*im))
-    print("\tval:  %s"%(val))
+
+#     #
+#     # path #2 construction
+#     #
+#     z1 = numpy.complex(-2)
+#     z2 = numpy.complex(-1)
+#     z3 = numpy.complex(-1 - 0.5j)
+#     z4 = numpy.complex(-2 - 0.5j)
+#     path_segments2 = [
+#         (lambda t,z1=z1,z2=z2: z1*(1-t) + z2*t,
+#          lambda t,z1=z1,z2=z2: z2-z1),
+#         (lambda t,z1=z2,z2=z3: z1*(1-t) + z2*t,
+#          lambda t,z1=z2,z2=z3: z2-z1),
+#         (lambda t,z1=z3,z2=z4: z1*(1-t) + z2*t,
+#          lambda t,z1=z3,z2=z4: z2-z1),
+#         (lambda t,z1=z4,z2=z1: z1*(1-t) + z2*t,
+#          lambda t,z1=z4,z2=z1: z2-z1),
+#         ]
+#     x0 = z1
+#     y0 = polyroots(f,x,y,x0)
+
+#     print "=== (constructing path #2) ==="
+#     gamma2 = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments2)
+
+
+#     print "=== (plotting) ==="
+# #     P = gamma2.sample_uniform(32)
+# #     xx,yy = zip(*P)
+# #     xx = numpy.array(xx)
+# #     y0,y1,y2 = map(numpy.array,zip(*yy))
+# #     plt.plot(xx.real, xx.imag, 'k',
+# #              y0.real, y0.imag, 'r.-',
+# #              y1.real, y1.imag, 'g.-',
+# #              y2.real, y2.imag, 'b.-')
+# #     plt.show()
+
+
+#     print "=== computing holom diffs ==="
+#     from abelfunctions.differentials import differentials
+#     omega = differentials(f,x,y)[0]
+
+#     print "=== integrating along path #1 ==="
+#     eps = 1e-15
+
+#     print("integral:")
+#     t = time.time()
+#     print gamma1.integrate(omega,x,y)
+#     print "time:", time.time()-t
+
+#     print "\n=== integrating along path #2 ==="
+
+#     print("integral:")
+#     t = time.time()
+#     print gamma2.integrate(omega,x,y)
+#     print "time:", time.time()-t

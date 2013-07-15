@@ -14,7 +14,6 @@ from abelfunctions.riemannsurface_path import (
     path_around_branch_point,
     path_around_infinity,
     RiemannSurfacePath,
-    parameterize_differential,
     )
 from abelfunctions.riemannsurface_point import RiemannSurfacePoint
 from abelfunctions.singularities import genus
@@ -176,26 +175,7 @@ class RiemannSurface(object):
 
         - `path`: a RiemannSurfacePath defined on the Riemann surface
         """
-        x0,y0 = path(0)
-        omega = parameterize_differential(omega, x, y, path)
-
-        n = path._num_path_segments
-        val = numpy.complex(0)
-
-        for k in xrange(n):
-            k = numpy.double(k)
-            #re = scipy.integrate.quad(lambda t: omega(t).real,k/n,(k+1)/n)[0]
-            #im = scipy.integrate.quad(lambda t: omega(t).imag,k/n,(k+1)/n)[0]
-            t = numpy.linspace(k/n,(k+1.0)/n,32)
-            o = omega(t)
-
-            re = scipy.integrate.trapz(t,o.real)
-            im = scipy.integrate.trapz(t,o.imag)
-
-            val += re + 1.0j*im
-
-        return val
-
+        return path.integrate(omega, x, y)
 
     def period_matrix(self):
         """
