@@ -18,7 +18,7 @@ from matplotlib.cbook import flatten
 from utilities import cached_function, cached_property
 
 from abelfunctions.riemannsurface_path import (
-    polyroots, 
+    polyroots,
     path_around_branch_point,
     path_around_infinity,
     RiemannSurfacePath,
@@ -786,9 +786,9 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     for i in G.nodes():
         # compute path segments to path around b_i and analytically
         # continuing the base_fibre
-        path_segments = path_around_branch_point(G,i,1)
+        path_segment_data = path_around_branch_point(G,i,1)
         gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                                   path_segments=path_segments)
+                                   path_segment_data=path_segment_data)
         yend = gamma(1)[1]
 
         # check if permutation is identity. if so, delete b_i from the
@@ -806,9 +806,9 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
 
 
     # analytically continue around infinity. append if branch point
-    path_segments = path_around_infinity(G,-1)
+    path_segment_data = path_around_infinity(G,-1)
     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                               path_segments=path_segments)
+                               path_segment_data=path_segment_data)
     yend = gamma(1)[1]
 
     # check if permutation is identity. if so, delete b_i from the

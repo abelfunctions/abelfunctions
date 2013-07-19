@@ -25,10 +25,10 @@ import pdb
 
 class RiemannSurface(object):
     """
-    Class for defining a Riemann surface corresponding to a plane
-    algebraic curve.
+    Class for defining a Riemann surface corresponding to a plane algebraic
+    curve.
     """
-    def __init__(self, f, x, y):
+    def __init__(self,f,x,y):
         self.f = f
         self.x = x
         self.y = y
@@ -40,18 +40,18 @@ class RiemannSurface(object):
         return RiemannSurfacePoint(self, x, y)
 
 
-    def point(self, x0, y0):
+    def point(self,x0,y0):
         """
-        Returns the point on the Riemann surface closest to
-        `(x0,y0)`. (In the event that floating point precision is used
-        to calculate the coordinates `(x0,y0)`.
+        Returns the point on the Riemann surface closest to `(x0,y0)`. (In the
+        event that floating point precision is used to calculate the
+        coordinates `(x0,y0)`.
         """
         return RiemannSurfacePoint(self,x0,y0)
 
     def monodromy(self):
         """
         """
-        return monodromy(self.f, self.x, self.y)
+        return monodromy(self.f,self.x,self.y)
 
 
     def monodromy_graph(self):
@@ -81,7 +81,7 @@ class RiemannSurface(object):
 
 
     def homology(self):
-        return homology(self.f, self.x, self.y)
+        return homology(self.f,self.x,self.y)
 
 
     def holomorphic_differentials(self):
@@ -137,7 +137,7 @@ class RiemannSurface(object):
 
         cycle_paths = []
         for cycle in cycles:
-            path_segments = []
+            path_segment_data = []
 
             # For each (branch point, rotation number) pair appearing in
             # the cycle compute the path segments the complex x-plane
@@ -146,19 +146,18 @@ class RiemannSurface(object):
             # path segemnts.
             for (bpt, rot) in cycle[1::2]:
                 if bpt == sympy.oo:
-                    bpt_path_segs = path_around_infinity(G,rot)
+                    bpt_path_segdat = path_around_infinity(G,rot)
                 else:
                     bpt_index = [key for key,data in G.nodes(data=True)
                                  if abs(data['value']-bpt) < 1e-15][0]
-                    bpt_path_segs = path_around_branch_point(G,bpt_index,rot)
-                path_segments.extend(bpt_path_segs)
+                    bpt_path_segdat = path_around_branch_point(G,bpt_index,rot)
+                path_segment_data.extend(bpt_path_segdat)
 
             # Construct the RiemannSurfacePath and append to path list
             x0 = self.base_point()
             y0 = self.base_lift()
             gamma = RiemannSurfacePath(self, (x0,y0),
-                                       path_segments=path_segments)
-
+                                       path_segment_data=path_segment_data)
             cycle_paths.append(gamma)
 
         return cycle_paths
@@ -175,7 +174,7 @@ class RiemannSurface(object):
 
         - `path`: a RiemannSurfacePath defined on the Riemann surface
         """
-        return path.integrate(omega, x, y)
+        return path.integrate(omega,x,y)
 
     def period_matrix(self):
         """
@@ -275,6 +274,14 @@ if __name__ == '__main__':
     print "\n\tRS: computing cycles"
     cycles = X.cycles()
 
+    print "\n\tRS: computing paths"
+    paths = X.cycle_paths()
+
+    print "\n\tRS: computing differentials"
+    diffs = X.holomorphic_differentials()
+
+    print "\n\tRS: example plots"
+    paths[1].plot_differential(diffs[0],x,y,N=256)
 
 #    print "\n\tRS: computing paths"
 #    paths = X.cycle_paths()
