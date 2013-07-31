@@ -339,15 +339,15 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
 	"""
 	Returns the intersection number of two edges of the Tretkoff graph.
 
-	Note: Python is smart and uses lexicographical ordering on lists
-	which is exactly what we need.
+	Note: Python is smart and uses lexicographical ordering on lists which
+	is exactly what we need.
 	"""
 	ei_start,ei_end = map(lambda n: C.node[n]['order'], ei)
 	ej_start,ej_end = map(lambda n: C.node[n]['order'], ej)
 
-        # if the starting or ending nodes match then determine the
-	# intersection number using a differenti technique from the
-	# general case. (this part can probably be cleaned up)
+        # if the starting or ending nodes match then determine the intersection
+	# number using a different technique from the general case. (this part
+	# can probably be cleaned up)
         if ei_start == ej_start:
             if ((ei_start < ei_end < ej_end) or (ej_end < ei_start < ei_end)
                 or (ei_end < ej_end < ei_start)):
@@ -361,15 +361,13 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
             else:
                 return -1
 
-        # otherwise, if the starting node of ei lies before the
-	# starting node of ej then simply return the negative of the
-	# intersection (ej o ei).
+        # otherwise, if the starting node of ei lies before the starting node
+	# of ej then simply return the negative of the intersection (ej o ei).
         elif ei_start > ej_start:
             return (-1)*intersection_number(ej,ei)
 
-	# finally, in the general case, we need to check the relative
-	# ordering of the ending nodes of the edges with the starting
-	# nodes.
+	# finally, in the general case, we need to check the relative ordering
+	# of the ending nodes of the edges with the starting nodes.
 	else:
 	    if ((ej_start < ei_end < ej_end) or (ej_end < ej_start < ei_end)
 		or (ei_start < ej_end < ej_start)):
@@ -382,9 +380,8 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
 	raise ValueError('Unable to determine intersection index of ' + \
 			 'edge %s with edge %s'%(ei,ej))
 
-
-    # the intersection matrix is anti-symmetric, so we only determine
-    # the intersection numbers of the upper triangle
+    # the intersection matrix is anti-symmetric, so we only determine the
+    # intersection numbers of the upper triangle
     num_final_edges = len(final_edges)
     K = numpy.zeros((num_final_edges, num_final_edges), dtype=numpy.int)
     for i in range(num_final_edges):
@@ -396,8 +393,8 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
     # obtain the intersection numbers below the diagonal
     K = K - K.T
 
-    # sanity_check: make sure the intersection matrix predicts the
-    # same genus that the genus formula otuputs
+    # sanity_check: make sure the intersection matrix predicts the same genus
+    # that the genus formula otuputs
     rank = numpy.linalg.matrix_rank(K)
     if rank/2 != g:
 	raise ValueError("Found inconsistent genus in homolgy " + \
@@ -652,7 +649,6 @@ if __name__=='__main__':
     from networkx import graphviz_layout
 
     f0 = y**3 - 2*x**3*y - x**8  # Klein curve
-
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
     f2 = -x**7 + 2*x**3*y + y**3
     f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
@@ -665,14 +661,15 @@ if __name__=='__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     f11= y**2 - (x**2+1)*(x**2-1)*(4*x**2+1)  # simple genus two hyperelliptic
     f12 = x**4 + y**4 - 1
-
     f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
+    f = f1
 
-    f = f2
-
+    print("\nComputing monodromy...")
     hs = monodromy(f,x,y)
+    print("\nComputing genus...")
     g = int(genus(f,x,y))
+    print("...genus = %d"%g)
 
     print("\nBranch points...")
     for bpt in hs[2]: print bpt

@@ -796,14 +796,13 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
         # monodromy group
         phi = matching_permutation(base_sheets,yend)
         if phi.is_identity():
-            branch_points.pop(i)
+            branch_points[i] = None
         else:
             mon.append(phi)
 
-
     # XXX convert monodromy to both mpmath and numpy later
-    branch_points = [numpy.complex(bpt) for bpt in branch_points]
-
+    branch_points = map(numpy.complex,
+                        [bpt for bpt in branch_points if bpt != None])
 
     # analytically continue around infinity. append if branch point
     path_segment_data = path_around_infinity(G,-1)
@@ -846,32 +845,39 @@ if __name__=='__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
 
-    a = Permutation([[1,2],[0,3]])
-    b = Permutation([[0],[1,2],[3]])
-    c = Permutation([[0,3],[1],[2]])
+#     a = Permutation([[1,2],[0,3]])
+#     b = Permutation([[0],[1,2],[3]])
+#     c = Permutation([[0,3],[1],[2]])
 
-    print 'a    ', a
-    print 'b    ', b
-    print 'c    ', c
-    print
-    print 'a*b  ',a*b
-    print 'a*c  ',a*c
-    print 'a*b*c',a*b*c
-    print '== id',(a*b*c).is_identity()
+#     print 'a    ', a
+#     print 'b    ', b
+#     print 'c    ', c
+#     print
+#     print 'a*b  ',a*b
+#     print 'a*c  ',a*c
+#     print 'a*b*c',a*b*c
+#     print '== id',(a*b*c).is_identity()
 
-#     f = f2
+    f = f1
 
-#     print "Computing monodromy graph of", f
-#     G = monodromy_graph(f,x,y)
-#     base_point = G.node[0]['basepoint']
-#     base_sheets = G.node[0]['baselift']
-#     branch_points = [data['value'] for node,data in G.nodes(data=True)]
+    print "Computing monodromy graph of", f
+    G = monodromy_graph(f,x,y)
+    base_point = G.node[0]['basepoint']
+    base_sheets = G.node[0]['baselift']
+    branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
-#     show_paths(G)
+    show_paths(G)
 
-#     print "Computing monodromy of", f
-#     mon = monodromy(f,x,y)
-#     base_point, base_sheets, branch_points, m, G = mon
+    print "Computing monodromy of", f
+    mon = monodromy(f,x,y)
+    base_point, base_sheets, branch_points, m, G = mon
+
+    print "\nbase point:"
+    print base_point
+    print "\nbase_sheets:"
+    for sheet in base_sheets: print sheet
+    print "\nmonodromy:"
+    for mi,bpt in zip(m,branch_points): print '%s\t%s'%(bpt,mi)
 
 #     import cProfile, pstats
 #     cProfile.run('mon = M.monodromy()','monodromy.profile')
