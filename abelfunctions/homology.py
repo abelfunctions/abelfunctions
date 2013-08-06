@@ -261,7 +261,7 @@ def tretkoff_graph(hurwitz_system):
 		    elif len(pi) > 0:
 			visited_branch_places.append(succ)
 			C.add_edge(node,succ)
-			C.node[succ]['label'] = '$b_%d, %s$'%(idx,pi)
+			C.node[succ]['label'] = '$b_{%d}, %s$'%(idx,pi)
 			C.node[succ]['level'] = level+1
 			C.node[succ]['nrots'] = None
 			C.node[succ]['order'] = C.node[node]['order'] + \
@@ -590,63 +590,52 @@ def homology(f,x,y):
 
 
 
-# def plot_homology(C,final_edges):
-#     try:
-#         import networkx as nx
-#         import matplotlib.pyplot as plt
-#     except:
-#         raise
+def show_homology(C,final_edges):
+    try:
+        import networkx as nx
+        import matplotlib.pyplot as plt
+    except:
+        raise
 
-#     edges = C.edges()
-#     labels = dict([(n,d['label']) for n,d in C.nodes(data=True)])
+    edges = C.edges()
+    labels = dict([(n,d['label']) for n,d in C.nodes(data=True)])
 
-#     # compute positions
-#     pos = {0:(0,0)}
-#     level = 1
-#     prev_points = [0]
-#     level_points = [0]
-#     N_prev = 1
-#     while len(level_points) > 0:
-#         level_points = sorted([n for n,d in C.nodes(data=True)
-#                                if d['level'] == level],
-#                                key = lambda n: C.node[n]['order'])
+    # compute positions
+    pos = {0:(0,0)}
+    level = 1
+    prev_points = [0]
+    level_points = [0]
+    N_prev = 1
+    while len(level_points) > 0:
+        level_points = sorted([n for n,d in C.nodes(data=True)
+                               if d['level'] == level],
+                               key = lambda n: C.node[n]['order'])
 
-#         N = len(level_points)
-#         for k in range(N):
-#             node = level_points[k]
-#             pred = [p for p in C.neighbors(node)
-#                     if C.node[p]['level'] < level][0]
+        num_level_points = len(level_points)
+        for n in range(num_level_points):
+            point = level_points[n]
+            pos[point] = (level,n-num_level_points/2.0)
 
-#             # complex position distributed evenly about unit circle
-#             theta = numpy.double(k)/N
-#             z = numpy.exp(1.0j*numpy.pi*theta)
+        level += 1
 
-#             # cluster by predecessor location
+    # offset label positions
+    offset = 0.3
+    label_pos = dict( (node,(xpos,ypos-offset))
+                      for node,(xpos,ypos) in pos.iteritems() )
 
-#             # scale by level
-#             z *= level
+    # draw it
+    nx.draw_networkx_nodes(C, pos)
+    nx.draw_networkx_edges(C, pos, edgelist=edges, width=2)
+    nx.draw_networkx_edges(C, pos, edgelist=final_edges,
+                           edge_color='b', style='dashed')
+    nx.draw_networkx_labels(C, label_pos, labels=labels, font_size=16)
 
-#             pos[node] = (z.real, z.imag)
-
-#         level += 1
-#         N_prev = N
-#         prev_points = level_points[:]
-
-
-#     # draw it
-#     nx.draw_networkx_nodes(C, pos)
-#     nx.draw_networkx_edges(C, pos, edgelist=edges, width=2)
-#     nx.draw_networkx_edges(C, pos, edgelist=final_edges,
-#                            edge_color='b', style='dashed')
-#     nx.draw_networkx_labels(C, pos, labels=labels, font_size=16)
-
-#     plt.show()
+    plt.show()
 
 
 
 if __name__=='__main__':
     from sympy.abc import x,y
-    from networkx import graphviz_layout
 
     f0 = y**3 - 2*x**3*y - x**8  # Klein curve
     f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
