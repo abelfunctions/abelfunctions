@@ -14,8 +14,6 @@ from abelfunctions.utilities import cached_function
 import pdb
 
 
-
-
 def find_cycle(pi, j):
     """
     Returns the cycle (as a list) of the permutation pi
@@ -183,11 +181,12 @@ def tretkoff_graph(hurwitz_system):
 
     # initialize graph with base point: the zero sheet
     C = nx.Graph()
-    C.add_node(0)
-    C.node[0]['final'] = False
-    C.node[0]['label'] = '$%d$'%(0)
-    C.node[0]['level'] = 0
-    C.node[0]['order'] = [0]
+    node = (0,)
+    C.add_node(node)
+    C.node[node]['value'] = 0
+    C.node[node]['label'] = "$0$"
+    C.node[node]['final'] = False
+    C.node[node]['level'] = 0
 
     # keep track of sheets and branch places that we've already
     # visited. initialize with the zero sheet and all branch places
@@ -203,20 +202,13 @@ def tretkoff_graph(hurwitz_system):
 	]
 
     level = 0
-    endpoints = [0]
+    endpoints = [node]
     final_edges = []
     while len(endpoints) > 0:
 	# obtain the endpoints on the previous level that are not
 	# final and sort by their "succession" order".
 	endpoints = sorted([n for n,d in C.nodes_iter(data=True)
-		     if d['level'] == level],
-		     key=lambda n: C.node[n]['order'][-1])
-
-	order_counter = 0
-
-	# print "level =", level
-	# print "endpoints ="
-	# print endpoints
+                            if d['level'] == level and not d['final']])
 
 	for node in endpoints:
 	    # determine the successors for this node. we use a
@@ -231,7 +223,7 @@ def tretkoff_graph(hurwitz_system):
 	    # place whose order is determined by the predecessor sheet.
 	    ###################################################################
 	    if level % 2 == 0:
-		current_sheet = node
+		current_sheet = C.node[node]['value']
 
 		# determine which branch points to add. in the initial
 		# case, add all branch points. for all subsequent
@@ -240,41 +232,38 @@ def tretkoff_graph(hurwitz_system):
 		if current_sheet == 0:
 		    branch_point_indices = range(t)
 		else:
-		    bpt,pi = C.neighbors(current_sheet)[0]
+                    pred = C.neighbors(node)[0]
+		    bpt,pi = C.node[pred]['value']
 		    ind = branch_points.index(bpt)
 		    branch_point_indices = range(ind+1,t) + range(ind)
 
 		# for each branch place connecting the curent sheet to other
 		# sheets, add a final edge if we've already visited the place
 		# or connect it to the graph, otherwise.
+                ctr = 0
 		for idx in branch_point_indices:
+                    succ = tuple(list(node) + [ctr])
 		    bpt = branch_points[idx]
 		    pi = find_cycle(monodromy[idx],current_sheet)
-		    succ = (bpt,pi)
-		    edge = (node,succ) # final edges point from sheets to bpts
+                    value = (bpt,pi)
 
-		    # determine whether or not this is a successor or a
-		    # "final" vertex
-		    if succ in visited_branch_places:
-			if edge not in final_edges and len(pi) > 1:
-			    final_edges.append(edge)
-		    elif len(pi) > 0:
-			visited_branch_places.append(succ)
-			C.add_edge(node,succ)
-			C.node[succ]['label'] = '$b_{%d}, %s$'%(idx,pi)
-			C.node[succ]['level'] = level+1
-			C.node[succ]['nrots'] = None
-			C.node[succ]['order'] = C.node[node]['order'] + \
-						[order_counter]
+                    if value in visited_branch_places:
+                        final = True
+                    else:
+                        final = False
+                        visited_branch_places.append(value)
 
-		    # the counter is over all succesors of all current
-		    # sheets at the current level (as opposed to just
-		    # successors of this sheet)
-		    order_counter += 1
+                    if len(pi) > 1:
+                        C.add_edge(node,succ)
+                        C.node[succ]['value'] = value
+                        C.node[succ]['label'] = "$b_%d,%s$"%(idx,pi)
+                        C.node[succ]['final'] = final
+                        C.node[succ]['level'] = level+1
+                        ctr += 1
 
 	    ###################################################################
 	    else:
-		current_place = node
+		current_place = C.node[node]['value']
 		bpt,pi = current_place
 
 		# C is always a tree. obtain the previous node (which
@@ -284,42 +273,58 @@ def tretkoff_graph(hurwitz_system):
 		# we also try to minimize the number of rotations performed
 		# by allowing reverse rotations.
 		n = len(pi)
-		previous_sheet = C.neighbors(current_place)[0]
+                pred = C.neighbors(node)[0]
+		previous_sheet = C.node[pred]['value']
 		pi = reorder_cycle(pi,previous_sheet)
-
+                ctr = 0
 		for idx in range(1,n):
-		    next_sheet = pi[idx]
-		    succ = next_sheet
-		    edge = (succ,node) # final edges point from sheets to bpts
+                    succ = tuple(list(node) + [ctr])
+		    value = pi[idx]
+		    edge = (succ,node)
 
-		    if next_sheet in visited_sheets:
-			if edge not in final_edges:
-			    final_edges.append(edge)
-		    else:
-			visited_sheets.append(next_sheet)
-			C.add_edge(succ,node)
-			C.node[succ]['label'] = '$%d$'%(next_sheet)
-			C.node[succ]['level'] = level+1
-			C.node[succ]['nrots'] = idx if idx <= n/2 else idx-n
-			C.node[succ]['order'] = C.node[node]['order'] + \
-						[order_counter]
+                    if value in visited_sheets:
+                        final = True
+                    else:
+                        final = False
+                        visited_sheets.append(value)
 
-		    # the counter is over all succesors of all current
-		    # branch places at the current level (as opposed
-		    # to just successors of this branch place)
-		    order_counter += 1
+                    C.add_edge(node,succ)
+                    C.node[succ]['value'] = value
+                    C.node[succ]['label'] = "$%d$"%(value)
+                    C.node[succ]['final'] = final
+                    C.node[succ]['level'] = level+1
+                    ctr += 1
 
 	# we are done adding succesors to all endpoints at this
 	# level. level up!
 	level += 1
 
-    # the tretkoff graph is constructed. return the final edge. we
-    # also return the graph since it contains ordering and
-    # rotational data
-    return C, final_edges
+    return C
 
 
-def intersection_matrix(tretkoff_graph, final_edges, g):
+def final_edges(C):
+    """
+    """
+    final_nodes = [n for n in C.nodes() if C.node[n]['final']]
+    edges = []
+    while len(final_nodes) > 0:
+        node = final_nodes.pop()
+        pred = C.neighbors(node)[0]
+        pred_val = C.node[pred]['value']
+        other = [n for n in final_nodes if C.node[n]['value'] == pred_val and
+                 C.node[C.neighbors(n)[0]]['value'] == C.node[node]['value']]
+        other = other[0]
+
+        final_nodes.remove(other)
+        if isinstance(C.node[node]['value'],tuple):
+            edges.append((other,node))
+        else:
+            edges.append((node,other))
+
+    return edges
+
+
+def intersection_matrix(final_edges, g):
     """
     Compute the intersection matrix of the c-cycles from the
     Tretkoff graph and final edge data output by `tretkoff_graph()`.
@@ -333,8 +338,6 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
     - g: the expected genus of the riemann surface as given by
       singularities.genus()
     """
-    C = tretkoff_graph
-
     def intersection_number(ei,ej):
 	"""
 	Returns the intersection number of two edges of the Tretkoff graph.
@@ -342,28 +345,12 @@ def intersection_matrix(tretkoff_graph, final_edges, g):
 	Note: Python is smart and uses lexicographical ordering on lists which
 	is exactly what we need.
 	"""
-	ei_start,ei_end = map(lambda n: C.node[n]['order'], ei)
-	ej_start,ej_end = map(lambda n: C.node[n]['order'], ej)
+	ei_start,ei_end = ei
+	ej_start,ej_end = ej
 
-        # if the starting or ending nodes match then determine the intersection
-	# number using a different technique from the general case. (this part
-	# can probably be cleaned up)
-        if ei_start == ej_start:
-            if ((ei_start < ei_end < ej_end) or (ej_end < ei_start < ei_end)
-                or (ei_end < ej_end < ei_start)):
-                return 1
-            else:
-                return -1
-        elif ei_end == ej_end:
-            if ((ei_start < ej_start< ei_end) or (ej_start < ei_end < ei_start)
-                or (ei_end < ei_start < ej_start)):
-                return 1
-            else:
-                return -1
-
-        # otherwise, if the starting node of ei lies before the starting node
-	# of ej then simply return the negative of the intersection (ej o ei).
-        elif ei_start > ej_start:
+        # if the starting node of ei lies before the starting node of ej
+	# then simply return the negative of the intersection (ej o ei).
+        if ei_start > ej_start:
             return (-1)*intersection_number(ej,ei)
 
 	# finally, in the general case, we need to check the relative ordering
@@ -580,8 +567,9 @@ def homology(f,x,y):
     # * the frobenius_transform of the intersection matrix
     #   gives us which linear combinations of the c_cycles we
     #   need to obtain the a- and b-cycles
-    C, final_edges = tretkoff_graph(hurwitz_system)
-    K = intersection_matrix(C, final_edges, g)
+    C = tretkoff_graph(hurwitz_system)
+    edges = final_edges(C)
+    K = intersection_matrix(edges,g)
     T = frobenius_transform(K,g)
 
     c_cycles = compute_c_cycles(C, final_edges)
@@ -590,46 +578,46 @@ def homology(f,x,y):
 
 
 
-def show_homology(C,final_edges):
+def show_homology(C):
     try:
         import networkx as nx
         import matplotlib.pyplot as plt
     except:
         raise
 
-    edges = C.edges()
-    labels = dict([(n,d['label']) for n,d in C.nodes(data=True)])
+    final_nodes = [n for n,d in C.nodes(data=True) if d['final']]
+    final_edges = [e for e in C.edges()
+                   if e[0] in final_nodes or e[1] in final_nodes]
+    edges = [e for e in C.edges() if e not in final_edges]
 
     # compute positions
-    pos = {0:(0,0)}
-    level = 1
-    prev_points = [0]
-    level_points = [0]
-    N_prev = 1
+    pos = {(0,):(0,0)}
+    labels = {(0,):"$0$"}
+    level = 0
+    level_points = [(0,)]
     while len(level_points) > 0:
+        level += 1
         level_points = sorted([n for n,d in C.nodes(data=True)
-                               if d['level'] == level],
-                               key = lambda n: C.node[n]['order'])
+                               if d['level'] == level])
 
         num_level_points = len(level_points)
-        for n in range(num_level_points):
-            point = level_points[n]
+        n = 0
+        for point in level_points:
             pos[point] = (level,n-num_level_points/2.0)
-
-        level += 1
-
-    # offset label positions
-    offset = 0.3
-    label_pos = dict( (node,(xpos,ypos-offset))
-                      for node,(xpos,ypos) in pos.iteritems() )
+            labels[point] = C.node[point]['label'] + \
+                '\n $' + str(point) + '$'
+            n += 1
 
     # draw it
-    nx.draw_networkx_nodes(C, pos)
-    nx.draw_networkx_edges(C, pos, edgelist=edges, width=2)
+    nx.draw_networkx_nodes(C, pos, node_color='w')
+    nx.draw_networkx_nodes(C, pos, nodelist=final_nodes, node_color='w')
+    nx.draw_networkx_edges(C, pos, edgelist=edges)
     nx.draw_networkx_edges(C, pos, edgelist=final_edges,
                            edge_color='b', style='dashed')
-    nx.draw_networkx_labels(C, label_pos, labels=labels, font_size=16)
+    nx.draw_networkx_labels(C, pos, labels=labels, font_size=13)
 
+    plt.xticks([])
+    plt.yticks([])
     plt.show()
 
 
@@ -652,7 +640,7 @@ if __name__=='__main__':
     f12 = x**4 + y**4 - 1
     f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
-    f = f1
+    f = f2
 
     print("\nComputing monodromy...")
     hs = monodromy(f,x,y)
@@ -667,24 +655,31 @@ if __name__=='__main__':
     for mon in hs[-2]: print mon
 
     print("\nComputing Tretkoff Graph...")
-    C, final_edges = tretkoff_graph(hs)
-    print("Final edges:")
-    for e in final_edges: print e
+    C = tretkoff_graph(hs)
 
-    print("\nComputing c-cycles...")
-    c_cycles = compute_c_cycles(C, final_edges)
-    for c in c_cycles: print c
+    print("\nComputing final edges...")
+    e = map(lambda (ei,ej): (C.node[ei]['value'],C.node[ej]['value']),
+            final_edges(C))
+    for ei in e: print ei
+
+    show_homology(C)
+
 
     print("\nComputing intersection matrix and lincombs...")
-    K = intersection_matrix(C, final_edges, g)
+    edges = final_edges(C)
+    K = intersection_matrix(edges, g)
     T = frobenius_transform(K,g)
     J = numpy.dot(numpy.dot(T,K),T.T)
     print("K =\n%s\n\nT =\n%s\n\nJ =\n%s"%(K,T,J))
 
-    print("\nComputing a- and b-cycles")
-    a,b = compute_ab_cycles(c_cycles, T, g, C, None)
-    print("a-cycles:")
-    for ai in a: print ai
+#     print("\nComputing c-cycles...")
+#     c_cycles = compute_c_cycles(C, final_edges)
+#     for c in c_cycles: print c
 
-    print("b-cycles:")
-    for bi in b: print bi
+#     print("\nComputing a- and b-cycles")
+#     a,b = compute_ab_cycles(c_cycles, T, g, C, None)
+#     print("a-cycles:")
+#     for ai in a: print ai
+
+#     print("b-cycles:")
+#     for bi in b: print bi
