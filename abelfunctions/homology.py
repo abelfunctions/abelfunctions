@@ -348,21 +348,25 @@ def intersection_matrix(final_edges, g):
 	ei_start,ei_end = ei
 	ej_start,ej_end = ej
 
-        # if the starting node of ei lies before the starting node of ej
-	# then simply return the negative of the intersection (ej o ei).
-        if ei_start > ej_start:
+        # the intersection number changes sign when a single edge is
+        # reversed. normalize the edges such that the starting node of
+        # each edge occurs before the ending node and that ei's starting
+        # node occurs before ej's. (intersection is anti-symmetic)
+        if ei_start > ei_end:
+            return (-1)*intersection_number((ei[1],ei[0]),ej)
+        elif ej_start > ej_end:
+            return (-1)*intersection_number(ei,(ej[1],ej[0]))
+        elif ei_start > ej_start:
             return (-1)*intersection_number(ej,ei)
 
-	# finally, in the general case, we need to check the relative ordering
-	# of the ending nodes of the edges with the starting nodes.
-	else:
-	    if ((ej_start < ei_end < ej_end) or (ej_end < ej_start < ei_end)
-		or (ei_start < ej_end < ej_start)):
-		return 1
-	    elif (ej_end < ei_end < ej_start):
-		return -1
-	    else:
-		return 0
+        # after the above transformations, there is only one
+        # configuration resulting in a non-zero intersection number. (24
+        # total intersection possibilities / 2**3 = 3, because of three
+        # binary transformations)
+        if ej_start < ei_end < ej_end:
+            return 1
+        else:
+            return 0
 
 	raise ValueError('Unable to determine intersection index of ' + \
 			 'edge %s with edge %s'%(ei,ej))
@@ -640,7 +644,7 @@ if __name__=='__main__':
     f12 = x**4 + y**4 - 1
     f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
-    f = f2
+    f = f13
 
     print("\nComputing monodromy...")
     hs = monodromy(f,x,y)
