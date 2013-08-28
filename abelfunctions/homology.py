@@ -187,6 +187,7 @@ def tretkoff_graph(hurwitz_system):
     C.node[node]['label'] = "$0$"
     C.node[node]['final'] = False
     C.node[node]['level'] = 0
+    C.node[node]['nrots'] = 0
 
     # keep track of sheets and branch places that we've already
     # visited. initialize with the zero sheet and all branch places
@@ -256,7 +257,7 @@ def tretkoff_graph(hurwitz_system):
                     if len(pi) > 1:
                         C.add_edge(node,succ)
                         C.node[succ]['value'] = value
-                        C.node[succ]['label'] = "$b_%d,%s$"%(idx,pi)
+                        C.node[succ]['label'] = "$b_{%d},%s$"%(idx,pi)
                         C.node[succ]['final'] = final
                         C.node[succ]['level'] = level+1
                         ctr += 1
@@ -293,6 +294,7 @@ def tretkoff_graph(hurwitz_system):
                     C.node[succ]['label'] = "$%d$"%(value)
                     C.node[succ]['final'] = final
                     C.node[succ]['level'] = level+1
+                    C.node[succ]['nrots'] = idx if idx <= n/2 else idx-n
                     ctr += 1
 
 	# we are done adding succesors to all endpoints at this
@@ -302,8 +304,26 @@ def tretkoff_graph(hurwitz_system):
     return C
 
 
+
 def final_edges(C):
     """
+    Returns a list of final edges from the homology graph.
+
+    The final edges are those that define the c-cycles on the Riemann
+    surface. Note that the edges returned are such that the nodes of the
+    edge are _both_ final nodes.
+
+    The final edges are ordered such that the sheet number appears first
+    in the edge.
+
+    Input:
+
+    - homology graph
+
+    Output:
+
+    - list of (ordered) tuples representing the final edges
+
     """
     final_nodes = [n for n in C.nodes() if C.node[n]['final']]
     edges = []
@@ -413,6 +433,7 @@ def compute_c_cycles(tretkoff_graph, final_edges):
     point, and "n_{i_k}" is the number of times and direction to go
     about branch point "b_{i_k}".
     """
+    root = tuple([0])
     C = tretkoff_graph
     c_cycles = []
 
@@ -423,18 +444,14 @@ def compute_c_cycles(tretkoff_graph, final_edges):
 	# obtain the vertices on the Tretkoff graph starting from the
 	# base place, going through the edge, and then back to the
 	# base_place
-	path_to_edge = nx.shortest_path(C,0,edge[0])
-	path_from_edge = nx.shortest_path(C,edge[1],0)
-	path = path_to_edge + path_from_edge
+        edge = map(lambda n: C.neighbors(n)[0], edge)
+	path_to_edge = nx.shortest_path(C,root,edge[0])
+	path_from_edge = nx.shortest_path(C,edge[1],root)
+        path = path_to_edge + path_from_edge
+        path_values = map(lambda n: C.node[n]['value'], path)
 
-	# the path information is currently of the form:
-	#
-	# [0, .., s_j, (b_{i_j}, pi_{i_j}), ...]
-	#
-	# (each odd element is a branch place - permutation pair.)
-	# replace with the roatational data stored in the graph
 	for n in range(1,len(path),2):
-	    branch_place = path[n]
+	    branch_place = path_values[n]
 
 	    # update the path entry (remember, Python uses references
 	    # to lists) if we are traveling the return path then
@@ -445,12 +462,11 @@ def compute_c_cycles(tretkoff_graph, final_edges):
 	    else:
 		prev_sheet = path[n-1]
 		nrots = - C.node[prev_sheet]['nrots']
-	    path[n] = (branch_place[0], nrots)
+	    path_values[n] = (branch_place[0], nrots)
 
-	c_cycles.append(path)
+        c_cycles.append(path_values)
 
     return c_cycles
-
 
 
 
@@ -644,7 +660,7 @@ if __name__=='__main__':
     f12 = x**4 + y**4 - 1
     f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
-    f = f13
+    f = f5
 
     print("\nComputing monodromy...")
     hs = monodromy(f,x,y)
@@ -668,7 +684,6 @@ if __name__=='__main__':
 
     show_homology(C)
 
-
     print("\nComputing intersection matrix and lincombs...")
     edges = final_edges(C)
     K = intersection_matrix(edges, g)
@@ -676,14 +691,13 @@ if __name__=='__main__':
     J = numpy.dot(numpy.dot(T,K),T.T)
     print("K =\n%s\n\nT =\n%s\n\nJ =\n%s"%(K,T,J))
 
-#     print("\nComputing c-cycles...")
-#     c_cycles = compute_c_cycles(C, final_edges)
-#     for c in c_cycles: print c
+    print("\nComputing c-cycles...")
+    c_cycles = compute_c_cycles(C, edges)
+    for c in c_cycles: print c
 
-#     print("\nComputing a- and b-cycles")
-#     a,b = compute_ab_cycles(c_cycles, T, g, C, None)
-#     print("a-cycles:")
-#     for ai in a: print ai
-
-#     print("b-cycles:")
-#     for bi in b: print bi
+    print("\nComputing a- and b-cycles")
+    a,b = compute_ab_cycles(c_cycles, T, g, C, None)
+    print("a-cycles:")
+    for ai in a: print ai
+    print("b-cycles:")
+    for bi in b: print bi
