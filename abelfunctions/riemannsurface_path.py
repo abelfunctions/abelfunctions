@@ -23,6 +23,8 @@ from matplotlib import cm
 from matplotlib.patches import Circle
 from matplotlib.collections import LineCollection
 
+from itertools import tee
+
 import pdb
 
 def factorial(n):
@@ -673,6 +675,45 @@ class RiemannSurfacePath(object):
         tpts_segment = numpy.linspace(0,1,n)
         return self.sample_points(tpts_segment)
 
+
+    def plot(self,N,**kwds):
+        nSegs = len(self.PathSegments)
+        ppseg = N #N/nSegs
+        tpts_seg = numpy.linspace(0,1,ppseg)
+
+        # create figure
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        colors_backup = ax._get_lines.color_cycle
+
+        # plot each segment
+        for k in range(nSegs):
+            Segment = self.PathSegments[k]
+            Pseg = Segment.sample_points(tpts_seg)
+            xseg,yseg = zip(*Pseg)
+            yseg = zip(*yseg)
+
+            colors,colors_backup = tee(colors_backup)
+
+            for yy in yseg:
+                color = colors.next()
+                yy = numpy.array(yy,dtype=numpy.complex)
+
+                # jibba jabba
+                if k == 0:
+                    ax.plot([1],yy[0].real,'o',color=color,
+                            markersize=16)
+
+                tseg = (tpts_seg+k)/nSegs
+                ax.plot(tseg,yy.real,'-',tseg,yy.imag,'--',
+                                 color=color,**kwds)
+
+        ax.xaxis.set_ticks([numpy.double(k)/len(self.PathSegments)
+                             for k in range(len(self.PathSegments)+1)])
+        ax.grid(True,which='major')
+
+        fig.show()
+
     def plot_differential(self,omega,x,y,N):
         """
         Plots the differential `omega = omega(x,y) dx` on the path.
@@ -755,7 +796,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f = y**3 - x**3*y + x**7
+    f = f9
 
     class DummyRiemannSurface(object):
         def __init__(self,f,x,y):
@@ -763,52 +804,79 @@ if __name__=='__main__':
             self.x = x
             self.y = y
 
-    print "=== (computing holomorphic differentials)"
-    from abelfunctions.differentials import differentials
-    omega = differentials(f,x,y)[0]
-    print "omega =", omega
+    print "=== computing monodromy graph and base info ==="
+    from abelfunctions.monodromy import monodromy_graph, show_paths
+    G = monodromy_graph(f,x,y)
+    base_point = G.node[0]['basepoint']
+    base_sheets = G.node[0]['baselift']
+    branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
-    #
-    # path #0 construction
-    #
-    z0 = numpy.complex(-2)
-    z1 = numpy.complex(-1)
-    z2 = numpy.complex(-1.5 + 1.0j)
-    z3 = numpy.complex(-2.5 + 1.0j)
-    path_segment_data0 = [(z0,z1),(z1,z2),(z2,z3),(z3,z0)]
-    x0 = z0
-    y0 = polyroots(f,x,y,x0)
-    P0 = (x0,y0)
-    RS = DummyRiemannSurface(f,x,y)
+    print "=== showing path ==="
+    show_paths(G)
 
-    print "\n=== (constructing path #0)"
-    gamma0 = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data0)
+    print "=== constructing path around branch point ==="
+    bpt_index = 15
+#    path_segment_data = path_around_branch_point(G,bpt_index,1,
+#                                                 with_conjugates=False)
+    path_segment_data = path_around_infinity(G,-1)
+    gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
+                               path_segment_data=path_segment_data)
 
-    print "=== (plotting differential on path #0)"
-    gamma0.plot_differential(omega,x,y,N=64)
+    print "=== fibre change ==="
+    print "\toriginal\tnew\t"
+    n = len(base_sheets)
+    for k in range(n):
+        print "\t%s\t%s"%(base_sheets[k],gamma(1.0)[1][k])
 
-    print "=== (integrating differential on path #0)"
-    integral = gamma0.integrate(omega,x,y)
-    print "\tvalue:", integral
+    gamma.plot(32)
 
-    pi = numpy.pi
-    R = numpy.double(1.0)
-    w = numpy.complex(-2)
-    path_segment_data1 = [
-        (R,w,0,1),
-        (R,w,pi,1),
-        ]
-    x0 = w+R
-    y0 = polyroots(f,x,y,x0)
-    P0 = (x0,y0)
-    RS = DummyRiemannSurface(f,x,y)
+#     print "=== (computing holomorphic differentials)"
+#     from abelfunctions.differentials import differentials
+#     omega = differentials(f,x,y)[0]
 
-    print "\n=== (constructing path #1)"
-    gamma1 = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data1)
+#     print "omega =", omega
 
-    print "=== (plotting differential on path #1)"
-    gamma1.plot_differential(omega,x,y,N=128)
+#     #
+#     # path #0 construction
+#     #
+#     z0 = numpy.complex(-2)
+#     z1 = numpy.complex(-1)
+#     z2 = numpy.complex(-1.5 + 1.0j)
+#     z3 = numpy.complex(-2.5 + 1.0j)
+#     path_segment_data0 = [(z0,z1),(z1,z2),(z2,z3),(z3,z0)]
+#     x0 = z0
+#     y0 = polyroots(f,x,y,x0)
+#     P0 = (x0,y0)
+#     RS = DummyRiemannSurface(f,x,y)
 
-    print "=== (integrating differential on path #1)"
-    integral = gamma1.integrate(omega,x,y)
-    print "\tvalue:", integral
+#     print "\n=== (constructing path #0)"
+#     gamma0 = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data0)
+
+#     print "=== (plotting differential on path #0)"
+#     gamma0.plot_differential(omega,x,y,N=64)
+
+#     print "=== (integrating differential on path #0)"
+#     integral = gamma0.integrate(omega,x,y)
+#     print "\tvalue:", integral
+
+#     pi = numpy.pi
+#     R = numpy.double(1.0)
+#     w = numpy.complex(-2)
+#     path_segment_data1 = [
+#         (R,w,0,1),
+#         (R,w,pi,1),
+#         ]
+#     x0 = w+R
+#     y0 = polyroots(f,x,y,x0)
+#     P0 = (x0,y0)
+#     RS = DummyRiemannSurface(f,x,y)
+
+#     print "\n=== (constructing path #1)"
+#     gamma1 = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data1)
+
+#     print "=== (plotting differential on path #1)"
+#     gamma1.plot_differential(omega,x,y,N=128)
+
+#     print "=== (integrating differential on path #1)"
+#     integral = gamma1.integrate(omega,x,y)
+#     print "\tvalue:", integral

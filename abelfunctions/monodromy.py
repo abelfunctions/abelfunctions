@@ -858,7 +858,7 @@ if __name__=='__main__':
 #     print 'a*b*c',a*b*c
 #     print '== id',(a*b*c).is_identity()
 
-    f = f1
+    f = f9
 
     print "Computing monodromy graph of", f
     G = monodromy_graph(f,x,y)

@@ -592,7 +592,7 @@ def homology(f,x,y):
     K = intersection_matrix(edges,g)
     T = frobenius_transform(K,g)
 
-    c_cycles = compute_c_cycles(C, final_edges)
+    c_cycles = compute_c_cycles(C, edges)
     a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
     return a_cycles, b_cycles
 
@@ -660,7 +660,7 @@ if __name__=='__main__':
     f12 = x**4 + y**4 - 1
     f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
-    f = f5
+    f = f9
 
     print("\nComputing monodromy...")
     hs = monodromy(f,x,y)
