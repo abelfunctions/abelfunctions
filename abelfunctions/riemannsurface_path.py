@@ -642,10 +642,10 @@ class RiemannSurfacePath(object):
             return self.PathSegments[-1]._checkpoints[-1][1]
 
         n = len(self.PathSegments)
-        seg_index = floor(t*n)
+        seg_index = int(numpy.floor(t*n))
         seg_t = t*n - seg_index
         Segment = self.PathSegments[seg_index]
-        return Segment.analytically_contine(seg_t,checkpoint=checkpoint)
+        return Segment.analytically_continue(seg_t,checkpoint=checkpoint)
 
     def integrate(self,omega,x,y):
         """
@@ -815,10 +815,11 @@ if __name__=='__main__':
     show_paths(G)
 
     print "=== constructing path around branch point ==="
-    bpt_index = 15
-#    path_segment_data = path_around_branch_point(G,bpt_index,1,
-#                                                 with_conjugates=False)
-    path_segment_data = path_around_infinity(G,-1)
+    bpt_index = 2
+    print '\tbranch point: %s'%(bpt_index)
+    print '\tconjugates:   %s'%(G.node[bpt_index]['conjugates'])
+    path_segment_data = path_around_branch_point(G,bpt_index,1)
+#    path_segment_data = path_around_infinity(G,-1)
     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
                                path_segment_data=path_segment_data)
 
