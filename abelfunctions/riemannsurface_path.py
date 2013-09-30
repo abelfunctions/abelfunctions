@@ -229,7 +229,7 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
             prev_edge_index = G[prev_node][curr_node]['index']
         if prev_edge_index[1] != curr_edge_index[0]:
             arg = pi if prev_edge_index[1] == -1 else 0
-            dir = -1 if prev_node in conjugates else 1 # XXX
+            dir = -1 if curr_node in conjugates else 1 # XXX
             path_data.append((curr_radius, curr_value, arg, dir))
 
         # Add the line to the next discriminant point.
@@ -352,7 +352,7 @@ class RiemannSurfacePathSegment():
     All Riemann surface paths have either line segments or semi-circles as the
     x-plane part of the path.
     """
-    def __init__(self,RS,P0,n_checkpoints=8):
+    def __init__(self,RS,P0,n_checkpoints=10):
         """
         Construct a RiemannSurfacePathSegment
 
@@ -557,7 +557,7 @@ class RiemannSurfacePathSegment():
 
 
 class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
-    def __init__(self,RS,P0,z0,z1,n_checkpoints=3):
+    def __init__(self,RS,P0,z0,z1,n_checkpoints=12):
         self.z0 = z0
         self.z1 = z1
         RiemannSurfacePathSegment.__init__(self,RS,P0)
@@ -570,7 +570,7 @@ class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
 
 
 class RiemannSurfacePathSegment_Semicircle(RiemannSurfacePathSegment):
-    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=5):
+    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=12):
         self.R = R
         self.w = w
         self.arg = arg
@@ -621,7 +621,6 @@ class RiemannSurfacePath(object):
         return self.analytically_continue(t,checkpoint=checkpoint)
 
     def _initialize_segments(self,path_segment_data):
-        one = numpy.double(1.0)
         Pi = self.P0
         for datum in path_segment_data:
             # construct path segment from segment data
@@ -675,8 +674,38 @@ class RiemannSurfacePath(object):
         tpts_segment = numpy.linspace(0,1,n)
         return self.sample_points(tpts_segment)
 
+    def plot_x(self,N,**kwds):
+        nSegs = len(self.PathSegments)
+        ppseg = N #N/nSegs
+        tpts_seg = numpy.linspace(0,1,ppseg)
 
-    def plot(self,N,**kwds):
+        # create figure
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+
+        # plot each segment
+        eps = 0.02
+        ctr = 0
+        for k in range(nSegs):
+            Segment = self.PathSegments[k]
+            Pseg = Segment.sample_points(tpts_seg)
+            xseg,yseg = zip(*Pseg)
+            xseg = numpy.array(xseg,dtype=numpy.complex)
+
+            for xx in xseg:
+                if k <= nSegs/2:
+                    ax.text(xx.real,xx.imag-eps,str(ctr),fontsize=9)
+                else:
+                    ax.text(xx.real,xx.imag+eps,str(ctr),fontsize=9)
+
+                ctr += 1
+
+            ax.plot(xseg.real,xseg.imag,'b')
+
+        fig.show()
+
+
+    def plot_y(self,N,**kwds):
         nSegs = len(self.PathSegments)
         ppseg = N #N/nSegs
         tpts_seg = numpy.linspace(0,1,ppseg)
@@ -815,7 +844,7 @@ if __name__=='__main__':
     show_paths(G)
 
     print "=== constructing path around branch point ==="
-    bpt_index = 2
+    bpt_index = 1
     print '\tbranch point: %s'%(bpt_index)
     print '\tconjugates:   %s'%(G.node[bpt_index]['conjugates'])
     path_segment_data = path_around_branch_point(G,bpt_index,1)
@@ -829,7 +858,8 @@ if __name__=='__main__':
     for k in range(n):
         print "\t%s\t%s"%(base_sheets[k],gamma(1.0)[1][k])
 
-    gamma.plot(32)
+    gamma.plot_x(6)
+    gamma.plot_y(32)
 
 #     print "=== (computing holomorphic differentials)"
 #     from abelfunctions.differentials import differentials

@@ -738,7 +738,7 @@ def show_paths(G):
 
 
 @cached_function
-def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
+def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,roots=None):
     """
     Returns information about the monodromy group of the Riemann
     surface associated with the plane complex algebraic curve ``f(x,y)
@@ -777,6 +777,8 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
       path
     """
     deg = sympy.degree(f,y)
+
+    # if a base point is provided, compute the monodromy graph as usual
     G = monodromy_graph(f,x,y,kappa=kappa)
     base_point = G.node[0]['basepoint']
     base_sheets = G.node[0]['baselift']
@@ -800,6 +802,12 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
         else:
             mon.append(phi)
 
+    ###########################################################################
+    print '###MONODROMY!###'
+    for bbpptt, mmoonn in zip(branch_points,mon):
+        print '%s\t%s'%(bbpptt,mmoonn)
+    ###########################################################################
+
     # XXX convert monodromy to both mpmath and numpy later
     branch_points = map(numpy.complex,
                         [bpt for bpt in branch_points if bpt != None])
@@ -814,10 +822,12 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8):
     # branch point list. if not add the permutation to the
     # monodromy group
     phi = matching_permutation(base_sheets,yend)
+
+    print '\tinfinity\t%s'%phi
     if not phi.is_identity():
         # test that the product of the finite monodromy group elements is
         # equal to the inverse of the permuatation at infinity
-        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon)
+        phi_prod = reduce(lambda phi1,phi2: phi1*phi2, mon)
         phi_prod = phi_prod * phi
         if phi_prod.is_identity():
             branch_points.append(sympy.oo)
