@@ -372,13 +372,18 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     #     - bd_index = index of bd. its ranking in the sorted
     #                  discriminant points
     key = lambda z: 100*sympy.mpmath.re(z) - sympy.mpmath.im(z)
-    cmp = lambda z: sympy.mpmath.arg(z-b0) #XXX deterministic ordering!!!
+    def cmp(z,b0=None):
+        """
+        Compare by angle, first, and then by distance from the
+        base point.
+        """
+        return (sympy.mpmath.arg(z-b0),sympy.mpmath.absmax(z-b0))
+
     bd  = min(disc_pts, key=key)
     base_radius = min( [sympy.mpmath.absmax(bd - bi) for bi in disc_pts
                         if bi != bd] + [10] ) * kappa / 2.0
-
     b0 = bd - base_radius
-    disc_pts = sorted(disc_pts, key=cmp)
+    disc_pts = sorted(disc_pts, key=lambda z: cmp(z,b0=b0))
     bd_index = disc_pts.index(bd)
 
     # XXX UGLY...but I can't find a better way to convert a polynomial
@@ -436,7 +441,6 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
         elif d < -R: G[i][k]['index'] = (-1,1)
         else:        G[i][k]['index'] = (-1,-1)
 
-
     # Comptues the vertex types as defined in [FKS]:
     #
     # * 'node'     -- a parent vertex of the graph with multiple children
@@ -489,8 +493,6 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
         G.node[bd_index]['type'] = 'v-point node'
     else:
         G.node[bd_index]['type'] = 'node'
-
-
 
     #
     # Comptue the graph node conjugates so as to establisht he proper
@@ -865,21 +867,21 @@ if __name__=='__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     f11= x**5 + y**5 - 1
 
-    f = f2
+    f = f10
 
     print "Computing monodromy of", f
     I = 1.0j
-#     # f10
-#     base_point = -1.43572291547089
-#     base_sheets =[-1.93155860973,
-#                    -0.141326328588,
-#                    1.03644246916 - 0.404482364824*I,
-#                    1.03644246916 + 0.404482364824*I]
-    # f2
-    base_point = -1.44838920232100
-    base_sheets = [-3.20203812255,
-                    1.60101906127-1.26997391750*I,
-                    1.60101906127+1.26997391750*I]
+    # f10
+    base_point = -1.43572291547089
+    base_sheets =[-1.93155860973,
+                   -0.141326328588,
+                   1.03644246916 - 0.404482364824*I,
+                   1.03644246916 + 0.404482364824*I]
+#     # f2
+#     base_point = -1.44838920232100
+#     base_sheets = [-3.20203812255,
+#                     1.60101906127-1.26997391750*I,
+#                     1.60101906127+1.26997391750*I]
 
     base_point, base_sheets, branch_points, mon, G = \
         monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
