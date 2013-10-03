@@ -133,6 +133,9 @@ class Permutation(object):
     def __contains__(self, item):
         return self._list.__contains__(item)
 
+    def __eq__(self, other):
+        return self._list == other._list
+
     def __mul__(self, other):
         return self.__rmul__(other)
 
@@ -369,7 +372,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     #     - bd_index = index of bd. its ranking in the sorted
     #                  discriminant points
     key = lambda z: 100*sympy.mpmath.re(z) - sympy.mpmath.im(z)
-    cmp = lambda z: sympy.mpmath.arg(z-b0)
+    cmp = lambda z: sympy.mpmath.arg(z-b0) #XXX deterministic ordering!!!
     bd  = min(disc_pts, key=key)
     base_radius = min( [sympy.mpmath.absmax(bd - bi) for bi in disc_pts
                         if bi != bd] + [10] ) * kappa / 2.0
@@ -738,7 +741,7 @@ def show_paths(G):
 
 
 @cached_function
-def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,roots=None):
+def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,base_sheets=None):
     """
     Returns information about the monodromy group of the Riemann
     surface associated with the plane complex algebraic curve ``f(x,y)
@@ -778,17 +781,32 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,roots=None):
     """
     deg = sympy.degree(f,y)
 
-    # if a base point is provided, compute the monodromy graph as usual
+    # we still use the default base point to determine branch point
+    # ordering in monodromy_graph(). the custom base_points and
+    # base_sheets are used in the analytic continuation phase
     G = monodromy_graph(f,x,y,kappa=kappa)
-    base_point = G.node[0]['basepoint']
-    base_sheets = G.node[0]['baselift']
+    custom_base_point = True
+    custom_base_sheets = True
+    if not base_point:
+        base_point = G.node[0]['basepoint']
+        custom_base_point = False
+    if not base_sheets:
+        base_sheets = G.node[0]['baselift']
+        custom_base_sheets = False
+
     branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
     mon = []
     for i in G.nodes():
         # compute path segments to path around b_i and analytically
-        # continuing the base_fibre
+        # continuing the base_fibre. if a custom base point was
+        # provided then add the appropriate path segment data
         path_segment_data = path_around_branch_point(G,i,1)
+        if custom_base_point:
+            seg = (base_point, G.node[0]['basepoint'])
+            path_segment_data = [seg] + path_segment_data + \
+                [tuple(reversed(seg))]
+
         gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
                                    path_segment_data=path_segment_data)
         yend = gamma(1)[1]
@@ -801,12 +819,6 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,roots=None):
             branch_points[i] = None
         else:
             mon.append(phi)
-
-    ###########################################################################
-    print '###MONODROMY!###'
-    for bbpptt, mmoonn in zip(branch_points,mon):
-        print '%s\t%s'%(bbpptt,mmoonn)
-    ###########################################################################
 
     # XXX convert monodromy to both mpmath and numpy later
     branch_points = map(numpy.complex,
@@ -822,12 +834,10 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,roots=None):
     # branch point list. if not add the permutation to the
     # monodromy group
     phi = matching_permutation(base_sheets,yend)
-
-    print '\tinfinity\t%s'%phi
     if not phi.is_identity():
         # test that the product of the finite monodromy group elements is
         # equal to the inverse of the permuatation at infinity
-        phi_prod = reduce(lambda phi1,phi2: phi1*phi2, mon)
+        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon)
         phi_prod = phi_prod * phi
         if phi_prod.is_identity():
             branch_points.append(sympy.oo)
@@ -850,49 +860,53 @@ if __name__=='__main__':
     f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
     f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
     f7 = y**3 - (x**3 + y)**2 + 1
-    f8 = (x**6)*y**3 + 2*x**3*y - 1
+    f8 = x**2*y**6 + 2*x**3*y**5 - 1
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+    f11= x**5 + y**5 - 1
 
-
-#     a = Permutation([[1,2],[0,3]])
-#     b = Permutation([[0],[1,2],[3]])
-#     c = Permutation([[0,3],[1],[2]])
-
-#     print 'a    ', a
-#     print 'b    ', b
-#     print 'c    ', c
-#     print
-#     print 'a*b  ',a*b
-#     print 'a*c  ',a*c
-#     print 'a*b*c',a*b*c
-#     print '== id',(a*b*c).is_identity()
-
-    f = f9
-
-    print "Computing monodromy graph of", f
-    G = monodromy_graph(f,x,y)
-    base_point = G.node[0]['basepoint']
-    base_sheets = G.node[0]['baselift']
-    branch_points = [data['value'] for node,data in G.nodes(data=True)]
-
-    show_paths(G)
+    f = f2
 
     print "Computing monodromy of", f
-    mon = monodromy(f,x,y)
-    base_point, base_sheets, branch_points, m, G = mon
+    I = 1.0j
+#     # f10
+#     base_point = -1.43572291547089
+#     base_sheets =[-1.93155860973,
+#                    -0.141326328588,
+#                    1.03644246916 - 0.404482364824*I,
+#                    1.03644246916 + 0.404482364824*I]
+    # f2
+    base_point = -1.44838920232100
+    base_sheets = [-3.20203812255,
+                    1.60101906127-1.26997391750*I,
+                    1.60101906127+1.26997391750*I]
+
+    base_point, base_sheets, branch_points, mon, G = \
+        monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
 
     print "\nbase point:"
     print base_point
     print "\nbase_sheets:"
     for sheet in base_sheets: print sheet
     print "\nmonodromy:"
-    for mi,bpt in zip(m,branch_points): print '%s\t%s'%(bpt,mi)
+    mon_row ="{:>32}"*2
+    for mi,bpt in zip(mon,branch_points):
+        print mon_row.format(bpt,str(mi)[1:-1])
 
-#     import cProfile, pstats
-#     cProfile.run('mon = M.monodromy()','monodromy.profile')
-#     p = pstats.Stats('monodromy.profile')
-#     p.strip_dirs()
-#     p.sort_stats('time').print_stats(25)
-#     p.sort_stats('cumulative').print_stats(25)
-#     p.sort_stats('calls').print_stats(25)
+
+    # additional testing of particular branch points
+    print "Constructing a test path..."
+    path_segment_data = path_around_branch_point(G,3,1)
+    seg = (base_point, G.node[0]['basepoint'])
+    path_segment_data = [seg] + path_segment_data + \
+        [tuple(reversed(seg))]
+    gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
+                               path_segment_data=path_segment_data)
+
+# #     import cProfile, pstats
+# #     cProfile.run('mon = M.monodromy()','monodromy.profile')
+# #     p = pstats.Stats('monodromy.profile')
+# #     p.strip_dirs()
+# #     p.sort_stats('time').print_stats(25)
+# #     p.sort_stats('cumulative').print_stats(25)
+# #     p.sort_stats('calls').print_stats(25)

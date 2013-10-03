@@ -714,6 +714,7 @@ class RiemannSurfacePath(object):
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         colors_backup = ax._get_lines.color_cycle
+        deg = len(self.y0)
 
         # plot each segment
         for k in range(nSegs):
@@ -724,22 +725,20 @@ class RiemannSurfacePath(object):
 
             colors,colors_backup = tee(colors_backup)
 
+            j = -1
             for yy in yseg:
+                if k != 0: j = None
+                else:      j += 1
                 color = colors.next()
                 yy = numpy.array(yy,dtype=numpy.complex)
-
-                # jibba jabba
-                if k == 0:
-                    ax.plot([1],yy[0].real,'o',color=color,
-                            markersize=16)
-
                 tseg = (tpts_seg+k)/nSegs
                 ax.plot(tseg,yy.real,'-',tseg,yy.imag,'--',
-                                 color=color,**kwds)
+                                 color=color,label=j,**kwds)
 
         ax.xaxis.set_ticks([numpy.double(k)/len(self.PathSegments)
                              for k in range(len(self.PathSegments)+1)])
         ax.grid(True,which='major')
+        ax.legend(loc='best')
 
         fig.show()
 
