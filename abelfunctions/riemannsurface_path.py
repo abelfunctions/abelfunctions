@@ -782,9 +782,9 @@ class RiemannSurfacePath(object):
         # plotting: first axis is the x-path, second axis is the y-path, and
         # third axis is the value fo the differential along the path
         fig = plt.figure()
-        ax1 = fig.add_subplot(1,3,1)
-        ax2 = fig.add_subplot(1,3,2)
-        ax3 = fig.add_subplot(1,3,3)
+        ax1 = fig.add_subplot(2,2,1)
+        ax2 = fig.add_subplot(2,2,3)
+        ax3 = fig.add_subplot(1,2,2)
 
         ax1.plot(xx.real,xx.imag,'b.-')
         ax2.plot(yy.real,yy.imag,'g.-')
