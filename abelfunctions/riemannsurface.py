@@ -28,10 +28,12 @@ class RiemannSurface(object):
     Class for defining a Riemann surface corresponding to a plane algebraic
     curve.
     """
-    def __init__(self,f,x,y):
+    def __init__(self,f,x,y,base_point=None,base_sheets=None):
         self.f = f
         self.x = x
         self.y = y
+        self._base_point=base_point
+        self._base_sheets=base_sheets
 
     def __repr__(self):
         return "Riemann surface defined by the algebraic curve %s." %(self.f)
@@ -51,8 +53,8 @@ class RiemannSurface(object):
     def monodromy(self):
         """
         """
-        return monodromy(self.f,self.x,self.y)
-
+        return monodromy(self.f,self.x,self.y,base_point=self._base_point,
+                         base_sheets=self._base_sheets)
 
     def monodromy_graph(self):
         """
@@ -153,6 +155,13 @@ class RiemannSurface(object):
                     bpt_path_segdat = path_around_branch_point(G,bpt_index,rot)
                 path_segment_data.extend(bpt_path_segdat)
 
+            # if a custom base point is provided then add the
+            # appropriate path segment data
+            if self._base_point:
+                seg = (self.base_point(), G.node[0]['basepoint'])
+                path_segment_data = [seg] + path_segment_data + \
+                    [tuple(reversed(seg))]
+
             # Construct the RiemannSurfacePath and append to path list
             x0 = self.base_point()
             y0 = self.base_lift()
@@ -202,9 +211,11 @@ class RiemannSurface(object):
             Ai = []
             Bi = []
             for j in xrange(g):
+                print "A[%d,%d]"%(i,j)
                 integral = self.integrate(omega,x,y,cycles[j])
                 Ai.append(integral)
 
+                print "B[%d,%d]"%(i,j)
                 integral = self.integrate(omega,x,y,cycles[j+g])
                 Bi.append(integral)
 
@@ -246,8 +257,15 @@ if __name__ == '__main__':
 
 
     f = f2
-    X = RiemannSurface(f,x,y)
 
+    # f2
+    I = 1.0j
+    base_point = -1.44838920232100
+    base_sheets = [-3.20203812255,
+                    1.60101906127-1.26997391750*I,
+                    1.60101906127+1.26997391750*I]
+
+    X = RiemannSurface(f,x,y,base_point=base_point,base_sheets=base_sheets)
 
     print "\n\tRS"
     print X
@@ -281,18 +299,18 @@ if __name__ == '__main__':
     diffs = X.holomorphic_differentials()
 
     print "\n\tRS: example plots"
-    paths[1].plot_differential(diffs[0],x,y,N=256)
+    paths[2].plot_differential(diffs[1],x,y,N=512)
 
 #    print "\n\tRS: computing paths"
 #    paths = X.cycle_paths()
 
-    print "\n\tRS: period matrix"
-    A,B = X.period_matrix()
-    Omega = numpy.dot(la.inv(A),B)
-    print "\n\tA = "
-    print A
-    print "\n\tB = "
-    print B
-    print "\n\tOmega (abelfunctions)"
-    print Omega
-    print
+#     print "\n\tRS: period matrix"
+#     A,B = X.period_matrix()
+#     Omega = numpy.dot(la.inv(A),B)
+#     print "\n\tA = "
+#     print A
+#     print "\n\tB = "
+#     print B
+#     print "\n\tOmega (abelfunctions)"
+#     print Omega
+#     print

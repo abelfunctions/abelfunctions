@@ -450,19 +450,22 @@ def compute_c_cycles(tretkoff_graph, final_edges):
         path = path_to_edge + path_from_edge
         path_values = map(lambda n: C.node[n]['value'], path)
 
-	for n in range(1,len(path),2):
-	    branch_place = path_values[n]
+        # convert branch places (branch point, permutation) to
+        # point-rotations pairs (branch point, number and direction of
+        # rotations)
+        for n in range(1,len(path),2):
+            branch_place = path_values[n]
 
-	    # update the path entry (remember, Python uses references
-	    # to lists) if we are traveling the return path then
-	    # reverse the rotations.
-	    if n < len(path_to_edge):
-		next_sheet = path[n+1]
-		nrots = C.node[next_sheet]['nrots']
-	    else:
-		prev_sheet = path[n-1]
-		nrots = - C.node[prev_sheet]['nrots']
-	    path_values[n] = (branch_place[0], nrots)
+            # update the path entry (remember, Python uses references to
+            # lists) if we are traveling the return path then reverse the
+            # rotations.
+            if n < len(path_to_edge):
+                next_sheet = path[n+1]
+                nrots = C.node[next_sheet]['nrots']
+            else:
+                prev_sheet = path[n-1]
+                nrots = - C.node[prev_sheet]['nrots']
+            path_values[n] = (branch_place[0], nrots)
 
         c_cycles.append(path_values)
 
@@ -567,14 +570,28 @@ def compute_ab_cycles(c_cycles, linear_combinations, g,
 
 
 @cached_function
-def homology(f,x,y):
+def homology(f,x,y,base_point=None,base_sheets=None):
     """
     Given a plane representation of a Riemann surface, that is, a
     complex plane algebraic curve, return a canonical basis for the
     homology of the Riemann surface.
+
+    Inputs:
+
+    - f,x,y: an algebraic curve in x and y.
+
+    - base_point: (optional) the base point of the monodromy group lying
+      in the complex x-plane
+
+    - base_sheets: (optional) perscribed ordering of the y-sheets lying
+    above the base_point
+
+    Outputs:
+
     """
     g = int(genus(f,x,y))
-    hurwitz_system = monodromy(f,x,y)
+    hurwitz_system = monodromy(f,x,y,base_point=base_point,
+                               base_sheets=base_sheets)
     base_point, base_sheets, branch_points, mon, G = hurwitz_system
 
     # compute primary data elements:
@@ -595,7 +612,6 @@ def homology(f,x,y):
     c_cycles = compute_c_cycles(C, edges)
     a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
     return a_cycles, b_cycles
-
 
 
 def show_homology(C):
@@ -660,10 +676,17 @@ if __name__=='__main__':
     f12 = x**4 + y**4 - 1
     f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
-    f = f9
+    f = f2
 
     print("\nComputing monodromy...")
-    hs = monodromy(f,x,y)
+    # f2
+    I = 1.0j
+    base_point = -1.44838920232100
+    base_sheets = [-3.20203812255,
+                    1.60101906127-1.26997391750*I,
+                    1.60101906127+1.26997391750*I]
+
+    hs = monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
     print("\nComputing genus...")
     g = int(genus(f,x,y))
     print("...genus = %d"%g)
