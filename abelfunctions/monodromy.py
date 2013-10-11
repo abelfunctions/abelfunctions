@@ -117,7 +117,7 @@ class Permutation(object):
         return str(self._cycles)
 
     def __repr__(self):
-        return self._list.__repr__()
+        return str(self._cycles)
 
     def __hash__(self):
         if self._hash is None:
@@ -827,7 +827,7 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,base_sheets=None):
                         [bpt for bpt in branch_points if bpt != None])
 
     # analytically continue around infinity. append if branch point
-    path_segment_data = path_around_infinity(G,-1)
+    path_segment_data = path_around_infinity(G,1)
     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
                                path_segment_data=path_segment_data)
     yend = gamma(1)[1]

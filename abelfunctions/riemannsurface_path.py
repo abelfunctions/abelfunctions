@@ -92,71 +92,46 @@ def polyroots(f,x,y,xi,types='numpy'):
     return sympy.mpmath.polyroots(coeffs)
 
 
-def _path_segments_from_path_data(path_data,circle_data,types='numpy'):
+def path_segments_from_cycle(cycle,G,base_point=None):
     """
-    Take data about the x-path and returns parameterizing functions.
+    Given a cycle, which is a list of the form
+
+        (...,s_i,(b_i,n_i),....)
+
+    where s_i is a sheet index, b_i is a branch point, and n_i is the
+    number of times and direction one goes around the branch point,
+    return a list of path segments parameterizing the input cycle.
+
+    The path segment is constructed by performing repeated calls to
+    path_around_granch_point() and path_around_infinity().
 
     Input:
 
-    - `path_data`: a list containing tuples
+    * cycle: a cycle in the form as output by homology()
 
-        (z0,z1)
+    * G: the monodromy graph, as output by monodromy()
 
-        or
-
-        (R,w,arg,d)
-
-        containing information about how to get to the final circle of
-        the x-path.
-
-    - `circle_data`: a list containing tuples (R,w,arg,d) describing
-      how to go around the circle.
-
-    Output:
-
-    [x(t),dxdt(t)]
+    * base_point: (optional) a custom base point
     """
     path_segments = []
-    if types == 'mpmath':
-        exp = sympy.mpmath.exp
-        pi = sympy.mpmath.pi
-        j = sympy.mpmath.j
-        cast_type = sympy.mpmath.mpc
-    else:
-        exp = numpy.exp
-        pi = numpy.pi
-        j = numpy.complex(1.0j)
-        cast_type = numpy.complex
 
-    # Add the segments leading up to the branch point circle
-    for datum in path_data:
-        if len(datum) == 2:
-            z0,z1 = map(cast_type,datum)
-            path_part = _line_path(a=z0,b=z1)
+    # for each (branch point, rotation number) pair appearing in the
+    # cycle, determine the path segments in the complex x-plane going
+    # around that branch point "rotation number" number of times
+    branch_points = [data['value'] for key,data in G.nodes(data=True)]
+    for (bpt,rot) in cycle[1::2]:
+        if (bpt == sympy.oo) or (bpt == numpy.Inf):
+            bpt_path_seg = path_around_infinity(G,rot)
         else:
-            R,w,arg,dir = map(cast_type,datum)
-            path_part = _circle_path(R=R,w=w,arg=arg,dir=dir,exp=exp,
-                                     I=j,PI=pi,rev=False)
-        path_segments.append(path_part)
+            idx = branch_points.index(bpt)
+            bpt_path_seg = path_around_branch_point(G,idx,rot)
+        path_segments.extend(bpt_path_seg)
 
-    # Add the semicircle segments going around the branch point
-    for datum in circle_data:
-        R,w,arg,dir = map(cast_type,datum)
-        path_part = _circle_path(R=R,w=w,arg=arg,dir=dir,exp=exp,I=j,PI=pi)
-        path_segments.append(path_part)
-
-    # Add the reversed path segments leading back to the base point
-    # (to reverse these paths, simply make the transformation t |-->
-    # (1-t) )
-    for datum in reversed(path_data):
-        if len(datum) == 2:
-            z0,z1 = map(cast_type,datum)
-            path_part = _line_path(a=z1,b=z0)
-        else:
-            R,w,arg,dir = map(cast_type,datum)
-            path_part = _circle_path(R=R,w=w,arg=arg,dir=dir,exp=exp,
-                                     I=j,PI=pi,rev=True)
-        path_segments.append(path_part)
+    # if a custom base point is provided then add a line segment going
+    # from the custom base point to the default one chosen by monodromy
+    if base_point:
+        seg = (base_point, G.node[0]['basepoint'])
+        path_segments = [seg] + path_segments + [tuple(reversed(seg))]
 
     return path_segments
 
@@ -319,7 +294,7 @@ def path_around_infinity(G, rot, types='numpy'):
     z0 = CC(base_point)
     arg0 = arg(z0)               # starting angle on the circle
     z1 = CC((z0/abs(z0))*radius) # starting point on the circle
-    dir = 1 if rot > 0 else -1
+    dir = -1 if rot > 0 else 1   #XXX
 
     # construct path
     if abs(base_point - z1) > 1e-14:
@@ -503,12 +478,14 @@ class RiemannSurfacePathSegment():
             xi,yi = self.analytically_continue(ti)
             return omega(xi,yi[0]) * dxdt
 
-        # integrate the real an imaginary parts
-        re = scipy.integrate.romberg(lambda t: integrand(t).real,0,1,
-                                     **kwds)
-        im = scipy.integrate.romberg(lambda t: integrand(t).imag,0,1,
-                                     **kwds)
-        return re + 1.0j*im
+#         # integrate the real an imaginary parts
+#         re = scipy.integrate.romberg(lambda t: integrand(t).real,0,1,
+#                                      **kwds)
+#         im = scipy.integrate.romberg(lambda t: integrand(t).imag,0,1,
+#                                      **kwds)
+#         return re + 1.0j*im
+        return scipy.integrate.romberg(integrand,0,1,**kwds)
+
 
     def sample_points(self,tpts):
         """
@@ -590,7 +567,7 @@ class RiemannSurfacePath(object):
     TODO: remove path_segment_data from constructor and replace with
     "automatic" path construction.
     """
-    def __init__(self,RS,P0,P1=None,path_segment_data=None):
+    def __init__(self, RS, P0, P1=None, path_segment_data=None):
         """
         Construct a Riemann surface path.
         """
@@ -709,7 +686,6 @@ class RiemannSurfacePath(object):
 
         fig.show()
 
-
     def plot_y(self,N,**kwds):
         nSegs = len(self.PathSegments)
         ppseg = N/nSegs
@@ -805,8 +781,8 @@ class RiemannSurfacePath(object):
 
         ax1.plot(xx.real,xx.imag,'b-',xc.real,xc.imag,'bo')
         ax2.plot(yy.real,yy.imag,'g-',yc.real,yc.imag,'go')
-        ax3.plot(tt,oo.real,'r')
-        ax3.plot(tt,oo.imag,'b')
+        ax3.plot(tt,oo.real,'b-')
+        ax3.plot(tt,oo.imag,'b--')
         ax3.xaxis.set_ticks([numpy.double(k)/len(self.PathSegments)
                              for k in range(len(self.PathSegments)+1)])
         ax3.grid(True,which='major')

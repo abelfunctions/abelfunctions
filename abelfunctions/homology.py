@@ -570,7 +570,7 @@ def compute_ab_cycles(c_cycles, linear_combinations, g,
 
 
 @cached_function
-def homology(f,x,y,base_point=None,base_sheets=None):
+def homology(f,x,y,base_point=None,base_sheets=None,verbose=True):
     """
     Given a plane representation of a Riemann surface, that is, a
     complex plane algebraic curve, return a canonical basis for the
@@ -585,6 +585,26 @@ def homology(f,x,y,base_point=None,base_sheets=None):
 
     - base_sheets: (optional) perscribed ordering of the y-sheets lying
     above the base_point
+
+    - verbose: (optional) return a dictionary containing the following
+      information
+
+      * 'basepoint' : the base point used in the monodromy group
+
+      * 'basesheets' : the base sheets (order matters) lying above the
+        base point
+
+      * 'c-cycles' : a list of intermediate cycles. linear combinations
+        of these make up the a- and b-cycles
+
+      * 'linearcombination' : a (2g x m) integer matrix, where g is the
+        genus of the curve f = f(x,y). the first g rows show which
+        linear combination of the c-cycles produce the a-cycles. the
+        second g rows give the b-cycles.
+
+      * 'a-cycles' : a list of the a-cycles
+
+      * 'b-cycles' : a list of the b-cycles
 
     Outputs:
 
@@ -611,7 +631,18 @@ def homology(f,x,y,base_point=None,base_sheets=None):
 
     c_cycles = compute_c_cycles(C, edges)
     a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
-    return a_cycles, b_cycles
+
+    if verbose:
+        return {
+            'basepoint': base_point,
+            'basesheets': base_sheets,
+            'c-cycles': c_cycles,
+            'linearcombinations': T[:2*g,:],
+            'a-cycles': a_cycles,
+            'b-cycles': b_cycles,
+            }
+    else:
+        return a_cycles, b_cycles
 
 
 def show_homology(C):
