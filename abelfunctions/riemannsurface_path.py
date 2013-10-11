@@ -352,7 +352,7 @@ class RiemannSurfacePathSegment():
     All Riemann surface paths have either line segments or semi-circles as the
     x-plane part of the path.
     """
-    def __init__(self,RS,P0,n_checkpoints=10):
+    def __init__(self,RS,P0,n_checkpoints=8):
         """
         Construct a RiemannSurfacePathSegment
 
@@ -367,10 +367,8 @@ class RiemannSurfacePathSegment():
           analytic continuation doesn't have to start from the beginning of the
           path
         """
-        # HACK. clean this up later. monodromy is the only function that calls
-        # RiemannSurfacePath wtihout first constructing a RiemannSurface
-        # object. Consider making monodromy inaccessible outside of
-        # RiemannSurface. (mondromy and homology are internal, anyway...)
+        # monodromy calls RiemannSurfacePath without first constructing
+        # a RiemannSurface object
         if isinstance(RS,tuple):
             self.RS = RS
             self.f,self.x,self.y = RS
@@ -494,7 +492,7 @@ class RiemannSurfacePathSegment():
         # the y-roots lying above that t-point
         return xip1, yip1
 
-    def integrate(self,omega,x,y):
+    def integrate(self,omega,x,y,**kwds):
         """
         Integrates a differential `omega(x,y) = h(x,y)dx` along the path
         segment.
@@ -507,9 +505,9 @@ class RiemannSurfacePathSegment():
 
         # integrate the real an imaginary parts
         re = scipy.integrate.romberg(lambda t: integrand(t).real,0,1,
-                                     tol=1e-14,rtol=1e-14,divmax=10)
+                                     **kwds)
         im = scipy.integrate.romberg(lambda t: integrand(t).imag,0,1,
-                                     tol=1e-14,rtol=1e-14,divmax=10)
+                                     **kwds)
         return re + 1.0j*im
 
     def sample_points(self,tpts):
@@ -557,10 +555,11 @@ class RiemannSurfacePathSegment():
 
 
 class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
-    def __init__(self,RS,P0,z0,z1,n_checkpoints=12):
+    def __init__(self,RS,P0,z0,z1,n_checkpoints=5):
         self.z0 = z0
         self.z1 = z1
-        RiemannSurfacePathSegment.__init__(self,RS,P0)
+        RiemannSurfacePathSegment.__init__(self,RS,P0,
+                                           n_checkpoints=n_checkpoints)
 
     def get_x(self,t):
         return self.z0*(1-t) + self.z1*t
@@ -570,12 +569,13 @@ class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
 
 
 class RiemannSurfacePathSegment_Semicircle(RiemannSurfacePathSegment):
-    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=12):
+    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=9):
         self.R = R
         self.w = w
         self.arg = arg
         self.dir = dir
-        RiemannSurfacePathSegment.__init__(self,RS,P0)
+        RiemannSurfacePathSegment.__init__(self,RS,P0,
+                                           n_checkpoints)
 
     def get_x(self,t):
         return self.R * numpy.exp(1.0j*(self.dir*numpy.pi*t+self.arg)) + self.w
@@ -646,13 +646,13 @@ class RiemannSurfacePath(object):
         Segment = self.PathSegments[seg_index]
         return Segment.analytically_continue(seg_t,checkpoint=checkpoint)
 
-    def integrate(self,omega,x,y):
+    def integrate(self,omega,x,y,**kwds):
         """
         Integrate the differential `omega(x,y) = h(x,y)dx` along the path.
         """
         integral = numpy.complex(0.0)
         for Segment in self.PathSegments:
-            integral += Segment.integrate(omega,x,y)
+            integral += Segment.integrate(omega,x,y,**kwds)
         return integral
 
     def sample_points(self,tpts_segment):
@@ -676,12 +676,13 @@ class RiemannSurfacePath(object):
 
     def plot_x(self,N,**kwds):
         nSegs = len(self.PathSegments)
-        ppseg = N #N/nSegs
+        ppseg = int(N/nSegs)
         tpts_seg = numpy.linspace(0,1,ppseg)
 
         # create figure
         fig = plt.figure()
-        ax = fig.add_subplot(1,1,1)
+        ax1 = fig.add_subplot(1,2,1)
+        ax2 = fig.add_subplot(1,2,2)
 
         # plot each segment
         eps = 0.02
@@ -691,23 +692,27 @@ class RiemannSurfacePath(object):
             Pseg = Segment.sample_points(tpts_seg)
             xseg,yseg = zip(*Pseg)
             xseg = numpy.array(xseg,dtype=numpy.complex)
+            dxseg = numpy.array([Segment.get_dxdt(ti) for ti in tpts_seg],
+                                dtype=numpy.complex)
+            tseg = (tpts_seg+k)/nSegs
 
             for xx in xseg:
                 if k <= nSegs/2:
-                    ax.text(xx.real,xx.imag-eps,str(ctr),fontsize=9)
+                    ax1.text(xx.real,xx.imag-eps,str(ctr),fontsize=9)
                 else:
-                    ax.text(xx.real,xx.imag+eps,str(ctr),fontsize=9)
+                    ax1.text(xx.real,xx.imag+eps,str(ctr),fontsize=9)
 
                 ctr += 1
 
-            ax.plot(xseg.real,xseg.imag,'b')
+            ax1.plot(xseg.real,xseg.imag,'b')
+            ax2.plot(tseg,dxseg.real,'b',tseg,dxseg.imag,'b--')
 
         fig.show()
 
 
     def plot_y(self,N,**kwds):
         nSegs = len(self.PathSegments)
-        ppseg = N #N/nSegs
+        ppseg = N/nSegs
         tpts_seg = numpy.linspace(0,1,ppseg)
 
         # create figure
@@ -765,19 +770,31 @@ class RiemannSurfacePath(object):
         yy = []
         tt = []
         oo = []
+        xc = []
+        yc = []
         for k in range(nSegs):
             Segment = self.PathSegments[k]
+
             xx_seg,yy_seg,oo_seg = pd(tpts_seg,Segment=Segment)
             xx.extend(xx_seg)
             yy.extend(yy_seg)
             tt.extend((tpts_seg+k)/nSegs)
             oo.extend(oo_seg)
 
+            # checkpoint values
+            ti,pc = zip(*Segment._checkpoints)
+            xck,ycallk = zip(*pc)
+            yck = zip(*ycallk)[0]
+            xc.extend(xck)
+            yc.extend(yck)
+
         # get the x- and y-path interpolating points
         xx = numpy.array(xx,dtype=numpy.complex)
         yy = numpy.array(yy,dtype=numpy.complex)
         tt = numpy.array(tt,dtype=numpy.double)
         oo = numpy.array(oo,dtype=numpy.complex)
+        xc = numpy.array(xc,dtype=numpy.complex)
+        yc = numpy.array(yc,dtype=numpy.complex)
 
         # plotting: first axis is the x-path, second axis is the y-path, and
         # third axis is the value fo the differential along the path
@@ -786,8 +803,8 @@ class RiemannSurfacePath(object):
         ax2 = fig.add_subplot(2,2,3)
         ax3 = fig.add_subplot(1,2,2)
 
-        ax1.plot(xx.real,xx.imag,'b.-')
-        ax2.plot(yy.real,yy.imag,'g.-')
+        ax1.plot(xx.real,xx.imag,'b-',xc.real,xc.imag,'bo')
+        ax2.plot(yy.real,yy.imag,'g-',yc.real,yc.imag,'go')
         ax3.plot(tt,oo.real,'r')
         ax3.plot(tt,oo.imag,'b')
         ax3.xaxis.set_ticks([numpy.double(k)/len(self.PathSegments)
@@ -824,7 +841,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f = f9
+    f = f2
 
     class DummyRiemannSurface(object):
         def __init__(self,f,x,y):
@@ -839,55 +856,64 @@ if __name__=='__main__':
     base_sheets = G.node[0]['baselift']
     branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
-    print "=== showing path ==="
-    show_paths(G)
-
     print "=== constructing path around branch point ==="
-    bpt_index = 1
+    bpt_index = 5
     print '\tbranch point: %s'%(bpt_index)
     print '\tconjugates:   %s'%(G.node[bpt_index]['conjugates'])
-    path_segment_data = path_around_branch_point(G,bpt_index,1)
-#    path_segment_data = path_around_infinity(G,-1)
+#    path_segment_data = path_around_branch_point(G,bpt_index,1)
+    path_segment_data = path_around_infinity(G,-3)
     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
                                path_segment_data=path_segment_data)
 
-    print "=== fibre change ==="
-    print "\toriginal\tnew\t"
-    n = len(base_sheets)
-    for k in range(n):
-        print "\t%s\t%s"%(base_sheets[k],gamma(1.0)[1][k])
-
-    gamma.plot_x(6)
-    gamma.plot_y(32)
-
-#     print "=== (computing holomorphic differentials)"
-#     from abelfunctions.differentials import differentials
-#     omega = differentials(f,x,y)[0]
-
-#     print "omega =", omega
+    print "=== (computing holomorphic differentials)"
+    from abelfunctions.differentials import differentials
+    omega = differentials(f,x,y)[1]
+    print "omega =", omega
 
 #     #
-#     # path #0 construction
+#     # path construction
 #     #
-#     z0 = numpy.complex(-2)
-#     z1 = numpy.complex(-1)
-#     z2 = numpy.complex(-1.5 + 1.0j)
-#     z3 = numpy.complex(-2.5 + 1.0j)
-#     path_segment_data0 = [(z0,z1),(z1,z2),(z2,z3),(z3,z0)]
-#     x0 = z0
+# #     z0 = numpy.complex(-1.5 + 0.0j)
+# #     z1 = numpy.complex(-1.5 - 1.0j)
+# #     z2 = numpy.complex(-2.5 - 1.0j)
+# #     z3 = numpy.complex(-2.5 + 0.0j)
+
+# #     z0 = numpy.complex(-0.5 + 0.5j)
+# #     z1 = numpy.complex(0.5 + 0.5j)
+# #     z2 = numpy.complex(0.5 - 0.5j)
+# #     z3 = numpy.complex(-0.5 - 0.5j)
+
+# #    path_segment_data0 = [(z0,z1),(z1,z2),(z2,z3),(z3,z0)]
+# #    x0 = z0
+
+#     R,w,arg,dir = 0.5,0,0,1
+#     path_segment_data = [
+#         (R,w,arg,dir),
+#         (R,w,arg+numpy.pi,dir),
+#         (R,w,arg,dir),
+#         (R,w,arg+numpy.pi,dir),
+#         ]
+#     x0 = R * numpy.exp(1.0j*arg) + w
+
+#     # compute y-roots, base_place, and corresponding riemann surface
 #     y0 = polyroots(f,x,y,x0)
 #     P0 = (x0,y0)
-#     RS = DummyRiemannSurface(f,x,y)
+#     RS = (f,x,y)
 
-#     print "\n=== (constructing path #0)"
-#     gamma0 = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data0)
+#     print "\n=== (constructing path)"
+#     gamma = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data)
 
-#     print "=== (plotting differential on path #0)"
-#     gamma0.plot_differential(omega,x,y,N=64)
+    gamma.plot_differential(omega,x,y,N=512)
+#     gamma.plot_x(N=128)
+#     gamma.plot_y(N=128)
 
-#     print "=== (integrating differential on path #0)"
-#     integral = gamma0.integrate(omega,x,y)
-#     print "\tvalue:", integral
+#     print "=== (plotting differential on path)"
+#     gamma.plot_differential(omega,x,y,N=128)
+
+    print "=== (integrating differential on path)"
+    integral = gamma.integrate(omega,x,y,show=True)
+    print "\tvalue:", integral
+
 
 #     pi = numpy.pi
 #     R = numpy.double(1.0)

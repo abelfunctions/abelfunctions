@@ -238,6 +238,7 @@ class RiemannSurface(object):
 
 if __name__ == '__main__':
     from sympy.abc import x,y
+    from abelfunctions.riemannsurface_path import polyroots
 
     f0 = y**3 - 2*x**3*y - x**8  # Klein curve
 
@@ -298,11 +299,8 @@ if __name__ == '__main__':
     print "\n\tRS: computing differentials"
     diffs = X.holomorphic_differentials()
 
-    print "\n\tRS: example plots"
-    paths[2].plot_differential(diffs[1],x,y,N=512)
-
-#    print "\n\tRS: computing paths"
-#    paths = X.cycle_paths()
+#     print "\n\tRS: computing paths"
+#     paths = X.cycle_paths()
 
 #     print "\n\tRS: period matrix"
 #     A,B = X.period_matrix()
@@ -314,3 +312,5 @@ if __name__ == '__main__':
 #     print "\n\tOmega (abelfunctions)"
 #     print Omega
 #     print
+
+    paths[3].plot_differential(diffs[1],x,y,N=1024)
