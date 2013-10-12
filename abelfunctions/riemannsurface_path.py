@@ -92,7 +92,7 @@ def polyroots(f,x,y,xi,types='numpy'):
     return sympy.mpmath.polyroots(coeffs)
 
 
-def path_segments_from_cycle(cycle,G,base_point=None):
+def path_segments_from_cycle(cycle, G, base_point=None):
     """
     Given a cycle, which is a list of the form
 
@@ -546,13 +546,13 @@ class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
 
 
 class RiemannSurfacePathSegment_Semicircle(RiemannSurfacePathSegment):
-    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=9):
+    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=8):
         self.R = R
         self.w = w
         self.arg = arg
         self.dir = dir
         RiemannSurfacePathSegment.__init__(self,RS,P0,
-                                           n_checkpoints)
+                                           n_checkpoints=n_checkpoints)
 
     def get_x(self,t):
         return self.R * numpy.exp(1.0j*(self.dir*numpy.pi*t+self.arg)) + self.w
@@ -567,7 +567,7 @@ class RiemannSurfacePath(object):
     TODO: remove path_segment_data from constructor and replace with
     "automatic" path construction.
     """
-    def __init__(self, RS, P0, P1=None, path_segment_data=None):
+    def __init__(self, RS, P0, P1=None, path_segments=None, cycle=None):
         """
         Construct a Riemann surface path.
         """
@@ -588,8 +588,16 @@ class RiemannSurfacePath(object):
         self.y0 = tuple(map(numpy.complex,P0[1]))
         self.P0 = (self.x0,self.y0)
 
+        # for convenience, if a cycle is provided instead of path segments
+        # then the path segments are computed
+        if cycle:
+            G = monodromy_graph(self.f,self.x,self.y)
+            path_segments = path_segments_from_cycle(cycle,G,base_point=P0[0])
+
+        # initialize the path segemnts with checkpoints by anaytically
+        # continuing
         self.PathSegments = []
-        self._initialize_segments(path_segment_data)
+        self._initialize_segments(path_segments)
 
     def __str__(self):
         return r'RiemannSurfacePath defined on the curve %s == 0'%self.f
@@ -651,7 +659,7 @@ class RiemannSurfacePath(object):
         tpts_segment = numpy.linspace(0,1,n)
         return self.sample_points(tpts_segment)
 
-    def plot_x(self,N,**kwds):
+    def plot_x(self,N,**kwds,segnum=None):
         nSegs = len(self.PathSegments)
         ppseg = int(N/nSegs)
         tpts_seg = numpy.linspace(0,1,ppseg)
@@ -817,7 +825,7 @@ if __name__=='__main__':
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
-    f = f2
+    f = f10
 
     class DummyRiemannSurface(object):
         def __init__(self,f,x,y):
@@ -832,83 +840,24 @@ if __name__=='__main__':
     base_sheets = G.node[0]['baselift']
     branch_points = [data['value'] for node,data in G.nodes(data=True)]
 
-    print "=== constructing path around branch point ==="
-    bpt_index = 5
-    print '\tbranch point: %s'%(bpt_index)
-    print '\tconjugates:   %s'%(G.node[bpt_index]['conjugates'])
-#    path_segment_data = path_around_branch_point(G,bpt_index,1)
-    path_segment_data = path_around_infinity(G,-3)
-    gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                               path_segment_data=path_segment_data)
+#     print "=== constructing path around branch point ==="
+#     bpt_index = 5
+#     print '\tbranch point: %s'%(bpt_index)
+#     print '\tconjugates:   %s'%(G.node[bpt_index]['conjugates'])
+# #    path_segment_data = path_around_branch_point(G,bpt_index,1)
+#     path_segment_data = path_around_infinity(G,-3)
+#     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
+#                                path_segment_data=path_segment_data)
+
+    print "=== computing homology and c-cycles ==="
+    from abelfunctions.homology import homology
+    cycles = homology(f,x,y,verbose=True)['c-cycles']
+    gammas = [RiemannSurfacePath((f,x,y),(base_point,base_sheets),
+                                 cycle=cycle)
+              for cycle in cycles]
 
     print "=== (computing holomorphic differentials)"
     from abelfunctions.differentials import differentials
-    omega = differentials(f,x,y)[1]
-    print "omega =", omega
-
-#     #
-#     # path construction
-#     #
-# #     z0 = numpy.complex(-1.5 + 0.0j)
-# #     z1 = numpy.complex(-1.5 - 1.0j)
-# #     z2 = numpy.complex(-2.5 - 1.0j)
-# #     z3 = numpy.complex(-2.5 + 0.0j)
-
-# #     z0 = numpy.complex(-0.5 + 0.5j)
-# #     z1 = numpy.complex(0.5 + 0.5j)
-# #     z2 = numpy.complex(0.5 - 0.5j)
-# #     z3 = numpy.complex(-0.5 - 0.5j)
-
-# #    path_segment_data0 = [(z0,z1),(z1,z2),(z2,z3),(z3,z0)]
-# #    x0 = z0
-
-#     R,w,arg,dir = 0.5,0,0,1
-#     path_segment_data = [
-#         (R,w,arg,dir),
-#         (R,w,arg+numpy.pi,dir),
-#         (R,w,arg,dir),
-#         (R,w,arg+numpy.pi,dir),
-#         ]
-#     x0 = R * numpy.exp(1.0j*arg) + w
-
-#     # compute y-roots, base_place, and corresponding riemann surface
-#     y0 = polyroots(f,x,y,x0)
-#     P0 = (x0,y0)
-#     RS = (f,x,y)
-
-#     print "\n=== (constructing path)"
-#     gamma = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data)
-
-    gamma.plot_differential(omega,x,y,N=512)
-#     gamma.plot_x(N=128)
-#     gamma.plot_y(N=128)
-
-#     print "=== (plotting differential on path)"
-#     gamma.plot_differential(omega,x,y,N=128)
-
-    print "=== (integrating differential on path)"
-    integral = gamma.integrate(omega,x,y,show=True)
-    print "\tvalue:", integral
-
-
-#     pi = numpy.pi
-#     R = numpy.double(1.0)
-#     w = numpy.complex(-2)
-#     path_segment_data1 = [
-#         (R,w,0,1),
-#         (R,w,pi,1),
-#         ]
-#     x0 = w+R
-#     y0 = polyroots(f,x,y,x0)
-#     P0 = (x0,y0)
-#     RS = DummyRiemannSurface(f,x,y)
-
-#     print "\n=== (constructing path #1)"
-#     gamma1 = RiemannSurfacePath(RS,P0,path_segment_data=path_segment_data1)
-
-#     print "=== (plotting differential on path #1)"
-#     gamma1.plot_differential(omega,x,y,N=128)
-
-#     print "=== (integrating differential on path #1)"
-#     integral = gamma1.integrate(omega,x,y)
-#     print "\tvalue:", integral
+    omegas = differentials(f,x,y)
+    for omega in omegas:
+        sympy.pprint(omega)
