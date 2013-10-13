@@ -803,14 +803,14 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,base_sheets=None):
         # compute path segments to path around b_i and analytically
         # continuing the base_fibre. if a custom base point was
         # provided then add the appropriate path segment data
-        path_segment_data = path_around_branch_point(G,i,1)
+        path_segments = path_around_branch_point(G,i,1)
         if custom_base_point:
             seg = (base_point, G.node[0]['basepoint'])
-            path_segment_data = [seg] + path_segment_data + \
+            path_segments = [seg] + path_segments + \
                 [tuple(reversed(seg))]
 
         gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                                   path_segment_data=path_segment_data)
+                                   path_segments=path_segments)
         yend = gamma(1)[1]
 
         # check if permutation is identity. if so, delete b_i from the
@@ -827,9 +827,9 @@ def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,base_sheets=None):
                         [bpt for bpt in branch_points if bpt != None])
 
     # analytically continue around infinity. append if branch point
-    path_segment_data = path_around_infinity(G,1)
+    path_segments = path_around_infinity(G,1)
     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                               path_segment_data=path_segment_data)
+                               path_segments=path_segments)
     yend = gamma(1)[1]
 
     # check if permutation is identity. if so, delete b_i from the
@@ -871,17 +871,18 @@ if __name__=='__main__':
 
     print "Computing monodromy of", f
     I = 1.0j
-#     # f10
-#     base_point = -1.43572291547089
-#     base_sheets =[-1.93155860973,
-#                    -0.141326328588,
-#                    1.03644246916 - 0.404482364824*I,
-#                    1.03644246916 + 0.404482364824*I]
-    # f2
-    base_point = -1.44838920232100
-    base_sheets = [-3.20203812255,
-                    1.60101906127-1.26997391750*I,
-                    1.60101906127+1.26997391750*I]
+    # f10
+    base_point = -1.43572291547089
+    base_sheets =[-1.93155860973,
+                   -0.141326328588,
+                   1.03644246916 - 0.404482364824*I,
+                   1.03644246916 + 0.404482364824*I]
+
+#     # f2
+#     base_point = -1.44838920232100
+#     base_sheets = [-3.20203812255,
+#                     1.60101906127-1.26997391750*I,
+#                     1.60101906127+1.26997391750*I]
 
     base_point, base_sheets, branch_points, mon, G = \
         monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
@@ -898,12 +899,12 @@ if __name__=='__main__':
 
     # additional testing of particular branch points
     print "Constructing a test path..."
-    path_segment_data = path_around_branch_point(G,3,1)
+    path_segments = path_around_branch_point(G,3,1)
     seg = (base_point, G.node[0]['basepoint'])
-    path_segment_data = [seg] + path_segment_data + \
+    path_segments = [seg] + path_segments + \
         [tuple(reversed(seg))]
     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                               path_segment_data=path_segment_data)
+                               path_segments=path_segments)
 
 # #     import cProfile, pstats
 # #     cProfile.run('mon = M.monodromy()','monodromy.profile')

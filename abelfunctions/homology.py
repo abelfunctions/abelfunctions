@@ -336,6 +336,12 @@ def final_edges(C):
         other = other[0]
 
         final_nodes.remove(other)
+
+        # order is important: the nodes with final vertices "don't
+        # actually exist" in the homology graph. they're only there to
+        # help determine replative ordering of cycles. We choose final
+        # edges such that the predecessors of the nodes give the correct
+        # ordering
         if isinstance(C.node[node]['value'],tuple):
             edges.append((other,node))
         else:
@@ -438,13 +444,16 @@ def compute_c_cycles(tretkoff_graph, final_edges):
     c_cycles = []
 
     # recall that the edges have a direction: edge[0] is the starting
-    # node and edge[1] is the ending node. This determines the
-    # direction of the c-cycle.
-    for edge in final_edges:
+    # node and edge[1] is the ending node. This determines the direction
+    # of the c-cycle.
+    for final_edge in final_edges:
 	# obtain the vertices on the Tretkoff graph starting from the
 	# base place, going through the edge, and then back to the
 	# base_place
-        edge = map(lambda n: C.neighbors(n)[0], edge)
+        #
+        # see the comment in homology:final_edges() for an explanation
+        # on the ordering / direction of the cycle.
+        edge = map(lambda n: C.neighbors(n)[0], final_edge)
 	path_to_edge = nx.shortest_path(C,root,edge[0])
 	path_from_edge = nx.shortest_path(C,edge[1],root)
         path = path_to_edge + path_from_edge
@@ -453,19 +462,29 @@ def compute_c_cycles(tretkoff_graph, final_edges):
         # convert branch places (branch point, permutation) to
         # point-rotations pairs (branch point, number and direction of
         # rotations)
-        for n in range(1,len(path),2):
-            branch_place = path_values[n]
+#         for n in range(1,len(path),2):
+#             branch_place = path_values[n]
 
-            # update the path entry (remember, Python uses references to
-            # lists) if we are traveling the return path then reverse the
-            # rotations.
-            if n < len(path_to_edge):
-                next_sheet = path[n+1]
-                nrots = C.node[next_sheet]['nrots']
-            else:
-                prev_sheet = path[n-1]
-                nrots = - C.node[prev_sheet]['nrots']
-            path_values[n] = (branch_place[0], nrots)
+#             if n <= len(path_to_edge):
+#                 next_sheet = path[n+1]
+#                 nrots = C.node[next_sheet]['nrots']
+#             else:
+#                 next_sheet = path[n-1]
+#                 nrots = - C.node[next_sheet]['nrots']
+#             path_values[n] = (branch_place[0], nrots)
+
+        # go the the sheet number in the final edge, recording number of
+        # rotations normally
+        len_path_to_edge = len(path_to_edge)
+        for n in range(1,len(path),2):
+            bi,pi = path_values[n]
+            prev_sheet = C.node[path[n-1]]['value']
+            next_sheet = C.node[path[n+1]]['value']
+
+            nrots = pi.index(next_sheet) - pi.index(prev_sheet)
+            if nrots > len(pi)/2: nrots -= len(pi)
+
+            path_values[n] = (bi, nrots)
 
         c_cycles.append(path_values)
 
@@ -707,15 +726,22 @@ if __name__=='__main__':
     f12 = x**4 + y**4 - 1
     f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
 
-    f = f2
+    f = f10
 
     print("\nComputing monodromy...")
-    # f2
     I = 1.0j
-    base_point = -1.44838920232100
-    base_sheets = [-3.20203812255,
-                    1.60101906127-1.26997391750*I,
-                    1.60101906127+1.26997391750*I]
+#     # f2
+#     base_point = -1.44838920232100
+#     base_sheets = [-3.20203812255,
+#                     1.60101906127-1.26997391750*I,
+#                     1.60101906127+1.26997391750*I]
+
+    # f10
+    base_point = -1.43572291547089
+    base_sheets =[-1.93155860973,
+                   -0.141326328588,
+                   1.03644246916 - 0.404482364824*I,
+                   1.03644246916 + 0.404482364824*I]
 
     hs = monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
     print("\nComputing genus...")

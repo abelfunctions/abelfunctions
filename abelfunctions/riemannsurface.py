@@ -151,17 +151,14 @@ class RiemannSurface(object):
 
         for k in c_needed:
             c_cycle = c_cycles[k]
-            path_segments = path_segments_from_cycle(c_cycle, G, base_point)
             gamma = RiemannSurfacePath(self,(base_point,base_sheets),
-                                       path_segment_data=path_segments)
+                                       cycle=c_cycle)
             c_integrals[k] = [
                 self.integrate(omega, x, y, gamma) for omega in differentials
                 ]
 
         # now take appropriate linear combinations to compute the
         # integrals of the differentials around the a- and b-cycles
-        pdb.set_trace()
-
         tau = numpy.zeros((g,2*g),dtype=numpy.complex)
         for i in range(g):
             for j in range(2*g):
@@ -171,51 +168,7 @@ class RiemannSurface(object):
 
         A = tau[:g,:g]
         B = tau[:g,g:]
-
         return A,B
-
-#     def period_matrix(self):
-#         """
-#         Returns the period matrix `\tau = (A \; B)` where `A_{ij}` is
-#         the integral of the `j`th holomorphic differential basis element
-#         about the cycle `a_i`. (`B` is defined in the same way about the
-#         `b`-cycles.)
-
-#         Note: this function computes the integrals of the
-#         differentials over each of the c-cycles and then uses the
-#         homology data to determine which linear combination of
-#         c-cycles integrals gives the a- and b-cycles integrals.
-#         """
-#         cycles = self.cycle_paths()
-
-#         differentials = self.holomorphic_differentials()
-#         g = self.genus()
-#         x = self.x
-#         y = self.y
-
-#         A = []
-#         B = []
-#         for i in xrange(g):
-#             omega = differentials[i]
-#             Ai = []
-#             Bi = []
-#             for j in xrange(g):
-#                 print "A[%d,%d]"%(i,j)
-#                 integral = self.integrate(omega,x,y,cycles[j])
-#                 Ai.append(integral)
-
-#                 print "B[%d,%d]"%(i,j)
-#                 integral = self.integrate(omega,x,y,cycles[j+g])
-#                 Bi.append(integral)
-
-#             A.append(Ai)
-#             B.append(Bi)
-
-#         # need to transpose...?
-#         A = numpy.matrix(A,dtype=numpy.complex)
-#         B = numpy.matrix(B,dtype=numpy.complex)
-#         return (A,B)
-
 
     def show_paths(self):
         """
@@ -246,26 +199,28 @@ if __name__ == '__main__':
     f12 = x**4 + y**4 - 1
 
 
-    f = f10
+    f = f2
 
 #     # f2
+#     f = f2
 #     I = 1.0j
 #     base_point = -1.44838920232100
 #     base_sheets = [-3.20203812255,
 #                     1.60101906127-1.26997391750*I,
 #                     1.60101906127+1.26997391750*I]
 
-    # f10
-    I = 1.0j
-    base_point = -1.43572291547089
-    base_sheets = [
-        -1.93155860973,
-         -0.141326328588,
-         1.03644246916-.404482364824*I,
-         1.03644246916+.404482364824*I
-         ]
+#     # f10
+#     f = f10
+#     I = 1.0j
+#     base_point = -1.43572291547089
+#     base_sheets = [
+#         -1.93155860973,
+#          -0.141326328588,
+#          1.03644246916-.404482364824*I,
+#          1.03644246916+.404482364824*I
+#          ]
 
-    X = RiemannSurface(f,x,y,base_point=base_point,base_sheets=base_sheets)
+    X = RiemannSurface(f,x,y)#,base_point=base_point,base_sheets=base_sheets)
 
     print "\n\tRS"
     print X
@@ -292,13 +247,13 @@ if __name__ == '__main__':
     print "\n\tRS: computing differentials"
     diffs = X.holomorphic_differentials()
 
-#     print "\n\tRS: period matrix"
-#     A,B = X.period_matrix()
-#     Omega = numpy.dot(la.inv(A),B)
-#     print "\n\tA = "
-#     print A
-#     print "\n\tB = "
-#     print B
-#     print "\n\tOmega (abelfunctions)"
-#     print Omega
-#     print
+    print "\n\tRS: period matrix"
+    A,B = X.period_matrix()
+    Omega = numpy.dot(la.inv(A),B)
+    print "\n\tA = "
+    print A
+    print "\n\tB = "
+    print B
+    print "\n\tOmega (abelfunctions)"
+    print Omega
+    print

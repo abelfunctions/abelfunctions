@@ -23,6 +23,8 @@ from matplotlib import cm
 from matplotlib.patches import Circle
 from matplotlib.collections import LineCollection
 
+import abelfunctions
+
 from itertools import tee
 
 import pdb
@@ -546,7 +548,7 @@ class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
 
 
 class RiemannSurfacePathSegment_Semicircle(RiemannSurfacePathSegment):
-    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=8):
+    def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=9):
         self.R = R
         self.w = w
         self.arg = arg
@@ -591,7 +593,7 @@ class RiemannSurfacePath(object):
         # for convenience, if a cycle is provided instead of path segments
         # then the path segments are computed
         if cycle:
-            G = monodromy_graph(self.f,self.x,self.y)
+            G = abelfunctions.monodromy_graph(self.f,self.x,self.y)
             path_segments = path_segments_from_cycle(cycle,G,base_point=P0[0])
 
         # initialize the path segemnts with checkpoints by anaytically
@@ -659,7 +661,7 @@ class RiemannSurfacePath(object):
         tpts_segment = numpy.linspace(0,1,n)
         return self.sample_points(tpts_segment)
 
-    def plot_x(self,N,**kwds,segnum=None):
+    def plot_x(self,N,**kwds):
         nSegs = len(self.PathSegments)
         ppseg = int(N/nSegs)
         tpts_seg = numpy.linspace(0,1,ppseg)
