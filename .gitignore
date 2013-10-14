@@ -20,6 +20,11 @@ Thumbs.db
 riemanntheta_cy.c
 
 
+# Documentation #
+#################
+doc/_build
+
+
 # etc #
 #######
 *.ipynb
