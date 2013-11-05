@@ -47,18 +47,18 @@ class RiemannThetaCuda:
         self.g = None
         self.yd = None
         #Compiles a cuda sum-reduction function and stores it for later use
-        self.reduction = self.func2()
+        self.reduction = self.grid_sum_reduction_d()
         
 
     """
-    Compiles func1() and func3() based on g. Note that this function is called every time 
+    Compiles finite_sum_d() and exponential_growth_d() based on g. Note that this function is called every time 
 o   that g changes
     """
     def compile(self, g):
         self.g=g
         (self.finite_sum_without_derivs, self.finite_sum_with_derivs,
-         self.Xd, self.Yinv_vd, self.Td) = self.func1(self.tilewidth, self.tileheight, g)
-        self.dot_prod, self.Yinv_ud = self.func3(g, self.tileheight)
+         self.Xd, self.Yinv_vd, self.Td) = self.finite_sum_d(self.tilewidth, self.tileheight, g)
+        self.dot_prod, self.Yinv_ud = self.exponential_growth_d(g, self.tileheight)
 
     """
     Stores the real part of Omega a gpuarray in constant memory.
@@ -217,12 +217,12 @@ o   that g changes
     (fun1) contains function for computing the oscillatory part of the riemanntheta
     function
     
-    (func2) Is a function for computing sum reduction across the rows of a matrix
+    (grid_sum_reduction_d) Is a function for computing sum reduction across the rows of a matrix
     
-    (func3) Is a function for computing the exponential part of the riemanntheta function
+    (exponential_growth_d) Is a function for computing the exponential part of the riemanntheta function
     """
         
-    def func1(self, TILEWIDTH, TILEHEIGHT, g):
+    def finite_sum_d(self, TILEWIDTH, TILEHEIGHT, g):
         template = """
  
     #include <stdlib.h>
@@ -509,7 +509,7 @@ o   that g changes
         Td = mod.get_global("Td")[0]
         return (func, deriv_func, Xd, Yinvd, Td)
 
-    def func2(self):
+    def grid_sum_reduction_d(self):
         template = """
 
    #define BLOCKWIDTH %d
@@ -554,7 +554,7 @@ o   that g changes
         mod = SourceModule(template)
         return mod.get_function("reduction_kernel")
 
-    def func3(self, g, TILEHEIGHT):
+    def exponential_growth_d(self, g, TILEHEIGHT):
         template = """
 
     #include <stdlib.h>
