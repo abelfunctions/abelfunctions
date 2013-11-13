@@ -18,6 +18,7 @@ Thumbs.db
 # Cython output files #
 #######################
 riemanntheta_cy.c
+riemannsurface_path.c
 
 
 # Documentation #

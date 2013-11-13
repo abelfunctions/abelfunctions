@@ -12,9 +12,14 @@ complex x-plane.
   above this complex x-plane path
 """
 
+cdef extern from 'math.h':
+
 import numpy
+cimport numpy
+
 import scipy
 import sympy
+
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot as plt
@@ -32,13 +37,15 @@ import pdb
 def factorial(n):
     return reduce(lambda a,b: a*b, xrange(1,n+1))
 
-def newton(df,xip1,yij):
-    step = 1
-    while numpy.abs(step) > 1e-14:
+cpdef newton(df, complex xip1, complex yij):
+    cdef double eps = 1e-14
+    cdef complex step = 1, df1 = 0.0
+
+    while numpy.abs(step) > eps:
         # check if Df is invertible. (If not, then we are at a
         # critical point.)
-        df1 = df[1](xip1,yij)
-        if numpy.abs(df1) < 1e-14:
+        df1 = <complex>df[1](xip1,yij)
+        if numpy.abs(df1) < eps:
             return yij
 
         # Newton iterate
@@ -91,7 +98,7 @@ def polyroots(f,x,y,xi,types='numpy'):
         poly = numpy.poly1d(coeffs)
         return (poly.r).tolist()
 
-    return sympy.mpmath.polyroots(coeffs)
+#    return sympy.mpmath.polyroots(coeffs)
 
 
 def path_segments_from_cycle(cycle, G, base_point=None):
@@ -528,7 +535,7 @@ class RiemannSurfacePathSegment():
         Return N points Chebyshev / Clenshaw-Curtis sampled along the
         parameterized curve.
         """
-        theta = numpy.linspace(-numpy.pi,0,Npts)
+        theta = numpy.linspace(-numpy.pi,0,N)
         tpts = numpy.cos(theta)/2.0 + 0.5
         return self.sample(tpts)
 

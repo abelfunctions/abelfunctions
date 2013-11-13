@@ -14,7 +14,7 @@ custom directory <dir>, use
     python setup.py --prefix=<dir>
 """
 
-__version__ = '0.9'
+__version__ = '1.0'
 
 from distutils.core import setup, Command
 from distutils.extension import Extension
@@ -23,8 +23,6 @@ import unittest
 import os
 import os.path
 import numpy
-
-#import abelfunctions
 
 class clean(Command):
     """
@@ -53,19 +51,19 @@ class clean(Command):
             for f in os.listdir(dir):
                 path = os.path.join(dir,f)
                 try:
-                    if os.path.isfile(path):  
+                    if os.path.isfile(path):
                         os.remove(path)
-                    elif os.path.isdir(path): 
+                    elif os.path.isdir(path):
                         delete_dir(path)
                         os.removedirs(path)
                 except Exception, e:
                     print e
-                    
+
         # deletes .pyc files that don't have corresponding .py files
         for root, dirs, files in os.walk('.'):
             pyc_files = filter(lambda f: f.endswith('.pyc'), files)
             tilde_files = filter(lambda f: f.endswith('~'), files)
-            
+
             to_remove = pyc_files + tilde_files
             for f in to_remove:
                 full_path = os.path.join(root,f)
@@ -80,13 +78,12 @@ class test_abelfunctions(Command):
     """
     Runs all tests under every abelfunctions/ directory.
     """
-    
     description = "run all tests and doctests"
     user_options = []
 
     def initialize_options(self):
         pass
-    
+
     def finalize_options(self):
         pass
 
@@ -94,7 +91,6 @@ class test_abelfunctions(Command):
         loader = unittest.TestLoader()
         suite = loader.discover('abelfunctions')
         unittest.TextTestRunner(verbosity=2).run(suite)
-        
 
 
 packages = [
@@ -104,12 +100,18 @@ packages = [
 
 ext_modules = [
     Extension('abelfunctions.riemanntheta.riemanntheta_cy',
-              sources = ["abelfunctions/riemanntheta/riemanntheta_cy.pyx",
-                         "abelfunctions/riemanntheta/riemanntheta.c"],
+              sources = ['abelfunctions/riemanntheta/riemanntheta_cy.pyx',
+                         'abelfunctions/riemanntheta/riemanntheta.c'],
               include_dirs = [numpy.get_include()]
-              )
+              ),
+    Extension('abelfunctions.riemannsurface.riemannsurface_path',
+              sources = [
+                  'abelfunctions/riemannsurface/riemannsurface_path.pyx'
+                  ],
+              include_dirs = [numpy.get_include()]
+              ),
     ]
-    
+
 
 tests = [
     'abelfunctions.tests',
@@ -127,12 +129,14 @@ classifiers = [
     'Operating System :: MaxOS'
     ]
 
-long_description = '''Abelfunctions is a Python library for computing with
-Abelian functions. The primary goal of the application is to make computing
-with Abelian functions as ubiquitous as computing with trigonometric functions.
-This framework is applied toward solving integrable systems of partial 
-differential equations. It is the research work of Chris Swierczewski from the
-Department of Applied Mathematics at the University of Washington.'''
+long_description = '''
+Abelfunctions is a Python library for computing with Abelian
+functions. The primary goal of the application is to make computing with
+Abelian functions as ubiquitous as computing with trigonometric
+functions.  This framework is applied toward solving integrable systems
+of partial differential equations. It is the research work of Chris
+Swierczewski from the Department of Applied Mathematics at the
+University of Washington.'''
 
 setup(
     name = 'abelfunctions',
@@ -144,8 +148,6 @@ setup(
     url = 'https://github.com/cswiercz/abelfunctions',
     license = 'GPL v2+',
     packages = ['abelfunctions'] + packages + tests,
-    package_data = {'abelfunctions.riemanntheta':
-                   ['finite_sum_opencl.cl']},
     ext_modules = ext_modules,
     cmdclass = {'test': test_abelfunctions,
                 'clean': clean,
