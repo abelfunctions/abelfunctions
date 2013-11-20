@@ -12,59 +12,56 @@ complex x-plane.
   above this complex x-plane path
 """
 
-cdef extern from 'math.h':
-
 import numpy
 cimport numpy
-
 import scipy
 import sympy
-
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot as plt
-
 from matplotlib import cm
 from matplotlib.patches import Circle
 from matplotlib.collections import LineCollection
 
+from itertools import tee
+from smale cimport *
+
 import abelfunctions
 
-from itertools import tee
 
-import pdb
+# def factorial(n):
+#     return reduce(lambda a,b: a*b, xrange(1,n+1))
 
-def factorial(n):
-    return reduce(lambda a,b: a*b, xrange(1,n+1))
+# cpdef newton(df, complex xip1, complex yij):
+#     cdef double eps = 1e-14
+#     cdef complex step = 1, df1 = 0.0
 
-cpdef newton(df, complex xip1, complex yij):
-    cdef double eps = 1e-14
-    cdef complex step = 1, df1 = 0.0
+#     while numpy.abs(step) > eps:
+#         # check if Df is invertible. (If not, then we are at a
+#         # critical point.)
+#         df1 = <complex>df[1](xip1,yij)
+#         if numpy.abs(df1) < eps:
+#             return yij
 
-    while numpy.abs(step) > eps:
-        # check if Df is invertible. (If not, then we are at a
-        # critical point.)
-        df1 = <complex>df[1](xip1,yij)
-        if numpy.abs(df1) < eps:
-            return yij
+#         # Newton iterate
+#         step = df[0](xip1,yij)/df1
+#         yij -= step
+#     return yij
 
-        # Newton iterate
-        step = df[0](xip1,yij)/df1
-        yij -= step
-    return yij
+# def smale_beta(df,xip1,yij):
+#     return numpy.abs( df[0](xip1,yij)/df[1](xip1,yij) )
 
-def smale_beta(df,xip1,yij):
-    return numpy.abs( df[0](xip1,yij)/df[1](xip1,yij) )
+# def smale_gamma(df,xip1,yij,deg):
+#     df1 = df[1](xip1,yij)
+#     bounds = ( numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./(k-1.0))
+#                for k in xrange(2,deg+1) )
+#     return max(bounds)
 
-def smale_gamma(df,xip1,yij,deg):
-    df1 = df[1](xip1,yij)
-    bounds = ( numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./(k-1.0))
-               for k in xrange(2,deg+1) )
-    return max(bounds)
+# smale_alpha0 = numpy.double(13.0 - 2.0*numpy.sqrt(17.0))/4.0
+# def smale_alpha(df,xip1,yij,deg):
+#     return smale_beta(df,xip1,yij) * smale_gamma(df,xip1,yij,deg)
 
 smale_alpha0 = numpy.double(13.0 - 2.0*numpy.sqrt(17.0))/4.0
-def smale_alpha(df,xip1,yij,deg):
-    return smale_beta(df,xip1,yij) * smale_gamma(df,xip1,yij,deg)
 
 
 def polyroots(f,x,y,xi,types='numpy'):
@@ -446,7 +443,7 @@ class RiemannSurfacePathSegment():
         # any of them are not then refine the step by analytically continuing
         # to an intermediate "time"
         for yij in yi:
-            if smale_alpha(df,xip1,yij,deg) > smale_alpha0:
+            if smale_alpha(df,xip1,yij) > smale_alpha0:
                 tt = (ti+tip1)/2.0
                 PP = self.analytically_continue(tt,checkpoint=(ti,Pi))
                 return self.analytically_continue(tip1,checkpoint=(tt,PP))

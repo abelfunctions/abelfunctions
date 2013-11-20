@@ -106,7 +106,13 @@ ext_modules = [
               ),
     Extension('abelfunctions.riemannsurface.riemannsurface_path',
               sources = [
-                  'abelfunctions/riemannsurface/riemannsurface_path.pyx'
+                  'abelfunctions/riemannsurface/riemannsurface_path.pyx',
+                  ],
+              include_dirs = [numpy.get_include()]
+              ),
+    Extension('abelfunctions.riemannsurface.smale',
+              sources = [
+                  'abelfunctions/riemannsurface/smale.pyx',
                   ],
               include_dirs = [numpy.get_include()]
               ),
