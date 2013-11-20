@@ -28,40 +28,11 @@ from smale cimport *
 
 import abelfunctions
 
+cdef extern from "math.h":
+    double sqrt(double)
 
-# def factorial(n):
-#     return reduce(lambda a,b: a*b, xrange(1,n+1))
 
-# cpdef newton(df, complex xip1, complex yij):
-#     cdef double eps = 1e-14
-#     cdef complex step = 1, df1 = 0.0
-
-#     while numpy.abs(step) > eps:
-#         # check if Df is invertible. (If not, then we are at a
-#         # critical point.)
-#         df1 = <complex>df[1](xip1,yij)
-#         if numpy.abs(df1) < eps:
-#             return yij
-
-#         # Newton iterate
-#         step = df[0](xip1,yij)/df1
-#         yij -= step
-#     return yij
-
-# def smale_beta(df,xip1,yij):
-#     return numpy.abs( df[0](xip1,yij)/df[1](xip1,yij) )
-
-# def smale_gamma(df,xip1,yij,deg):
-#     df1 = df[1](xip1,yij)
-#     bounds = ( numpy.abs(df[k](xip1,yij)/(factorial(k)*df1))**(1./(k-1.0))
-#                for k in xrange(2,deg+1) )
-#     return max(bounds)
-
-# smale_alpha0 = numpy.double(13.0 - 2.0*numpy.sqrt(17.0))/4.0
-# def smale_alpha(df,xip1,yij,deg):
-#     return smale_beta(df,xip1,yij) * smale_gamma(df,xip1,yij,deg)
-
-smale_alpha0 = numpy.double(13.0 - 2.0*numpy.sqrt(17.0))/4.0
+cdef double smale_alpha0 = (13.0 - 2.0*sqrt(17.0))/4.0
 
 
 def polyroots(f,x,y,xi,types='numpy'):
@@ -94,8 +65,6 @@ def polyroots(f,x,y,xi,types='numpy'):
         coeffs = [numpy.complex(z) for z in coeffs]
         poly = numpy.poly1d(coeffs)
         return (poly.r).tolist()
-
-#    return sympy.mpmath.polyroots(coeffs)
 
 
 def path_segments_from_cycle(cycle, G, base_point=None):

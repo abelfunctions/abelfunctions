@@ -1,3 +1,15 @@
+'''
+smale.pyx
+
+NOTE:
+
+* for some reason UnivariatePolynomial.eval is calling a bunch of
+  Python. Run
+
+      $ cython -a smale.pyx
+
+  for more information
+'''
 import cython
 import numpy
 cimport numpy
@@ -12,10 +24,6 @@ cdef extern from "complex.h":
     double abs(complex)
 
 
-ABELFUNCTIONS_SMALE_ALPHA0 = (13/0 - 2.0*sqrt(17.0))/4.0;
-
-
-# Polynomial Definitions
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef class UnivariatePolynomial:
