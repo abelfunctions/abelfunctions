@@ -624,8 +624,7 @@ Tinv, z, g, R)
         return u,v
 
     """
-    TODO: Find a clean way to integrate Riemann theta into value_at_point or call, also implement 
-    derivatives for Riemann theta and derivatives.
+    TODO: Add documentation
     """
     def characteristic(self, chars, z, Omega, deriv = [], prec=1e-8):
         val = 0
@@ -635,32 +634,33 @@ Tinv, z, g, R)
         if len(deriv) == 0:
             u,v = self.exp_and_osc_at_point(z_tilde, Omega)
             quadratic_term =  np.dot(alpha.T, np.dot(Omega,alpha))[0,0]
-            exp_shift = 2*np.pi*1.0j*.5*quadratic_term + quadratic_term
+            exp_shift = 2*np.pi*1.0j*(.5*quadratic_term + np.dot(alpha.T, (z + beta)))
             theta_val = np.exp(u + exp_shift)*v
         elif len(deriv) == 1:
             d = deriv[0]
-            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha, np.dot(Omega, alpha)) + np.dot(alpha, (z + beta))))
+            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha.T, np.dot(Omega, alpha)) + np.dot(alpha.T, (z + beta))))
             alpha_part = 2*np.pi*1.0j*alpha
             theta_eval = self.value_at_point(z_tilde, Omega, prec=prec)
-            term1 = np.dot(theta_eval*alpha_part, d)
+            term1 = np.dot(theta_eval*alpha_part.T, d)
             term2 = self.value_at_point(z_tilde, Omega, prec=prec, deriv=d)
             theta_val = scalar_term*(term1 + term2)
         elif len(deriv) == 2:
-            d1,d2 = deriv[0],deriv[1]
-            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha, np.dot(Omega, alpha)) + np.dot(alpha, (z + beta))))
+            d1,d2 = np.matrix(deriv[0]).T, np.matrix(deriv[1]).T
+            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha.T, np.dot(Omega, alpha))[0,0] + np.dot(alpha.T, (z + beta))[0,0]))
             #Compute the non-theta hessian
             g = Omega.shape[0]
-            non_theta_hess = np.zeros((g, g))
+            non_theta_hess = np.zeros((g, g), dtype = np.complex128)
             theta_eval = self.value_at_point(z_tilde, Omega, prec=prec)
-            theta_grad = np.zeros(g)
+            theta_grad = np.zeros(g, dtype=np.complex128)
             for i in range(g):
                 partial = np.zeros(g)
                 partial[i] = 1.0
-                theta_grad[i] = self.value_at_point(z_tilde, Omega, prec = prec, deriv = partial)  
-            for n in xrange(g):
+                theta_grad[i] = self.value_at_point(z_tilde, Omega, prec = prec, deriv = partial)
+-            for n in xrange(g):
                 for k in xrange(g):
-                    non_theta_hess[n,k] = 2*np.pi*1.j*alpha[k] * (2*np.pi*1.j*theta_eval*alpha[n] + theta_grad[n]) + (2*np.pi*1.j*theta_grad[k]*alpha[n])
-            term1 = np.dot(d1.T, np.dot(non_theta_hess, d2))
+                    non_theta_hess[n,k] =  2*np.pi*1.j*alpha[k,0] * (2*np.pi*1.j*theta_eval*alpha[n,0] + theta_grad[n]) + (2*np.pi*1.j*theta_grad[k]*alpha[n,0])
+                    
+            term1 = np.dot(d1.T, np.dot(non_theta_hess, d2))[0,0]
             term2 = self.value_at_point(z_tilde, Omega, prec=prec, deriv=deriv)
             theta_val = scalar_term*(term1 + term2)
         else:
@@ -765,9 +765,9 @@ if __name__=="__main__":
     print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
     
     print "Theta w/ Characteristic Test"
-    z = np.array([0,0])
+    z = np.array([1.j,0])
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
-    deriv = []
+    deriv = [[1,0],[1,0]]
     chars = [[0,0],[0,0]]
     print theta.characteristic(chars, z, Omega, deriv)
     
