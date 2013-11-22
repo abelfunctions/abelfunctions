@@ -14,7 +14,7 @@ from abelfunctions.riemannsurface.riemannsurface_path import (
     path_segments_from_cycle,
     RiemannSurfacePath,
     )
-from abelfunctions.riemannsurfaceriemannsurface_point import (
+from abelfunctions.riemannsurface.riemannsurface_point import (
     RiemannSurfacePoint,
     )
 from abelfunctions.singularities import genus
@@ -179,7 +179,7 @@ class RiemannSurface(object):
 
 if __name__ == '__main__':
     from sympy.abc import x,y
-    from abelfunctions.riemannsurface_path import polyroots
+    from abelfunctions.riemannsurface.riemannsurface_path import polyroots
 
     f0 = y**3 - 2*x**3*y - x**8  # Klein curve
 

@@ -31,7 +31,10 @@ import abelfunctions
 cdef extern from "math.h":
     double sqrt(double)
 
+cdef extern from "complex.h":
+    double cabs(complex)
 
+# consider moving to smale.pyx
 cdef double smale_alpha0 = (13.0 - 2.0*sqrt(17.0))/4.0
 
 
@@ -292,8 +295,7 @@ def path_around_infinity(G, rot, types='numpy'):
 
 
 
-
-class RiemannSurfacePathSegment():
+cdef class RiemannSurfacePathSegment:
     """
     Defines a segment of a Riemann surface path parameterized on the interval
     [0,1]. Used for analytically continuing and integrating on Riemann
@@ -333,10 +335,10 @@ class RiemannSurfacePathSegment():
         self.P0 = (self.x0,self.y0)
 
         self.deg = sympy.degree(self.f,self.y)
-        self.df = [
-            sympy.lambdify((self.x,self.y),sympy.diff(self.f,self.y,k),'numpy')
-            for k in range(self.deg+1)
-            ]
+        self.df = numpy.array(
+            [MultivariatePolynomial(sympy.diff(self.f,self.y,k),self.x,self.y)
+            for k in range(self.deg+1)],
+            dtype=MultivariatePolynomial)
 
         self._checkpoints = [(numpy.double(0.0),self.P0)]
         self._n_checkpoints = n_checkpoints
@@ -391,14 +393,14 @@ class RiemannSurfacePathSegment():
         """
         Analytically continue along the path to `t \in [0,1]`.
         """
+        cdef int i,j,k
+
         # use checkpoint, if provided. otherwise, find nearest checkpoint.
         if checkpoint is None:
             ti,Pi = self._nearest_checkpoint(t)
         else:
             ti,Pi = checkpoint
 
-        df = self.df
-        deg = self.deg
         xi,yi = Pi
         tip1 = t
         xip1 = self.get_x(tip1)
@@ -411,20 +413,21 @@ class RiemannSurfacePathSegment():
         # first determine if the y-root guesses are 'approximate solutions'. if
         # any of them are not then refine the step by analytically continuing
         # to an intermediate "time"
-        for yij in yi:
-            if smale_alpha(df,xip1,yij) > smale_alpha0:
+        for j in range(self.deg):
+            yij = yi[j]
+            if smale_alpha(self.df,xip1,yij) > smale_alpha0:
                 tt = (ti+tip1)/2.0
                 PP = self.analytically_continue(tt,checkpoint=(ti,Pi))
                 return self.analytically_continue(tip1,checkpoint=(tt,PP))
 
         # next, determine if the approximate solutions will converge to
         # different associated solutions
-        for j in xrange(deg):
+        for j in range(self.deg):
             yij = yi[j]
-            betaij = smale_beta(df,xip1,yij)
-            for k in xrange(j+1,deg):
+            betaij = smale_beta(self.df,xip1,yij)
+            for k in range(j+1,self.deg):
                 yik = yi[k]
-                betaik = smale_beta(df,xip1,yik)
+                betaik = smale_beta(self.df,xip1,yik)
 
                 if numpy.abs(yij-yik) < 3*(betaij+betaik):  #XXX (was 2)
                     # approximate solutions don't lead to distinct
@@ -436,7 +439,7 @@ class RiemannSurfacePathSegment():
 
         # finally, since we know that we have approximate solutions that will
         # converge to difference associated solutions we will Netwon iterate
-        yip1 = tuple([ newton(df,xip1,yij) for yij in yi ])
+        yip1 = tuple([ newton(self.df,xip1,yi[j]) for j in range(self.deg)])
 
         # return the t-point that we were able to step to as well as
         # the y-roots lying above that t-point
@@ -566,7 +569,7 @@ class RiemannSurfacePath(object):
         # for convenience, if a cycle is provided instead of path segments
         # then the path segments are computed
         if cycle:
-            G = abelfunctions.monodromy_graph(self.f,self.x,self.y)
+            G = abelfunctions.monodromy.monodromy_graph(self.f,self.x,self.y)
             path_segments = path_segments_from_cycle(cycle,G,base_point=P0[0])
 
         # initialize the path segemnts with checkpoints by anaytically
