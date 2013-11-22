@@ -462,22 +462,18 @@ class RiemannTheta_Function(object):
     -----
 
     Omega - the Riemann matrix
-
     X - The real part of Omega
-
     Y - The imaginary part of Omega
-
     Yinv - The inverse of Y
-
     T - The Cholesky Decomposition of Y
-
     g - The genus of the Riemann theta function
-
     prec - The desired precision
-
     deriv - the set of derivatives to compute (Possibly an empty set)
-
     Tinv - The inverse of T
+
+    Output
+    -----
+    Data structures ready for GPU computation.
     """
     def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv, batch):
         recache_omega = not np.array_equal(self._Omega, Omega)
@@ -517,18 +513,14 @@ class RiemannTheta_Function(object):
     -----
     
     Z - the set of points to compute theta(z, Omega) at.
-
     deriv - The derivatives to compute (possibly an empty list)
-
     gpu_max - The maximum number of points to compute on the GPU at once
-
     length - The number of points we're computing. (ie. length == |Z|)
-
+    
     Output
     -------
     
     u - A list of the exponential growth terms of theta (or deriv(theta)) for each z in Z
-
     v - A list of the approximations of the infite sum of theta (or deriv(theta)) for each z in Z
     """
     def gpu_process(self, Z, deriv, gpu_max, length):
@@ -551,7 +543,8 @@ class RiemannTheta_Function(object):
 
 
     """
-    Computes the exponential and oscillatory part of the Riemann theta function.
+    Computes the exponential and oscillatory part of the Riemann theta function. Or the directional
+    derivative of theta.
     
     Input
     -----
@@ -559,35 +552,21 @@ class RiemannTheta_Function(object):
     z - The point (or set of points) to compute the Riemann Theta function at. Note that if z is a set of 
     points the variable "batch" must be set to true. If z is a single point itshould be in the form of a 
     1-d numpy array, if z is a set of points it should be a list or 1-d numpy array of 1-d numpy arrays.
-
     Omega - The Riemann matrix
-
     batch - A variable that indicates whether or not a batch of points is being computed.
-
     prec - The desired digits of precision to compute theta up to. Note that precision is limited to double
-
     precision which is about ~15 decimal points.
-
     gpu - Indicates whether or not to do batch computations on a GPU, the default is set to yes if the proper
-
     pyCuda libraries are installed and no otherwise.
-
     gpu_max - The maximum number of points to be computed on a GPU at once.
 
     Output
     ------
 
     u - A list of the exponential growth terms of theta (or deriv(theta)) for each z in Z
-
     v - A list of the approximations of the infite sum of theta (or deriv(theta)) for each z in Z
     """
     def exp_and_osc_at_point(self, z, Omega, batch = False, prec=1e-12, deriv=[], gpu=gpu_capable, gpu_max = 500000):
-        r"""
-        Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
-        (Or a given directional derivative of `\theta`.) That is, compute 
-        complex numbers `u,v \in \CC` such that `\theta(z,\Omega) = e^u v` 
-        where the value of `v` is oscillatory as a function of `z`.            
-        """
         g = Omega.shape[0]
         pi = np.pi
 
@@ -645,16 +624,49 @@ Tinv, z, g, R)
         return u,v
 
     """
-    TODO: Add documentation and derivatives for theta with characteristic
+    TODO: Find a clean way to integrate Riemann theta into value_at_point or call, also implement 
+    derivatives for Riemann theta and derivatives.
     """
-    def characteristic(self, chars, z, Omega):
-        alpha, beta = chars[0], chars[1]
-        shift = np.dot(Omega, alpha) + beta
-        z = z + shift
-        u,v = self.exp_and_osc_at_point(z, Omega)
-        exp_shift = 2*np.pi*1.0j*(.5*np.dot(alpha,np.dot(Omega,alpha)) + np.dot(alpha,np.dot(Omega,alpha)))
-        return np.exp(u - exp_shift)*v
-
+    def characteristic(self, chars, z, Omega, deriv = [], prec=1e-8):
+        val = 0
+        z = np.matrix(z).T
+        alpha, beta = np.matrix(chars[0]).T, np.matrix(chars[1]).T
+        z_tilde = z + np.dot(Omega,alpha) + beta
+        if len(deriv) == 0:
+            u,v = self.exp_and_osc_at_point(z_tilde, Omega)
+            quadratic_term =  np.dot(alpha.T, np.dot(Omega,alpha))[0,0]
+            exp_shift = 2*np.pi*1.0j*.5*quadratic_term + quadratic_term
+            theta_val = np.exp(u + exp_shift)*v
+        elif len(deriv) == 1:
+            d = deriv[0]
+            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha, np.dot(Omega, alpha)) + np.dot(alpha, (z + beta))))
+            alpha_part = 2*np.pi*1.0j*alpha
+            theta_eval = self.value_at_point(z_tilde, Omega, prec=prec)
+            term1 = np.dot(theta_eval*alpha_part, d)
+            term2 = self.value_at_point(z_tilde, Omega, prec=prec, deriv=d)
+            theta_val = scalar_term*(term1 + term2)
+        elif len(deriv) == 2:
+            d1,d2 = deriv[0],deriv[1]
+            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha, np.dot(Omega, alpha)) + np.dot(alpha, (z + beta))))
+            #Compute the non-theta hessian
+            g = Omega.shape[0]
+            non_theta_hess = np.zeros((g, g))
+            theta_eval = self.value_at_point(z_tilde, Omega, prec=prec)
+            theta_grad = np.zeros(g)
+            for i in range(g):
+                partial = np.zeros(g)
+                partial[i] = 1.0
+                theta_grad[i] = self.value_at_point(z_tilde, Omega, prec = prec, deriv = partial)  
+            for n in xrange(g):
+                for k in xrange(g):
+                    non_theta_hess[n,k] = 2*np.pi*1.j*alpha[k] * (2*np.pi*1.j*theta_eval*alpha[n] + theta_grad[n]) + (2*np.pi*1.j*theta_grad[k]*alpha[n])
+            term1 = np.dot(d1.T, np.dot(non_theta_hess, d2))
+            term2 = self.value_at_point(z_tilde, Omega, prec=prec, deriv=deriv)
+            theta_val = scalar_term*(term1 + term2)
+        else:
+            return NotImplementedError()
+        return theta_val
+            
 
     r"""
     Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if batch is True.
@@ -707,13 +719,13 @@ if __name__=="__main__":
     print
     
     if (gpu_capable):
-        a = np.random.rand(2000000)
-        b = np.random.rand(2000000)
+        a = np.random.rand(10)
+        b = np.random.rand(10)
         c = max(b)
         b = 1.j*b/(1.0*c)
         a = a + b
         print a.size
-        a = a.reshape(1000000,2)
+        a = a.reshape(5,2)
         start1 = time.clock()
         print theta.value_at_point(a, Omega, batch=True, prec=1e-12)
         print("GPU time to perform calculation: " + str(time.clock() - start1))
@@ -751,6 +763,14 @@ if __name__=="__main__":
     for x in range(5):
         l.append(y)
     print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
+    
+    print "Theta w/ Characteristic Test"
+    z = np.array([0,0])
+    Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
+    deriv = []
+    chars = [[0,0],[0,0]]
+    print theta.characteristic(chars, z, Omega, deriv)
+    
     
     print "Test #3"
     import pylab as p
