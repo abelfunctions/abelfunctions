@@ -10,10 +10,10 @@ NOTE:
 
   for more information
 '''
-import cython
+cimport cython
+from cython.view cimport array as cvarray
 import numpy
 cimport numpy
-
 
 cdef extern from "math.h":
     double sqrt(double)
@@ -21,8 +21,7 @@ cdef extern from "math.h":
 cdef extern from "complex.h":
     double creal(complex)
     double cimag(complex)
-    double abs(complex)
-
+    double cabs(complex)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -37,9 +36,6 @@ cdef class UnivariatePolynomial:
 
         c[0]*x^(deg) + c[1]*x^(deg-1) + ... + c[deg]
     '''
-    cdef complex[:] c
-    cdef int deg
-
     def __cinit__(self,f,x):
         '''Initialize a UnivariatePolynomial from a Sympy Poly.'''
         cdef int n
@@ -82,20 +78,17 @@ cdef class UnivariatePolynomial:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef class MultivariatePolynomial:
-#    cdef object c
-#    cdef int deg
-
+    '''A Multivariate polynomial class for fast evaluation.'''
     def __cinit__(self,f,x,y):
         '''Initialize BiPolynomial from a Sympy polynomial.'''
-        self.c = []
         cdef int n
 
         f = f.as_poly(y)
         coeffs = f.all_coeffs()
         self.deg = <int>(len(coeffs)-1)
-        for n in range(self.deg+1):
-            coeff = coeffs[n]
-            self.c.append(UnivariatePolynomial(coeff,x))
+        self.c = numpy.array(
+            [UnivariatePolynomial(coeff,x) for coeff in coeffs],
+            dtype=UnivariatePolynomial)
 
     def __str__(self):
         cdef int n
@@ -125,7 +118,6 @@ cdef class MultivariatePolynomial:
             return True
         return False
 
-
 cdef int factorial(int n) nogil:
     cdef int k, nfac = 1
     with nogil:
@@ -133,8 +125,11 @@ cdef int factorial(int n) nogil:
             nfac *= k
         return nfac
 
+@cython.boundscheck(False)
 @cython.cdivision(True)
-cdef complex newton(object df, complex xip1, complex yij):
+cdef complex newton(MultivariatePolynomial[:] df,
+                    complex xip1,
+                    complex yij):
     '''
     Newton iterate the y-root yij from the x-point xi to the x-point
     xip1.
@@ -151,11 +146,10 @@ cdef complex newton(object df, complex xip1, complex yij):
     cdef MultivariatePolynomial df1 = df[1]
     cdef complex step = 1.0
     cdef complex df1y
-    while abs(step) > 1e-8:
-        # Check if df is invertible. If not then we are at a critical
-        # point.
+    while cabs(step) > 1e-14:
+        # if df is not invertible then we are at a critical point.
         df1y = df1.eval(xip1,yij)
-        if abs(df1y) < 1e-8:
+        if cabs(df1y) < 1e-14:
             return yij
 
         step = df0.eval(xip1,yij)/df1y
@@ -163,8 +157,11 @@ cdef complex newton(object df, complex xip1, complex yij):
     return yij
 
 
+@cython.boundscheck(False)
 @cython.cdivision(True)
-cdef double smale_beta(object df, complex xip1, complex yij):
+cdef double smale_beta(MultivariatePolynomial[:] df,
+                       complex xip1,
+                       complex yij):
     '''
     Compute Smale beta.
 
@@ -178,11 +175,15 @@ cdef double smale_beta(object df, complex xip1, complex yij):
     '''
     cdef MultivariatePolynomial df0 = df[0]
     cdef MultivariatePolynomial df1 = df[1]
-    return abs(df0.eval(xip1,yij)/df1.eval(xip1,yij))
+    return cabs(df0.eval(xip1,yij)/df1.eval(xip1,yij))
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 @cython.cdivision(True)
-cdef double smale_gamma(object df, complex xip1, complex yij):
+cdef double smale_gamma(MultivariatePolynomial[:] df,
+                        complex xip1,
+                        complex yij):
     '''
     Compute Smale gamma.
 
@@ -203,16 +204,17 @@ cdef double smale_gamma(object df, complex xip1, complex yij):
 
     for n in range(2,deg+1):
         dfn = df[n]
-        gamman = abs(dfn.eval(xip1,yij) / (factorial(n)*df1y))
+        gamman = cabs(dfn.eval(xip1,yij) / (factorial(n)*df1y))
         gamman = gamman**(1.0/(n-1.0))
         if gamman > gamma:
             gamma = gamman
     return gamma
 
 
-cdef double smale_alpha(object df, complex xip1, complex yij):
-    '''
-    Compute Smale gamma.
+cdef double smale_alpha(MultivariatePolynomial[:] df,
+                        complex xip1,
+                        complex yij):
+    '''Compute Smale gamma.
 
     Input:
 
