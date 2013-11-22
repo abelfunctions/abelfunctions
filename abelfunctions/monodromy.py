@@ -17,14 +17,12 @@ from matplotlib.cbook import flatten
 
 from utilities import cached_function, cached_property
 
-from abelfunctions.riemannsurface_path import (
+from abelfunctions.riemannsurface.riemannsurface_path import (
     polyroots,
     path_around_branch_point,
     path_around_infinity,
     RiemannSurfacePath,
     )
-
-import pdb
 
 class Permutation(object):
     """

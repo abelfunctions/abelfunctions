@@ -95,6 +95,7 @@ class test_abelfunctions(Command):
 
 packages = [
     'abelfunctions.riemanntheta',
+    'abelfunctions.riemannsurface',
     'abelfunctions.utilities',
     ]
 

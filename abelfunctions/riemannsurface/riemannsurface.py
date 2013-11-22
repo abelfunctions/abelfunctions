@@ -10,17 +10,16 @@ import sympy
 
 from abelfunctions.monodromy import monodromy, show_paths
 from abelfunctions.homology import homology
-from abelfunctions.riemannsurface_path import (
+from abelfunctions.riemannsurface.riemannsurface_path import (
     path_segments_from_cycle,
     RiemannSurfacePath,
     )
-from abelfunctions.riemannsurface_point import RiemannSurfacePoint
+from abelfunctions.riemannsurfaceriemannsurface_point import (
+    RiemannSurfacePoint,
+    )
 from abelfunctions.singularities import genus
 from abelfunctions.differentials import differentials
 from abelfunctions.utilities import cached_function
-
-
-import pdb
 
 class RiemannSurface(object):
     """
