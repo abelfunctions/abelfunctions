@@ -865,49 +865,49 @@ if __name__=='__main__':
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
     f11= x**5 + y**5 - 1
 
-    f = f10
+    f = f2
 
-    print "Computing monodromy of", f
-    I = 1.0j
-    # f10
-    base_point = -1.43572291547089
-    base_sheets =[-1.93155860973,
-                   -0.141326328588,
-                   1.03644246916 - 0.404482364824*I,
-                   1.03644246916 + 0.404482364824*I]
+#     print "Computing monodromy of", f
+#     I = 1.0j
+#     # f10
+#     base_point = -1.43572291547089
+#     base_sheets =[-1.93155860973,
+#                    -0.141326328588,
+#                    1.03644246916 - 0.404482364824*I,
+#                    1.03644246916 + 0.404482364824*I]
 
-#     # f2
-#     base_point = -1.44838920232100
-#     base_sheets = [-3.20203812255,
-#                     1.60101906127-1.26997391750*I,
-#                     1.60101906127+1.26997391750*I]
+# #     # f2
+# #     base_point = -1.44838920232100
+# #     base_sheets = [-3.20203812255,
+# #                     1.60101906127-1.26997391750*I,
+# #                     1.60101906127+1.26997391750*I]
 
-    base_point, base_sheets, branch_points, mon, G = \
-        monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
+#     base_point, base_sheets, branch_points, mon, G = \
+#         monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
 
-    print "\nbase point:"
-    print base_point
-    print "\nbase_sheets:"
-    for sheet in base_sheets: print sheet
-    print "\nmonodromy:"
-    mon_row ="{:>32}"*2
-    for mi,bpt in zip(mon,branch_points):
-        print mon_row.format(bpt,str(mi)[1:-1])
+#     print "\nbase point:"
+#     print base_point
+#     print "\nbase_sheets:"
+#     for sheet in base_sheets: print sheet
+#     print "\nmonodromy:"
+#     mon_row ="{:>32}"*2
+#     for mi,bpt in zip(mon,branch_points):
+#         print mon_row.format(bpt,str(mi)[1:-1])
 
 
-    # additional testing of particular branch points
-    print "Constructing a test path..."
-    path_segments = path_around_branch_point(G,3,1)
-    seg = (base_point, G.node[0]['basepoint'])
-    path_segments = [seg] + path_segments + \
-        [tuple(reversed(seg))]
-    gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                               path_segments=path_segments)
+#     # additional testing of particular branch points
+#     print "Constructing a test path..."
+#     path_segments = path_around_branch_point(G,3,1)
+#     seg = (base_point, G.node[0]['basepoint'])
+#     path_segments = [seg] + path_segments + \
+#         [tuple(reversed(seg))]
+#     gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
+#                                path_segments=path_segments)
 
-# #     import cProfile, pstats
-# #     cProfile.run('mon = M.monodromy()','monodromy.profile')
-# #     p = pstats.Stats('monodromy.profile')
-# #     p.strip_dirs()
-# #     p.sort_stats('time').print_stats(25)
-# #     p.sort_stats('cumulative').print_stats(25)
-# #     p.sort_stats('calls').print_stats(25)
+# # #     import cProfile, pstats
+# # #     cProfile.run('mon = M.monodromy()','monodromy.profile')
+# # #     p = pstats.Stats('monodromy.profile')
+# # #     p.strip_dirs()
+# # #     p.sort_stats('time').print_stats(25)
+# # #     p.sort_stats('cumulative').print_stats(25)
+# # #     p.sort_stats('calls').print_stats(25)

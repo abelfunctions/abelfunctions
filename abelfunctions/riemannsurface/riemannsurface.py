@@ -198,7 +198,7 @@ if __name__ == '__main__':
     f12 = x**4 + y**4 - 1
 
 
-    f = f2
+    f = f10
 
 #     # f2
 #     f = f2
@@ -246,13 +246,13 @@ if __name__ == '__main__':
     print "\n\tRS: computing differentials"
     diffs = X.holomorphic_differentials()
 
-    print "\n\tRS: period matrix"
-    A,B = X.period_matrix()
-    Omega = numpy.dot(la.inv(A),B)
-    print "\n\tA = "
-    print A
-    print "\n\tB = "
-    print B
-    print "\n\tOmega (abelfunctions)"
-    print Omega
-    print
+#     print "\n\tRS: period matrix"
+#     A,B = X.period_matrix()
+#     Omega = numpy.dot(la.inv(A),B)
+#     print "\n\tA = "
+#     print A
+#     print "\n\tB = "
+#     print B
+#     print "\n\tOmega (abelfunctions)"
+#     print Omega
+#     print
