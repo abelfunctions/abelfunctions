@@ -193,33 +193,13 @@ if __name__ == '__main__':
     f8 = (x**6)*y**3 + 2*x**3*y - 1
     f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
     f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1  # genus 3
-
     f11 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
     f12 = x**4 + y**4 - 1
 
 
     f = f10
 
-#     # f2
-#     f = f2
-#     I = 1.0j
-#     base_point = -1.44838920232100
-#     base_sheets = [-3.20203812255,
-#                     1.60101906127-1.26997391750*I,
-#                     1.60101906127+1.26997391750*I]
-
-#     # f10
-#     f = f10
-#     I = 1.0j
-#     base_point = -1.43572291547089
-#     base_sheets = [
-#         -1.93155860973,
-#          -0.141326328588,
-#          1.03644246916-.404482364824*I,
-#          1.03644246916+.404482364824*I
-#          ]
-
-    X = RiemannSurface(f,x,y)#,base_point=base_point,base_sheets=base_sheets)
+    X = RiemannSurface(f,x,y)
 
     print "\n\tRS"
     print X
@@ -246,13 +226,11 @@ if __name__ == '__main__':
     print "\n\tRS: computing differentials"
     diffs = X.holomorphic_differentials()
 
-#     print "\n\tRS: period matrix"
-#     A,B = X.period_matrix()
-#     Omega = numpy.dot(la.inv(A),B)
-#     print "\n\tA = "
-#     print A
-#     print "\n\tB = "
-#     print B
-#     print "\n\tOmega (abelfunctions)"
-#     print Omega
-#     print
+
+#     import cProfile, pstats
+#     cProfile.run('X.period_matrix()','periodmatrix.profile')
+#     p = pstats.Stats('periodmatrix.profile')
+# #    p.strip_dirs()
+#     p.sort_stats('time').print_stats(25)
+#     p.sort_stats('cumulative').print_stats(25)
+#     p.sort_stats('calls').print_stats(25)

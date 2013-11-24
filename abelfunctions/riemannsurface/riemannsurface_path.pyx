@@ -33,6 +33,7 @@ cdef extern from "math.h":
 
 cdef extern from "complex.h":
     double cabs(complex)
+    complex cexp(complex)
 
 # consider moving to smale.pyx
 cdef double smale_alpha0 = (13.0 - 2.0*sqrt(17.0))/4.0
@@ -304,6 +305,18 @@ cdef class RiemannSurfacePathSegment:
     All Riemann surface paths have either line segments or semi-circles as the
     x-plane part of the path.
     """
+    cdef object RS
+    cdef object f
+    cdef object x
+    cdef object y
+    cdef object P0
+    cdef object x0
+    cdef object y0
+    cdef public object _checkpoints
+    cdef object _n_checkpoints
+    cdef MultivariatePolynomial[:] df
+    cdef int deg
+
     def __init__(self,RS,P0,n_checkpoints=8):
         """
         Construct a RiemannSurfacePathSegment
@@ -382,11 +395,11 @@ cdef class RiemannSurfacePathSegment:
         return numpy.double(0.0),self.P0
 
     # overwritten in subclasses
-    def get_x(self,t):
+    cdef complex get_x(self,double t):
         pass
 
     # overwritten in subclasses
-    def get_dxdt(self,t):
+    cdef complex get_dxdt(self,double t):
         pass
 
     def analytically_continue(self,t,checkpoint=None):
@@ -394,6 +407,10 @@ cdef class RiemannSurfacePathSegment:
         Analytically continue along the path to `t \in [0,1]`.
         """
         cdef int i,j,k
+        cdef double ti,tip1
+        cdef complex xi,xip1,yij,yik
+        cdef complex[:] yi
+        cdef double betaij, betaik
 
         # use checkpoint, if provided. otherwise, find nearest checkpoint.
         if checkpoint is None:
@@ -401,7 +418,8 @@ cdef class RiemannSurfacePathSegment:
         else:
             ti,Pi = checkpoint
 
-        xi,yi = Pi
+        xi = Pi[0]
+        yi = numpy.array(Pi[1],dtype=complex)
         tip1 = t
         xip1 = self.get_x(tip1)
 
@@ -509,35 +527,41 @@ cdef class RiemannSurfacePathSegment:
         return self.sample(tpts)
 
 
-class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
+cdef class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
+    cdef complex z0
+    cdef complex z1
     def __init__(self,RS,P0,z0,z1,n_checkpoints=5):
-        self.z0 = z0
-        self.z1 = z1
+        self.z0 = numpy.complex(z0)
+        self.z1 = numpy.complex(z1)
         RiemannSurfacePathSegment.__init__(self,RS,P0,
                                            n_checkpoints=n_checkpoints)
 
-    def get_x(self,t):
+    cdef complex get_x(self,double t):
         return self.z0*(1-t) + self.z1*t
 
-    def get_dxdt(self,t):
+    cdef complex get_dxdt(self,double t):
         return self.z1-self.z0
 
 
-class RiemannSurfacePathSegment_Semicircle(RiemannSurfacePathSegment):
+cdef class RiemannSurfacePathSegment_Semicircle(RiemannSurfacePathSegment):
+    cdef complex R
+    cdef complex w
+    cdef complex arg
+    cdef complex dir
     def __init__(self,RS,P0,R,w,arg,dir,n_checkpoints=9):
-        self.R = R
-        self.w = w
-        self.arg = arg
-        self.dir = dir
+        self.R = numpy.complex(R)
+        self.w = numpy.complex(w)
+        self.arg = numpy.complex(arg)
+        self.dir = numpy.complex(dir)
         RiemannSurfacePathSegment.__init__(self,RS,P0,
                                            n_checkpoints=n_checkpoints)
 
-    def get_x(self,t):
-        return self.R * numpy.exp(1.0j*(self.dir*numpy.pi*t+self.arg)) + self.w
+    cdef complex get_x(self,double t):
+        return self.R*cexp(1.0j*(self.dir*3.14159265358979*t+self.arg))+self.w
 
-    def get_dxdt(self,t):
-        return (self.R*1.0j*numpy.pi*self.dir) * \
-            numpy.exp(1.0j*(self.dir*numpy.pi*t+self.arg))
+    cdef complex get_dxdt(self,double t):
+        return (self.R*1.0j*3.14159265358979*self.dir) * \
+            cexp(1.0j*(self.dir*3.14159265358979*t+self.arg))
 
 
 class RiemannSurfacePath(object):
@@ -601,7 +625,8 @@ class RiemannSurfacePath(object):
 
     def analytically_continue(self,t,checkpoint=None):
         if numpy.abs(t-1) < 1e-14:
-            return self.PathSegments[-1]._checkpoints[-1][1]
+            Segment = self.PathSegments[-1]
+            return Segment._checkpoints[-1][1]
 
         n = len(self.PathSegments)
         seg_index = int(numpy.floor(t*n))
