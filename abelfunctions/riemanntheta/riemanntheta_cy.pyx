@@ -96,7 +96,7 @@ def find_int_points(int g, c, R, T):
     while (not FINISHED):
         start, g, c, R = stack.pop()
         a = <int>np.ceil((c[g] - R/T[g,g]).real)
-        b = <int>np.floor((c[g] + R/T[g,g]).real)
+        b = <int>np.ceil((c[g] + R/T[g,g]).real)
         #Check if reached the edge of the ellipsoid
         if not a < b:
             if (len(stack) == 0):

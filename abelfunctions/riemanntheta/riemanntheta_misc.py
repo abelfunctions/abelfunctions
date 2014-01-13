@@ -2,7 +2,6 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 import os.path
-import RIEMANN
 
 try:
     import pyopencl as cl
@@ -151,7 +150,7 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
     pi    = np.pi
 
     # define shifted vectors
-    shift     = Yinv * y
+    shift     = Yinv*y
     intshift  = shift.round()
     fracshift = shift - intshift
 
@@ -175,9 +174,6 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
         npt   = np.exp(normpart(n))
         cpart = npt * np.cos(ept)
         spart = npt * np.sin(ept)
-        print(cpart)
-        print(spart)
-        print()
             
         if (len(deriv) > 0):
             dp         = derivprod(n)

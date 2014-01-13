@@ -42,6 +42,12 @@ import numpy as np
 from mayavi.mlab import *
 import matplotlib.pyplot as plt
 
+gpu = True
+try:
+    import pycuda.driver
+except ImportError:
+    gpu = False
+
 """
 Plots the real part of Riemann Theta for Omega 1 with z = (x + iy,0)
 where x,y are real numbers such that 0 < x < 1, 0 < y < 5  
@@ -200,6 +206,19 @@ def plt_second_deriv():
     U,V = theta.exp_and_osc_at_point([[0, z*1.0j] for z in Z], Omega, deriv=k, batch=True)
     plt.plot(Z, V.real)
     plt.show()
+
+def explosion(SIZE, gpu):
+    theta = RiemannTheta
+    Omega = np.matrix([[1.690983006 + .951056516*1.0j, 1.5 + .363271264*1.0j],
+                       [1.5 + .363271264*1.0j, 1.309016994 + .951056516*1.0j]])
+    X,Y = np.mgrid[-1.5:1.5:SIZE*1.0j, -1.5:1.5:SIZE*1.0j]
+    Z = X + Y*1.0j
+    Z = Z.flatten()
+    U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
+    V = np.exp(U)*V
+    V = V.reshape(SIZE, SIZE)
+    s = surf(X,Y,np.absolute(V), warp_scale = 'auto')
+    savefig("test.eps"
     
 def get_r1_vals(SIZE, gpu):
     theta = RiemannTheta

@@ -99,9 +99,11 @@ import numpy as np
 import scipy as sp
 import scipy.linalg as la
 import riemanntheta_cy
-from scipy.special import gamma, gammaincc, gammainccinv
+from scipy.special import gamma, gammaincc, gammainccinv,gammaincinv
 from scipy.optimize import fsolve
 import time
+from lattice_reduction import lattice_reduce
+from riemanntheta_omegas import RiemannThetaOmegas
 
 gpu_capable = True
 try:
@@ -109,7 +111,8 @@ try:
 except ImportError:
     gpu_capable = False
 
-class RiemannTheta_Function:
+
+class RiemannTheta_Function(object):
     r"""
     Creates an instance of the Riemann theta function parameterized by a
     Riemann matrix ``Omega``, directional derivative ``derivs``, and
@@ -160,7 +163,7 @@ class RiemannTheta_Function:
 
     """
 
-    def __init__(self, uniform=True, deriv_accuracy_radius=5):
+    def __init__(self, uniform=True, deriv_accuracy_radius=5, tileheight = 32, tilewidth = 16):
         """
         Defines parameters in constructed class instance.
         """
@@ -176,7 +179,7 @@ class RiemannTheta_Function:
         self._Tinv      = None
         self._prec      = 1e-8
         if (gpu_capable):
-            self.parRiemann = RiemannThetaCuda(32, 16) 
+            self.parRiemann = RiemannThetaCuda(tileheight, tilewidth) 
 
     def lattice(self):
         r"""
@@ -204,7 +207,67 @@ class RiemannTheta_Function:
         return NotImplementedError()
 
 
-    def integer_points(self, Yinv, T, Tinv, z, g, R):
+    def find_int_points(self,g, c, R, T,start):
+        r"""
+        Recursive helper function for computing the integer points needed in
+        each coordinate direction.
+
+        INPUT:
+        - ``g`` -- the genus. recursively used to determine integer
+        points along each axis.
+
+        - ``c`` -- center of integer point computation. `0 \in \CC^g`
+        is used when using the uniform approximation.
+
+        - ``R`` -- the radius of the ellipsoid along the current axis.
+
+        - ``start`` -- the starting integer point for each recursion
+        along each axis.
+
+        OUTPUT:
+
+        - ``intpoints`` -- (list) a list of all of the integer points
+        inside the bounding ellipsoid along a single axis
+
+        ... todo::
+ 
+        Recursion can be memory intensive in Python. For genus `g<30`
+        this is a reasonable computation but can be sped up by
+        writing a loop instead.
+        """
+        a_ = c[g] - R/(np.sqrt(np.pi)*T[g,g]) 
+        b_ = c[g] + R/(np.sqrt(np.pi)*T[g,g])
+        a = np.ceil(a_)
+        b = np.floor(b_)
+        # check if we reached the edge of the ellipsoid
+        if not a <= b: return np.array([])
+        # last dimension reached: append points
+        if g == 0:
+            points = np.array([])
+            for i in range(a, b+1):
+                #Note that this algorithm works backwards on the coordinates,
+                #the last coordinate found is x1 if our coordinates are {x1,x2, ... xn}
+                points = np.append(np.append([i],start), points)
+            return points
+        #
+        # compute new shifts, radii, start, and recurse
+        #
+        newg = g-1
+        newT = T[:(newg+1),:(newg+1)]
+        newTinv = la.inv(newT)
+        pts = []
+        for n in range(a, b+1):
+            chat = c[:newg+1]
+            that = T[:newg+1,g]
+            newc = (chat.T - (np.dot(newTinv, that)*(n - c[g]))).T
+            newR = np.sqrt(R**2 - np.pi*(T[g,g] * (n - c[g]))**2) # XXX
+            newstart = np.append([n],start)
+            newpts = self.find_int_points(newg,newc,newR,newT,newstart)
+            pts = np.append(pts,newpts)
+        return pts
+
+
+    def integer_points(self, Yinv, T, z, g, R):
         """
         The set, `U_R`, of the integral points needed to compute Riemann 
         theta at the complex point $z$ to the numerical precision given
@@ -268,7 +331,8 @@ class RiemannTheta_Function:
             c     = Yinv * y
             intc  = c.round()
             leftc = c - intc
-        return riemanntheta_cy.find_int_points(g-1, leftc, R, T)
+        int_points = self.find_int_points(g-1,leftc,R,T,[])
+        return int_points
 
     def radius(self, T, prec, deriv=[]):
         r"""
@@ -296,8 +360,7 @@ class RiemannTheta_Function:
 
         # compute the length of the shortest lattice vector
         #U  = qflll(T)
-	U = T
-        A  = U*T
+	A = lattice_reduce(T)
         r  = min(la.norm(A[:,i]) for i in range(int(g)))
         normTinv = la.norm(la.inv(T))
 
@@ -310,7 +373,7 @@ class RiemannTheta_Function:
             lhs  = eps * (2.0/g) * (r/2.0)**g * gamma(g/2.0)
             ins  = gammainccinv(g/2.0,lhs)
             R    = np.sqrt(ins) + r/2.0
-            rad  = max( R, (np.sqrt(2*g)+r)/2.0 )
+            rad  = max( R, (np.sqrt(2*g)+r)/2.0)
         elif len(deriv) == 1:
             # solve for left-hand side
             L         = self.deriv_accuracy_radius
@@ -393,34 +456,72 @@ class RiemannTheta_Function:
         return rad
 
     """
-    Performs simple recacheing of matrices, also prepares gpu for processing if necessary
+    Performs simple re-cacheing of matrices, also prepares them for gpu for processing if necessary.
+    
+    Input
+    -----
+
+    Omega - the Riemann matrix
+    X - The real part of Omega
+    Y - The imaginary part of Omega
+    Yinv - The inverse of Y
+    T - The Cholesky Decomposition of Y
+    g - The genus of the Riemann theta function
+    prec - The desired precision
+    deriv - the set of derivatives to compute (Possibly an empty set)
+    Tinv - The inverse of T
+
+    Output
+    -----
+    Data structures ready for GPU computation.
     """
-    def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv):
+    def recache(self, Omega, X, Y, Yinv, T, g, prec, deriv, Tinv, batch):
         recache_omega = not np.array_equal(self._Omega, Omega)
         recache_prec = self._prec != prec
-        # check if we've already computed the uniform radius and intpoints
+        #Check if we've already computed the uniform radius and intpoints for this Omega/Precision
         if (recache_omega or recache_prec):
+            #If not recompute the integer summation set.
             self._prec = prec
             self._rad = self.radius(T, prec, deriv=deriv)
             origin = [0]*g
-            self._intpoints = self.integer_points(Yinv, T, Tinv, origin, 
+            self._intpoints = self.integer_points(Yinv, T, origin, 
                                                   g, self._rad)
-        if (gpu_capable):
+        #If gpu_capable is set to true and batch is set to true then the data structures need to 
+        #be loaded onto the GPU for computation. This code loads them onto the GPU and compiles
+        #the pyCuda functions.
+        if (gpu_capable and batch):
             self.parRiemann.cache_intpoints(self._intpoints)
-            if (self._Omega is None or not g == self._Omega.shape[0]):
+            #Check if the gpu functions depending on the genus and Omega need to be compiled/recompiled
+            if (self._Omega is None or not g == self._Omega.shape[0] or self.parRiemann.g is None):
                 self.parRiemann.compile(g)
                 self.parRiemann.cache_omega_real(X)
                 self.parRiemann.cache_omega_imag(Yinv, T)
+            #Check if the gpu functions depending only on Omega need to be recompiled
             else:
+                #Check if the gpu functions depending on the real part of Omega need to be recompiled
                 if (not np.array_equal(self._Omega.real, Omega.real)):
                     self.parRiemann.cache_omega_real(X)
+                #Check if the gpu functions depending on the imaginary part of Omega need to be recompiled
                 if (not np.array_equal(self._Omega.imag, Omega.imag)):
                     self.parRiemann.cache_omega_imag(Yinv, T)
         self._Omega = Omega
 
     """
-    Handles gpu processing of data sets which are too large to fit into the memory of the gpu
-    at once
+    Handles calls to the GPU.
+    
+    Input
+    -----
+    
+    Z - the set of points to compute theta(z, Omega) at.
+    deriv - The derivatives to compute (possibly an empty list)
+    gpu_max - The maximum number of points to compute on the GPU at once
+    length - The number of points we're computing. (ie. length == |Z|)
+    
+    Output
+    -------
+    
+    u - A list of the exponential growth terms of theta (or deriv(theta)) for each z in Z
+    v - A list of the approximations of the infite sum of theta (or deriv(theta)) for each z in Z
     """
     def gpu_process(self, Z, deriv, gpu_max, length):
         v = np.array([])
@@ -439,29 +540,46 @@ class RiemannTheta_Function:
             u = np.concatenate((u, u_p))
             v = np.concatenate((v, v_p))
         return u,v
- 
-    
 
-    def exp_and_osc_at_point(self, z, Omega, batch = False, prec=1e-9, deriv=[], gpu=gpu_capable, gpu_max = 500000):
-        r"""
-        Calculate the exponential and oscillating parts of `\theta(z,\Omega)`.
-        (Or a given directional derivative of `\theta`.) That is, compute 
-        complex numbers `u,v \in \CC` such that `\theta(z,\Omega) = e^u v` 
-        where the value of `v` is oscillatory as a function of `z`.            
-        """
+
+    """
+    Computes the exponential and oscillatory part of the Riemann theta function. Or the directional
+    derivative of theta.
+    
+    Input
+    -----
+    
+    z - The point (or set of points) to compute the Riemann Theta function at. Note that if z is a set of 
+    points the variable "batch" must be set to true. If z is a single point itshould be in the form of a 
+    1-d numpy array, if z is a set of points it should be a list or 1-d numpy array of 1-d numpy arrays.
+    Omega - The Riemann matrix
+    batch - A variable that indicates whether or not a batch of points is being computed.
+    prec - The desired digits of precision to compute theta up to. Note that precision is limited to double
+    precision which is about ~15 decimal points.
+    gpu - Indicates whether or not to do batch computations on a GPU, the default is set to yes if the proper
+    pyCuda libraries are installed and no otherwise.
+    gpu_max - The maximum number of points to be computed on a GPU at once.
+
+    Output
+    ------
+
+    u - A list of the exponential growth terms of theta (or deriv(theta)) for each z in Z
+    v - A list of the approximations of the infite sum of theta (or deriv(theta)) for each z in Z
+    """
+    def exp_and_osc_at_point(self, z, Omega, batch = False, prec=1e-12, deriv=[], gpu=gpu_capable, gpu_max = 500000):
         g = Omega.shape[0]
         pi = np.pi
 
         #Process all of the matrices into numpy matrices
-        X = np.matrix(Omega.real)
-        Y = np.matrix(Omega.imag)
-        Yinv = np.matrix(la.inv(Y))
-        T = np.matrix(la.cholesky(Y))
-        Tinv = np.matrix(la.inv(T))
+        X = np.array(Omega.real)
+        Y = np.array(Omega.imag)
+        Yinv = np.array(la.inv(Y))
+        T = np.array(la.cholesky(Y))
+        Tinv = np.array(la.inv(T))
         deriv = np.array(deriv)
         
         #Do recacheing if necessary
-        self.recache(Omega, X, Y, Yinv, T, g, prec, deriv, Tinv)
+        self.recache(Omega, X, Y, Yinv, T, g, prec, deriv, Tinv, batch)
 
         # extract real and imaginary parts of input z
         length = 1
@@ -473,13 +591,13 @@ class RiemannTheta_Function:
             R = self._rad
             S = self._intpoints
         elif(batch):
-                raise Exception("Can't compute pointwise approximation for multiple points.\nUse uniform approximation or call the function seperately for each point.")
+                raise Exception("Can't compute pointwise approximation for multiple points at once.\nUse uniform approximation or call the function seperately for each point.")
         else:
             R = self.radius(T, prec, deriv=deriv)
             S = self.integer_points(Yinv, T, 
 Tinv, z, g, R)
-        # compute oscillatory and exponential terms
-        if gpu and (length > gpu_max):
+        #Compute oscillatory and exponential terms
+        if gpu and batch and (length > gpu_max):
             u,v = self.gpu_process(z, deriv, gpu_max, length)
         elif gpu and batch and len(deriv) > 0:
             v = self.parRiemann.compute_v_with_derivs(z, deriv)
@@ -489,7 +607,7 @@ Tinv, z, g, R)
             v = riemanntheta_cy.finite_sum_derivatives(X, Yinv, T, z, S, deriv, g, batch)
         else:
             v = riemanntheta_cy.finite_sum(X, Yinv, T, z, S, g, batch)
-        if (length > gpu_max):
+        if (length > gpu_max and gpu):
             #u already computed
             pass
         elif (gpu and batch):
@@ -499,20 +617,64 @@ Tinv, z, g, R)
             u = np.zeros(K)
             for i in range(K):
                 w = np.array([z[i,:].imag])
-                val = pi*np.dot(w, Yinv*w.T).item(0,0)
+                val = np.pi*np.dot(w, np.dot(Yinv,w.T)).item(0,0)
                 u[i] = val
         else:
-            u = pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
+            u = np.pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
         return u,v
 
-    def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
-        r"""
-        Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if batch is True.
-        """
+    """
+    TODO: Add documentation
+    """
+    def characteristic(self, chars, z, Omega, deriv = [], prec=1e-8):
+        val = 0
+        z = np.matrix(z).T
+        alpha, beta = np.matrix(chars[0]).T, np.matrix(chars[1]).T
+        z_tilde = z + np.dot(Omega,alpha) + beta
+        if len(deriv) == 0:
+            u,v = self.exp_and_osc_at_point(z_tilde, Omega)
+            quadratic_term =  np.dot(alpha.T, np.dot(Omega,alpha))[0,0]
+            exp_shift = 2*np.pi*1.0j*(.5*quadratic_term + np.dot(alpha.T, (z + beta)))
+            theta_val = np.exp(u + exp_shift)*v
+        elif len(deriv) == 1:
+            d = deriv[0]
+            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha.T, np.dot(Omega, alpha)) + np.dot(alpha.T, (z + beta))))
+            alpha_part = 2*np.pi*1.0j*alpha
+            theta_eval = self.value_at_point(z_tilde, Omega, prec=prec)
+            term1 = np.dot(theta_eval*alpha_part.T, d)
+            term2 = self.value_at_point(z_tilde, Omega, prec=prec, deriv=d)
+            theta_val = scalar_term*(term1 + term2)
+        elif len(deriv) == 2:
+            d1,d2 = np.matrix(deriv[0]).T, np.matrix(deriv[1]).T
+            scalar_term = np.exp(2*np.pi*1.0j*(.5*np.dot(alpha.T, np.dot(Omega, alpha))[0,0] + np.dot(alpha.T, (z + beta))[0,0]))
+            #Compute the non-theta hessian
+            g = Omega.shape[0]
+            non_theta_hess = np.zeros((g, g), dtype = np.complex128)
+            theta_eval = self.value_at_point(z_tilde, Omega, prec=prec)
+            theta_grad = np.zeros(g, dtype=np.complex128)
+            for i in range(g):
+                partial = np.zeros(g)
+                partial[i] = 1.0
+                theta_grad[i] = self.value_at_point(z_tilde, Omega, prec = prec, deriv = partial)
+-            for n in xrange(g):
+                for k in xrange(g):
+                    non_theta_hess[n,k] =  2*np.pi*1.j*alpha[k,0] * (2*np.pi*1.j*theta_eval*alpha[n,0] + theta_grad[n]) + (2*np.pi*1.j*theta_grad[k]*alpha[n,0])
+                    
+            term1 = np.dot(d1.T, np.dot(non_theta_hess, d2))[0,0]
+            term2 = self.value_at_point(z_tilde, Omega, prec=prec, deriv=deriv)
+            theta_val = scalar_term*(term1 + term2)
+        else:
+            return NotImplementedError()
+        return theta_val
+            
 
+    r"""
+    Returns the value of `\theta(z,\Omega)` at a point `z` or set of points if batch is True.
+    """     
+    def value_at_point(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
         exp_part, osc_part = self.exp_and_osc_at_point(z, Omega, prec=prec,
                                                        deriv=deriv, gpu=gpu,batch=batch)
-
+        
         return np.exp(exp_part) * osc_part
 
     def __call__(self, z, Omega, prec=1e-8, deriv=[], gpu=gpu_capable, batch=False):
@@ -536,7 +698,7 @@ if __name__=="__main__":
     Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
 
     print "Test #1:"
-    print theta.value_at_point(z,Omega)
+    print theta.value_at_point(z, Omega, batch = False)
     print "1.1654 - 1.9522e-15*I"
     print 
     
@@ -545,7 +707,6 @@ if __name__=="__main__":
     print theta.value_at_point(z1,Omega)
     print "-438.94 + 0.00056160*I"
     print
-
 
     print "Batch Test"
     z0 = np.array([0, 0])
@@ -557,20 +718,20 @@ if __name__=="__main__":
     print
     
     if (gpu_capable):
-        a = []
-        for x in range(200000):
-            a.append(z0)
-            a.append(z1)
-            a.append(z2)
-            a.append(z3)
-            a.append(z4)
+        a = np.random.rand(10)
+        b = np.random.rand(10)
+        c = max(b)
+        b = 1.j*b/(1.0*c)
+        a = a + b
+        print a.size
+        a = a.reshape(5,2)
         start1 = time.clock()
-        print theta.value_at_point(a, Omega, batch=True, prec=1e-12)[57000:57005]
+        print theta.value_at_point(a, Omega, batch=True, prec=1e-12)
         print("GPU time to perform calculation: " + str(time.clock() - start1))
         start2 = time.clock()
-        #print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)[1730:1735]
-        #print("CPU time to do same calculation: " + str(time.clock() - start2))
-
+        print theta.value_at_point(a, Omega, gpu=False, batch=True,prec=1e-12)
+        print("CPU time to do same calculation: " + str(time.clock() - start2))
+        
     print
     print "Derivative Tests:"
     print "Calculating directional derivatives at z = [i, 0]"
@@ -602,7 +763,14 @@ if __name__=="__main__":
         l.append(y)
     print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
     
-   
+    print "Theta w/ Characteristic Test"
+    z = np.array([1.j,0])
+    Omega = np.matrix([[1.0j,-0.5],[-0.5,1.0j]])
+    deriv = [[1,0],[1,0]]
+    chars = [[0,0],[0,0]]
+    print theta.characteristic(chars, z, Omega, deriv)
+    
+    
     print "Test #3"
     import pylab as p
     from mpl_toolkits.mplot3d import Axes3D
@@ -618,10 +786,22 @@ if __name__=="__main__":
     Z = X + Y*1.0j
     Z = Z.flatten()
     U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
-    Z = V.reshape(60,60).real
+    Z = (V.reshape(60,60)).imag
     print "\tPlotting..."
     plt.contourf(X,Y,Z,7,antialiased=True)
     plt.show()
-                       
 
-
+    SIZE = 100
+    x = np.linspace(-7,7,SIZE)
+    y = np.linspace(-7,7,SIZE)
+    X,Y = p.meshgrid(x,y)
+    Z = X + Y*1.j
+    Z = X + Y*1.j
+    Z = Z.flatten()
+    w = np.array([[1.j]])
+    print w
+    U,V = theta.exp_and_osc_at_point(Z, w, batch = True)
+    print theta._intpoints
+    Z = (V.reshape(100,100)).real
+    plt.contourf(X,Y,Z,7,antialiased=True)
+    plt.show()    

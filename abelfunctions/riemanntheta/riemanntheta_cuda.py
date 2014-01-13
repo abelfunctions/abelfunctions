@@ -10,7 +10,7 @@ multiple points. Returns a list of complex values.
 Prepares the variables for computation on a GPU,
 
 X = real part of the Omega matrix
-Yinv = The inverser of the imaginary part of the Omega matrix
+Yinv = The inverse of the imaginary part of the Omega matrix
 T = Cholesky Decomposition of Omega
 Z = List of points to compute the function at
 S = List of integer points to sum over
@@ -47,18 +47,18 @@ class RiemannThetaCuda:
         self.g = None
         self.yd = None
         #Compiles a cuda sum-reduction function and stores it for later use
-        self.reduction = self.func2()
+        self.reduction = self.grid_sum_reduction_d()
         
 
     """
-    Compiles func1() and func3() based on g. Note that this function is called every time 
-    that g changes
+    Compiles finite_sum_d() and exponential_growth_d() based on g. Note that this function is called every time 
+o   that g changes
     """
     def compile(self, g):
         self.g=g
         (self.finite_sum_without_derivs, self.finite_sum_with_derivs,
-         self.Xd, self.Yinv_vd, self.Td) = self.func1(self.tilewidth, self.tileheight, g)
-        self.dot_prod, self.Yinv_ud = self.func3(g, self.tileheight)
+         self.Xd, self.Yinv_vd, self.Td) = self.finite_sum_d(self.tilewidth, self.tileheight, g)
+        self.dot_prod, self.Yinv_ud = self.exponential_growth_d(g, self.tileheight)
 
     """
     Stores the real part of Omega a gpuarray in constant memory.
@@ -80,15 +80,16 @@ class RiemannThetaCuda:
         cuda.memcpy_dtod(self.Td, Td.ptr, Td.nbytes)
         cuda.memcpy_dtod(self.Yinv_vd, Yinvd.ptr, Yinvd.nbytes)
         cuda.memcpy_dtod(self.Yinv_ud, Yinvd.ptr, Yinvd.nbytes)
-        test = gpuarray.zeros(self.g * self.g, dtype = np.double)
-        cuda.memcpy_dtod(test.ptr, self.Yinv_ud, Yinvd.nbytes)
 
     """
     Stores the list of integer points as a gpuarray
     """
-    def cache_intpoints(self, S):
-        S = np.require(S, dtype = np.double, requirements=['A','W','O','C'])
-        self.Sd = gpuarray.to_gpu(S)
+    def cache_intpoints(self, S, gpu_already = False):
+        if (not gpu_already):
+            S = np.require(S, dtype = np.double, requirements=['A','W','O','C'])
+            self.Sd = gpuarray.to_gpu(S)
+        else:
+            self.Sd = S
 
     """
     Computes the oscillatory part of the riemann-theta function without any derivatives
@@ -174,8 +175,8 @@ class RiemannThetaCuda:
     #Z
     def sum_reduction(self, fsum, N, K, Kd, Nd):
         out = gpuarray.zeros(K*N, dtype = np.double)
-        blockheight = 32
-        blockwidth = 16
+        blockheight = self.tileheight
+        blockwidth = self.tilewidth
         while (N > 1):
             J = (N - 1)//blockwidth + 1
             gridsize = (J, (K-1)//blockheight + 1, 1)
@@ -216,14 +217,14 @@ class RiemannThetaCuda:
     (fun1) contains function for computing the oscillatory part of the riemanntheta
     function
     
-    (func2) Is a function for computing sum reduction across the rows of a matrix
+    (grid_sum_reduction_d) Is a function for computing sum reduction across the rows of a matrix
     
-    (func3) Is a function for computing the exponential part of the riemanntheta function
+    (exponential_growth_d) Is a function for computing the exponential part of the riemanntheta function
     """
         
-    def func1(self, TILEWIDTH, TILEHEIGHT, g):
+    def finite_sum_d(self, TILEWIDTH, TILEHEIGHT, g):
         template = """
-
+ 
     #include <stdlib.h>
     #include <stdio.h>
     #include <math.h>
@@ -508,11 +509,11 @@ class RiemannThetaCuda:
         Td = mod.get_global("Td")[0]
         return (func, deriv_func, Xd, Yinvd, Td)
 
-    def func2(self):
-        mod = SourceModule("""
+    def grid_sum_reduction_d(self):
+        template = """
 
-   #define BLOCKWIDTH 16
-   #define BLOCKHEIGHT 32
+   #define BLOCKWIDTH %d
+   #define BLOCKHEIGHT %d
 
     __global__ void reduction_kernel(double *A_d, double *A_outd, int x_len, int y_len, int POINTS)
     {
@@ -549,11 +550,11 @@ class RiemannThetaCuda:
       }
     }
 
-    """)
-
+    """%(self.tilewidth, self.tileheight)
+        mod = SourceModule(template)
         return mod.get_function("reduction_kernel")
 
-    def func3(self, g, TILEHEIGHT):
+    def exponential_growth_d(self, g, TILEHEIGHT):
         template = """
 
     #include <stdlib.h>
