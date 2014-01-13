@@ -120,7 +120,7 @@ ext_modules = [
     Extension('abelfunctions.riemanntheta.lattice_reduction',
               sources = ['abelfunctions/riemanntheta/lattice_reduction.pyx',
                          'abelfunctions/riemanntheta/lll_reduce.c'],
-              include_dirs = [np.get_include()]
+              include_dirs = [numpy.get_include()]
               ),
     ]
 

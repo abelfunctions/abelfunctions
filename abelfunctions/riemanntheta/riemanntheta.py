@@ -103,7 +103,7 @@ from scipy.special import gamma, gammaincc, gammainccinv,gammaincinv
 from scipy.optimize import fsolve
 import time
 from lattice_reduction import lattice_reduce
-from riemanntheta_omegas import RiemannThetaOmegas
+#from riemanntheta_omegas import RiemannThetaOmegas
 
 gpu_capable = True
 try:
@@ -656,7 +656,7 @@ Tinv, z, g, R)
                 partial = np.zeros(g)
                 partial[i] = 1.0
                 theta_grad[i] = self.value_at_point(z_tilde, Omega, prec = prec, deriv = partial)
--            for n in xrange(g):
+            for n in xrange(g):
                 for k in xrange(g):
                     non_theta_hess[n,k] =  2*np.pi*1.j*alpha[k,0] * (2*np.pi*1.j*theta_eval*alpha[n,0] + theta_grad[n]) + (2*np.pi*1.j*theta_grad[k]*alpha[n,0])
                     
@@ -761,7 +761,7 @@ if __name__=="__main__":
     l = []
     for x in range(5):
         l.append(y)
-    print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
+    #print theta.value_at_point(l, Omega, deriv = [[1,1],[1,1],[1,1],[1,1]], batch=True)
     
     print "Theta w/ Characteristic Test"
     z = np.array([1.j,0])
@@ -779,19 +779,24 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
 
     print "\tCalculating theta..."
-    SIZE = 60
+    fig1 = plt.figure()
+    ax = fig1.add_subplot(1,1,1)
+    SIZE = 128
     x = np.linspace(0,1,SIZE)
     y = np.linspace(0,5,SIZE)
     X,Y = p.meshgrid(x,y)
     Z = X + Y*1.0j
     Z = Z.flatten()
     U,V = theta.exp_and_osc_at_point([[z,0] for z in Z], Omega, batch=True)
-    Z = (V.reshape(60,60)).imag
+    Z = (V.reshape(SIZE,SIZE)).imag
     print "\tPlotting..."
-    plt.contourf(X,Y,Z,7,antialiased=True)
-    plt.show()
+    ax.contourf(X,Y,Z,7,antialiased=True)
+    fig1.show()
 
-    SIZE = 100
+    print "\tCalculating theta..."
+    fig2 = plt.figure()
+    ax = fig2.add_subplot(1,1,1)
+    SIZE = 512
     x = np.linspace(-7,7,SIZE)
     y = np.linspace(-7,7,SIZE)
     X,Y = p.meshgrid(x,y)
@@ -802,6 +807,7 @@ if __name__=="__main__":
     print w
     U,V = theta.exp_and_osc_at_point(Z, w, batch = True)
     print theta._intpoints
-    Z = (V.reshape(100,100)).real
-    plt.contourf(X,Y,Z,7,antialiased=True)
-    plt.show()    
+    Z = (V.reshape(SIZE,SIZE)).real
+    print "\tPlotting..."
+    ax.contourf(X,Y,Z,7,antialiased=True)
+    fig2.show()    

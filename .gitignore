@@ -19,6 +19,7 @@ Thumbs.db
 #######################
 riemanntheta_cy.c
 riemannsurface_path.c
+lattice_reduction.c
 smale.c
 smale.html
 
