@@ -17,6 +17,7 @@ Thumbs.db
 
 # Cython output files #
 #######################
+Cython-Riemann.c
 riemanntheta_cy.c
 riemannsurface_path.c
 lattice_reduction.c
