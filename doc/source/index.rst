@@ -6,11 +6,20 @@
 Welcome to abelfunctions's documentation!
 =========================================
 
+`abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python
+library for computing with complex algebraic curves and Abelian
+functions. If this is your first time using `abelfunctions`, start with
+the tutorial.
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   install.rst
+   tutorial.rst
+   modules/index.rst
+   authors.rst
 
 
 Indices and tables
