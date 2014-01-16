@@ -1,9 +1,0 @@
-Introduction
-============
-
-
-
-Authors
-=======
-
-- Chris Swierczewski
