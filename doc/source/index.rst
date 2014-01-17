@@ -8,7 +8,7 @@ Welcome to abelfunctions's documentation!
 
 `abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python
 library for computing with complex algebraic curves and Abelian
-functions. If this is your first time using `abelfunctions`, start with
+functions. If this is your first time using abelfunctions, start with
 the tutorial.
 
 Contents:
@@ -19,6 +19,7 @@ Contents:
    install.rst
    tutorial.rst
    modules/index.rst
+   develop.rst
    authors.rst
 
 

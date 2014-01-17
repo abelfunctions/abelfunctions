@@ -7,10 +7,10 @@ Prerequisites
 abelfunctions runs well with either `Anaconda
 <http://continuum.io/downloads.html>`_, the `Enthought Python
 Distribution <http://enthought.com/products/epd.php>`_, or `Sage
-<http://www.sagemath.org>`.  Specifically, abelfunctions requires the
+<http://www.sagemath.org>`_.  Specifically, abelfunctions requires the
 following Python packages
 
-* gcc (or equivalent)
+* gcc or clang
 * numpy
 * scipy
 * sympy
@@ -21,16 +21,16 @@ following Python packages
 Optionally, the NVIDIA CUDA compiler is needed to compile the high-performance
 CUDA code used in computing the Riemann theta function.
 
-Installation Instructions
--------------------------
+Installation Options
+--------------------
 
 *Download the Code*. There are two ways to do this:
 
-1) Download and extract a zipfile. First, go to the abelfunctions
-   homepage <https://github.com/cswiercz/abelfunctions>. Then, click on
+1) Download and extract a zipfile. First, go to the `abelfunctions
+   homepage <https://github.com/cswiercz/abelfunctions>`_. Then, click on
    the button labeled "ZIP" near the top of the page.
 
-2) If you have git <http://git-scm.com/> installed, run::
+2) If you have `git <http://git-scm.com/>`_ installed, run::
 
     $ git clone git://github.com/cswiercz/abelfunctions.git
 
@@ -44,7 +44,7 @@ Installation Instructions
   $ python setup.py install
 
 
-Run abelfunctions
+Test Installation
 -----------------
 
 After installation, make sure you can import the `abelfunctions` package::
