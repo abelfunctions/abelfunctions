@@ -100,23 +100,42 @@ packages = [
     ]
 
 ext_modules = [
-    Extension('abelfunctions.riemanntheta.riemanntheta_cy',
-              sources = ['abelfunctions/riemanntheta/riemanntheta_cy.pyx',
-                         'abelfunctions/riemanntheta/riemanntheta.c'],
-              include_dirs = [numpy.get_include()]
-              ),
-    Extension('abelfunctions.riemannsurface.riemannsurface_path',
+#     Extension('abelfunctions.riemanntheta.riemanntheta_cy',
+#               sources = ['abelfunctions/riemanntheta/riemanntheta_cy.pyx',
+#                          'abelfunctions/riemanntheta/riemanntheta.c'],
+#               include_dirs = [numpy.get_include()]
+#               ),
+    Extension('abelfunctions.riemann_surface',
               sources = [
-                  'abelfunctions/riemannsurface/riemannsurface_path.pyx',
+                  'abelfunctions/riemann_surface.pyx',
                   ],
               include_dirs = [numpy.get_include()]
               ),
-    Extension('abelfunctions.riemannsurface.smale',
+
+    Extension('abelfunctions.riemann_surface_path',
               sources = [
-                  'abelfunctions/riemannsurface/smale.pyx',
+                  'abelfunctions/riemann_surface_path.pyx',
                   ],
               include_dirs = [numpy.get_include()]
               ),
+    Extension('abelfunctions.analytic_continuation',
+              sources = [
+                  'abelfunctions/analytic_continuation.pyx',
+                  ],
+              include_dirs = [numpy.get_include()]
+              ),
+    Extension('abelfunctions.analytic_continuation_smale',
+              sources = [
+                  'abelfunctions/analytic_continuation_smale.pyx',
+                  ],
+              include_dirs = [numpy.get_include()]
+              ),
+#     Extension('abelfunctions.riemannsurface.smale',
+#               sources = [
+#                   'abelfunctions/riemannsurface/smale.pyx',
+#                   ],
+#               include_dirs = [numpy.get_include()]
+#               ),
     Extension('abelfunctions.riemanntheta.lattice_reduction',
               sources = ['abelfunctions/riemanntheta/lattice_reduction.pyx',
                          'abelfunctions/riemanntheta/lll_reduce.c'],

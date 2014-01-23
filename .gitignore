@@ -18,11 +18,19 @@ Thumbs.db
 # Cython output files #
 #######################
 Cython-Riemann.c
+Cython-Riemann.html
 riemanntheta_cy.c
-riemannsurface_path.c
+riemanntheta_cy.html
 lattice_reduction.c
-smale.c
-smale.html
+lattice_reduction.html
+riemann_surface.c
+riemann_surface.html
+riemann_surface_path.c
+riemann_surface_path.html
+analytic_continuation.c
+analytic_continuation.html
+analytic_continuation_smale.c
+analytic_continuation_smale.html
 
 
 # Documentation #
