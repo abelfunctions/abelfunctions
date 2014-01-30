@@ -32,6 +32,13 @@ class clean(Command):
 
     description = "remove all build and trash files"
     user_options = []
+    cleaned_file_extensions = ['.pyc', '~', '.so', '.c', '.html']
+    ignored_files = [
+        './abelfunctions/riemanntheta/lattice_reduction.c',
+        './abelfunctions/riemanntheta/lll_reduce.c',
+        './abelfunctions/riemanntheta/riemanntheta.c',
+        './doc/themes/sphinx13/layout.html'
+        ]
 
     def initialize_options(self):
         pass
@@ -60,18 +67,27 @@ class clean(Command):
                     print e
 
         # deletes .pyc files that don't have corresponding .py files
+        to_remove = []
         for root, dirs, files in os.walk('.'):
-            pyc_files = filter(lambda f: f.endswith('.pyc'), files)
-            tilde_files = filter(lambda f: f.endswith('~'), files)
+            # get absolute path to each file
+            files = map(lambda f: os.path.join(root,f), files)
 
-            to_remove = pyc_files + tilde_files
-            for f in to_remove:
-                full_path = os.path.join(root,f)
-                os.unlink(full_path)
+            # filter out various file types
+            for ext in self.cleaned_file_extensions:
+                to_remove.extend(filter(lambda f: f.endswith(ext), files))
 
-        # delete build directory
-        dir = 'build'
-        delete_dir(dir)
+        # make sure ignored files are removed from the 'to remove' list
+        for f in self.ignored_files:
+            to_remove.remove(f)
+
+        # delete the files slated for removal
+        for f in to_remove:
+            os.unlink(f)
+
+        # delete build directories
+        dirs = ['./build', './doc/build']
+        for d in dirs:
+            delete_dir(d)
 
 
 class test_abelfunctions(Command):
