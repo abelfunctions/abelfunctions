@@ -74,6 +74,34 @@ cdef class RiemannSurfacePathPrimitive:
         self._ncheckpoints = ncheckpoints
         self._initialize_checkpoints()
 
+    def __add__(self, other):
+        # try getting the segments of the other object. Doing so asserts
+        # that the other object is of type RiemannSurfacePathPrimitve
+        try:
+            segments = numpy.append(self.segments, other.segments)
+        except AttributeError:
+            raise TypeError('Summands must both be of '
+                            'RiemannSurfacePathPrimitive type.')
+
+        # assert that the endpoint of the segments of this path matches
+        # with those of the other path
+        #
+        # XXX do we have to check the entire fibre or just the first
+        # fibre component?
+        eps = 1e-8
+        end_segment = self.segments[-1]
+        x_end = end_segment.get_x(1)
+        y_end = end_segment.get_y(1)
+        x_start = other.x0
+        y_start = other.y0
+        if (scipy.norm(x_start - x_end) > eps) or
+               (scipy.norm(y_start - y_end) > eps):
+            raise ValueError('Cannot form sum of paths: starting place and '
+                             'fibre of right Riemann surface path does not '
+                             'match ending place of left path.')
+        else:
+            return RiemannSurfacePath(self.RS, self.x0, self.y0, segments)
+
     cdef int _nearest_checkpoint_index(self, double t):
         """Returns the index of the checkpoint closest to and preceding `t`."""
         cdef int n,k
@@ -255,11 +283,21 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     :class:RiemannSurfacePathPrimitive objects. This path is
     parameterized for `t \in [0,1]`.
     """
-    def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
-                 complex x0, complex[:] y0,
+    def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
                  RiemannSurfacePathPrimitive[:] segments):
-        RiemannSurfacePathPrimitive.__init__(self, RS, AC, x0, y0,
-                                             ncheckpoints=None)
+        # RiemannSurfacePath delegates all analytic continuation to each
+        # of its components, so we intialize its parent with a null
+        # AnalyticContinuator object.
+        #
+        # Additionally, setting ncheckpoints to "0" prevents
+        # self._initialize_checkpoints() from executing, which only
+        # makes sense on a single path segment / path primitive.
+        RiemannSurfacePathPrimitive.__init__(self, RS, None, x0, y0,
+                                             ncheckpoints=0)
+
+        # important: self.segments must be set after the parent
+        # intialization call since parent will set self.segments equal
+        # to "self"
         self.segments = segments
         self.nsegments = len(segments)
 
