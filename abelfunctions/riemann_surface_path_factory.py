@@ -2,69 +2,50 @@
 Riemann Surface Path Factory
 ============================
 
-This module implements the :class:RiemannSurfacePathFactory class, a
-class for generating :class:RiemannSurfacePath objects from various
+This module implements the :class:`RiemannSurfacePathFactory` class, a
+class for generating :class:`RiemannSurfacePath` objects from various
 kinds of input data.
 
 Authors
 -------
 
 * Chris Swierczewski (January 2013)
+
 """
 
-
-def polyroots(f,x,y,xi,types='numpy'):
-    """
-    Helper function for computing multiprecise roots of polynomials
-    using `sympy.mpmath`.
-
-    Precision is set by modifying `sympy.mpmath.mp.dps`.
-
-    Input:
-
-    - `f,x,y`: a complex plane algebraic curve in x,y with
-      `sympy.mpmath.mpc` coefficients
-
-    - `xi`: a complex x-point
-
-    Output:
-
-    - the multiprecise roots of ``f(xi,y) = 0``.
-    """
-    dps = sympy.mpmath.mp.dps
-    p = f.as_poly(y)
-
-    if types == 'mpmath':
-        coeffs = [c.evalf(subs={x:xi},n=dps) for c in p.all_coeffs()]
-        coeffs = [sympy.mpmath.mpc(*(z.as_real_imag())) for z in coeffs]
-        return sympy.mpmath.polyroots(coeffs)
-    else:
-        coeffs = [c.evalf(subs={x:xi},n=15) for c in p.all_coeffs()]
-        coeffs = [numpy.complex(z) for z in coeffs]
-        poly = numpy.poly1d(coeffs)
-        return (poly.r).tolist()
-
-
 def path_segments_from_cycle(cycle, G, base_point=None):
-    """
-    Given a cycle, which is a list of the form
+    """Converts a homology cycle encoding to a path segment data list.
 
-        (...,s_i,(b_i,n_i),....)
+    Given a cycle, which is a list of the form .. math::
 
-    where s_i is a sheet index, b_i is a branch point, and n_i is the
-    number of times and direction one goes around the branch point,
-    return a list of path segments parameterizing the input cycle.
+        \left( \ldots , s_i, (b_i,n_i) , \ldots \right)
+
+    where :math:`s_i` is a sheet index, :math:`b_i` is a branch point,
+    and :math`n_i` is the number of times and direction one goes around
+    the branch point, return a list of path segments parameterizing the
+    input cycle.
 
     The path segment is constructed by performing repeated calls to
-    path_around_granch_point() and path_around_infinity().
+    :function:`path_around_branch_point` and
+    :function:`path_around_infinity`.
 
-    Input:
+    Auguments
+    ---------
+    cycle : list
+        A cycle in the form as output by :function:`homology`.
+    G : networkx.Graph
+        The monodromy graph, as output by :function:`monodromy`.
+    base_point : complex, optional
+        A custom base point. :function:`monodromy` will choose a default
+        base point unless otherwise given.
 
-    * cycle: a cycle in the form as output by homology()
-
-    * G: the monodromy graph, as output by monodromy()
-
-    * base_point: (optional) a custom base point
+    Returns
+    -------
+    list
+        A list of tuples with each tuple representing a single segment
+        of the path. Lines are represented as :math:`(z_0,z_1)` tuples
+        and semicircles are given as :math:`(R,w,\text{arg},\text{dir}`
+        tuples.
     """
     path_segments = []
 
@@ -90,32 +71,26 @@ def path_segments_from_cycle(cycle, G, base_point=None):
 
 
 def path_around_branch_point(G, bpt, rot, types='numpy'):
-    """
-    Returns a list of tuples encoding information about the x-part of the
-    Riemann Surfaace path starting from the base point going around the branch
-    point, "bpt", "rot" number of times, and then returning to the starting
-    point.
+    """Returns a list of tuples paramterizing the x-part of the path
+    starting from the base point and going around infinity.
 
-    Line segments are encoded as tuples (z0,z1) where z0 is the starting
-    x-value and z1 is the ending x-value.
+    Arguments
+    ---------
+    G : networkx.Graph
+        The "monodromy graph", as computed by monodromy_graph().
+    bpt : complex
+        Index of the target branch point
+    rot : int
+        Rotation number and direction of the path going around branch
+        point `bpt`.
 
-    Semicircles are encoded as tuples (R,w,arg,dir) where R is the radius, w is
-    the center, arg is the starting argument (e.g. arg=0 means start on the
-    right side of the circle), and dir indicates which direction to travel
-    around the circle in a semicircular arc.
-
-    Input:
-
-    - G: the "monodromy graph", as computed by monodromy_graph()
-
-    - bpt: the index of the target branch point
-
-    - rot: the rotation number and direction of the path going around
-    branch point "bpt".
-
-    Output:
-
-    A list of tuples encoding the path information.
+    Returns
+    -------
+    list
+        A list of tuples with each tuple representing a single segment
+        of the path. Lines are represented as :math:`(z_0,z_1)` tuples
+        and semicircles are given as :math:`(R,w,\text{arg},\text{dir}`
+        tuples.
     """
     abs = numpy.abs
     pi = numpy.pi
@@ -200,23 +175,24 @@ def path_around_branch_point(G, bpt, rot, types='numpy'):
 
 
 def path_around_infinity(G, rot, types='numpy'):
-    """
-    Returns a list of labmda functions paramterizing the path starting
-    from the base point and going around infinity.
+    """Returns a list of tuples paramterizing the x-part of the path
+    starting from the base point and going around infinity.
 
-    Input:
+    Arguments
+    ---------
+    G : networkx.Graph
+        The "monodromy graph", as computed by monodromy_graph().
+    rot : int
+        Rotation number and direction of the path going around infinity.
 
-    - G: the "monodromy graph", as computed by monodromy_graph()
+    Returns
+    -------
+    list
+        A list of tuples with each tuple representing a single segment
+        of the path. Lines are represented as :math:`(z_0,z_1)` tuples
+        and semicircles are given as :math:`(R,w,\text{arg},\text{dir}`
+        tuples.
 
-    - bpt: the index of the target branch point
-
-    - rot: the rotation number and direction of the path going around
-    branch point "bpt".
-
-    Output:
-
-    A list of path segments ``(x(t), dxdt(t))`` for ``t \in [0,1]``
-    defined by lambda functions.
     """
     abs = numpy.abs
     arg = numpy.angle
@@ -268,3 +244,95 @@ def path_around_infinity(G, rot, types='numpy'):
 
     return path_data + circle_data + reversed_path_data
 
+
+
+class RiemannSurfacePathFactory(object):
+    """
+    """
+    def __init__(self, RS):
+        self.RS = RS
+        self.Mon = RS.Monodromy
+        self.Hom = RS.Homology
+
+        # cache the a-, b-, and c-cycles
+        self._a_cycles = None
+        self._b_cycles = None
+        self._c_cycles = None
+
+    def __str__(self):
+        return 'Riemann Surface Path Factory for %s'%(self.RS)
+
+    def a_cycles(self):
+        """Returns the a-cycles on the Riemann surface.
+
+        Returns
+        -------
+        list, RiemannSurfacePath
+            A list of the a-cycles of the Riemann surface as
+            :class:`RiemannSurfacePath` objects.
+        """
+        if self._a_cycles:
+            return self._a_cycles
+
+        cyc = []
+
+
+
+        self._a_cycles = [c for c in cyc]
+        return self._a_cycles
+
+    def b_cycles(self):
+        """Returns the b-cycles on the Riemann surface.
+
+        Returns
+        -------
+        list, RiemannSurfacePath
+            A list of the b-cycles of the Riemann surface as
+            :class:`RiemannSurfacePath` objects.
+        """
+        if self._b_cycles:
+            return self._b_cycles
+
+        cyc = []
+
+
+
+        self._b_cycles = [c for c in cyc]
+        return self._b_cycles
+
+
+    def c_cycles(self):
+        """Returns the c-cycles of the Riemann surface.
+
+        The a- and b- cycles of the Riemann surface are formed from
+        linear combinations of the c-cycles. These linear combinations
+        are obtained from the :method:`linear_combinations` method.
+
+        .. note::
+
+            It may be computationally more efficient to integrate over
+            the (necessary) c-cycles and take linear combinations of the
+            results than to integrate over the a- and b-cycles
+            separately. Sometimes the column rank of the linear
+            combination matrix (that is, the number of c-cycles used to
+            construct a- and b-cycles) is lower than the size of the
+            homology group and sometimes the c-cycles are simpler and
+            shorter than the homology cycles.
+
+        Returns
+        -------
+        list, RiemannSurfacePath
+            A list of the c-cycles of the Riemann surface as
+            :class:`RiemannSurfacePath` objects.
+        """
+        if self._c_cycles:
+            return self._c_cycles
+
+        cyc = []
+
+        self._c_cycles = [c for c in cyc]
+        return self._c_cycles
+
+
+    def linear_combinations(self):
+        pass
