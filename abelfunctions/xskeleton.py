@@ -15,231 +15,11 @@ from matplotlib.patches import Circle
 from matplotlib.lines import Line2D
 from matplotlib.cbook import flatten
 
-from utilities import cached_function, cached_property
-
-from abelfunctions.riemannsurface.riemannsurface_path import (
-    polyroots,
-    path_around_branch_point,
-    path_around_infinity,
-    RiemannSurfacePath,
+from utilities import (
+    cached_function,
     )
 
-class Permutation(object):
-    """
-    A permutation.
-
-    Examples::
-    We create the permutation ``p = 1->1, 2->4, 3->2, 4->3``.
-
-        >>> p = Permutation([0,3,1,2])
-
-    We can multiply permutations together. Let ``q`` be the transposition
-    ``0->1, 1->0``. The product ``qp`` represents the permutation obtained
-    by applying ``p`` to the identity ``[0,1,2,3]`` first and then ``q``.
-
-        >>> q = Permutation([2,1])
-        >>> q*p
-        [1, 3, 0, 2]
-        >>> p*q
-        [3, 0, 1, 2]
-
-    Permutations can act on lists.
-
-        >>> p.action(['a','b','c','d'])
-        ['a', 'd', 'b', 'c']
-    """
-    def __init__(self,l):
-        """
-        Construct a Permutation object. If the input "l" is a list of
-        ints then set self.list to "l". Otherwise, cycle notation is assumed
-        if l[0] is itself a list.
-        """
-        if isinstance(l,list):
-            if isinstance(l[0],list):
-                l = self._list_from_cycles(l)
-            self._list = l
-        else:
-            # try to turn object into list
-            self._list = list(l)
-            self.__init__(l)
-
-        self._cycles = self._cycles_from_list(self._list)
-        self._hash = None
-
-
-    def _list_from_cycles(self,cycles):
-        """
-        Create a permutation list ``i \to l[i]`` from a cycle notation
-        list.
-
-        Example:
-
-        >>> p = Permutation([[0,1],[2],[3]])
-        >>> p._list
-        [1, 0, 2]
-
-        >>> q = Permutation([[2,4],[1,3]])
-        >>> q._list
-        [2, 3, 0, 1]
-        """
-        degree = max([0] + [max(cycle + [0]) for cycle in cycles]) + 1
-        l = range(degree)
-        for cycle in cycles:
-            if not cycle:
-                continue
-            first = cycle[0]
-            for i in range(len(cycle)-1):
-                l[cycle[i]] = cycle[i+1]
-            l[cycle[-1]] = first
-
-        return l
-
-    def _cycles_from_list(self,l):
-        n = len(l)
-        cycles = []
-        not_visited = range(n)[::-1]
-
-        while len(not_visited) > 0:
-            i = not_visited.pop()
-            cycle = [i]
-            j = l[i]
-            while j != i:
-                cycle.append(j)
-                not_visited.remove(j)
-                j = self(j)
-            cycles.append(tuple(cycle))
-
-        return cycles
-
-    def __str__(self):
-        return str(self._cycles)
-
-    def __repr__(self):
-        return str(self._cycles)
-
-    def __hash__(self):
-        if self._hash is None:
-            self._hash = str(self._list).__hash__()
-        return self._hash
-
-    def __len__(self):
-        return self._list.__len__()
-
-    def __getitem__(self, key):
-        return self._list.__getitem__(key)
-
-    def __contains__(self, item):
-        return self._list.__contains__(item)
-
-    def __eq__(self, other):
-        return self._list == other._list
-
-    def __mul__(self, other):
-        return self.__rmul__(other)
-
-    def __rmul__(self, other):
-#         # pad the permutations if they are of different lengths
-#         new_other = other[:] + [i+1 for i in range(len(other), len(self))]
-#         new_p1 = self[:] + [i+1 for i in range(len(self), len(other))]
-#         return Permutation([new_p1[i-1] for i in new_other])
-        new_other = other[:] + [i for i in range(len(other), len(self))]
-        new_p1 = self[:] + [i for i in range(len(self), len(other))]
-        return Permutation([new_p1[i] for i in new_other])
-
-    def __call__(self, i):
-        """
-        Returns the image of the integer i under this permutation.
-        """
-        if isinstance(i,int) and 0 <= i < len(self):
-            return self[i]
-        else:
-            raise TypeError, "i (= %s) must be an integer between " \
-                             "%s and %s" %(i,0,len(self)-1)
-
-
-    def is_identity(self):
-        n = len(self._list)
-        if self._list == range(n):
-            return True
-        return False
-
-    def index(self, key):
-        return self._list.index(key)
-
-    def action(self, a):
-        """
-        Returns the action of the permutation on a list.
-
-        **Examples**
-
-            >>> p = Permutation([0,3,1,2])
-            >>> p.action(['a','b','c','d'])
-            ['a', 'd', 'b', 'c']
-        """
-        if len(a) != len(self):
-            raise ValueError, "len(a) must equal len(self)"
-        return map(lambda i: a[self[i]], range(len(a)))
-
-    def inv(self):
-        """
-        Returns the inverse permutation.
-        """
-        l = range(len(self))
-        for i in range(len(self)):
-            l[self(i)] = i
-
-        return Permutation(l)
-
-
-
-def matching_permutation(a, b):
-    """
-    Returns the permutation ``p`` that matches the elements of the list
-    `a` to those of `b` as closely as possible. That is
-    `b ~= p.action(a)``. The elements of the two lists nedd not be the
-    same but will try to match them as closely as possible.
-
-    EXAMPLES::
-    If the two lists contain the same elements then ``matching_permutation``
-    simply returns permutation defining the rearrangement.::
-
-        >>> a = [6,-5,9]
-        >>> b = [9,6,-5]
-        >>> p = matching_permutation(a,b); p
-        [3, 1, 2]
-
-    ``matching_permutation`` will attempt to find such a permutation even if
-    the elements of the two lists are not exactly the same.::
-
-        >>> a = [1.1,7.2,-3.9]
-        >>> b = [-4,1,7]
-        >>> p = matching_permutation(a,b); p
-        [3, 1, 2]
-        >>> p.action(a)
-        [-4, 1, 7]
-    """
-    N = len(a)
-    if N != len(b):
-        raise ValueError, "Lists must be of same length."
-
-    perm = [-1]*N
-    eps  = 0.5*min([abs(a[i]-a[j]) for i in range(N) for j in range(i)])
-
-    for i in xrange(N):
-        for j in xrange(N):
-            dist = abs(a[i] - b[j])
-            if dist < eps:
-                perm[j] = i
-                break
-
-    if -1 in perm:
-        raise ValueError, "Could not compute matching permutation " \
-                          "between %s and %s." %(a,b)
-
-    return Permutation(perm)
-
-
-
+import pdb
 
 def prim_fringe(G, weight_function=lambda e: 1, starting_vertex=None):
     """
@@ -271,8 +51,7 @@ def prim_fringe(G, weight_function=lambda e: 1, starting_vertex=None):
                 fringe_list[neighbor] = (w, u)
     return edges
 
-
-@cached_function
+#@cached_function
 def discriminant_points(f,x,y):
     """
     Returns the discriminant points of a plane algebraic curve `f =
@@ -313,9 +92,8 @@ def discriminant_points(f,x,y):
         i += 1
     return disc_pts
 
-
-@cached_function
-def monodromy_graph(f,x,y,kappa=3.0/5.0):
+#@cached_function
+def monodromy_graph(f, x, y, kappa=3.0/5.0):
     """
     Constructs a NetworkX graph describing the path connectedness of the
     monodromy paths. Each node has the following data attached to it:
@@ -394,6 +172,14 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
                     coeffs_b0)
     base_lift = sympy.mpmath.polyroots(coeffs_b0)
 
+    #
+    # XXX coerce everything to numpy data types
+    #
+    b0 = numpy.complex(b0)
+    bd = numpy.complex(bd)
+    disc_pts = numpy.array(disc_pts, dtype=numpy.complex)
+    base_lift = numpy.array(base_lift, dtype=numpy.complex)
+
     # Compute minimal spanning tree. the weights are the distances
     # between the nodes. the spanning tree algorihtm is from a
     # Sage implementation of Prim with a designated starting node
@@ -417,8 +203,8 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
         radius = rho * kappa / 2.0
 
         # store useful data to graph
-        G.node[i]['pos']        = (sympy.mpmath.re(disc_pt),
-                                   sympy.mpmath.im(disc_pt))
+        G.node[i]['pos']        = (disc_pt.real,
+                                   disc_pt.imag)
         G.node[i]['value']      = disc_pt
         G.node[i]['radius']     = radius
         G.node[i]['type']       = 'simple'
@@ -433,7 +219,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
     for (i,k) in G.edges():
         bi = G.node[i]['value']
         bk = G.node[k]['value']
-        d = sympy.mpmath.re(bk-bi)
+        d = (bk-bi).real
         R = max( [G.node[i]['radius'], G.node[k]['radius']] )
         if d > R:    G[i][k]['index'] = (1,-1)
         elif d < -R: G[i][k]['index'] = (-1,1)
@@ -501,7 +287,7 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
         Compute the angle between vertex v and w using monodromy
         graph indices.
         """
-        arg = sympy.mpmath.arg
+        arg = numpy.angle #sympy.mpmath.arg
         v = origin_vertex
 
         # compute "reference point": if v is a node then this is
@@ -697,8 +483,6 @@ def monodromy_graph(f,x,y,kappa=3.0/5.0):
 
     return G
 
-
-
 def show_paths(G):
     """
     Plot all of the paths in the complex x-plane of the monodromy
@@ -739,113 +523,531 @@ def show_paths(G):
     fig.show()
 
 
+class XSkeleton(object):
+    """Defines the basic x-path structure of the Riemann surface.
 
-@cached_function
-def monodromy(f,x,y,kappa=3.0/5.0,ppseg=8,base_point=None,base_sheets=None):
+    A component of :class:`RiemannSurfacePathFactory`, `XSkeleton`
+    computes the 'x-highways` of the Riemann surface: the paths taken in
+    the x-plane to navigate the branch points of the curve. A
+    `networkx.Graph` object encapsulates most of this information.
+
+    Attributes
+    ----------
+    RS : RiemannSurface
+    kappa : double
+        A scaling factor between 0.5 and 1 used to determine the radii
+        of the circles around the branch points of the curve.
+    G : networkx.Graph
+        A graph object defining the skeleton of the x-part of the
+        Riemann Surface.
+
     """
-    Returns information about the monodromy group of the Riemann
-    surface associated with the plane complex algebraic curve ``f(x,y)
-    = 0``.
+    def __init__(self, RS, kappa=3./5., base_point=None):
+        """Initialize the XSkeleton.
 
-    In particular, `monodromy()` returns the Hurwitz system of
-    ``f(x,y) = 0``, which consistes of the data
+        All of the information given by :class:`XSkeleton` is computed
+        at initialization. The primary attribute is a `networkx.Graph`
+        object which stores the radii and branch point connectivity.
 
-    - base point: the base point of the monodromy group
+        Arguments
+        ---------
+        RS : RiemannSurface
+        kappa : double, optional
+            A scaling factor between 0.5 and 1 used to determine the
+            radii of the circles around the branch points of the curve.
+        base_point : complex (optional)
+            A custom base point can be given. This is often used for
+            testing and comparison purposes.
 
-    - base sheets: the ordered sheets / lift ``y = \{
-      y_0,\ldots,y_{n-1}`` lying above the base point, where ``n =
-      deg_y(f)``.
+        """
+        self.RS = RS
 
-    - branch points: the branch points of the algebraic curve lying in
-      the complex ``x``-plane
+        f = RS.f
+        x = RS.x
+        y = RS.y
+        self.kappa = kappa
+        self.hurwitz_system = None
 
-    - monodromy: the elements of the monodromy group. The ``j``th
-      element of this list corresponds to the ``j``th branch point
+        # ensure that the monodromy graph is ready at instantiation
+        self.G = monodromy_graph(f, x, y, kappa=kappa)
 
-    - connectivity graph: a network_x graph that encodes all of the
-      path-finding information of the monodromy group. See
-      `monodromy_graph()` for more information.
+        # set the base points and base sheets
+        self._custom_base_point = True
+        self._base_point = base_point
+        if not base_point:
+            self._base_point = self.G.node[0]['basepoint']
+            self._custom_base_point = False
 
-    Input:
+    def _index(self, b):
+        """Returns the index of the branch point in the ordered list of branch
+        points.
 
-    - `f,x,y`: a complex plane algebraic curve
+        In some cases the ordering of the branch points in the complex
+        plane matters (where the ordering is the angle made between the
+        branch point and the base point).
 
-    - `kappa`: (default: 3.0/5.0) a scaling factor for the radii of
-      the monodromy path circles. If `kappa==1` then the circles are
-      as large as possible without intersecting any other monodromy
-      path circles.
+        Arguments
+        ---------
+        bpt : complex
 
-    - `ppseg`: (default: 8) the number of interpolating points per path
-      segment to use when analytically continuing along each monodromy
-      path
-    """
-    deg = sympy.degree(f,y)
+        .. note::
 
-    # we still use the default base point to determine branch point
-    # ordering in monodromy_graph(). the custom base_points and
-    # base_sheets are used in the analytic continuation phase
-    G = monodromy_graph(f,x,y,kappa=kappa)
-    custom_base_point = True
-    custom_base_sheets = True
-    if not base_point:
-        base_point = G.node[0]['basepoint']
-        custom_base_point = False
-    if not base_sheets:
-        base_sheets = G.node[0]['baselift']
-        custom_base_sheets = False
+            Should some approximation proceedures be in place here?
 
-    branch_points = [data['value'] for node,data in G.nodes(data=True)]
+        """
+        # pts = self.discriminant_points()
+        # return numpy.argmin(numpy.abs(pts-b))
+        return self.branch_points().tolist().index(b)
 
-    mon = []
-    for i in G.nodes():
-        # compute path segments to path around b_i and analytically
-        # continuing the base_fibre. if a custom base point was
-        # provided then add the appropriate path segment data
-        path_segments = path_around_branch_point(G,i,1)
-        if custom_base_point:
-            seg = (base_point, G.node[0]['basepoint'])
-            path_segments = [seg] + path_segments + \
-                [tuple(reversed(seg))]
+    def base_point(self):
+        return self._base_point
 
-        gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                                   path_segments=path_segments)
-        yend = gamma(1)[1]
+    def branch_points(self):
+        """Returns a list of the discriminant points of the X-skeleton."""
+        return numpy.array(
+            [data['value'] for node,data in self.G.nodes(data=True)],
+            dtype=numpy.complex)
 
-        # check if permutation is identity. if so, delete b_i from the
-        # branch point list. if not add the permutation to the
-        # monodromy group
-        phi = matching_permutation(base_sheets,yend)
-        if phi.is_identity():
-            branch_points[i] = None
+    def root_branch_point(self):
+        """Returns the branch point closest to / attached to the base point.
+        """
+        root_index = self.G.node[0]['root']
+        return self.G.node[root_index]['value']
+
+    def branch_points_on_path(self, bi):
+        """Returns the branch points lying on the path from the base point,
+        through the root node, and to the branch point.
+
+        Arguments
+        ---------
+        bi : complex
+            A branch point of the curve.
+
+        Returns
+        -------
+        list
+            A list of the branch points lying on the x-path from the
+            base point to the target branch point.
+
+        """
+        bi_index = self._index(bi)
+        root_index = self.G.node[0]['root']
+        path_vertices = nx.shortest_path(self.G, source=root_index,
+                                         target=bi_index)
+
+        return [self.G.node[n]['value'] for n in path_vertices]
+
+    def conjugates(self, bi):
+        """Returns the branch points that are "conjugate" to the given branch
+        point.
+
+        The conjugate branch points are those where the path around `bi`
+        needs to lie above the point when defining the monodromy path.
+
+        Arguments
+        ---------
+        bi : complex
+            A branch point of the curve.
+
+        Returns
+        -------
+        list
+            A list of the conjugate branch points to `b`.
+
+        """
+        bi_index = self._index(bi)
+        return self.G.node[bi_index]['conjugates']
+
+    def radius(self, bi):
+        """The radius of the circle around the branch point `bi`.
+
+        Arguments
+        ---------
+        bi : complex
+            A branch point of the curve.
+
+        Returns
+        -------
+        double
+            The radius of the circle around `b`.
+
+        """
+        bi_index = self._index(bi)
+        return self.G.node[bi_index]['radius']
+
+    def _get_edge_index(self, bi, bj):
+        """Returns the "edge index" of the path from `bi` to `bj`.
+
+        The edge index encodes which sides of the branch points' circles
+        are connected. `-1` = left side. `+1` = right side. So, for
+        example, an edge index of `(1,-1)` between points `bi` and `bj`
+        means a the straight line path connects the right side (`+1`) of
+        the circle around `bi` to the left side (`-1`) of the circle
+        around `bj`.
+
+        This method is used primarily in :py:meth:`is_semicircle_on_path`
+        and :py:meth:`semicircle_on_path`.
+
+        """
+        bi_index = self._index(bi)
+        bj_index = self._index(bj)
+        root_index = self._index(self.root_branch_point())
+        edgeij_index = self.G[bi_index][bj_index]['index']
+
+        # the root point always connects to the left side of a connected
+        # branch point. the side on the root point circle doesn't
+        # matter.
+        if bi_index == root_index:
+            #return (0,-1)
+            return edgeij_index
         else:
-            mon.append(phi)
+            return edgeij_index
 
-    # XXX convert monodromy to both mpmath and numpy later
-    branch_points = map(numpy.complex,
-                        [bpt for bpt in branch_points if bpt != None])
+    def xpath_to_branch_point(self, bi):
+        """Returns data defining the path starting from the base x-point
+        and ending "at" the branch point `bi`. (See below.)
 
-    # analytically continue around infinity. append if branch point
-    path_segments = path_around_infinity(G,1)
-    gamma = RiemannSurfacePath((f,x,y),(base_point,base_sheets),
-                               path_segments=path_segments)
-    yend = gamma(1)[1]
+        Technically, the ending point is :math:`b_i \pm R_i`. Whether or
+        not we end on the left or right side of the branch point depends
+        on its connectivity with the other branch points of the
+        X-Skeleton structure.
 
-    # check if permutation is identity. if so, delete b_i from the
-    # branch point list. if not add the permutation to the
-    # monodromy group
-    phi = matching_permutation(base_sheets,yend)
-    if not phi.is_identity():
-        # test that the product of the finite monodromy group elements is
-        # equal to the inverse of the permuatation at infinity
-        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon)
-        phi_prod = phi_prod * phi
-        if phi_prod.is_identity():
-            branch_points.append(sympy.oo)
-            mon.append(phi)
+        Arguments
+        ---------
+        bi : complex
+            A finite branch point.
+
+        Returns
+        -------
+        list
+            A list of tuples defining either lines or semicircles in the
+            complex x-plane.
+
+        """
+        # xpath stores the tuples defining the Riemann surface paths
+        b = self.branch_points_on_path(bi)
+        conjugates = self.conjugates(bi)
+        xpath = []
+
+        # if there is a custom base point, add the line from the
+        # base point to the root branch point
+        if self._custom_base_point:
+            root = self.root_branch_point()
+            R = self.radius(root)
+            xpath.append( (self.base_point(), root-R) )
+
+        # for each branch point on the path to the target branch point
+        # point construct the semicircle going aroung the branch point
+        # (if necessary) and the line going to the next branch point.
+        bj = b[0]
+        for bk in b[1:]:
+            # the semicircle around `bj` should go above `bj` if it is a
+            # conjugate branch point to `bi`
+            is_conjugate = True if bj in conjugates else False
+            if self.has_semicircle_on_path(bj, bk):
+                xpath.append(self.semicircle_on_path(
+                    bj, bk, is_conjugate=is_conjugate))
+
+            xpath.append(self.line_on_path(bj, bk))
+            bj = bk  # update loop
+
+        return xpath
+
+    def xpath_circle_branch_point(self, bi, nrots=1):
+        """Returns a list of tuples, each encoding semicircles, representing a
+        rotation around branch point `bi` `nrots` times.
+
+        Arguments
+        ---------
+        bi : complex
+            The branch point to encircle.
+        nrots : int, optional
+            The number of times to rotate around the branch point. If
+            negative, rotate `abs(nrots)` times in the negative
+            (clockwise) direction. (default = 1)
+
+        Returns
+        -------
+        list
+            A list of tuples of the form `(R, w, arg_start, arg_end,
+            dir)` where `R` is the radius, `w` is the center,
+            `arg_start` is the starting argument, `arg_end` is the
+            ending argument, and `dir` is the direction of a semicircle
+            making up a number of rotations around the branch point
+            `bi`.
+
+        .. note:
+
+            The output, here, can be used immediately to construct
+            :class:RiemannSurfacePathPrimitive objects as opposed to the
+            output of :py:meth:`semicircle_on_path` where the direction
+            of the semicircle still needs to be specified.
+
+        """
+        b = self.branch_points_on_path(bi)
+
+        # if we're encircling the root branch point (the point closest
+        # to the base point) then we're always starting on the left-side
+        # of the circle
+        if len(b) == 1:
+            edge_index = (0,-1)
         else:
-            raise ValueError('Contradictory permutation at infinity.')
+            b_prev = b[-2]
+            edge_index = self._get_edge_index(b_prev, bi)
 
-    return base_point, base_sheets, branch_points, mon, G
+        # construct complete circle
+        R = self.radius(bi)
+        w = bi
+        theta = numpy.pi if edge_index[1] == -1 else 0
+        dtheta = numpy.pi if nrots > 0 else -numpy.pi
+        circle = [(R, w, theta, dtheta),
+                  (R, w, theta + dtheta, dtheta)]
+
+        # rotate abs(nrots) times
+        return circle * int(abs(nrots))
+
+    def xpath_monodromy_path(self, bi, nrots=1):
+        """Returns data defining the path starting from the base x-point, going
+        around the branch point `bi` `nrots` times, and returning to the
+        base x-point.
+
+        Arguments
+        ---------
+        bi : complex
+            A branch point.
+        nrots : integer (default `1`)
+            A number of rotations around this branch point.
+
+        Returns
+        -------
+        list
+            A list of tuples defining either lines or semicircles in the
+            complex x-plane.
+
+        """
+        # special case when going around infinity.
+        if bi == sympy.oo:
+            return self.xpath_around_infinity(nrots=nrots)
+
+        xpath_to_bi = self.xpath_to_branch_point(bi)
+        xpath_around_bi = self.xpath_circle_branch_point(bi, nrots=nrots)
+        xpath_from_bi = self.xpath_reverse(xpath_to_bi)
+        xpath = xpath_to_bi + xpath_around_bi + xpath_from_bi
+        return xpath
+
+    def xpath_around_infinity(self, nrots=1):
+        """Returns data defining the path starting from the base x-point, going
+        around infinity `nrots` times, and returning to the base point.
+
+        Computes and returns a path circling infinity in the positive
+        direction. (In the finite :math:`\mathbb{C}_x` plane this is a
+        clockwise circle around all of the finite branch point.) This
+        path is used to determine the monodromy group element around
+        infinity.
+
+        Arguments
+        ---------
+        nrots : integer, (default `1`)
+            The number of rotations around this branch point.
+
+        Returns
+        -------
+        RiemannSurfacePath
+            The path of the monodromy group circling the branch point.
+
+        """
+        xpath = []
+
+        # determine the radius R of the circle, centered at the origin,
+        # encircling all of the branch points and their "protection"
+        # circles
+        b = self.branch_points()
+        R = 0.0
+        for bi in b:
+            radius = self.radius(bi)
+            arg = numpy.arg(bi)
+            Ri = numpy.abs(bi + arg*radius)
+            R = Ri if Ri > R else R
+
+        # the path begins with a line starting the base point and ending
+        # at -R.
+        xpath.append((self.base_point(), -R))
+
+        # the positive direction around infinity is equal to the
+        # negative direction around the origin
+        dtheta = -numpy.pi if nrots > 0 else numpy.pi
+        for _ in range(abs(nrots)):
+            xpath.append((R, 0, numpy.pi, dtheta))
+            xpath.append((R, 0, 0, dtheta))
+
+        # return to the base point
+        xpath.append((-R, self.base_point()))
+        return xpath
+
+    def xpath_reverse(self, xpath):
+        """Reverses an x-path.
+
+        Useful for building the return path from a branch point to the
+        base point.
+
+        Arguments
+        ---------
+        xpath : list
+            A list of tuples defining either lines or semicircles in the
+            complex x-plane.
+
+        Returns
+        -------
+        list
+            A list of tuples defining either lines or semicircles in the
+            complex x-plane representing the reverse of `xpath`.
+
+        """
+        reverse_xpath = []
+        for data in xpath[::-1]:
+            if len(data) == 2:
+                z0, z1 = data
+                data = (z1, z0)
+            else:
+                R, w, theta, dtheta = data
+                theta += dtheta
+                dtheta = -dtheta
+                data = (R, w, theta, dtheta)
+
+            reverse_xpath.append(data)
+        return reverse_xpath
+
+    def has_semicircle_on_path(self, bj, bk):
+        """Returns `True` if the path from branch point `bj` to `bk` requires
+        encircling `bj`. Returns `False` if no semicircle is necessary.
+
+        Arguments
+        ---------
+        bj, bk : complex
+            Adjacent discriminant points lying on the x-skeleton path.
+
+        Returns
+        -------
+        boolean
+            `True` if the path from `bj` to `bk` requires a semicircle
+            around `bk`.
+
+        """
+        edgejk_index = self._get_edge_index(bj, bk)
+
+        # special case when bj is the root branch point:
+        root = self.root_branch_point()
+        if numpy.abs(bj-root) < 1e-14:
+            # if the line from the root branch point `bj` to the child
+            # `bk` connects to the left side of the root branch point
+            # then a semicircle around `bj` is unnecessary
+            if edgejk_index[0] == -1:
+                return False
+            else:
+                return True
+        else:
+            # otherwise, determine the branch point `bi` preceeding `bj`
+            # on the path to `bk`
+            b = self.branch_points_on_path(bk)
+            bj_path_index = b.index(bj)
+            bi = b[bj_path_index - 1]
+            edgeij_index = self._get_edge_index(bi, bj)
+
+        # a semicircle is unnecessary when the side of the line segment
+        # connecting point `bi` to point `bj` on the `bj` circle is the
+        # same as of the segment connecting `bj` to `bk`. visually, this
+        # pattern looks like a "V" touching the side of a circle.
+        if edgeij_index[1] == edgejk_index[0]:
+            return False
+        else:
+            return True
+
+    def semicircle_on_path(self, bj, bk, is_conjugate=False):
+        """Returns a tuple defining the semicircle that needs to be navigated
+        when traveling around branch point `bj`, to `bk`.
+
+        Raises an error if no such semicircle exists. See
+        :py:meth:`has_semicircle_on_path`
+
+        Arguments
+        ---------
+        bj, bk : complex
+            Adjacent discriminant points lying on the x-skeleton path.
+        is_conjugate : boolean (default `False`)
+            If `False`, returns path data defining a semicircle going
+            *below* `bj`. If `True`, the semicircle travels above `bj`.
+
+        Returns
+        -------
+        (R, w, arg_start, arg_end)
+            A tuple encoding the semicircle information. `R` is the
+            radius, `w` is the center, `arg_start` is the starting
+            argument on the semicircle, and `arg_end` is the ending
+            argument.
+
+        """
+        if not self.has_semicircle_on_path(bj, bk):
+            raise ValueError('No semicircle is necessary when navigating '
+                             'from %s to %s'%(bj, bk))
+
+        edgejk_index = self._get_edge_index(bj, bk)
+        bj_index = self._index(bj)
+        R = self.G.node[bj_index]['radius']
+        w = bj
+
+        # special case when bj is the root branch point:
+        root = self.root_branch_point()
+        if numpy.abs(bj-root) < 1e-14:
+            # we've already checked that the semicircle is needed. the
+            # semicircle around the root branch point always starts on
+            # the left side
+            theta = numpy.pi
+        else:
+            # otherwise, determine the branch point `bi` preceeding `bj`
+            # on the path to `bk` and get its connection properties
+            b = self.branch_points_on_path(bk)
+            bj_path_index = b.index(bj)
+            bi = b[bj_path_index - 1]
+            edgeij_index = self._get_edge_index(bi, bj)
+
+            # start on the left side of the `bj` circle if the edge
+            # connecting `bi` to `bj` meets the left (-1) side
+            theta = numpy.pi if edgeij_index[1] == -1 else 0
+
+        dtheta = -numpy.pi if is_conjugate else numpy.pi
+        return (R, w, theta, dtheta)
+
+    def line_on_path(self, bj, bk):
+        """Returns a tuple representing the endpoints of the line from
+        branch points `bj` to `bk`.
+
+        Arguments
+        ---------
+        bj, bk : complex
+            Adjacent branch points.
+
+        Returns
+        -------
+        (z0, z1)
+            A tuple representing the line segment with the complex
+            starting point `z0` and complex ending point `z1`.
+
+        """
+        bj_index = self._index(bj)
+        bk_index = self._index(bk)
+        bj_radius = self.radius(bj)
+        bk_radius = self.radius(bk)
+        edgejk_index = self._get_edge_index(bj, bk)
+
+        # if we're on the left (-1) side of the circle then we subtract
+        # the radius. otherwise, we're on the right (+1) side so we add
+        # the radius.
+        z0 = bj + edgejk_index[0]*bj_radius
+        z1 = bk + edgejk_index[1]*bk_radius
+        return (z0, z1)
+
+    def show_paths(self):
+        show_paths(self.G)
 
 
 

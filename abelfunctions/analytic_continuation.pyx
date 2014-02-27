@@ -44,6 +44,7 @@ cdef class AnalyticContinuator:
     """
     def __init__(self,RiemannSurface RS):
         self.RS = RS
+        self.deg = self.RS.deg
 
     cpdef complex[:] analytically_continue(
             self,

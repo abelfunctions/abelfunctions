@@ -146,12 +146,6 @@ ext_modules = [
                   ],
               include_dirs = [numpy.get_include()]
               ),
-#     Extension('abelfunctions.riemannsurface.smale',
-#               sources = [
-#                   'abelfunctions/riemannsurface/smale.pyx',
-#                   ],
-#               include_dirs = [numpy.get_include()]
-#               ),
     Extension('abelfunctions.riemanntheta.lattice_reduction',
               sources = ['abelfunctions/riemanntheta/lattice_reduction.pyx',
                          'abelfunctions/riemanntheta/lll_reduce.c'],

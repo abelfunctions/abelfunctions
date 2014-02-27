@@ -13,6 +13,31 @@ Authors
 
 """
 
+import numpy
+import scipy
+import sympy
+
+from .analytic_continuation import (
+    AnalyticContinuator,
+    )
+from .analytic_continuation_smale import (
+    AnalyticContinuatorSmale,
+)
+# from .analytic_continuation_puiseux import (
+#     AnalyticContinuatorPuiseux,
+#     )
+from .riemann_surface_path import (
+    RiemannSurfacePathPrimitive,
+    RiemannSurfacePath,
+    RiemannSurfacePathArc,
+    RiemannSurfacePathLine,
+    )
+from .utilities import (
+    Permutation,
+    )
+from .xskeleton import XSkeleton
+
+
 def path_segments_from_cycle(cycle, G, base_point=None):
     """Converts a homology cycle encoding to a path segment data list.
 
@@ -245,24 +270,123 @@ def path_around_infinity(G, rot, types='numpy'):
     return path_data + circle_data + reversed_path_data
 
 
-
 class RiemannSurfacePathFactory(object):
-    """
-    """
-    def __init__(self, RS):
-        self.RS = RS
-        self.Mon = RS.Monodromy
-        self.Hom = RS.Homology
+    """The Path Factory for Riemann surfaces contains all of the methods
+    needed to construct paths from place to place on the Riemann
+    surface.
 
-        # cache the a-, b-, and c-cycles
+    The path factory makes heavy use of Monodromy and Homology to
+    determine
+    """
+    def __init__(self, RS, kappa=3./5., base_point=None, base_sheets=None):
+        self.RS = RS
         self._a_cycles = None
         self._b_cycles = None
         self._c_cycles = None
+        self._lincombs = None
+
+        # initialize the X- and Y-skeletons at construction. this is
+        # important! Also note that the monodromy group needs to be
+        # computed from the X-Skeleton in order to compute the
+        # Y-Skeleton
+        self.XSkel = XSkeleton(RS, kappa=kappa, base_point=base_point)
+
+        if base_sheets:
+            self._base_sheets = base_sheets
+        else:
+            p = RS.f.as_poly(RS.y)
+            a = self.XSkel.base_point()
+            coeffs = numpy.array(
+                [c.evalf(subs={RS.x:a}, n=15) for c in p.all_coeffs()],
+                dtype=numpy.complex)
+            poly = numpy.poly1d(coeffs)
+            self._base_sheets = (poly.r).tolist()
 
     def __str__(self):
         return 'Riemann Surface Path Factory for %s'%(self.RS)
 
+    def base_point(self):
+        return self.XSkel.base_point()
+
+    def base_sheets(self):
+        return self._base_sheets
+
+    def base_place(self):
+        return (self.base_point(), self.base_sheets())
+
+    def branch_points(self):
+        return self.XSkel.branch_points()
+
+    def monodromy_group(self):
+        """Returns the monodromy group of the algebraic curve defining the
+        Riemann surface.
+
+        Returns
+        -------
+        dict
+            A dictionary where the keys are the branch points of the curve
+            and the values are their corresponding sheet permutations.
+        """
+        x0 = self.base_point()
+        y0 = self.base_sheets()
+
+        # compute the monodromy element for each branch point. if it's the
+        # identity permutation, don't add to monodromy dictionary
+        mon = {}
+        for bi in self.branch_points():
+            # create the monodromy path
+            xpath = self.XSkel.xpath_monodromy_path(bi)
+            gamma = self.RiemannSurfacePath_from_xpath(xpath, x0, y0)
+
+            # compute the end fibre and the corresponding permutation
+            yend = gamma.get_y(1)
+            phi = matching_permutation(y0, yend)
+
+            # check if permutation is identity. if so, don't monodromy
+            # group dictionary
+            if not phi.is_identity():
+                mon[bi] = phi
+
+        # compute the monodromy element of the possible branch point at
+        # infinity.
+        xpath = self.XSkel.xpath_monodromy_path(bi)
+        gamma = self.RiemannSurfacePath_from_xpath(xpath, x0, y0)
+        yend = gamma.get_y(1)
+        phi_oo = matching_permutation(y0, yend)
+        if not phi_oo.is_identity():
+            mon[sympy.oo] = phi_oo
+
+        # sanity check: the product of the finite branch point
+        # permutations should be equal to the inverse of the permutation
+        # at infinity
+        #
+        # XXX
+        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon.values())
+        phi_prod = phi_prod * phi_oo.inverse()
+        if not phi_prod.is_identity():
+            raise ValueError('Contradictory permutation at infinity.')
+        return mon
+
+    def monodromy_path(self, bi):
+        """Returns the monodromy path around the branch point `bi`.
+
+        Arguments
+        ---------
+        bi : complex
+            A branch point of the curve.
+
+        Returns
+        -------
+        RiemannSurfacePath
+            The path encircling the branch point `bi`.
+
+        """
+        xpath = self.XSkel.xpath_monodromy_path(bi)
+        gamma = self.RiemannSurfacePath_from_xpath(xpath)
+        return gamma
+
     def a_cycles(self):
+
         """Returns the a-cycles on the Riemann surface.
 
         Returns
@@ -275,9 +399,6 @@ class RiemannSurfacePathFactory(object):
             return self._a_cycles
 
         cyc = []
-
-
-
         self._a_cycles = [c for c in cyc]
         return self._a_cycles
 
@@ -294,9 +415,6 @@ class RiemannSurfacePathFactory(object):
             return self._b_cycles
 
         cyc = []
-
-
-
         self._b_cycles = [c for c in cyc]
         return self._b_cycles
 
@@ -333,6 +451,55 @@ class RiemannSurfacePathFactory(object):
         self._c_cycles = [c for c in cyc]
         return self._c_cycles
 
+    def RiemannSurfacePath_from_xpath(self, xpath, x0=None, y0=None):
+        """Constructs a :class:`RiemannSurfacePath` object from a list of
+        x-path data.
 
-    def linear_combinations(self):
-        pass
+        Arguments
+        ---------
+        xpath : list
+            A list of tuples defining the xpath.
+        x0 : complex (default `self.base_point()`)
+            The starting x-point of the path.
+        y0 : complex list (default `self.base_sheets()`)
+            The starting ordering of the y-sheets.
+
+        Returns
+        -------
+        RiemannSurfacePath
+            A path on the Riemann surface with the prescribed x-path.
+
+        """
+        if x0 is None:
+            x0 = self.base_point()
+        if y0 is None:
+            y0 = self.base_sheets()
+
+        ACSmale = AnalyticContinuatorSmale(self.RS)
+        # ACPuisuex = AnalyticContinuatorPuiseux(self.RS)
+        x0 = numpy.complex(x0)
+        y0 = numpy.array(y0, dtype=numpy.complex)
+        x0_segment = x0
+        y0_segment = y0
+        segments = []
+        for data in xpath:
+            # pick an analytic continuator (XXX PROVIDE LOGIC FOR THIS XXX)
+            AC = ACSmale
+
+            # build a segment based on the xpath data
+            if len(data) == 2:
+                segment = RiemannSurfacePathLine(self.RS, AC, x0_segment,
+                                                 y0_segment, *data)
+            else:
+                segment = RiemannSurfacePathArc(self.RS, AC, x0_segment,
+                                                y0_segment, *data)
+
+            # determine the starting place of the next segment
+            x0_segment = segment.get_x(1)
+            y0_segment = segment.get_y(1)
+            segments.append(segment)
+
+        # build the entire path from the path segments
+        segments = numpy.array(segments, dtype=RiemannSurfacePathPrimitive)
+        gamma = RiemannSurfacePath(self.RS, x0, y0, segments)
+        return gamma

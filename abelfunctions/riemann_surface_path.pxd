@@ -23,11 +23,12 @@ cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
     cdef complex z0
     cdef complex z1
 
-cdef class RiemannSurfacePathSemicircle(RiemannSurfacePathPrimitive):
+cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
     cdef complex R
     cdef complex w
-    cdef complex arg
-    cdef complex dir
+    cdef complex theta
+    cdef complex dtheta
+
 
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     pass
