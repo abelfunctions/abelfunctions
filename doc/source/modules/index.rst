@@ -10,3 +10,4 @@ is automatically generated using abelfunction's docstrings.
    :maxdepth: 1
 
    puiseux.rst
+   riemann_surface_path.rst
