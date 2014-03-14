@@ -18,6 +18,7 @@ import scipy
 import sympy
 import networkx as nx
 import matplotlib
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.patches import Circle
@@ -399,7 +400,7 @@ cdef class RiemannSurfacePathSegment:
         pass
 
     # overwritten in subclasses
-    cdef complex get_dxdt(self,double t):
+    cpdef complex get_dxdt(self,double t):
         pass
 
     def analytically_continue(self,t,checkpoint=None):
@@ -539,7 +540,7 @@ cdef class RiemannSurfacePathSegment_Line(RiemannSurfacePathSegment):
     cdef complex get_x(self,double t):
         return self.z0*(1-t) + self.z1*t
 
-    cdef complex get_dxdt(self,double t):
+    cpdef complex get_dxdt(self,double t):
         return self.z1-self.z0
 
 
@@ -559,7 +560,7 @@ cdef class RiemannSurfacePathSegment_Semicircle(RiemannSurfacePathSegment):
     cdef complex get_x(self,double t):
         return self.R*cexp(1.0j*(self.dir*3.14159265358979*t+self.arg))+self.w
 
-    cdef complex get_dxdt(self,double t):
+    cpdef complex get_dxdt(self,double t):
         return (self.R*1.0j*3.14159265358979*self.dir) * \
             cexp(1.0j*(self.dir*3.14159265358979*t+self.arg))
 
@@ -731,74 +732,175 @@ class RiemannSurfacePath(object):
                              for k in range(len(self.PathSegments)+1)])
         ax.grid(True,which='major')
         ax.legend(loc='best')
-
         fig.show()
 
-    def plot_differential(self,omega,x,y,N):
-        """
-        Plots the differential `omega = omega(x,y) dx` on the path.
-
-        NOTE: this can probably be written much more cleanly
-        """
+    def plot(self, N, figsize=(12,8), **kwds):
         nSegs = len(self.PathSegments)
         ppseg = N/nSegs
         tpts_seg = numpy.linspace(0,1,ppseg)
 
-        oo = numpy.array([],dtype=numpy.complex)
-        omega = sympy.lambdify((x,y),omega,'numpy')
-        def parameterized_differential(ti,Segment=None):
-            dxdt = Segment.get_dxdt(ti)
-            xi,yi = Segment.analytically_continue(ti)
-            return (xi,yi[0],omega(xi,yi[0]) * dxdt)
-        pd = numpy.vectorize(parameterized_differential,excluded=['Segment'])
+        # create figure
+        fig = plt.figure()
+        ax_x = fig.add_subplot(1,2,1)
+        ax_y = fig.add_subplot(1,2,2)
 
-        # evaluate the differential along each segment
-        xx = []
-        yy = []
-        tt = []
-        oo = []
-        xc = []
-        yc = []
+        # plot each segment
+        for k in range(nSegs):
+            Segment = self.PathSegments[k]
+            Pseg = Segment.sample_points(tpts_seg)
+            xseg,yseg = zip(*Pseg)
+
+            xseg = numpy.array(xseg, dtype=numpy.complex)
+            yseg = numpy.array(zip(*yseg)[0], dtype=numpy.complex)
+
+            ax_x.plot(xseg.real, xseg.imag, 'b', **kwds)
+            ax_y.plot(yseg.real, yseg.imag, 'g', **kwds)
+        return fig
+
+    def plot3d(self, N, figsize=(12,8), **kwds):
+        nSegs = len(self.PathSegments)
+        ppseg = N/nSegs
+        tpts_seg = numpy.linspace(0,1,ppseg)
+
+        # create figure
+        fig = plt.figure()
+        ax_x = fig.add_subplot(1,2,1, projection='3d')
+        ax_y = fig.add_subplot(1,2,2, projection='3d')
+
+        # plot each segment
+        for k in range(nSegs):
+            Segment = self.PathSegments[k]
+            Pseg = Segment.sample_points(tpts_seg)
+            xseg,yseg = zip(*Pseg)
+
+            t = (tpts_seg + k) / nSegs
+            z = numpy.zeros_like(t)
+            xseg = numpy.array(xseg, dtype=numpy.complex)
+            yseg = numpy.array(zip(*yseg)[0], dtype=numpy.complex)
+
+            ax_x.plot(xseg.real, xseg.imag, t, 'b', **kwds)
+            ax_x.plot(xseg.real, xseg.imag, z, 'gray', alpha=0.5, **kwds)
+            ax_y.plot(yseg.real, yseg.imag, t, 'g', **kwds)
+            ax_y.plot(yseg.real, yseg.imag, z, 'gray', alpha=0.5, **kwds)
+        return fig
+
+
+        #     j = -1
+        #     for yy in yseg:
+        #         if k != 0: j = None
+        #         else:      j += 1
+        #         color = colors.next()
+        #         yy = numpy.array(yy,dtype=numpy.complex)
+        #         tseg = (tpts_seg+k)/nSegs
+        #         ax.plot(tseg,yy.real,'-',tseg,yy.imag,'--',
+        #                          color=color,label=j,**kwds)
+
+        # ax.xaxis.set_ticks([numpy.double(k)/len(self.PathSegments)
+        #                      for k in range(len(self.PathSegments)+1)])
+        # ax.grid(True,which='major')
+        # ax.legend(loc='best')
+
+        # fig.show()
+
+    def plot_differential(self, omega, x, y, N, all_roots=False, **kwds):
+        nSegs = len(self.PathSegments)
+        ppseg = N/nSegs
+        tpts_seg = numpy.linspace(0,1,ppseg)
+
+        # lambdify differential
+        omega = sympy.lambdify((x,y), omega, 'numpy')
+
+        # create figure
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+
+        # plot each segment
         for k in range(nSegs):
             Segment = self.PathSegments[k]
 
-            xx_seg,yy_seg,oo_seg = pd(tpts_seg,Segment=Segment)
-            xx.extend(xx_seg)
-            yy.extend(yy_seg)
-            tt.extend((tpts_seg+k)/nSegs)
-            oo.extend(oo_seg)
+            def parameterized_differential(ti,Segment=None):
+                dxdt = Segment.get_dxdt(ti)
+                xi,yi = Segment.analytically_continue(ti)
+                return (xi,yi[0],omega(xi,yi[0]) * dxdt)
+            pd = numpy.vectorize(parameterized_differential,
+                                 excluded=['Segment'])
 
-            # checkpoint values
-            ti,pc = zip(*Segment._checkpoints)
-            xck,ycallk = zip(*pc)
-            yck = zip(*ycallk)[0]
-            xc.extend(xck)
-            yc.extend(yck)
+            # xseg = numpy.array(xseg, dtype=numpy.complex)
+            # yseg = numpy.array(zip(*yseg)[0], dtype=numpy.complex)
+            xseg, yseg, oseg = pd(tpts_seg, Segment=Segment)
+            t = (tpts_seg + k)/nSegs
 
-        # get the x- and y-path interpolating points
-        xx = numpy.array(xx,dtype=numpy.complex)
-        yy = numpy.array(yy,dtype=numpy.complex)
-        tt = numpy.array(tt,dtype=numpy.double)
-        oo = numpy.array(oo,dtype=numpy.complex)
-        xc = numpy.array(xc,dtype=numpy.complex)
-        yc = numpy.array(yc,dtype=numpy.complex)
+            ax.plot(t, oseg.real, 'b', **kwds)
+            ax.plot(t, oseg.imag, 'r', **kwds)
 
-        # plotting: first axis is the x-path, second axis is the y-path, and
-        # third axis is the value fo the differential along the path
-        fig = plt.figure()
-        ax1 = fig.add_subplot(2,2,1)
-        ax2 = fig.add_subplot(2,2,3)
-        ax3 = fig.add_subplot(1,2,2)
+        return fig
 
-        ax1.plot(xx.real,xx.imag,'b-',xc.real,xc.imag,'bo')
-        ax2.plot(yy.real,yy.imag,'g-',yc.real,yc.imag,'go')
-        ax3.plot(tt,oo.real,'b-')
-        ax3.plot(tt,oo.imag,'b--')
-        ax3.xaxis.set_ticks([numpy.double(k)/len(self.PathSegments)
-                             for k in range(len(self.PathSegments)+1)])
-        ax3.grid(True,which='major')
 
-        fig.show()
+    # def plot_differential(self,omega,x,y,N):
+    #     """
+    #     Plots the differential `omega = omega(x,y) dx` on the path.
+
+    #     NOTE: this can probably be written much more cleanly
+    #     """
+    #     nSegs = len(self.PathSegments)
+    #     ppseg = N/nSegs
+    #     tpts_seg = numpy.linspace(0,1,ppseg)
+
+    #     oo = numpy.array([],dtype=numpy.complex)
+    #     omega = sympy.lambdify((x,y),omega,'numpy')
+    #     def parameterized_differential(ti,Segment=None):
+    #         dxdt = Segment.get_dxdt(ti)
+    #         xi,yi = Segment.analytically_continue(ti)
+    #         return (xi,yi[0],omega(xi,yi[0]) * dxdt)
+    #     pd = numpy.vectorize(parameterized_differential,excluded=['Segment'])
+
+    #     # evaluate the differential along each segment
+    #     xx = []
+    #     yy = []
+    #     tt = []
+    #     oo = []
+    #     xc = []
+    #     yc = []
+    #     for k in range(nSegs):
+    #         Segment = self.PathSegments[k]
+
+    #         xx_seg,yy_seg,oo_seg = pd(tpts_seg,Segment=Segment)
+    #         xx.extend(xx_seg)
+    #         yy.extend(yy_seg)
+    #         tt.extend((tpts_seg+k)/nSegs)
+    #         oo.extend(oo_seg)
+
+    #         # checkpoint values
+    #         ti,pc = zip(*Segment._checkpoints)
+    #         xck,ycallk = zip(*pc)
+    #         yck = zip(*ycallk)[0]
+    #         xc.extend(xck)
+    #         yc.extend(yck)
+
+    #     # get the x- and y-path interpolating points
+    #     xx = numpy.array(xx,dtype=numpy.complex)
+    #     yy = numpy.array(yy,dtype=numpy.complex)
+    #     tt = numpy.array(tt,dtype=numpy.double)
+    #     oo = numpy.array(oo,dtype=numpy.complex)
+    #     xc = numpy.array(xc,dtype=numpy.complex)
+    #     yc = numpy.array(yc,dtype=numpy.complex)
+
+    #     # plotting: first axis is the x-path, second axis is the y-path, and
+    #     # third axis is the value fo the differential along the path
+    #     fig = plt.figure()
+    #     ax1 = fig.add_subplot(2,2,1)
+    #     ax2 = fig.add_subplot(2,2,3)
+    #     ax3 = fig.add_subplot(1,2,2)
+
+    #     ax1.plot(xx.real,xx.imag,'b-',xc.real,xc.imag,'bo')
+    #     ax2.plot(yy.real,yy.imag,'g-',yc.real,yc.imag,'go')
+    #     ax3.plot(tt,oo.real,'b-')
+    #     ax3.plot(tt,oo.imag,'b--')
+    #     ax3.xaxis.set_ticks([numpy.double(k)/len(self.PathSegments)
+    #                          for k in range(len(self.PathSegments)+1)])
+    #     ax3.grid(True,which='major')
+
+    #     fig.show()
 
 
 if __name__=='__main__':
