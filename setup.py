@@ -116,18 +116,6 @@ packages = [
     ]
 
 ext_modules = [
-#     Extension('abelfunctions.riemanntheta.riemanntheta_cy',
-#               sources = ['abelfunctions/riemanntheta/riemanntheta_cy.pyx',
-#                          'abelfunctions/riemanntheta/riemanntheta.c'],
-#               include_dirs = [numpy.get_include()]
-#               ),
-    Extension('abelfunctions.riemann_surface',
-              sources = [
-                  'abelfunctions/riemann_surface.pyx',
-                  ],
-              include_dirs = [numpy.get_include()]
-              ),
-
     Extension('abelfunctions.riemann_surface_path',
               sources = [
                   'abelfunctions/riemann_surface_path.pyx',
