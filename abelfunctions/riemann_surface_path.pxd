@@ -31,5 +31,6 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
 
 
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
+    cdef int _get_segment_index(self, double)
     pass
 

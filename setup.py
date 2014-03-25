@@ -116,6 +116,11 @@ packages = [
     ]
 
 ext_modules = [
+    Extension('abelfunctions.riemann_surface',
+              sources = [
+                  'abelfunctions/riemann_surface.pyx',
+                  ],
+              ),
     Extension('abelfunctions.riemann_surface_path',
               sources = [
                   'abelfunctions/riemann_surface_path.pyx',

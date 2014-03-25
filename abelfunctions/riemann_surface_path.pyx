@@ -65,19 +65,23 @@ cdef class RiemannSurfacePathPrimitive:
         Plots the path in the complex x- and y-planes at the t-points
         given. *args and **kwds are passed to matplotlib.pyplot.plot.
     """
+    property segments:
+
     def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
                  complex x0, complex[:] y0, int ncheckpoints=6):
-        print '--- RSPP __init__()'
         self.RS = RS
         self.x0 = x0
         self.y0 = y0
         self.AC = AC
         self.segments = numpy.array([self], dtype=RiemannSurfacePathPrimitive)
         self._ncheckpoints = ncheckpoints
-        self._initialize_checkpoints()
-        print '--- RSPP __init__() END'
 
-    def __add__(self, other):
+        # RiemannSurfacePath objects are treated as RiemannSurfacePathPrimitive
+        # objects with zero checkpoints
+        if ncheckpoints:
+            self._initialize_checkpoints()
+
+    def __add__(self, RiemannSurfacePathPrimitive other):
         # try getting the segments of the other object. Doing so asserts
         # that the other object is of type RiemannSurfacePathPrimitve
         cdef RiemannSurfacePathPrimitive[:] segments
@@ -89,9 +93,6 @@ cdef class RiemannSurfacePathPrimitive:
 
         # assert that the endpoint of the segments of this path matches
         # with those of the other path
-        #
-        # XXX do we have to check the entire fibre or just the first
-        # fibre component?
         cdef double eps = 1e-8
         cdef RiemannSurfacePathPrimitive end_segment = self.segments[-1]
         cdef complex x_end = end_segment.get_x(1)
@@ -116,7 +117,7 @@ cdef class RiemannSurfacePathPrimitive:
 
     cdef int _nearest_checkpoint_index(self, double t):
         """Returns the index of the checkpoint closest to and preceding `t`."""
-        cdef int n,k
+        cdef int n, k
         cdef double ti
 
         n = self._ncheckpoints
@@ -125,7 +126,7 @@ cdef class RiemannSurfacePathPrimitive:
             if ti >= t:
                 return k-1
 
-        # use base point if a valid checkpoint isn't found
+        # use first checkpoint if something goes wrong
         return 0
 
     def _initialize_checkpoints(self):
@@ -147,17 +148,18 @@ cdef class RiemannSurfacePathPrimitive:
         n = self._ncheckpoints
         t = numpy.linspace(0, 1, n)
         x = numpy.array([self.get_x(ti) for ti in t], dtype=complex)
-        y = numpy.zeros((n,self.RS.deg), dtype=complex)
+        y = numpy.zeros((n, self.RS.deg), dtype=complex)
+        y[0,:] = self.y0
 
         tim1 = 0.0
         xim1 = self.x0
         yim1 = self.y0
-        for k in range(1,n):
-            ti = t[k]
+        for i in range(1,n):
+            ti = t[i]
             xi = self.get_x(ti)
             yi = self.analytically_continue(xim1, yim1, xi)
 
-            y[k] = yi
+            y[i,:] = yi
             xim1 = xi
             yim1 = yi
 
@@ -191,16 +193,16 @@ cdef class RiemannSurfacePathPrimitive:
     @cython.wraparound(False)
     cpdef complex[:] get_y(self, double t):
         """Return the y-fibre of the path at `t \in [0,1]`."""
-        cdef int n,k
+        cdef int n, k
         cdef double tim1
-        cdef complex xim1,xi
-        cdef complex[:] yim1,yi
+        cdef complex xim1, xi
+        cdef complex[:] yim1, yi
 
         # get the closest checkpoint to the desired t-value
-        k = self._nearest_checkpoint_index(t)
-        tim1 = self._tcheckpoints[k]
-        xim1 = self._xcheckpoints[k]
-        yim1 = self._ycheckpoints[k]
+        i = self._nearest_checkpoint_index(t)
+        tim1 = self._tcheckpoints[i]
+        xim1 = self._xcheckpoints[i]
+        yim1 = self._ycheckpoints[i]
 
         # analytically continue to target
         xi = self.get_x(t)
@@ -224,8 +226,10 @@ cdef class RiemannSurfacePathPrimitive:
         """
         x = numpy.array([self.get_x(ti) for ti in t],
                         dtype=numpy.complex)
-        p = plt.plot(x.real, x.imag, *args, **kwds)
-        return p
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        lines, = ax.plot(x.real, x.imag, *args, **kwds)
+        return fig
 
     def plot_y(self, double[:] t, *args, **kwds):
         """Plot the y-part of the path in the complex y-plane.
@@ -244,8 +248,10 @@ cdef class RiemannSurfacePathPrimitive:
         """
         y = numpy.array([self.get_y(ti)[0] for ti in t],
                         dtype=numpy.complex)
-        p = plt.plot(y.real, y.imag, *args, **kwds)
-        return p
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        lines, = ax.plot(y.real, y.imag, *args, **kwds)
+        return fig
 
 
 cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
@@ -326,7 +332,6 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     """
     def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
                  RiemannSurfacePathPrimitive[:] segments):
-        print '--- RSP __init__()'
         # RiemannSurfacePath delegates all analytic continuation to each
         # of its components, so we intialize its parent with a null
         # AnalyticContinuator object.
@@ -342,7 +347,23 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         # to "self"
         self.segments = segments
         self.nsegments = len(segments)
-        print '--- RSP __init__() END'
+
+    cdef int _get_segment_index(self, double t):
+        """Returns the index of the path segment located at the given :math:`t
+        \in [0,1]`.
+
+        .. note::
+
+            This routine computes the appropriate path segment index
+            without resorting to branching. Such an approach is needed
+            since :math:`t = 1.0` should return the index of the final
+            segment.
+
+        """
+        cdef int k = floor(t*self.nsegments)
+        cdef int diff = (self.nsegments - 1) - k
+        cdef int dsgn = diff >> 31
+        return k + (diff & dsgn)
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -358,15 +379,8 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         """
         cdef RiemannSurfacePathPrimitive seg_k
         cdef complex x
-        cdef int k
-
-        if t == 1.0:
-            k = self.nsegments-1
-            t_seg = 1.0
-        else:
-            k = floor(t*self.nsegments)
-            t_seg = t*self.nsegments - k
-
+        cdef int k = self._get_segment_index(t)
+        cdef double t_seg = t*self.nsegments - k
         seg_k = self.segments[k]
         x = seg_k.get_x(t_seg)
         return x
@@ -394,9 +408,8 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         """
         cdef RiemannSurfacePathPrimitive seg_k
         cdef complex dxdt
-        cdef int k = floor(t*self.nsegments)
-
-        t_seg = t*self.nsegments - k
+        cdef int k = self._get_segment_index(t)
+        cdef double t_seg = t*self.nsegments - k
         seg_k = self.segments[k]
         dxdt = seg_k.get_dxdt(t_seg)
         return dxdt
@@ -415,9 +428,8 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         """
         cdef RiemannSurfacePathPrimitive seg_k
         cdef complex[:] y
-        cdef int k = floor(t*self.nsegments)
-
-        t_seg = t*self.nsegments - k
+        cdef int k = self._get_segment_index(t)
+        cdef double t_seg = t*self.nsegments - k
         seg_k = self.segments[k]
         y = seg_k.get_y(t_seg)
         return y
