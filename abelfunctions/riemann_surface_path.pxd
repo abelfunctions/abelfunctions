@@ -2,12 +2,12 @@ from abelfunctions.riemann_surface cimport RiemannSurface
 from abelfunctions.analytic_continuation cimport AnalyticContinuator
 
 cdef class RiemannSurfacePathPrimitive:
-    cdef RiemannSurface RS
-    cdef AnalyticContinuator AC
-    cdef complex x0
-    cdef complex[:] y0
-    cdef RiemannSurfacePathPrimitive[:] segments
-    cdef int nsegments
+    cdef RiemannSurface _RS
+    cdef AnalyticContinuator _AC
+    cdef complex _x0
+    cdef complex[:] _y0
+    cdef RiemannSurfacePathPrimitive[:] _segments
+    cdef int _nsegments
     cdef int _ncheckpoints
     cdef double[:] _tcheckpoints
     cdef complex[:] _xcheckpoints
@@ -18,6 +18,7 @@ cdef class RiemannSurfacePathPrimitive:
     cpdef complex[:] analytically_continue(RiemannSurfacePathPrimitive,
                                            complex, complex[:], complex)
     cpdef complex[:] get_y(self, double)
+
 
 cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
     cdef complex z0
