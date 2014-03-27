@@ -24,12 +24,12 @@ import os
 import os.path
 import numpy
 
+
 class clean(Command):
     """
     Cleans *.pyc and other trash files producing the same copy of the code
     as in the git repository.
     """
-
     description = "remove all build and trash files"
     user_options = []
     cleaned_file_extensions = ['.pyc', '~', '.so', '.c', '.html']
@@ -111,7 +111,6 @@ class test_abelfunctions(Command):
 
 packages = [
     'abelfunctions.riemanntheta',
-    'abelfunctions.riemannsurface',
     'abelfunctions.utilities',
     ]
 
@@ -136,6 +135,13 @@ ext_modules = [
     Extension('abelfunctions.analytic_continuation_smale',
               sources = [
                   'abelfunctions/analytic_continuation_smale.pyx',
+                  ],
+              include_dirs = [numpy.get_include()]
+              ),
+    Extension('abelfunctions.riemanntheta.riemanntheta_cy',
+              sources = [
+                  'abelfunctions/riemanntheta/riemanntheta_cy.pyx',
+                  'abelfunctions/riemanntheta/riemanntheta.c',
                   ],
               include_dirs = [numpy.get_include()]
               ),
