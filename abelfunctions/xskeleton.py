@@ -541,6 +541,33 @@ class XSkeleton(object):
         A graph object defining the skeleton of the x-part of the
         Riemann Surface.
 
+    Methods
+    -------
+    base_point
+        Returns the base point of the monodromy group of the curve.
+    branch_points
+        Returns the branch points of the curve.
+    xpath_to_branch_point
+        Returns a list of tuples representing a path in the complex
+        x-plane starting at the base point and leading to the given
+        branch point.
+    xpath_circle_branch_point
+        Returns a list of tuples representing a path in the complex
+        x-plane encircling a branch point a given number of times.
+    xpath_monodromy_path
+        Returns a list of tuples representing a path in the complex
+        x-plane representing the monodromy path of the given branch
+        point.
+    xpath_monodromy_path
+        Returns a list of tuples representing a path in the complex
+        x-plane starting at the base point and encircling infinity a
+        given number of times.
+
+    .. todo::
+
+        Wrap remaining functions (as necessary) in this module into this
+        class.
+
     """
     def __init__(self, RS, kappa=3./5., base_point=None):
         """Initialize the XSkeleton.
@@ -865,7 +892,7 @@ class XSkeleton(object):
         R = 0.0
         for bi in b:
             radius = self.radius(bi)
-            arg = numpy.arg(bi)
+            arg = numpy.angle(bi)
             Ri = numpy.abs(bi + arg*radius)
             R = Ri if Ri > R else R
 
@@ -1048,31 +1075,3 @@ class XSkeleton(object):
 
     def show_paths(self):
         show_paths(self.G)
-
-
-
-if __name__=='__main__':
-    from sympy.abc import x,y
-
-    f0 = y**3 - 2*x**3*y - x**8  # Klein curve
-    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    f2 = -x**7 + 2*x**3*y + y**3
-    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
-    f4 = y**2 + x**3 - x**2
-    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-    f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
-    f7 = y**3 - (x**3 + y)**2 + 1
-    f8 = x**2*y**6 + 2*x**3*y**5 - 1
-    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
-    f11= x**5 + y**5 - 1
-
-    f = f2
-
-    import cProfile, pstats
-    cProfile.run('mon = monodromy(f10,x,y)','monodromy.profile')
-    p = pstats.Stats('monodromy.profile')
-#    p.strip_dirs()
-    p.sort_stats('time').print_stats(25)
-    p.sort_stats('cumulative').print_stats(25)
-    p.sort_stats('calls').print_stats(25)

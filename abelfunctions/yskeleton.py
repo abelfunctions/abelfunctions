@@ -1,17 +1,23 @@
 """
-Homology
+Y-Skeleton
+==========
+
+This module defines the y-skeleton of the Riemann surface. That is, a
+means of not only computing the a- and b-cycles of the first homology
+group of the Riemann surface but also mechanisms for travelling from one
+sheet to another on the Riemann surface.
+
 """
 import numpy
 import scipy
 import sympy
 import networkx as nx
+import matplotlib
+import matplotlib.pyplot as plt
 
 from operator import itemgetter
-from abelfunctions.monodromy import Permutation, monodromy
-from abelfunctions.singularities import genus
-from abelfunctions.utilities import cached_function
-
-import pdb
+from .utilities import Permutation
+from .singularities import genus
 
 
 def find_cycle(pi, j):
@@ -165,7 +171,7 @@ def frobenius_transform(A,g):
 
 
 
-def tretkoff_graph(hurwitz_system):
+def tretkoff_graph(base_sheets, monodromy_group):
     """
     There are two types of nodes:
 
@@ -177,7 +183,7 @@ def tretkoff_graph(hurwitz_system):
     point are in 1-1 correspondence with the cycles of the permuation) these
     occur on the odd levels
     """
-    base_point, base_sheets, branch_points, monodromy, G = hurwitz_system
+    branch_points, monodromy = zip(*monodromy_group.items())
 
     # initialize graph with base point: the zero sheet
     C = nx.Graph()
@@ -504,7 +510,7 @@ def reverse_cycle(cycle):
 
 
 
-def compress_cycle(cycle, tretkoff_graph, monodromy_graph):
+def compress_cycle(cycle, tretkoff_graph):
     """
     Given a cycle, the Tretkoff graph, and the monodromy graph, return a
     shortened equivalent cycle.
@@ -546,9 +552,7 @@ def compress_cycle(cycle, tretkoff_graph, monodromy_graph):
     return cycle
 
 
-
-def compute_ab_cycles(c_cycles, linear_combinations, g,
-		      tretkoff_graph, monodromy_graph):
+def compute_ab_cycles(c_cycles, linear_combinations, g, tretkoff_graph):
     """
     Returns the a- and b-cycles of the Riemann surface given the
     intermediate 'c-cycles' and linear combinations matrix.
@@ -579,8 +583,8 @@ def compute_ab_cycles(c_cycles, linear_combinations, g,
 
 	a = a + [0]
 	b = b + [0]
-	a = compress_cycle(a, tretkoff_graph, monodromy_graph)
-	b = compress_cycle(b, tretkoff_graph, monodromy_graph)
+	a = compress_cycle(a, tretkoff_graph)
+	b = compress_cycle(b, tretkoff_graph)
 
 	a_cycles.append(a)
 	b_cycles.append(b)
@@ -588,196 +592,297 @@ def compute_ab_cycles(c_cycles, linear_combinations, g,
     return a_cycles, b_cycles
 
 
-@cached_function
-def homology(f,x,y,base_point=None,base_sheets=None,verbose=True):
+# @cached_function
+# def homology(f,x,y,base_point=None,base_sheets=None,verbose=True):
+#     """
+#     Given a plane representation of a Riemann surface, that is, a
+#     complex plane algebraic curve, return a canonical basis for the
+#     homology of the Riemann surface.
+
+#     Inputs:
+
+#     - f,x,y: an algebraic curve in x and y.
+
+#     - base_point: (optional) the base point of the monodromy group lying
+#       in the complex x-plane
+
+#     - base_sheets: (optional) perscribed ordering of the y-sheets lying
+#     above the base_point
+
+#     - verbose: (optional) return a dictionary containing the following
+#       information
+
+#       * 'basepoint' : the base point used in the monodromy group
+
+#       * 'basesheets' : the base sheets (order matters) lying above the
+#         base point
+
+#       * 'c-cycles' : a list of intermediate cycles. linear combinations
+#         of these make up the a- and b-cycles
+
+#       * 'linearcombination' : a (2g x m) integer matrix, where g is the
+#         genus of the curve f = f(x,y). the first g rows show which
+#         linear combination of the c-cycles produce the a-cycles. the
+#         second g rows give the b-cycles.
+
+#       * 'a-cycles' : a list of the a-cycles
+
+#       * 'b-cycles' : a list of the b-cycles
+
+#     Outputs:
+
+#     """
+#     g = int(genus(f,x,y))
+#     hurwitz_system = monodromy(f,x,y,base_point=base_point,
+#                                base_sheets=base_sheets)
+#     base_point, base_sheets, branch_points, mon, G = hurwitz_system
+
+#     # compute primary data elements:
+#     #
+#     # * tretkoff_graph gives us the key combinatorial data
+#     #
+#     # * intersection_matrix takes this data and tells us how
+#     #   the c-cycles intersect
+#     #
+#     # * the frobenius_transform of the intersection matrix
+#     #   gives us which linear combinations of the c_cycles we
+#     #   need to obtain the a- and b-cycles
+#     C = tretkoff_graph(hurwitz_system)
+#     edges = final_edges(C)
+#     K = intersection_matrix(edges,g)
+#     T = frobenius_transform(K,g)
+
+#     c_cycles = compute_c_cycles(C, edges)
+#     a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
+
+#     if verbose:
+#         return {
+#             'basepoint': base_point,
+#             'basesheets': base_sheets,
+#             'c-cycles': c_cycles,
+#             'linearcombinations': T[:2*g,:],
+#             'a-cycles': a_cycles,
+#             'b-cycles': b_cycles,
+#             }
+#     else:
+#         return a_cycles, b_cycles
+
+
+# def show_homology(C):
+#     try:
+#         import networkx as nx
+#         import matplotlib.pyplot as plt
+#     except:
+#         raise
+
+#     final_nodes = [n for n,d in C.nodes(data=True) if d['final']]
+#     final_edges = [e for e in C.edges()
+#                    if e[0] in final_nodes or e[1] in final_nodes]
+#     edges = [e for e in C.edges() if e not in final_edges]
+
+#     # compute positions
+#     pos = {(0,):(0,0)}
+#     labels = {(0,):"$0$"}
+#     level = 0
+#     level_points = [(0,)]
+#     while len(level_points) > 0:
+#         level += 1
+#         level_points = sorted([n for n,d in C.nodes(data=True)
+#                                if d['level'] == level])
+
+#         num_level_points = len(level_points)
+#         n = 0
+#         for point in level_points:
+#             pos[point] = (level,n-num_level_points/2.0)
+#             labels[point] = C.node[point]['label'] + \
+#                 '\n $' + str(point) + '$'
+#             n += 1
+
+#     # draw it
+#     nx.draw_networkx_nodes(C, pos, node_color='w')
+#     nx.draw_networkx_nodes(C, pos, nodelist=final_nodes, node_color='w')
+#     nx.draw_networkx_edges(C, pos, edgelist=edges)
+#     nx.draw_networkx_edges(C, pos, edgelist=final_edges,
+#                            edge_color='b', style='dashed')
+#     nx.draw_networkx_labels(C, pos, labels=labels, font_size=13)
+
+#     plt.xticks([])
+#     plt.yticks([])
+#     plt.show()
+
+
+class YSkeleton(object):
+    """Defines the basic y-path structure of the Riemann surface.
+
+    In particular, this class offers methods for determining which
+    *y-paths*, given by a list of branch points in the complex x-plane
+    and rotation numbers, to take order to define homology basis cycles
+    as well as sheet switching paths.
+
+    Attributes
+    ----------
+    RS : Riemann Surface
+    C : networkx.Graph
+        A graph encoding the y-skeleton of the Riemann surface.
+
+    Methods
+    -------
+    a_cycles
+        Returns the y-paths of the a-cycles.
+    b_cycles
+        Returns the y-paths of the b-cycles.
+    c_cycles
+        Returns the y-paths of the c-cycles as well as a matrix
+        representing which linear combinations of the c-cycles make up
+        the a- and b- cycles. These data are useful for period matrix
+        optimization.
+    y_path_sheet_swap
+        Given two sheets, returns the y-path leading from the first
+        sheet to the second.
+
+    .. todo::
+
+        This class is a light wrapper around legacy code. This legacy
+        code should eventually be made part of this class.
     """
-    Given a plane representation of a Riemann surface, that is, a
-    complex plane algebraic curve, return a canonical basis for the
-    homology of the Riemann surface.
 
-    Inputs:
+    def __init__(self, RS, base_sheets, monodromy_group):
+        """Initializes the Y-Skeleton by computing the monodromy graph and
+        homology cycles of the Riemann surface.
 
-    - f,x,y: an algebraic curve in x and y.
+        Arguments
+        ---------
+        RS : RiemannSurface
+        base_sheets : complex, list
+            An ordered list of the sheets above the base point.
+        monodromy_group : dict
+            The monodromy group of the curve as given by
+            :py:func:`RiemannSurfacePathFactory.monodromy_group`
 
-    - base_point: (optional) the base point of the monodromy group lying
-      in the complex x-plane
+        """
+        self.RS = RS
+        self.C = tretkoff_graph(base_sheets, monodromy_group)
 
-    - base_sheets: (optional) perscribed ordering of the y-sheets lying
-    above the base_point
-
-    - verbose: (optional) return a dictionary containing the following
-      information
-
-      * 'basepoint' : the base point used in the monodromy group
-
-      * 'basesheets' : the base sheets (order matters) lying above the
-        base point
-
-      * 'c-cycles' : a list of intermediate cycles. linear combinations
-        of these make up the a- and b-cycles
-
-      * 'linearcombination' : a (2g x m) integer matrix, where g is the
-        genus of the curve f = f(x,y). the first g rows show which
-        linear combination of the c-cycles produce the a-cycles. the
-        second g rows give the b-cycles.
-
-      * 'a-cycles' : a list of the a-cycles
-
-      * 'b-cycles' : a list of the b-cycles
-
-    Outputs:
-
-    """
-    g = int(genus(f,x,y))
-    hurwitz_system = monodromy(f,x,y,base_point=base_point,
-                               base_sheets=base_sheets)
-    base_point, base_sheets, branch_points, mon, G = hurwitz_system
-
-    # compute primary data elements:
-    #
-    # * tretkoff_graph gives us the key combinatorial data
-    #
-    # * intersection_matrix takes this data and tells us how
-    #   the c-cycles intersect
-    #
-    # * the frobenius_transform of the intersection matrix
-    #   gives us which linear combinations of the c_cycles we
-    #   need to obtain the a- and b-cycles
-    C = tretkoff_graph(hurwitz_system)
-    edges = final_edges(C)
-    K = intersection_matrix(edges,g)
-    T = frobenius_transform(K,g)
-
-    c_cycles = compute_c_cycles(C, edges)
-    a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
-
-    if verbose:
-        return {
-            'basepoint': base_point,
-            'basesheets': base_sheets,
-            'c-cycles': c_cycles,
-            'linearcombinations': T[:2*g,:],
-            'a-cycles': a_cycles,
-            'b-cycles': b_cycles,
-            }
-    else:
-        return a_cycles, b_cycles
+        # compute the a-, b-, and c-cycles by calling self.homology()
+        self._a_cycles, self._b_cycles, self._c_cycles, \
+            self._linear_combinations = self.homology()
 
 
-def show_homology(C):
-    try:
-        import networkx as nx
-        import matplotlib.pyplot as plt
-    except:
-        raise
+    def homology(self):
+        """Computes the first homology group of the Riemann surface.
 
-    final_nodes = [n for n,d in C.nodes(data=True) if d['final']]
-    final_edges = [e for e in C.edges()
-                   if e[0] in final_nodes or e[1] in final_nodes]
-    edges = [e for e in C.edges() if e not in final_edges]
+        Returns
+        -------
+        a_cycles, b_cycles, c_cycles, linear_combinations
+            y-paths corresponding to the a-, b-, and c-cycles and a
+            matrix giving the linear combination of c-cycles for each a-
+            and b-cycle.
 
-    # compute positions
-    pos = {(0,):(0,0)}
-    labels = {(0,):"$0$"}
-    level = 0
-    level_points = [(0,)]
-    while len(level_points) > 0:
-        level += 1
-        level_points = sorted([n for n,d in C.nodes(data=True)
-                               if d['level'] == level])
+        .. todo::
 
-        num_level_points = len(level_points)
-        n = 0
-        for point in level_points:
-            pos[point] = (level,n-num_level_points/2.0)
-            labels[point] = C.node[point]['label'] + \
-                '\n $' + str(point) + '$'
-            n += 1
+            Move compress cycle to :py:class:`RiemannSurfacePathFactory`?
 
-    # draw it
-    nx.draw_networkx_nodes(C, pos, node_color='w')
-    nx.draw_networkx_nodes(C, pos, nodelist=final_nodes, node_color='w')
-    nx.draw_networkx_edges(C, pos, edgelist=edges)
-    nx.draw_networkx_edges(C, pos, edgelist=final_edges,
-                           edge_color='b', style='dashed')
-    nx.draw_networkx_labels(C, pos, labels=labels, font_size=13)
+        .. todo::
 
-    plt.xticks([])
-    plt.yticks([])
-    plt.show()
+            Delete legacy behavior of including sheet numbers in y-paths.
 
+        """
+        g = int(self.RS.genus())
+        edges = final_edges(self.C)
+        K = intersection_matrix(edges, g)
+        T = frobenius_transform(K, g)
 
+        c_cycles = compute_c_cycles(self.C, edges)
+        a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, self.C)
 
-if __name__=='__main__':
-    from sympy.abc import x,y
+        # TODO: ignore legacy sheet numbers
+        for k in range(g):
+            a_cycles[k] = a_cycles[k][1::2]
+            b_cycles[k] = b_cycles[k][1::2]
+        for k in range(len(c_cycles)):
+            c_cycles[k] = c_cycles[k][1::2]
 
-    f0 = y**3 - 2*x**3*y - x**8  # Klein curve
-    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    f2 = -x**7 + 2*x**3*y + y**3
-    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
-    f4 = y**2 + x**3 - x**2
-    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-    f6 = y**4 - y**2*x + x**2   # case with only one finite disc pt
-    f7 = y**3 - (x**3 + y)**2 + 1
-    f8 = (x**6)*y**3 + 2*x**3*y - 1
-    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
-    f11= y**2 - (x**2+1)*(x**2-1)*(4*x**2+1)  # simple genus two hyperelliptic
-    f12 = x**4 + y**4 - 1
-    f13 = y**2 - (x-2)*(x-1)*(x+1)*(x+2)  # simple genus one hyperelliptic
+        # truncate c_cycles and lincombs to 2*g elements
+        c_cycles = c_cycles[:2*g]
+        linear_combinations = T[:2*g,:]
+        return a_cycles, b_cycles, c_cycles, linear_combinations
 
-    f = f10
+    def a_cycles(self):
+        """Returns the y-paths of the a-cycles of the Riemann surface.
 
-    print("\nComputing monodromy...")
-    I = 1.0j
-#     # f2
-#     base_point = -1.44838920232100
-#     base_sheets = [-3.20203812255,
-#                     1.60101906127-1.26997391750*I,
-#                     1.60101906127+1.26997391750*I]
+        Returns
+        -------
+        list
+            A list of the a-cycles of the Riemann surface as
+            :class:`RiemannSurfacePath` objects.
+        """
+        return self._a_cycles
 
-    # f10
-    base_point = -1.43572291547089
-    base_sheets =[-1.93155860973,
-                   -0.141326328588,
-                   1.03644246916 - 0.404482364824*I,
-                   1.03644246916 + 0.404482364824*I]
+    def b_cycles(self):
+        """Returns the y-paths of the b-cycles of the Riemann surface.
+        """
+        return self._b_cycles
 
-    hs = monodromy(f,x,y,base_point=base_point,base_sheets=base_sheets)
-    print("\nComputing genus...")
-    g = int(genus(f,x,y))
-    print("...genus = %d"%g)
+    def c_cycles(self):
+        """Returns the y-paths of the c-cycles of the Riemann surface and the
+        linear combination matrix defining the a- and b-cycles from the
+        c-cycles.
 
-    print("\nBranch points...")
-    for bpt in hs[2]: print bpt
+        The a- and b- cycles of the Riemann surface are formed from
+        linear combinations of the c-cycles. These linear combinations
+        are obtained from the :method:`linear_combinations` method.
 
-    print("\nMonodromy Group...")
-    for mon in hs[-2]: print mon
+        .. note::
 
-    print("\nComputing Tretkoff Graph...")
-    C = tretkoff_graph(hs)
+            It may be computationally more efficient to integrate over
+            the (necessary) c-cycles and take linear combinations of the
+            results than to integrate over the a- and b-cycles
+            separately. Sometimes the column rank of the linear
+            combination matrix (that is, the number of c-cycles used to
+            construct a- and b-cycles) is lower than the size of the
+            homology group and sometimes the c-cycles are simpler and
+            shorter than the homology cycles.
 
-    print("\nComputing final edges...")
-    e = map(lambda (ei,ej): (C.node[ei]['value'],C.node[ej]['value']),
-            final_edges(C))
-    for ei in e: print ei
+        """
+        return self._c_cycles, self._linear_combinations
 
-    show_homology(C)
+    def plot(self):
+        """Plots the y-skeleton of the Riemann surface.
+        """
+        # get the edges and final edges of the graph.
+        C = self.C
+        final_nodes = [n for n,d in C.nodes(data=True) if d['final']]
+        final_edges = [e for e in C.edges()
+                       if e[0] in final_nodes or e[1] in final_nodes]
+        edges = [e for e in C.edges() if e not in final_edges]
 
-    print("\nComputing intersection matrix and lincombs...")
-    edges = final_edges(C)
-    K = intersection_matrix(edges, g)
-    T = frobenius_transform(K,g)
-    J = numpy.dot(numpy.dot(T,K),T.T)
-    print("K =\n%s\n\nT =\n%s\n\nJ =\n%s"%(K,T,J))
+        # custom node position makes it clear which branch points lead
+        # to which sheets. corresponding nodes are positioned in a line
+        # above each "level" of the graph.
+        pos = {(0,):(0,0)}
+        labels = {(0,):"$0$"}
+        level = 0
+        level_points = [(0,)]  # a list of points at each level
+        while len(level_points) > 0:
+            level += 1
+            level_points = sorted([n for n,d in C.nodes(data=True)
+                                   if d['level'] == level])
+            num_level_points = len(level_points)
+            n = 0
+            for point in level_points:
+                pos[point] = (level,n-num_level_points/2.0)
+                labels[point] = C.node[point]['label'] + \
+                    '\n $' + str(point) + '$'
+                n += 1
 
-    print("\nComputing c-cycles...")
-    c_cycles = compute_c_cycles(C, edges)
-    for c in c_cycles: print c
+        # draw it with separate coloring for the final edges
+        nx.draw_networkx_nodes(C, pos, node_color='w')
+        nx.draw_networkx_nodes(C, pos, nodelist=final_nodes, node_color='w')
+        nx.draw_networkx_edges(C, pos, edgelist=edges)
+        nx.draw_networkx_edges(C, pos, edgelist=final_edges,
+                               edge_color='b', style='dashed')
+        nx.draw_networkx_labels(C, pos, labels=labels, font_size=13)
+        plt.xticks([])
+        plt.yticks([])
+        return plt.gcf()
 
-    print("\nComputing a- and b-cycles")
-    a,b = compute_ab_cycles(c_cycles, T, g, C, None)
-    print("a-cycles:")
-    for ai in a: print ai
-    print("b-cycles:")
-    for bi in b: print bi
