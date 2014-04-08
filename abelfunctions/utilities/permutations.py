@@ -186,7 +186,7 @@ class Permutation(object):
             raise ValueError, "len(a) must equal len(self)"
         return map(lambda i: a[self[i]], range(len(a)))
 
-    def inv(self):
+    def inverse(self):
         """
         Returns the inverse permutation.
         """
