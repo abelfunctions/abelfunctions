@@ -150,6 +150,18 @@ ext_modules = [
                          'abelfunctions/riemanntheta/lll_reduce.c'],
               include_dirs = [numpy.get_include()]
               ),
+    Extension('abelfunctions.polynomials',
+              sources = [
+                  'abelfunctions/polynomials.pyx',
+                  ],
+              include_dirs = [numpy.get_include()]
+              ),
+    Extension('abelfunctions.differentials',
+              sources = [
+                  'abelfunctions/differentials.pyx',
+                  ],
+              include_dirs = [numpy.get_include()]
+              ),
     ]
 
 

@@ -9,12 +9,16 @@ A differential `\omega = h(x,y)dx` defined on a Riemann surface `X` is
 holomorphic on `X` if it is holomorphic at every point on `X`.
 """
 
+cimport cython
+
+import numpy
 import sympy
 import sympy.mpmath as mpmath
 
-from abelfunctions.integralbasis import integral_basis
-from abelfunctions.singularities import singularities, _transform, genus
-from abelfunctions.utilities import cached_function
+from .integralbasis import integral_basis
+from .singularities import singularities, _transform, genus
+from .utilities import cached_function
+from .polynomials cimport MultivariatePolynomial
 
 import pdb
 
@@ -103,7 +107,67 @@ def differentials(f,x,y):
     if g != -1 and g != len(differentials):
         raise AssertionError("Number of differentials does not match genus.")
 
-    return [differential/sympy.diff(f,y) for differential in differentials]
+    differentials = [differential/sympy.diff(f,y)
+                     for differential in differentials]
+    return map(lambda omega: Differential(omega, x, y), differentials)
+
+
+
+cdef class Differential:
+    """A differential one-form which can be defined on a Riemann surface.
+
+    Attributes
+    ----------
+    numer, denom : MultivariatePolynomial
+        Fast multivariate polynomial objects representing the numerator
+        and denominator of the differential.
+
+    Methods
+    -------
+    eval(z1,z2)
+        Fast evaluation of the differential.
+    as_sympy()
+        Returns the differential as a Sympy object.
+
+    """
+    def __cinit__(self, omega, x, y):
+        """Instantiate a differential form from a sympy Expression.
+
+        Arguments
+        ---------
+        omega : Sympy Expression
+        x, y : Sympy Symbol
+            The differential and its variables. Note in abelfunctions we
+            consider `y` to be a function of `x`. (A degree d y-cover.)
+
+        """
+        numer, denom = omega.as_numer_denom()
+        self._omega = omega
+        self.numer = MultivariatePolynomial(numer, x, y)
+        self.denom = MultivariatePolynomial(denom, x, y)
+
+    def __repr__(self):
+        return str(self._omega)
+
+    cpdef complex eval(self, complex z1, complex z2):
+        """Evaluate the differential at the complex point `(z1,z2)`.
+
+        Arguments
+        ---------
+        z1,z2 : complex
+
+        Returns
+        -------
+        complex
+            Returns the value :math:`\omega(z1,z2)`.
+
+        """
+        return self.numer.eval(z1,z2) / self.denom.eval(z1,z2)
+
+    def as_sympy(self):
+        """Returns the differential as a Sympy expression."""
+        return self._omega
+
 
 
 
@@ -160,18 +224,18 @@ if __name__=='__main__':
     # (fast! no singular points)
     # [x/(4*y**3), 1/(4*y**2), 1/(4*y**3)]
 
-    f = f2
+    # f = f2
 
-    import cProfile, pstats
-    cProfile.run(
-        'D = differentials(f,x,y)',
-        'differentials.profile',
-        )
-    p = pstats.Stats('differentials.profile')
-    p.strip_dirs()
-    p.sort_stats('cumulative').print_stats(20)
+    # import cProfile, pstats
+    # cProfile.run(
+    #     'D = differentials(f,x,y)',
+    #     'differentials.profile',
+    #     )
+    # p = pstats.Stats('differentials.profile')
+    # p.strip_dirs()
+    # p.sort_stats('cumulative').print_stats(20)
 
-    print "\nDifferentials:"
-    for omega in D:
-        sympy.pretty_print(omega)
-        print
+    # print "\nDifferentials:"
+    # for omega in D:
+    #     sympy.pretty_print(omega)
+    #     print

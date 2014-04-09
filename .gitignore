@@ -31,6 +31,10 @@ analytic_continuation.c
 analytic_continuation.html
 analytic_continuation_smale.c
 analytic_continuation_smale.html
+differentials.c
+differentials.html
+polynomials.c
+polynomials.html
 
 
 # Documentation #
