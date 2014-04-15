@@ -1,13 +1,13 @@
 Tutorial
 ========
 
-Here we give a brief overview of the capabilities of `abelfunctions` by
+Here we give a brief overview of the capabilities of abelfunctions by
 working through a simple example.
 
 Riemann Surfaces
 ----------------
 
-One of the primary objects we can construct with `abelfunctions` is a
+One of the primary objects we can construct with abelfunctions is a
 Riemann surface. In particular, a Riemann surface :math:`X` obtained by
 desingularizing and compactifying a complex plane algebraic curve
 :math:`f(x,y) = 0`. To create a Riemann surface, provide a SymPy
@@ -21,14 +21,14 @@ desingularizing and compactifying a complex plane algebraic curve
 
     f = y**3 + 2*x**3*y - x**7
     X = RiemannSurface(f,x,y)
-    print C
+    print X
 
 *
     .. code-block:: none
 
        Riemann surface defined by the algebraic curve -x**7 + 2*x**3*y + y**3
 
-`abelfunctions` can compute the singularities of the curve and uses the
+abelfunctions can compute the singularities of the curve and uses the
 corresponding information to determine the genus.
 
 .. code-block:: python
@@ -158,7 +158,7 @@ imaginary part.
 Riemann Theta Functions
 -----------------------
 
-Another major feature of `abelfunctions` is the ability to compute the
+Another major feature of abelfunctions is the ability to compute the
 Riemann theta function :math:`\theta : \mathbb{C}^g \times
 \mathfrak{h}_g`
 
@@ -181,7 +181,7 @@ matrices. Using the Riemann matrix computed above we can compute
 
         (9.12688266829e-12+9.12688266829e-12j)
 
-`abelfunctions` is very efficient in computing the Riemann theta
+abelfunctions is very efficient in computing the Riemann theta
 function for many values of :math:`z`. Here we plot the real and
 imaginary parts of :math:`\theta(z,\Omega)` for :math:`z = (x + iy, 0)`
 with :math:`x \in [0,5], y \in [0,1]`.
