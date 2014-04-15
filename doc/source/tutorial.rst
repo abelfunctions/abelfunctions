@@ -215,6 +215,6 @@ with :math:`x \in [0,5], y \in [0,1]`.
     fig.show()
 
 
-.. code-block:: none
-
-    [ADD IMAGE]
+.. figure:: img/riemanntheta_genus2.png
+    :figwidth: 100%
+    :width: 100%
