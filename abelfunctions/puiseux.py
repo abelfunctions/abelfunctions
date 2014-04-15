@@ -22,9 +22,9 @@ _U = sympy.Dummy('U')
 def _coefficient(F):
     """
     Helper function. Returns a dictionary of coefficients of the polynomial
-    indexed by monomial powers ..math :
+    indexed by monomial powers .. math::
 
-        `a_{ij} X^j Y^i`
+        a_{ij} X^j Y^i
 
     INPUTS:
     
@@ -135,31 +135,34 @@ def _new_polynomial(F,X,Y,tau,l):
 
 def polygon(F,X,Y,I):
     """
-    Computes a set of parameters and polynomials in one-to-one correspondence
-    with the segments fo the Newton polygon of F. If ``I=2`` the 
-    correspondence is only with the segments with negative slope.
+    Computes a set of parameters and polynomials in one-to-one
+    correspondence with the segments fo the Newton polygon of F. If
+    'I=2' the correspondence is only with the segments with negative
+    slope.
 
-    The segment `\Delta` corresponding to the list `(q,m,l,\Phi)` is on the
-    line `qj+mi=l` in the `(i,j)`-plane and .. math:
+    The segment :math:`\Delta` corresponding to the list `(q,m,l,\Phi)`
+    is on the line :math:`qj+mi=l` in the :math:`(i,j)`-plane and
+    .. math::
 
         \Phi = \sum_{(i,j) \in \Delta} a_{ij}Z^{(i-i_0)/q}
 
-    where `i_0` is the smallest value of `i` such that there is a point
-    `(i,j) \in \Delta`. Note that `\Phi \in \mathbb{L}[Z]`.
+    where :math:`i_0` is the smallest value of :math:`i` such that there
+    is a point :math:`(i,j) \in \Delta`. Note that :math:`\Phi \in
+    \mathbb{L}[Z]`.
 
+    Arguments
+    ---------
+    F : Sympy Poly
+        A polynomial in :math:`\\mathbb{L}[X,Y]`.
+    X,Y : Sympy Symbol
+        The dependent and independent variables, respectively.
+    I : int
+        A flag for determining [xxx]
 
-    INPUTS:
-    
-    -- ``F``: a polynomial in `\mathbb{L}[X,Y]`
-        
-    -- ``X,Y``: the variable defining ``F``
-        
-    -- ``I``: a parameter 
-
-    OUTPUTS:
-    
-    -- ``(list)``: a list of tuples `(q,m,l,\Phi)` where `q,m,l` are
-       integers with `(q,m) = 1`, `q>0`, and `\Phi \in \mathbb{L}[Z]`.
+    Returns
+    -------
+    A list of tuples `(q,m,l,\Phi)` where `q,m,l` are integers with
+    :math:`(q,m) = 1`, :math:`q>0`, and :math:`\Phi \in \mathbb{L}[Z]`.
     """
     # compute the coefficients and support of F
     P = sympy.poly(F,X,Y)
@@ -672,7 +675,6 @@ class PuiseuxSeries(object):
     def __hash__(self):
         return hash(tuple(self.d.items()))
 
-    
     def valuation(self):
         """
         Returns the valuation of the Puiseux series.
