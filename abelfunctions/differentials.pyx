@@ -14,6 +14,8 @@ cimport cython
 import numpy
 import sympy
 import sympy.mpmath as mpmath
+import matplotlib
+import matplotlib.pyplot as plt
 
 from .integralbasis import integral_basis
 from .singularities import singularities, _transform, genus
@@ -163,6 +165,33 @@ cdef class Differential:
 
         """
         return self.numer.eval(z1,z2) / self.denom.eval(z1,z2)
+
+    def plot(self, gamma, N=256, grid=False, **kwds):
+        """Plot the differential along the path `gamma`"""
+        nsegs = len(gamma.segments)
+        ppseg = N/nsegs
+
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        t = numpy.linspace(0,1,ppseg)
+        for k in range(nsegs):
+            segment = gamma.segments[k]
+            xvals = [segment.get_x(ti) for ti in t]
+            yvals = [segment.get_y(ti)[0] for ti in t]
+            ovals = numpy.array(
+                [self.eval(xi,yi) for xi,yi in zip(xvals,yvals)],
+                dtype=numpy.complex)
+
+            tseg = (t + k)/nsegs
+            ax.plot(tseg, ovals.real, 'b-', **kwds)
+            ax.plot(tseg, ovals.imag, 'r--', **kwds)
+
+        if grid:
+            ticks = numpy.linspace(0,1,nsegs+1)
+            ax.xaxis.set_ticks(ticks)
+            ax.grid(True, which='major')
+
+        return fig
 
     def as_sympy(self):
         """Returns the differential as a Sympy expression."""

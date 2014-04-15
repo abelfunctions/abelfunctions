@@ -69,9 +69,10 @@ class RiemannSurfacePathFactory(object):
             self._base_sheets = (poly.r).tolist()
 
         # compute the y-skeleton
-        monodromy_group = self.monodromy_group()
+        self._monodromy_group = None
+        self._monodromy_group = self.monodromy_group()
         self.YSkel = YSkeleton(RS, base_sheets=self._base_sheets,
-                               monodromy_group=monodromy_group)
+                               monodromy_group=self._monodromy_group)
 
     def __str__(self):
         return 'Riemann Surface Path Factory for %s'%(self.RS)
@@ -86,7 +87,10 @@ class RiemannSurfacePathFactory(object):
         return (self.base_point(), self.base_sheets())
 
     def branch_points(self):
-        return self.XSkel.branch_points()
+        return self._monodromy_group[0]
+
+    def discriminant_points(self):
+        return self.XSkel.discriminant_points()
 
     def monodromy_group(self):
         """Returns the monodromy group of the algebraic curve defining the
@@ -94,53 +98,63 @@ class RiemannSurfacePathFactory(object):
 
         Returns
         -------
-        dict
-            A dictionary where the keys are the branch points of the curve
-            and the values are their corresponding sheet permutations.
+        list of lists
+
+            A list of two lists. The first is the list of branch points.
+            The second is a list of corresponding permutation elements
+            on the y-sheets of the curve.
         """
+        if self._monodromy_group:
+            return self._monodromy_group
+
         x0 = self.base_point()
         y0 = self.base_sheets()
 
-        # compute the monodromy element for each branch point. if it's the
-        # identity permutation, don't add to monodromy dictionary
-        mon = {}
-        for bi in self.branch_points():
+        # compute the monodromy element for each discriminant point. if
+        # it's the identity permutation, don't add to monodromy group
+        branch_points = []
+        permutations = []
+        for bi in self.discriminant_points():
             # create the monodromy path
             xpath = self.XSkel.xpath_monodromy_path(bi)
             gamma = self.RiemannSurfacePath_from_xpath(xpath, x0, y0)
 
             # compute the end fibre and the corresponding permutation
-            yend = gamma.get_y(1)
+            yend = gamma.get_y(1.0)
             phi = matching_permutation(y0, yend)
 
-            # check if permutation is identity. if so, don't monodromy
-            # group dictionary
+            # add the point to the monodromy group if the permutation is
+            # not the identity.
             if not phi.is_identity():
-                mon[bi] = phi
+                branch_points.append(bi)
+                permutations.append(phi)
 
-        # compute the monodromy element of the branch point at infinity
+        # compute the monodromy element of the point at infinity
         xpath = self.XSkel.xpath_around_infinity()
         gamma = self.RiemannSurfacePath_from_xpath(xpath, x0, y0)
-        yend = gamma.get_y(1)
+        yend = gamma.get_y(1.0)
         phi_oo = matching_permutation(y0, yend)
-        if not phi.is_identity():
-            mon[sympy.oo] = phi_oo
+        if not phi_oo.is_identity():
+            # sanity check: the product of the finite branch point
+            # permutations should be equal to the inverse of the
+            # permutation at infinity
+            phi_prod = reduce(lambda phi1,phi2: phi2*phi1, permutations)
+            phi_prod = phi_prod * phi_oo
+            if phi_prod.is_identity():
+                branch_points.append(sympy.oo)
+                permutations.append(phi_oo)
+            else:
+                raise ValueError('Contradictory permutation at infinity.')
 
-        # sanity check: the product of the finite branch point
-        # permutations should be equal to the inverse of the permutation
-        # at infinity
-        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, mon.values())
-        if not phi_prod.is_identity():
-            raise ValueError('Contradictory permutation at infinity.')
-        return mon
+        return branch_points, permutations
 
     def monodromy_path(self, bi):
-        """Returns the monodromy path around the branch point `bi`.
+        """Returns the monodromy path around the discriminant point `bi`.
 
         Arguments
         ---------
         bi : complex
-            A branch point of the curve.
+            A discriminant point of the curve.
         nrots : optional, integer
             The number of times to rotate around `bi`. (Default 1).
 
@@ -155,7 +169,6 @@ class RiemannSurfacePathFactory(object):
         return gamma
 
     def a_cycles(self):
-
         """Returns the a-cycles on the Riemann surface.
 
         Returns
@@ -207,7 +220,17 @@ class RiemannSurfacePathFactory(object):
             :class:`RiemannSurfacePath` objects.
 
         """
-        raise NotImplementedError()
+        # prune the linear combinations matrix of the columns that don't
+        # contribute to a c-cycles
+        cycles, linear_combinations = self.YSkel.c_cycles()
+        ncols = linear_combinations.shape[1]
+        indices = [j for j in range(ncols)
+                   if not (linear_combinations[:,j] == 0).all()]
+        c_cycles = [cycles[i] for i in indices]
+        linear_combinations = linear_combinations[:,indices]
+
+        paths = map(self.RiemannSurfacePath_from_cycle, c_cycles)
+        return paths, linear_combinations
 
     def RiemannSurfacePath_from_cycle(self, cycle):
         """Constructs a :class:`RiemannSurfacePath` object from a list of

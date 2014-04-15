@@ -1,7 +1,7 @@
 """
 Monodromy
 
-Module for computing the monodromy group of the set of branch points
+Module for computing the monodromy group of the set of discriminant points
 of a complex plane algebraic curve.
 """
 
@@ -479,7 +479,7 @@ def monodromy_graph(f, x, y, kappa=3.0/5.0):
             position_tree[i] = k
 
             # store conjugation information in self
-            G.node[m]['conjugates'].append(k)
+            G.node[m]['conjugates'].append(disc_pts[k])
 
     return G
 
@@ -528,15 +528,16 @@ class XSkeleton(object):
 
     A component of :class:`RiemannSurfacePathFactory`, `XSkeleton`
     computes the 'x-highways` of the Riemann surface: the paths taken in
-    the x-plane to navigate the branch points of the curve. A
-    `networkx.Graph` object encapsulates most of this information.
+    the x-plane to navigate around the discriminant points of the
+    curve. A `networkx.Graph` object encapsulates most of this
+    information.
 
     Attributes
     ----------
     RS : RiemannSurface
     kappa : double
         A scaling factor between 0.5 and 1 used to determine the radii
-        of the circles around the branch points of the curve.
+        of the circles around the discriminant points of the curve.
     G : networkx.Graph
         A graph object defining the skeleton of the x-part of the
         Riemann Surface.
@@ -545,19 +546,19 @@ class XSkeleton(object):
     -------
     base_point
         Returns the base point of the monodromy group of the curve.
-    branch_points
-        Returns the branch points of the curve.
-    xpath_to_branch_point
+    discriminant_points
+        Returns the discriminant points of the curve.
+    xpath_to_discriminant_point
         Returns a list of tuples representing a path in the complex
         x-plane starting at the base point and leading to the given
-        branch point.
-    xpath_circle_branch_point
+        discriminant point.
+    xpath_circle_discriminant_point
         Returns a list of tuples representing a path in the complex
-        x-plane encircling a branch point a given number of times.
+        x-plane encircling a  point a given number of times.
     xpath_monodromy_path
         Returns a list of tuples representing a path in the complex
-        x-plane representing the monodromy path of the given branch
-        point.
+        x-plane representing the monodromy path of the given
+        discriminant point.
     xpath_monodromy_path
         Returns a list of tuples representing a path in the complex
         x-plane starting at the base point and encircling infinity a
@@ -574,14 +575,16 @@ class XSkeleton(object):
 
         All of the information given by :class:`XSkeleton` is computed
         at initialization. The primary attribute is a `networkx.Graph`
-        object which stores the radii and branch point connectivity.
+        object which stores the radii and discriminant point
+        connectivity.
 
         Arguments
         ---------
         RS : RiemannSurface
         kappa : double, optional
             A scaling factor between 0.5 and 1 used to determine the
-            radii of the circles around the branch points of the curve.
+            radii of the circles around the discriminant points of the
+            curve.
         base_point : complex (optional)
             A custom base point can be given. This is often used for
             testing and comparison purposes.
@@ -598,7 +601,9 @@ class XSkeleton(object):
         # ensure that the monodromy graph is ready at instantiation
         self.G = monodromy_graph(f, x, y, kappa=kappa)
 
-        # set the base points and base sheets
+        # set the base point. if not provided, use the one selected from
+        # the skeleton graph construction: detaults to left of "base"
+        # discriminant point.
         self._custom_base_point = True
         self._base_point = base_point
         if not base_point:
@@ -606,12 +611,12 @@ class XSkeleton(object):
             self._custom_base_point = False
 
     def _index(self, b):
-        """Returns the index of the branch point in the ordered list of branch
-        points.
+        """Returns the index of the discriminant point in the ordered list of
+        discriminant points.
 
-        In some cases the ordering of the branch points in the complex
-        plane matters (where the ordering is the angle made between the
-        branch point and the base point).
+        In some cases the ordering of the discriminant points in the
+        complex plane matters (where the ordering is the angle made
+        between the discriminant point and the base point).
 
         Arguments
         ---------
@@ -622,39 +627,40 @@ class XSkeleton(object):
             Should some approximation proceedures be in place here?
 
         """
-        # pts = self.discriminant_points()
-        # return numpy.argmin(numpy.abs(pts-b))
-        return self.branch_points().tolist().index(b)
+        return self.discriminant_points().tolist().index(b)
 
     def base_point(self):
         return self._base_point
 
-    def branch_points(self):
+    def discriminant_points(self):
         """Returns a list of the discriminant points of the X-skeleton."""
         return numpy.array(
             [data['value'] for node,data in self.G.nodes(data=True)],
             dtype=numpy.complex)
 
-    def root_branch_point(self):
-        """Returns the branch point closest to / attached to the base point.
+    def root_discriminant_point(self):
+        """Returns the discriminant point closest to / attached to the base
+        point.
+
         """
         root_index = self.G.node[0]['root']
         return self.G.node[root_index]['value']
 
-    def branch_points_on_path(self, bi):
-        """Returns the branch points lying on the path from the base point,
-        through the root node, and to the branch point.
+    def discriminant_points_on_path(self, bi):
+        """Returns the discriminant points lying on the path from the base
+        point, through the root node, and to the target discriminant
+        point.
 
         Arguments
         ---------
         bi : complex
-            A branch point of the curve.
+            A discriminant point of the curve.
 
         Returns
         -------
         list
-            A list of the branch points lying on the x-path from the
-            base point to the target branch point.
+            A list of the discriminant points lying on the x-path from
+            the base point to the target discriminant point.
 
         """
         bi_index = self._index(bi)
@@ -665,33 +671,34 @@ class XSkeleton(object):
         return [self.G.node[n]['value'] for n in path_vertices]
 
     def conjugates(self, bi):
-        """Returns the branch points that are "conjugate" to the given branch
-        point.
+        """Returns the discriminant points that are "conjugate" to the given
+        discriminant point.
 
-        The conjugate branch points are those where the path around `bi`
-        needs to lie above the point when defining the monodromy path.
+        The conjugate discriminant points are those where the path
+        around `bi` needs to lie above the point when defining the
+        monodromy path.
 
         Arguments
         ---------
         bi : complex
-            A branch point of the curve.
+            A discriminant point of the curve.
 
         Returns
         -------
         list
-            A list of the conjugate branch points to `b`.
+            A list of the conjugate discriminant points to `b`.
 
         """
         bi_index = self._index(bi)
         return self.G.node[bi_index]['conjugates']
 
     def radius(self, bi):
-        """The radius of the circle around the branch point `bi`.
+        """The radius of the circle around the discriminant point `bi`.
 
         Arguments
         ---------
         bi : complex
-            A branch point of the curve.
+            A discriminant point of the curve.
 
         Returns
         -------
@@ -705,12 +712,12 @@ class XSkeleton(object):
     def _get_edge_index(self, bi, bj):
         """Returns the "edge index" of the path from `bi` to `bj`.
 
-        The edge index encodes which sides of the branch points' circles
-        are connected. `-1` = left side. `+1` = right side. So, for
-        example, an edge index of `(1,-1)` between points `bi` and `bj`
-        means a the straight line path connects the right side (`+1`) of
-        the circle around `bi` to the left side (`-1`) of the circle
-        around `bj`.
+        The edge index encodes which sides of the discriminant points'
+        circles are connected. `-1` = left side. `+1` = right side. So,
+        for example, an edge index of `(1,-1)` between points `bi` and
+        `bj` means a the straight line path connects the right side
+        (`+1`) of the circle around `bi` to the left side (`-1`) of the
+        circle around `bj`.
 
         This method is used primarily in :py:meth:`is_semicircle_on_path`
         and :py:meth:`semicircle_on_path`.
@@ -718,11 +725,11 @@ class XSkeleton(object):
         """
         bi_index = self._index(bi)
         bj_index = self._index(bj)
-        root_index = self._index(self.root_branch_point())
+        root_index = self._index(self.root_discriminant_point())
         edgeij_index = self.G[bi_index][bj_index]['index']
 
         # the root point always connects to the left side of a connected
-        # branch point. the side on the root point circle doesn't
+        # discriminant point. the side on the root point circle doesn't
         # matter.
         if bi_index == root_index:
             #return (0,-1)
@@ -730,19 +737,20 @@ class XSkeleton(object):
         else:
             return edgeij_index
 
-    def xpath_to_branch_point(self, bi):
+    def xpath_to_discriminant_point(self, bi):
         """Returns data defining the path starting from the base x-point
-        and ending "at" the branch point `bi`. (See below.)
+        and ending "at" the discriminant point `bi`. (See below.)
 
-        Technically, the ending point is :math:`b_i \pm R_i`. Whether or
-        not we end on the left or right side of the branch point depends
-        on its connectivity with the other branch points of the
-        X-Skeleton structure.
+        Technically, the ending point is :math:`b_i \pm R_i` where
+        :math:`R_i` is the radius of the circle around :math:`b_i`
+        . Whether or not we end on the left or right side of the
+        discriminant point depends on its connectivity with the other
+        discriminant points points of the X-Skeleton structure.
 
         Arguments
         ---------
         bi : complex
-            A finite branch point.
+            A finite discriminant point.
 
         Returns
         -------
@@ -752,24 +760,25 @@ class XSkeleton(object):
 
         """
         # xpath stores the tuples defining the Riemann surface paths
-        b = self.branch_points_on_path(bi)
+        b = self.discriminant_points_on_path(bi)
         conjugates = self.conjugates(bi)
         xpath = []
 
         # if there is a custom base point, add the line from the
-        # base point to the root branch point
+        # base point to the root discriminant point
         if self._custom_base_point:
-            root = self.root_branch_point()
+            root = self.root_discriminant_point()
             R = self.radius(root)
             xpath.append( (self.base_point(), root-R) )
 
-        # for each branch point on the path to the target branch point
-        # point construct the semicircle going aroung the branch point
-        # (if necessary) and the line going to the next branch point.
+        # for each discriminant point on the path to the target
+        # discriminant point point construct the semicircle going aroung
+        # the discriminant point (if necessary) and the line going to
+        # the next discriminant point.
         bj = b[0]
         for bk in b[1:]:
             # the semicircle around `bj` should go above `bj` if it is a
-            # conjugate branch point to `bi`
+            # conjugate discriminant point to `bi`
             is_conjugate = True if bj in conjugates else False
             if self.has_semicircle_on_path(bj, bk):
                 xpath.append(self.semicircle_on_path(
@@ -780,18 +789,18 @@ class XSkeleton(object):
 
         return xpath
 
-    def xpath_circle_branch_point(self, bi, nrots=1):
+    def xpath_circle_discriminant_point(self, bi, nrots=1):
         """Returns a list of tuples, each encoding semicircles, representing a
-        rotation around branch point `bi` `nrots` times.
+        rotation around discriminant point `bi` `nrots` times.
 
         Arguments
         ---------
         bi : complex
-            The branch point to encircle.
+            The discriminant point to encircle.
         nrots : int, optional
-            The number of times to rotate around the branch point. If
-            negative, rotate `abs(nrots)` times in the negative
-            (clockwise) direction. (default = 1)
+            The number of times to rotate around the discriminant
+            point. If negative, rotate `abs(nrots)` times in the
+            negative (clockwise) direction. (default = 1)
 
         Returns
         -------
@@ -800,8 +809,8 @@ class XSkeleton(object):
             dir)` where `R` is the radius, `w` is the center,
             `arg_start` is the starting argument, `arg_end` is the
             ending argument, and `dir` is the direction of a semicircle
-            making up a number of rotations around the branch point
-            `bi`.
+            making up a number of rotations around the discriminant
+            point `bi`.
 
         .. note:
 
@@ -811,11 +820,11 @@ class XSkeleton(object):
             of the semicircle still needs to be specified.
 
         """
-        b = self.branch_points_on_path(bi)
+        b = self.discriminant_points_on_path(bi)
 
-        # if we're encircling the root branch point (the point closest
-        # to the base point) then we're always starting on the left-side
-        # of the circle
+        # if we're encircling the root discriminant point (the point
+        # closest to the base point) then we're always starting on the
+        # left-side of the circle
         if len(b) == 1:
             edge_index = (0,-1)
         else:
@@ -835,15 +844,15 @@ class XSkeleton(object):
 
     def xpath_monodromy_path(self, bi, nrots=1):
         """Returns data defining the path starting from the base x-point, going
-        around the branch point `bi` `nrots` times, and returning to the
-        base x-point.
+        around the discriminant point `bi` `nrots` times, and returning
+        to the base x-point.
 
         Arguments
         ---------
         bi : complex
-            A branch point.
+            A discriminant point.
         nrots : integer (default `1`)
-            A number of rotations around this branch point.
+            A number of rotations around this discriminant point.
 
         Returns
         -------
@@ -856,8 +865,8 @@ class XSkeleton(object):
         if bi == sympy.oo:
             return self.xpath_around_infinity(nrots=nrots)
 
-        xpath_to_bi = self.xpath_to_branch_point(bi)
-        xpath_around_bi = self.xpath_circle_branch_point(bi, nrots=nrots)
+        xpath_to_bi = self.xpath_to_discriminant_point(bi)
+        xpath_around_bi = self.xpath_circle_discriminant_point(bi, nrots=nrots)
         xpath_from_bi = self.xpath_reverse(xpath_to_bi)
         xpath = xpath_to_bi + xpath_around_bi + xpath_from_bi
         return xpath
@@ -868,32 +877,31 @@ class XSkeleton(object):
 
         Computes and returns a path circling infinity in the positive
         direction. (In the finite :math:`\mathbb{C}_x` plane this is a
-        clockwise circle around all of the finite branch point.) This
-        path is used to determine the monodromy group element around
-        infinity.
+        clockwise circle around all of the finite discriminant points.)
+        This path is used to determine the monodromy group element
+        around infinity.
 
         Arguments
         ---------
         nrots : integer, (default `1`)
-            The number of rotations around this branch point.
+            The number of rotations around this discriminant point.
 
         Returns
         -------
         RiemannSurfacePath
-            The path of the monodromy group circling the branch point.
+            The path of the monodromy group circling the discriminant point.
 
         """
         xpath = []
 
         # determine the radius R of the circle, centered at the origin,
-        # encircling all of the branch points and their "protection"
-        # circles
-        b = self.branch_points()
-        R = 0.0
+        # encircling all of the discriminant points and their
+        # "protection" circles
+        b = self.discriminant_points()
+        R = numpy.abs(self.base_point())
         for bi in b:
             radius = self.radius(bi)
-            arg = numpy.angle(bi)
-            Ri = numpy.abs(bi + arg*radius)
+            Ri = numpy.abs(bi) + 2*radius  # to be safely away
             R = Ri if Ri > R else R
 
         # the path begins with a line starting the base point and ending
@@ -914,8 +922,8 @@ class XSkeleton(object):
     def xpath_reverse(self, xpath):
         """Reverses an x-path.
 
-        Useful for building the return path from a branch point to the
-        base point.
+        Useful for building the return path from a discriminant point to
+        the base point.
 
         Arguments
         ---------
@@ -945,8 +953,9 @@ class XSkeleton(object):
         return reverse_xpath
 
     def has_semicircle_on_path(self, bj, bk):
-        """Returns `True` if the path from branch point `bj` to `bk` requires
-        encircling `bj`. Returns `False` if no semicircle is necessary.
+        """Returns `True` if the path from discriminant point `bj` to `bk`
+        requires encircling `bj`. Returns `False` if no semicircle is
+        necessary.
 
         Arguments
         ---------
@@ -962,20 +971,20 @@ class XSkeleton(object):
         """
         edgejk_index = self._get_edge_index(bj, bk)
 
-        # special case when bj is the root branch point:
-        root = self.root_branch_point()
+        # special case when bj is the root discriminant point:
+        root = self.root_discriminant_point()
         if numpy.abs(bj-root) < 1e-14:
-            # if the line from the root branch point `bj` to the child
-            # `bk` connects to the left side of the root branch point
+            # if the line from the root discriminant point `bj` to the
+            # child `bk` connects to the left side of the root point
             # then a semicircle around `bj` is unnecessary
             if edgejk_index[0] == -1:
                 return False
             else:
                 return True
         else:
-            # otherwise, determine the branch point `bi` preceeding `bj`
-            # on the path to `bk`
-            b = self.branch_points_on_path(bk)
+            # otherwise, determine the discriminant point `bi`
+            # preceeding `bj` on the path to `bk`
+            b = self.discriminant_points_on_path(bk)
             bj_path_index = b.index(bj)
             bi = b[bj_path_index - 1]
             edgeij_index = self._get_edge_index(bi, bj)
@@ -991,7 +1000,7 @@ class XSkeleton(object):
 
     def semicircle_on_path(self, bj, bk, is_conjugate=False):
         """Returns a tuple defining the semicircle that needs to be navigated
-        when traveling around branch point `bj`, to `bk`.
+        when traveling around discriminant point `bj`, to `bk`.
 
         Raises an error if no such semicircle exists. See
         :py:meth:`has_semicircle_on_path`
@@ -1022,17 +1031,17 @@ class XSkeleton(object):
         R = self.G.node[bj_index]['radius']
         w = bj
 
-        # special case when bj is the root branch point:
-        root = self.root_branch_point()
+        # special case when bj is the root discriminant point:
+        root = self.root_discriminant_point()
         if numpy.abs(bj-root) < 1e-14:
             # we've already checked that the semicircle is needed. the
-            # semicircle around the root branch point always starts on
-            # the left side
+            # semicircle around the root discriminant point always
+            # starts on the left side
             theta = numpy.pi
         else:
-            # otherwise, determine the branch point `bi` preceeding `bj`
-            # on the path to `bk` and get its connection properties
-            b = self.branch_points_on_path(bk)
+            # otherwise, determine the discriminant point `bi`
+            # preceeding `bj` on the path to `bk` and get its properties
+            b = self.discriminant_points_on_path(bk)
             bj_path_index = b.index(bj)
             bi = b[bj_path_index - 1]
             edgeij_index = self._get_edge_index(bi, bj)
@@ -1046,12 +1055,12 @@ class XSkeleton(object):
 
     def line_on_path(self, bj, bk):
         """Returns a tuple representing the endpoints of the line from
-        branch points `bj` to `bk`.
+        discriminant points `bj` to `bk`.
 
         Arguments
         ---------
         bj, bk : complex
-            Adjacent branch points.
+            Adjacent discriminant points.
 
         Returns
         -------

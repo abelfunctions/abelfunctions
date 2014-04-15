@@ -23,6 +23,7 @@ import numpy
 cimport numpy
 import sympy
 import matplotlib
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
 cdef extern from 'math.h':
@@ -98,7 +99,7 @@ cdef class RiemannSurfacePathPrimitive:
             return self._AC
 
     def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
-                 complex x0, complex[:] y0, int ncheckpoints=6):
+                 complex x0, complex[:] y0, int ncheckpoints=8):
         """Intitialize the `RiemannSurfacePathPrimitive` using a
         `RiemannSurface`, `AnalyticContinuator`, and starting place.
         """
@@ -266,13 +267,13 @@ cdef class RiemannSurfacePathPrimitive:
         yi = self.analytically_continue(xim1, yim1, xi)
         return yi
 
-    def plot_x(self, double[:] t, *args, **kwds):
+    def plot_x(self, N, *args, **kwds):
         """Plot the x-part of the path in the complex x-plane.
 
         Arguments
         ---------
-        t : double[:]
-            List of `t \in [0,1]` values at which to plot `x=x(t)`.
+        N : int
+            The number of interpolating points used to plot.
         *args, **kwds
             Additional arguments and keywords are passed to
             matplotlib.pyplot.plot.
@@ -281,6 +282,7 @@ cdef class RiemannSurfacePathPrimitive:
         -------
         matplotlib lines array.
         """
+        t = numpy.linspace(0,1,N)
         x = numpy.array([self.get_x(ti) for ti in t],
                         dtype=numpy.complex)
         fig = plt.figure()
@@ -288,13 +290,13 @@ cdef class RiemannSurfacePathPrimitive:
         lines, = ax.plot(x.real, x.imag, *args, **kwds)
         return fig
 
-    def plot_y(self, double[:] t, *args, **kwds):
+    def plot_y(self, N, *args, **kwds):
         """Plot the y-part of the path in the complex y-plane.
 
         Arguments
         ---------
-        t : double[:]
-            List of `t \in [0,1]` values at which to plot `y=y(t)`.
+        N : int (default=256)
+            The number of interpolating points used to plot.
         *args, **kwds
             Additional arguments and keywords are passed to
             matplotlib.pyplot.plot.
@@ -303,11 +305,81 @@ cdef class RiemannSurfacePathPrimitive:
         -------
         matplotlib lines array.
         """
+        t = numpy.linspace(0,1,N)
         y = numpy.array([self.get_y(ti)[0] for ti in t],
                         dtype=numpy.complex)
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         lines, = ax.plot(y.real, y.imag, *args, **kwds)
+        return fig
+
+    def plot3d_x(self, N, *args, **kwds):
+        """Plot the x-part of the path in the complex x-plane with the
+        parameter :math:`t \in [0,1] along the perpendicular axis.
+
+        Arguments
+        ---------
+        N : int
+            The number of interpolating points used to plot.
+        *args, **kwds
+            Additional arguments and keywords are passed to
+            matplotlib.pyplot.plot.
+
+        Returns
+        -------
+        matplotlib lines array.
+
+        """
+        z = numpy.zeros(N)
+        t = numpy.linspace(0,1,N)
+        y = numpy.array([self.get_x(ti) for ti in t],
+                        dtype=numpy.complex)
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1,projection='3d')
+        ax.plot(y.real, y.imag, t, *args, **kwds)
+
+        # draw a grey "shadow" below the plot
+        try:
+            kwds.pop('color')
+        except:
+            pass
+        kwds['alpha'] = 0.5
+        ax.plot(y.real, y.imag, z, color='grey', **kwds)
+        return fig
+
+
+    def plot3d_y(self, N, *args, **kwds):
+        """Plot the y-part of the path in the complex y-plane with the
+        parameter :math:`t \in [0,1] along the perpendicular axis.
+
+        Arguments
+        ---------
+        N : int
+            The number of interpolating points used to plot.
+        *args, **kwds
+            Additional arguments and keywords are passed to
+            matplotlib.pyplot.plot.
+
+        Returns
+        -------
+        matplotlib lines array.
+
+        """
+        z = numpy.zeros(N)
+        t = numpy.linspace(0,1,N)
+        y = numpy.array([self.get_y(ti)[0] for ti in t],
+                        dtype=numpy.complex)
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1,projection='3d')
+        ax.plot(y.real, y.imag, t, *args, **kwds)
+
+        # draw a grey "shadow" below the plot
+        try:
+            kwds.pop('color')
+        except:
+            pass
+        kwds['alpha'] = 0.5
+        ax.plot(y.real, y.imag, z, color='grey', **kwds)
         return fig
 
 
@@ -322,7 +394,7 @@ cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
     """
     def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
                  complex x0, complex[:] y0, complex z0, complex z1,
-                 int ncheckpoints=5):
+                 int ncheckpoints=8):
         self.z0 = z0
         self.z1 = z1
         RiemannSurfacePathPrimitive.__init__(self, RS, AC, x0, y0,

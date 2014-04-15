@@ -8,10 +8,18 @@ Authors
 * Chris Swierczewski (January 2014)
 """
 
+import numpy
 import sympy
+import scipy
+import scipy.integrate
+import scipy.linalg
 
+from .riemann_surface_path import RiemannSurfacePathPrimitive
+from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 from .riemann_surface_path_factory import RiemannSurfacePathFactory
 from .differentials import differentials
+from .differentials import Differential
+from .differentials cimport Differential
 from .singularities import genus
 
 
@@ -64,6 +72,7 @@ cdef class RiemannSurface:
         self._x = x
         self._y = y
         self._deg = sympy.degree(f,y)
+        self._period_matrix = None
         self.PathFactory = RiemannSurfacePathFactory(self)
 
     def __repr__(self):
@@ -112,6 +121,87 @@ cdef class RiemannSurface:
 
     def genus(self):
         return genus(self.f, self.x, self.y)
+
+    def a_cycles(self):
+        return self.PF.a_cycles()
+
+    def b_cycles(self):
+        return self.PF.b_cycles()
+
+    def c_cycles(self):
+        return self.PF.c_cycles()
+
+    def integrate(self, Differential omega, RiemannSurfacePathPrimitive gamma,
+                  **kwds):
+        """Integrate the differential `omega` over the Riemann surface path
+        `gamma`.
+
+        Arguments
+        ---------
+        omega : Differenial
+        gamma : RiemannSurfacePathPrimitive
+
+        Returns
+        -------
+        complex
+            The integral of `omega` on `gamma`.
+
+        """
+        cdef RiemannSurfacePathPrimitive segment
+        cdef complex x
+        cdef complex[:] y
+        cdef complex dxdt
+        cdef complex integral = 0.0
+
+        for segment in gamma.segments:
+            def integrand(t):
+                x = segment.get_x(t)
+                y = segment.get_y(t)[0]
+                dxdt = segment.get_dxdt(t)
+                return omega.eval(x,y) * dxdt
+
+            integral += scipy.integrate.romberg(integrand, 0, 1, **kwds)
+
+        return integral
+
+    def period_matrix(self):
+        if not (self._period_matrix is None):
+            return self._period_matrix
+
+        c_cycles, linear_combinations = self.c_cycles()
+        differentials = self.differentials()
+        c_periods = []
+        g = self.genus()
+        m = len(c_cycles)
+
+        for omega in differentials:
+            omega_periods = []
+            for gamma in c_cycles:
+                omega_periods.append(self.integrate(omega, gamma))
+            c_periods.append(omega_periods)
+
+        # take appropriate linear combinations of the c-periods to
+        # obtain the a- and b-periods
+        #
+        # tau[i,j] = \int_{a_j} \omega_i,  j < g
+        # tau[i,j] = \int_{b_j} \omega_i,  j >= g
+        #
+        tau = numpy.zeros((g,2*g), dtype=numpy.complex)
+        for i in range(g):
+            for j in range(2*g):
+                tau[i,j] = sum(linear_combinations[j,k] * c_periods[i][k]
+                               for k in range(m))
+
+        self._period_matrix = tau
+        return self._period_matrix
+
+    def riemann_matrix(self):
+        g = self.genus()
+        tau = self.period_matrix()
+        A = tau[:,:g]
+        B = tau[:,g:]
+        return numpy.dot(scipy.linalg.inv(A), B)
+
 
 
 

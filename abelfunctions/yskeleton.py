@@ -183,7 +183,7 @@ def tretkoff_graph(base_sheets, monodromy_group):
     point are in 1-1 correspondence with the cycles of the permuation) these
     occur on the odd levels
     """
-    branch_points, monodromy = zip(*monodromy_group.items())
+    branch_points, monodromy = monodromy_group
 
     # initialize graph with base point: the zero sheet
     C = nx.Graph()
@@ -795,15 +795,12 @@ class YSkeleton(object):
         c_cycles = compute_c_cycles(self.C, edges)
         a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, self.C)
 
-        # TODO: ignore legacy sheet numbers
         for k in range(g):
             a_cycles[k] = a_cycles[k][1::2]
             b_cycles[k] = b_cycles[k][1::2]
         for k in range(len(c_cycles)):
             c_cycles[k] = c_cycles[k][1::2]
 
-        # truncate c_cycles and lincombs to 2*g elements
-        c_cycles = c_cycles[:2*g]
         linear_combinations = T[:2*g,:]
         return a_cycles, b_cycles, c_cycles, linear_combinations
 
