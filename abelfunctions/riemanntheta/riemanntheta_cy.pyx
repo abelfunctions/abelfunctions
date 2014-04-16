@@ -25,8 +25,8 @@ cdef extern from 'riemanntheta.h':
 def finite_sum(X, Yinv, T, Z, S, g, List):
     vals = []
     N = len(S)/g
-    cdef double real[0]
-    cdef double imag[0]
+    real = np.array([0],'double')
+    imag = np.array([0],'double')
     for z in Z:
         x = z.real
         y = z.imag
@@ -37,7 +37,8 @@ def finite_sum(X, Yinv, T, Z, S, g, List):
         x = np.ascontiguousarray(x, dtype = 'double')
         y = np.ascontiguousarray(y, dtype = 'double')
         S = np.ascontiguousarray(S, dtype = 'double')
-        finite_sum_without_derivatives(real, imag, 
+        finite_sum_without_derivatives(<double*> np.PyArray_DATA(real),
+                                       <double*> np.PyArray_DATA(imag),
 				       <double*> np.PyArray_DATA(X),
                                        <double*> np.PyArray_DATA(Yinv),
                                        <double*> np.PyArray_DATA(T),
