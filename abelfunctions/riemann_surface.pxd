@@ -5,4 +5,3 @@ cdef class RiemannSurface:
     cdef int _deg
     cdef object _period_matrix
     cdef object PathFactory
-

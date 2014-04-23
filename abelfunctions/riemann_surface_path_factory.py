@@ -33,10 +33,11 @@ from .utilities import (
     Permutation,
     matching_permutation,
     )
-from .xskeleton import XSkeleton
+from .xpath_factory import XPathFactory, XPathFactoryAbel
 from .yskeleton import YSkeleton
 
 
+import pdb
 
 class RiemannSurfacePathFactory(object):
     """The Path Factory for Riemann surfaces contains all of the methods
@@ -53,7 +54,7 @@ class RiemannSurfacePathFactory(object):
         # important! Also note that the monodromy group needs to be
         # computed from the X-Skeleton in order to compute the
         # Y-Skeleton
-        self.XSkel = XSkeleton(RS, kappa=kappa, base_point=base_point)
+        self.XPF = XPathFactoryAbel(RS, kappa=kappa, base_point=base_point)
 
         # use custom base sheets if provided. otherwise, numerically
         # compute a fixed ordering of sheets above the base poitn.
@@ -61,7 +62,7 @@ class RiemannSurfacePathFactory(object):
             self._base_sheets = base_sheets
         else:
             p = RS.f.as_poly(RS.y)
-            a = self.XSkel.base_point()
+            a = self.XPF.base_point()
             coeffs = numpy.array(
                 [c.evalf(subs={RS.x:a}, n=15) for c in p.all_coeffs()],
                 dtype=numpy.complex)
@@ -71,14 +72,28 @@ class RiemannSurfacePathFactory(object):
         # compute the y-skeleton
         self._monodromy_group = None
         self._monodromy_group = self.monodromy_group()
-        self.YSkel = YSkeleton(RS, base_sheets=self._base_sheets,
-                               monodromy_group=self._monodromy_group)
+        # self.YSkel = YSkeleton(RS, base_sheets=self._base_sheets,
+        #                        monodromy_group=self._monodromy_group)
 
     def __str__(self):
         return 'Riemann Surface Path Factory for %s'%(self.RS)
 
+    def show_paths(self, ax=None, *args, **kwds):
+        """Plots all of the monodromy paths of the curve.
+
+        Arguments
+        ---------
+        ax : matplotlib.Axes
+            The figure axes on which to plot the paths.
+
+        Returns
+        -------
+        None
+        """
+        return self.XPF.show_paths(ax=ax, *args, **kwds)
+
     def base_point(self):
-        return self.XSkel.base_point()
+        return self.XPF.base_point()
 
     def base_sheets(self):
         return self._base_sheets
@@ -90,7 +105,7 @@ class RiemannSurfacePathFactory(object):
         return self._monodromy_group[0]
 
     def discriminant_points(self):
-        return self.XSkel.discriminant_points()
+        return self.XPF.discriminant_points()
 
     def monodromy_group(self):
         """Returns the monodromy group of the algebraic curve defining the
@@ -116,7 +131,7 @@ class RiemannSurfacePathFactory(object):
         permutations = []
         for bi in self.discriminant_points():
             # create the monodromy path
-            xpath = self.XSkel.xpath_monodromy_path(bi)
+            xpath = self.XPF.xpath_monodromy_path(bi)
             gamma = self.RiemannSurfacePath_from_xpath(xpath, x0, y0)
 
             # compute the end fibre and the corresponding permutation
@@ -130,7 +145,7 @@ class RiemannSurfacePathFactory(object):
                 permutations.append(phi)
 
         # compute the monodromy element of the point at infinity
-        xpath = self.XSkel.xpath_around_infinity()
+        xpath = self.XPF.xpath_around_infinity()
         gamma = self.RiemannSurfacePath_from_xpath(xpath, x0, y0)
         yend = gamma.get_y(1.0)
         phi_oo = matching_permutation(y0, yend)
@@ -164,7 +179,7 @@ class RiemannSurfacePathFactory(object):
             The path encircling the branch point `bi`.
 
         """
-        xpath = self.XSkel.xpath_monodromy_path(bi)
+        xpath = self.XPF.xpath_monodromy_path(bi)
         gamma = self.RiemannSurfacePath_from_xpath(xpath)
         return gamma
 
@@ -244,7 +259,7 @@ class RiemannSurfacePathFactory(object):
         """
         xpath = []
         for bi, nrots in cycle:
-            xpath.extend(self.XSkel.xpath_monodromy_path(bi, nrots=nrots))
+            xpath.extend(self.XPF.xpath_monodromy_path(bi, nrots=nrots))
         return self.RiemannSurfacePath_from_xpath(xpath)
 
     def RiemannSurfacePath_from_xpath(self, xpath, x0=None, y0=None):

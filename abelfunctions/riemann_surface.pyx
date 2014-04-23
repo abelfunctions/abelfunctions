@@ -82,8 +82,19 @@ cdef class RiemannSurface:
     def __call__(self, alpha, beta):
         pass
 
-    def show_paths(self):
-        self.PathFactory.XSkel.show_paths()
+    def show_paths(self, ax=None, *args, **kwds):
+        """Plots all of the monodromy paths of the curve.
+
+        Arguments
+        ---------
+        ax : matplotlib.Axes
+            The figure axes on which to plot the paths.
+
+        Returns
+        -------
+        None
+        """
+        self.PathFactory.show_paths(ax=ax, *args, **kwds)
 
     def point(self, alpha, beta):
         raise NotImplementedError('Need to define a RiemannSurfacePoint '
