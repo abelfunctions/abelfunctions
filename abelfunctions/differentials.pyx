@@ -34,7 +34,7 @@ def mnuk_conditions(f,u,v,b,P,c):
     numer, denom = b.as_numer_denom()
 
     # reduce b*P modulo f
-    expr = numer.as_poly(v,u,*c) * P.as_poly(v,u,*c, domain='QQ')
+    expr = numer.as_poly(v,u,*c) * P.as_poly(v,u,*c, domain='QQ[I]')
     q,r = sympy.polytools.reduced(expr,[sympy.poly(f,v,u,*c)])
 
     # divide by the largest power of x appearing in the denominator.
@@ -144,9 +144,11 @@ cdef class Differential:
 
         """
         numer, denom = omega.as_numer_denom()
-        self._omega = omega
+        numer = numer.expand()
+        denom = denom.expand()
         self.numer = MultivariatePolynomial(numer, x, y)
         self.denom = MultivariatePolynomial(denom, x, y)
+        self._omega = omega
 
     def __repr__(self):
         return str(self._omega)

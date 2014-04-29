@@ -72,8 +72,14 @@ cdef class RiemannSurface:
         self._x = x
         self._y = y
         self._deg = sympy.degree(f,y)
+
+        # cache symbolic objects since SymPy is slowish
         self._period_matrix = None
+        self._genus = None
+        self._holomorphic_oneforms = None
+
         self.PathFactory = RiemannSurfacePathFactory(self)
+
 
     def __repr__(self):
         s = 'Riemann surface defined by the algebraic curve %s'%(self.f)
@@ -120,18 +126,27 @@ cdef class RiemannSurface:
     def branch_points(self):
         return self.PathFactory.branch_points()
 
-    def holomorphic_differentials(self):
-        """Returns a basis of holomorphic differentials defined on the Riemann
-        surface.
+    def holomorphic_oneforms(self):
+        """Returns a basis of holomorphic one-forms (differentials) defined on
+        the Riemann surface.
 
         """
-        return differentials(self.f, self.x, self.y)
+        if not self._holomorphic_oneforms:
+            self._holomorphic_oneforms = differentials(self.f, self.x, self.y)
+        return self._holomorphic_oneforms
+
+    def holomorphic_differentials(self):
+        """Same as :py:meth:`holomorphic_oneforms`."""
+        return self.holomorphic_oneforms()
 
     def differentials(self):
-        return self.holomorphic_differentials()
+        """Same as :py:meth:`holomorphic_oneforms`."""
+        return self.holomorphic_oneforms()
 
     def genus(self):
-        return genus(self.f, self.x, self.y)
+        if not self._genus:
+            self._genus = genus(self.f, self.x, self.y)
+        return self._genus
 
     def a_cycles(self):
         return self.PF.a_cycles()
@@ -176,16 +191,22 @@ cdef class RiemannSurface:
         return integral
 
     def period_matrix(self):
+        """Returns the period matrix of the Riemann surface.
+
+        The period matrix is obtained by integrating a basis of
+        holomorphic one-forms over a first homology group basis.
+
+        """
         if not (self._period_matrix is None):
             return self._period_matrix
 
         c_cycles, linear_combinations = self.c_cycles()
-        differentials = self.differentials()
+        oneforms = self.holomorphic_oneforms()
         c_periods = []
         g = self.genus()
         m = len(c_cycles)
 
-        for omega in differentials:
+        for omega in oneforms:
             omega_periods = []
             for gamma in c_cycles:
                 omega_periods.append(self.integrate(omega, gamma))
@@ -207,6 +228,12 @@ cdef class RiemannSurface:
         return self._period_matrix
 
     def riemann_matrix(self):
+        """Returns the Riemann matrix of the Riemann surface.
+
+        A Riemann matrix is part of a normalization of the period
+        matrix.
+
+        """
         g = self.genus()
         tau = self.period_matrix()
         A = tau[:,:g]

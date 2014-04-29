@@ -592,132 +592,20 @@ def compute_ab_cycles(c_cycles, linear_combinations, g, tretkoff_graph):
     return a_cycles, b_cycles
 
 
-# @cached_function
-# def homology(f,x,y,base_point=None,base_sheets=None,verbose=True):
-#     """
-#     Given a plane representation of a Riemann surface, that is, a
-#     complex plane algebraic curve, return a canonical basis for the
-#     homology of the Riemann surface.
-
-#     Inputs:
-
-#     - f,x,y: an algebraic curve in x and y.
-
-#     - base_point: (optional) the base point of the monodromy group lying
-#       in the complex x-plane
-
-#     - base_sheets: (optional) perscribed ordering of the y-sheets lying
-#     above the base_point
-
-#     - verbose: (optional) return a dictionary containing the following
-#       information
-
-#       * 'basepoint' : the base point used in the monodromy group
-
-#       * 'basesheets' : the base sheets (order matters) lying above the
-#         base point
-
-#       * 'c-cycles' : a list of intermediate cycles. linear combinations
-#         of these make up the a- and b-cycles
-
-#       * 'linearcombination' : a (2g x m) integer matrix, where g is the
-#         genus of the curve f = f(x,y). the first g rows show which
-#         linear combination of the c-cycles produce the a-cycles. the
-#         second g rows give the b-cycles.
-
-#       * 'a-cycles' : a list of the a-cycles
-
-#       * 'b-cycles' : a list of the b-cycles
-
-#     Outputs:
-
-#     """
-#     g = int(genus(f,x,y))
-#     hurwitz_system = monodromy(f,x,y,base_point=base_point,
-#                                base_sheets=base_sheets)
-#     base_point, base_sheets, branch_points, mon, G = hurwitz_system
-
-#     # compute primary data elements:
-#     #
-#     # * tretkoff_graph gives us the key combinatorial data
-#     #
-#     # * intersection_matrix takes this data and tells us how
-#     #   the c-cycles intersect
-#     #
-#     # * the frobenius_transform of the intersection matrix
-#     #   gives us which linear combinations of the c_cycles we
-#     #   need to obtain the a- and b-cycles
-#     C = tretkoff_graph(hurwitz_system)
-#     edges = final_edges(C)
-#     K = intersection_matrix(edges,g)
-#     T = frobenius_transform(K,g)
-
-#     c_cycles = compute_c_cycles(C, edges)
-#     a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, C, G)
-
-#     if verbose:
-#         return {
-#             'basepoint': base_point,
-#             'basesheets': base_sheets,
-#             'c-cycles': c_cycles,
-#             'linearcombinations': T[:2*g,:],
-#             'a-cycles': a_cycles,
-#             'b-cycles': b_cycles,
-#             }
-#     else:
-#         return a_cycles, b_cycles
-
-
-# def show_homology(C):
-#     try:
-#         import networkx as nx
-#         import matplotlib.pyplot as plt
-#     except:
-#         raise
-
-#     final_nodes = [n for n,d in C.nodes(data=True) if d['final']]
-#     final_edges = [e for e in C.edges()
-#                    if e[0] in final_nodes or e[1] in final_nodes]
-#     edges = [e for e in C.edges() if e not in final_edges]
-
-#     # compute positions
-#     pos = {(0,):(0,0)}
-#     labels = {(0,):"$0$"}
-#     level = 0
-#     level_points = [(0,)]
-#     while len(level_points) > 0:
-#         level += 1
-#         level_points = sorted([n for n,d in C.nodes(data=True)
-#                                if d['level'] == level])
-
-#         num_level_points = len(level_points)
-#         n = 0
-#         for point in level_points:
-#             pos[point] = (level,n-num_level_points/2.0)
-#             labels[point] = C.node[point]['label'] + \
-#                 '\n $' + str(point) + '$'
-#             n += 1
-
-#     # draw it
-#     nx.draw_networkx_nodes(C, pos, node_color='w')
-#     nx.draw_networkx_nodes(C, pos, nodelist=final_nodes, node_color='w')
-#     nx.draw_networkx_edges(C, pos, edgelist=edges)
-#     nx.draw_networkx_edges(C, pos, edgelist=final_edges,
-#                            edge_color='b', style='dashed')
-#     nx.draw_networkx_labels(C, pos, labels=labels, font_size=13)
-
-#     plt.xticks([])
-#     plt.yticks([])
-#     plt.show()
-
-
-class YSkeleton(object):
+class YPathFactory(object):
     """Defines the basic y-path structure of the Riemann surface.
 
     In particular, this class offers methods for determining which
     *y-paths*, given by a list of branch points in the complex x-plane
     and rotation numbers, to take order to define homology basis cycles
     as well as sheet switching paths.
+
+    .. todo::
+
+        This class is a light wrapper around legacy code. This legacy
+        code should eventually be made part of this class. What's
+        implemented here is a temporary hack.
+
 
     Attributes
     ----------
@@ -740,10 +628,6 @@ class YSkeleton(object):
         Given two sheets, returns the y-path leading from the first
         sheet to the second.
 
-    .. todo::
-
-        This class is a light wrapper around legacy code. This legacy
-        code should eventually be made part of this class.
     """
 
     def __init__(self, RS, base_sheets, monodromy_group):
@@ -767,6 +651,126 @@ class YSkeleton(object):
         self._a_cycles, self._b_cycles, self._c_cycles, \
             self._linear_combinations = self.homology()
 
+    def _value(self, node):
+        """Gets the value associated with `node` on the y-skeleton `self.C`.
+
+        """
+        return self.C.node[node]['value']
+
+    def _node(self, value):
+        """Converts `value` to its associated node on the y-skeleton `self.C`.
+
+        """
+        nodes = []
+        nodes = [n for n,d in self.C.nodes(data=True)
+                 if numpy.all(d['value'] == value) and not d['final']]
+        return nodes[0]
+
+    def _values(self, ypath, rotations=False):
+        """Converts a ypath from value data to node data.
+
+        See :py:meth:`self._value`. This method can return the rotation
+        information, as opposed to the permutation, as an option.
+
+        .. note::
+
+            In order to provide rotation data the ypath must contain a
+            starting and ending sheet. Also, it is assumed that the
+            ypath is starting at / closer to the base place and ending
+            further away.
+
+        Arguments
+        ---------
+        ypath : list
+            A list of nodes on the y-skeleton `self.C`.
+
+        """
+        values = [self._value(node) for node in ypath]
+        if rotations:
+            for i in range(1, len(values), 2):
+                bi, pi = values[i]
+                prev_sheet = values[i-1]
+                next_sheet = values[i+1]
+
+                # compute the number of rotations needed to move between
+                # sheets.  take the shorest of the forward / reverse
+                # path options.
+                nrots = pi.index(next_sheet) - pi.index(prev_sheet)
+                if nrots > len(pi)/2: nrots -= len(pi)
+                values[i] = (bi, nrots)
+
+        return values
+
+    def _nodes(self, ypath):
+        """Converts a ypath from node data to value data.
+
+        """
+        return [self._node(value) for value in ypath]
+
+    def _trim_ypath(self, ypath):
+        """Trims off the sheet data from `ypath`.
+
+        Given a ypath in `(..., sheet, (branch_point, rotations), ...)`
+        form return the same path but with only the branch points and
+        rotations information.
+
+        """
+        return ypath[1::2]
+
+    def base_node(self):
+        """Returns the root node of the yskeleton."""
+        return (0,)
+
+    def ypath_from_base_to_sheet(self, sheet):
+        """Returns a ypath from the base sheet of the Riemann surface to
+        `sheet`.
+
+        Arguments
+        ---------
+        sheet : int
+            The index of the target sheet.
+        """
+        # convert sheet into a node
+        if isinstance(sheet, int):
+            sheet = self._node(sheet)
+
+        base = self.base_node()
+        path_to_sheet = nx.shortest_path(self.C, base, sheet)
+        values = self._values(path_to_sheet, rotations=True)
+        return self._trim_ypath(values)
+
+    def ypath_from_sheet_to_base(self, sheet):
+        """Returns a ypath from `sheet` to the base sheet of the Riemann
+        surface.
+
+        .. note::
+
+            This is simply a reversal of
+            :py:meth:`ypath_from_base_to_sheet`.
+
+        Arguments
+        ---------
+        sheet : int
+            The index of the target sheet.
+
+        """
+        ypath = self.ypath_from_base_to_sheet(sheet)
+        return self.ypath_values_reverse(ypath)
+
+    def ypath_values_reverse(self, ypath):
+        """Returns a ypath representing the reverse of `ypath`.
+
+        Reversing a ypath means not only visiting the branch points in
+        reverse order but also rotating about them in reverse.
+
+        .. note::
+
+            Only accepts trimmed ypaths in `(bpt, nrots)` notation.
+        """
+        for n in range(len(ypath)):
+            bpt, nrots = ypath[n]
+            ypath[n] = (bpt, -nrots)
+        return ypath
 
     def homology(self):
         """Computes the first homology group of the Riemann surface.
@@ -795,6 +799,9 @@ class YSkeleton(object):
         c_cycles = compute_c_cycles(self.C, edges)
         a_cycles, b_cycles = compute_ab_cycles(c_cycles, T, g, self.C)
 
+        # TODO: cycles are returned in sheet number / (branch point,
+        # rotations) pairs. refactor so that they're just returned
+        # without the sheet numbers
         for k in range(g):
             a_cycles[k] = a_cycles[k][1::2]
             b_cycles[k] = b_cycles[k][1::2]

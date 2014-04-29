@@ -15,6 +15,7 @@ Authors
 
 import numpy
 import scipy
+import scipy.linalg as linalg
 import sympy
 
 from .analytic_continuation import (
@@ -34,7 +35,7 @@ from .utilities import (
     matching_permutation,
     )
 from .xpath_factory import XPathFactory, XPathFactoryAbel
-from .yskeleton import YSkeleton
+from .ypath_factory import YPathFactory
 
 
 import pdb
@@ -72,8 +73,8 @@ class RiemannSurfacePathFactory(object):
         # compute the y-skeleton
         self._monodromy_group = None
         self._monodromy_group = self.monodromy_group()
-        # self.YSkel = YSkeleton(RS, base_sheets=self._base_sheets,
-        #                        monodromy_group=self._monodromy_group)
+        self.YPF = YPathFactory(RS, base_sheets=self._base_sheets,
+                                monodromy_group=self._monodromy_group)
 
     def __str__(self):
         return 'Riemann Surface Path Factory for %s'%(self.RS)
@@ -106,6 +107,76 @@ class RiemannSurfacePathFactory(object):
 
     def discriminant_points(self):
         return self.XPF.discriminant_points()
+
+    def _is_near_discriminant_point(self, P):
+        """Returns `True` if the x-coordinate of `P` is within the bounding
+        circle of a discriminant point.
+
+        Arguments
+        ---------
+        P : complex tuple
+            A place on the Riemann surface.
+        """
+        for bi in self.discriminant_points():
+            if numpy.abs(P[0] - bi) < self.XPF.radius(bi):
+                return True
+        return False
+
+    def path_to_place(self, P):
+        """Returns a path to a specified place `P` on the Riemann surface.
+
+        Arguments
+        ---------
+        P : complex tuple
+            A place on the Riemann surface.
+        """
+        # if the x-coordinate of the target place is near a discriminant
+        # point then use a Puiseux series technique to construct the
+        # path leading there.
+        if self._is_near_discriminant_point(P):
+            return self._path_to_near_discriminant_point(P)
+
+        # construct the reverse path from the place to the base x-point
+        # in order to determine which sheet the place is on
+        P0 = self.base_place()
+        xpath_to_target = self.XPF.xpath_build_avoiding_path(P0[0], P[0])
+        gamma = self.RiemannSurfacePath_from_xpath(xpath_to_target)
+
+        # determine the index of the sheet of the base place continues
+        # to the y-component of the target
+        base_sheets = self.base_sheets()
+        end_sheets = numpy.array(gamma.get_y(1.0), dtype=numpy.complex)
+        end_diffs = numpy.abs(end_sheets - P[1])
+        if numpy.min(end_diffs) > 1.0e-12:
+            raise ValueError('Error in constructing Abel path.')
+        sheet_index = numpy.argmin(end_diffs)
+
+        # if this sheet index is zero (the base sheet) then simply
+        # return the constructed path gamma
+        if sheet_index != 0:
+            # otherwise, construct the branch switching path
+            ypath = self.YPF.ypath_from_base_to_sheet(sheet_index)  # XXX CLEAN
+            gamma_swap = self.RiemannSurfacePath_from_cycle(ypath)  # XXX CLEAN
+            ordered_base_sheets = gamma_swap.get_y(1.0)
+
+            # take the new ordering of branch points and construct the
+            # path to the target place. there is an inherent check that
+            # the y-values above the base point match
+            gamma_rest = self.RiemannSurfacePath_from_xpath(
+                xpath_to_target, y0=ordered_base_sheets)
+            gamma = gamma_swap + gamma_rest
+
+        # sanity check
+        yend = gamma.get_y(1.0)[0]
+        if numpy.abs(yend - P[1]) > 1.0e-12:
+            raise ValueError('Error in constructing Abel path.')
+        return gamma
+
+    def _path_near_discriminant_point(self, P):
+        """Returns a path to a place `P` where the x-coordinate is a
+        discriminant point on the surface.
+        """
+        raise NotImplementedError()
 
     def monodromy_group(self):
         """Returns the monodromy group of the algebraic curve defining the
@@ -192,7 +263,7 @@ class RiemannSurfacePathFactory(object):
             A list of the a-cycles of the Riemann surface as
             :class:`RiemannSurfacePath` objects.
         """
-        cycles = self.YSkel.a_cycles()
+        cycles = self.YPF.a_cycles()
         paths = map(self.RiemannSurfacePath_from_cycle, cycles)
         return paths
 
@@ -205,7 +276,7 @@ class RiemannSurfacePathFactory(object):
             A list of the b-cycles of the Riemann surface as
             :class:`RiemannSurfacePath` objects.
         """
-        cycles = self.YSkel.b_cycles()
+        cycles = self.YPF.b_cycles()
         paths = map(self.RiemannSurfacePath_from_cycle, cycles)
         return paths
 
@@ -237,7 +308,7 @@ class RiemannSurfacePathFactory(object):
         """
         # prune the linear combinations matrix of the columns that don't
         # contribute to a c-cycles
-        cycles, linear_combinations = self.YSkel.c_cycles()
+        cycles, linear_combinations = self.YPF.c_cycles()
         ncols = linear_combinations.shape[1]
         indices = [j for j in range(ncols)
                    if not (linear_combinations[:,j] == 0).all()]

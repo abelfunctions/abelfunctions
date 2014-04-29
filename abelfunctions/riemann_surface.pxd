@@ -3,5 +3,7 @@ cdef class RiemannSurface:
     cdef object _x
     cdef object _y
     cdef int _deg
+    cdef object _genus
+    cdef object _holomorphic_oneforms
     cdef object _period_matrix
     cdef object PathFactory
