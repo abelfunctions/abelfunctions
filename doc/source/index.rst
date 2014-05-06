@@ -3,15 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to abelfunctions's documentation!
-=========================================
+.. image:: img/header.png
+    :align: center
 
 `abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python
-library for computing with complex algebraic curves and Abelian
-functions. If this is your first time using abelfunctions, start with
-the tutorial.
+library for computing with complex algebraic curves, Riemann surfaces,
+and Abelian functions. If this is your first time using abelfunctions
+then I suggest you begin with the :doc:`tutorial`.
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
