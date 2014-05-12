@@ -1,2 +1,3 @@
 .. automodule:: abelfunctions.puiseux
-   :members:
+    :members:
+    :show-inheritance:

@@ -69,7 +69,7 @@ Dual to the holomorphic differentials is the first Homology group of
 \ldots, a_g, b_1, \ldots, b_g \}`. In the genus two case, the picture
 looks like so:
 
-.. figure:: img/rs.png
+.. figure:: _static/rs.png
     :figwidth: 100%
     :scale: 60%
     :align: center
@@ -89,10 +89,10 @@ We can compute and plot these cycles in complex :math:`x-y` space.
     xfig.show()
     yfig.show()
 
-.. figure:: img/acycle_x.png
+.. figure:: _static/acycle_x.png
     :figwidth: 100%
 
-.. figure:: img/acycle_y.png
+.. figure:: _static/acycle_y.png
     :figwidth: 100%
 
 
@@ -215,6 +215,6 @@ with :math:`x \in [0,5], y \in [0,1]`.
     fig.show()
 
 
-.. figure:: img/riemanntheta_genus2.png
+.. figure:: _static/riemanntheta_genus2.png
     :figwidth: 100%
     :width: 100%

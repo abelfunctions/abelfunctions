@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: img/header.png
+.. image:: _static/header.png
     :align: center
 
 `abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python
@@ -17,12 +17,11 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   install.rst
-   tutorial.rst
-   modules/index.rst
-   develop.rst
-   authors.rst
-
+   install
+   tutorial
+   reference/index.rst
+   develop
+   authors
 
 Indices and tables
 ==================
