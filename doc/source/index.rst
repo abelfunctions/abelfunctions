@@ -19,8 +19,9 @@ Contents
 
    install
    tutorial
+   applications/index.rst
    reference/index.rst
-   develop
+   develop/index.rst
    authors
 
 Indices and tables
