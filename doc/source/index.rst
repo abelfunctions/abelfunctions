@@ -9,7 +9,7 @@
 `abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python
 library for computing with complex algebraic curves, Riemann surfaces,
 and Abelian functions. If this is your first time using abelfunctions
-then I suggest you begin with the :doc:`tutorial`.
+then I suggest you begin with the :doc:`quick_tutorial`.
 
 Contents
 --------
@@ -18,7 +18,8 @@ Contents
    :maxdepth: 2
 
    install
-   tutorial
+   quick_tutorial
+   indepth_tutorial
    applications/index.rst
    reference/index.rst
    develop/index.rst

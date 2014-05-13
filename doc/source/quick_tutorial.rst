@@ -1,5 +1,5 @@
-Tutorial
-========
+Quick Tutorial
+==============
 
 Here we give a brief overview of the capabilities of abelfunctions by
 working through a simple example.
