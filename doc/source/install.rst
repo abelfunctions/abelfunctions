@@ -21,41 +21,64 @@ following Python packages:
 Optionally, the NVIDIA CUDA compiler is needed to compile the high-performance
 CUDA code used in computing the Riemann theta function.
 
-Installation Options
---------------------
+Installation Procedure
+----------------------
 
-**Download the Code**: There are two ways to do this:
+1. **Download the Code**: There are two ways to do this:
 
-A) Download and extract a zipfile. First, go to the `abelfunctions
-   homepage <https://github.com/cswiercz/abelfunctions>`_. Then, click
-   on the button labeled "Download ZIP" located in the sidebar on the
-   right.
+  A) Go to the `abelfunctions repository
+     <https://github.com/cswiercz/abelfunctions>`_, click on the button
+     labeled "Download ZIP" located in the sidebar on the right, and
+     extract the package.
 
-B) If you have `git <http://git-scm.com/>`_ installed, run::
+  B) If you have `git <http://git-scm.com/>`_ installed, run ::
 
-    $ git clone git://github.com/cswiercz/abelfunctions.git
+       $ git clone git://github.com/cswiercz/abelfunctions.git
 
-**Installation**: Enter the main directory, `abelfunctions`, and run::
+     You can later update the code by running ::
 
-  $ python setup.py install
+       $ cd abelfunctions
+       $ git pull
+
+2. **Build**: Enter the main directory, ``abelfunctions``, and run ::
+
+     $ python setup.py build_ext
+
+3. **Install**: To make abelfunctions accessible by Python / iPython
+   from any directory on your computer, run::
+
+     $ python setup.py install
+
+Installation for Developers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you plan on hacking at abelfunctions it may be easier build and
+"install" abelfunctions in-place. To do so, run the following instead of
+Steps 2 and 3 above ::
+
+  $ python setup.py build_ext --inplace
+
+and then run your favorite scientific Python distribution from the
+``abelfunctions`` directory. If you make a change to any Cython
+(``.pyx``, ``.pxd``) file you'll have to run the above command again and
+re-import the ``abelfunctions`` package before being able to test your
+changes.
 
 
 Test Installation
 -----------------
 
 After installation, make sure you can import the abelfunctions package
-in your favorite Python distribution:
+in your favorite scientific Python distribution.
 
 .. code-block:: python
 
-      $ ipython
-      In [1]: from abelfunctions import *
-      In [2]: from sympy.abc import x,y
-      In [3]: f = y**3 + 2*x**3*y - x**7
-      In [4]: X = RiemannSurface(f,x,y)
-      In [5]: print X
+  from abelfunctions import *
+  from sympy.abc import x,y
+  f = y**3 + 2*x**3*y - x**7
+  X = RiemannSurface(f,x,y)
+  print X
 
-*
-    .. code-block:: none
+* .. code-block:: none
 
-        Riemann surface defined by the algebraic curve -x**7 + 2*x**3*y + y**3
+    Riemann surface defined by the algebraic curve -x**7 + 2*x**3*y + y**3
