@@ -1,20 +1,37 @@
-"""
-Riemann Surface Paths
-=====================
+"""Riemann Surface Paths :mod:`abelfunctions.riemann_surface_path`
+===============================================================
 
-The classes in this module follow the Composite design pattern [1]_ with
-:class:RiemannSurfacePathPrimitive acting as the "component" and
-:class:RiemannSurfacePath acting as the "composite". The classes
-:class:RiemannSurfacePathLine and :class:RiemannSurfacePathCircle define
-partricular types of paths.
+A framework for computing places along paths on Riemann surfaces.
+
+
+The classes in this module follow the Composite design pattern [Design
+Patterns]_ with :py:class:`RiemannSurfacePathPrimitive` acting as the
+"component" and :py:class:`RiemannSurfacePath` acting as the
+"composite". The classes :py:class:`RiemannSurfacePathLine` and
+:py:class:`RiemannSurfacePathArc` define partricular types of paths.
+
+Classes
+-------
+
+.. autosummary::
+
+    RiemannSurfacePathPrimitive
+    RiemannSurfacePath
+    RiemannSurfacePathLine
+    RiemannSurfacePathArc
 
 References
 ----------
 
-.. [1] E. Gamma, R. Helm, R. Johnson, J. Vlissides, *Design
-Patterns: Elements of Reusable Object-Oriented Software*,
-Pearson Education, 1994, pg. 163
+.. [Design Patterns] E. Gamma, R. Helm, R. Johnson, J. Vlissides,
+   *Design Patterns: Elements of Reusable Object-Oriented Software*,
+   Pearson Education, 1994, pg. 163
 
+Examples
+--------
+
+Contents
+--------
 
 """
 
@@ -34,10 +51,11 @@ cdef extern from 'complex.h':
 
 
 cdef class RiemannSurfacePathPrimitive:
-    """Primitive Riemann surface path object.
+    r"""Primitive Riemann surface path object.
 
     Defines basic, primitive functionality for Riemann surface
-    paths. Each path primitive is parameterized from t=0 to t=1.
+    paths. Each path primitive is parameterized from :math:`t=0` to
+    :math:`t=1`.
 
     Attributes
     ----------
@@ -50,24 +68,19 @@ cdef class RiemannSurfacePathPrimitive:
         or branch point of the curve.
     x0 : complex
         Starting x-value of the path.
-    y0 : complex[:]
+    y0 : complex[]
         Starting y-fibre of the path.
     segments : RiemannSurfacePathSegments
 
     Methods
     -------
-    get_x(double t)
-        Return the x-part of the path at `t` for `t \in [0,1]`.
-    get_dxdt(double t)
-        Return the deriviatve of the x-path at `t` for `t \in [0,1]`.
-    get_y(double t)
-        Return the y-fibre of the path at `t` for `t \in [0,1]`.
-    plot(double[:] t, *args, **kwds)
-        Plots the path in the complex x- and y-planes at the t-points
-        given. *args and **kwds are passed to matplotlib.pyplot.plot.
+
+    .. automethod::
+        :annotation:
+
     """
     property segments:
-        """The individual :py:class:`RiemannSurfacePathPrimitive` objects that
+        r"""The individual :py:class:`RiemannSurfacePathPrimitive` objects that
         make up this object.
 
         Every `RiemannSurfacePathPrimitive` object contains a list of
@@ -100,7 +113,7 @@ cdef class RiemannSurfacePathPrimitive:
 
     def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
                  complex x0, complex[:] y0, int ncheckpoints=8):
-        """Intitialize the `RiemannSurfacePathPrimitive` using a
+        r"""Intitialize the `RiemannSurfacePathPrimitive` using a
         `RiemannSurface`, `AnalyticContinuator`, and starting place.
         """
         self._RS = RS
@@ -116,15 +129,15 @@ cdef class RiemannSurfacePathPrimitive:
             self._initialize_checkpoints()
 
     def __add__(self, RiemannSurfacePathPrimitive other):
-        """Add two Riemann surface paths together.
+        r"""Add two Riemann surface paths together.
 
         Checks if the ending place of `self` is equal to the ending
         place of `other`. If so, returns a `RiemannSurfacePath` object
         whose segments are a concatenation of the path segments of each
         summand.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         other : RiemannSurfacePathPrimitive
 
         Returns
@@ -164,17 +177,17 @@ cdef class RiemannSurfacePathPrimitive:
             return RiemannSurfacePath(self.RS, self.x0, self.y0, segments)
 
     cdef int _nearest_checkpoint_index(self, double t):
-        """Returns the index of the checkpoint closest to and preceding `t`.
+        r"""Returns the index of the checkpoint closest to and preceding ``t``.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         t : double
 
         Returns
         -------
         int
-            The index `k` such that `self._tcheckpoints[k] <= t` but
-            `self._tcheckpoints[k+1] > t`.
+            The index ``k`` such that ``self._tcheckpoints[k] <= t`` but
+            ``self._tcheckpoints[k+1] > t``.
         """
         cdef int n, k
         cdef double ti
@@ -187,12 +200,21 @@ cdef class RiemannSurfacePathPrimitive:
         return 0
 
     def _initialize_checkpoints(self):
-        """Analytically continue along the entire path recording y-values at
+        r"""Analytically continue along the entire path recording y-values at
         evenly spaced points.
 
-        We cache the y-values at various evenly-spaced points `t \in
-        [0,1]` so one doesn't have to analytically continue from `t=0`
-        every time.
+        We cache the y-values at various evenly-spaced points :math:`t
+        \in [0,1]` so one doesn't have to analytically continue from
+        :math:`t=0` every time.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
         """
         cdef double[:] t
         cdef complex[:] x
@@ -226,22 +248,57 @@ cdef class RiemannSurfacePathPrimitive:
         self._ycheckpoints = y
 
     cpdef complex get_x(self, double t):
-        """Return the x-part of the path at `t \in [0,1]`."""
+        r"""Return the x-part of the path at :math:`t \in [0,1]`.
+
+        Parameters
+        ----------
+        t : double
+
+        Returns
+        -------
+        complex
+
+        """
         raise NotImplementedError('Must override RiemannSurfacePathPrimitive.'
                                   'get_x() method in subclass.')
 
     cpdef complex get_dxdt(self, double t):
-        """Return the derivative of the x-part of the path at `t \in [0,1]`."""
+        r"""Return the derivative of the x-part of the path at :math:`t \in
+        [0,1]`.
+
+        Parameters
+        ----------
+        t : double
+
+        Returns
+        -------
+        complex
+
+        """
         raise NotImplementedError('Must override RiemannSurfacePathPrimitive.'
                                   'get_dxdt() method in subclass.')
 
     cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi,
                                            complex xip1):
-        """Analytically continue the fibre `yi` from `xi` to `xip1`.
+        r"""Analytically continue the fibre ``yi`` from ``xi`` to ``xip1``.
 
         .. note::
 
            Calls internal AnalyticContinuator.
+
+        Parameters
+        ----------
+        xi : complex
+        yi : complex[]
+            The current x,y-fibre pair.
+        xip1 : complex
+            The target complex x-point.
+
+        Returns
+        -------
+        complex[]
+            The fibre above ``xip1``.
+
         """
         cdef complex[:] yip1 = self._AC.analytically_continue(
             self, xi, yi, xip1)
@@ -250,7 +307,17 @@ cdef class RiemannSurfacePathPrimitive:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cpdef complex[:] get_y(self, double t):
-        """Return the y-fibre of the path at `t \in [0,1]`."""
+        r"""Return the y-fibre of the path at :math:`t \in [0,1]`.
+
+        Parameters
+        ----------
+        t : double
+
+        Returns
+        -------
+        complex[:]
+
+        """
         cdef int n, k
         cdef double tim1
         cdef complex xim1, xi
@@ -268,19 +335,20 @@ cdef class RiemannSurfacePathPrimitive:
         return yi
 
     def plot_x(self, N, *args, **kwds):
-        """Plot the x-part of the path in the complex x-plane.
+        r"""Plot the x-part of the path in the complex x-plane.
 
-        Arguments
-        ---------
+        Additional arguments and keywords are passed to
+        ``matplotlib.pyplot.plot``.
+
+        Parameters
+        ----------
         N : int
             The number of interpolating points used to plot.
-        *args, **kwds
-            Additional arguments and keywords are passed to
-            matplotlib.pyplot.plot.
 
         Returns
         -------
         matplotlib lines array.
+
         """
         t = numpy.linspace(0,1,N)
         x = numpy.array([self.get_x(ti) for ti in t],
@@ -291,19 +359,20 @@ cdef class RiemannSurfacePathPrimitive:
         return fig
 
     def plot_y(self, N, *args, **kwds):
-        """Plot the y-part of the path in the complex y-plane.
+        r"""Plot the y-part of the path in the complex y-plane.
 
-        Arguments
-        ---------
-        N : int (default=256)
+        Additional arguments and keywords are passed to
+        ``matplotlib.pyplot.plot``.
+
+        Parameters
+        ----------
+        N : int
             The number of interpolating points used to plot.
-        *args, **kwds
-            Additional arguments and keywords are passed to
-            matplotlib.pyplot.plot.
 
         Returns
         -------
         matplotlib lines array.
+
         """
         t = numpy.linspace(0,1,N)
         y = numpy.array([self.get_y(ti)[0] for ti in t],
@@ -314,16 +383,16 @@ cdef class RiemannSurfacePathPrimitive:
         return fig
 
     def plot3d_x(self, N, *args, **kwds):
-        """Plot the x-part of the path in the complex x-plane with the
-        parameter :math:`t \in [0,1] along the perpendicular axis.
+        r"""Plot the x-part of the path in the complex x-plane with the
+        parameter :math:`t \in [0,1]` along the perpendicular axis.
 
-        Arguments
-        ---------
+        Additional arguments and keywords are passed to
+        ``matplotlib.pyplot.plot``.
+
+        Parameters
+        ----------
         N : int
             The number of interpolating points used to plot.
-        *args, **kwds
-            Additional arguments and keywords are passed to
-            matplotlib.pyplot.plot.
 
         Returns
         -------
@@ -349,16 +418,16 @@ cdef class RiemannSurfacePathPrimitive:
 
 
     def plot3d_y(self, N, *args, **kwds):
-        """Plot the y-part of the path in the complex y-plane with the
+        r"""Plot the y-part of the path in the complex y-plane with the
         parameter :math:`t \in [0,1] along the perpendicular axis.
 
-        Arguments
-        ---------
+        Additional arguments and keywords are passed to
+        ``matplotlib.pyplot.plot``.
+
+        Parameters
+        ----------
         N : int
             The number of interpolating points used to plot.
-        *args, **kwds
-            Additional arguments and keywords are passed to
-            matplotlib.pyplot.plot.
 
         Returns
         -------
@@ -384,13 +453,14 @@ cdef class RiemannSurfacePathPrimitive:
 
 
 cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
-    """A Riemann surface path for which the x-part of the path is a line
+    r"""A Riemann surface path for which the x-part of the path is a line
     segment.
 
     Attributes
     ----------
     z0,z1 : complex
        The starting and ending points of the complex x-line.
+
     """
     def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
                  complex x0, complex[:] y0, complex z0, complex z1,
@@ -411,7 +481,7 @@ cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
 
 
 cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
-    """A Riemann surface path for which the x-part of the path is an arc.
+    r"""A Riemann surface path for which the x-part of the path is an arc.
 
     Attributes
     ----------
@@ -453,11 +523,20 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
 
 
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
-    """A continuous, piecewise differentiable path on a Riemann surface.
+    r"""A continuous, piecewise differentiable path on a Riemann surface.
 
     RiemannSurfacePath is a composite of
     :class:RiemannSurfacePathPrimitive objects. This path is
-    parameterized for `t \in [0,1]`.
+    parameterized for :math:`t \in [0,1]`.
+
+    Methods
+    -------
+
+    get_x
+    get_dxdt
+    get_y
+
+
     """
     def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
                  RiemannSurfacePathPrimitive[:] segments):
@@ -478,7 +557,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         self._nsegments = len(segments)
 
     cdef int _get_segment_index(self, double t):
-        """Returns the index of the path segment located at the given :math:`t
+        r"""Returns the index of the path segment located at the given :math:`t
         \in [0,1]`.
 
         .. note::
@@ -487,6 +566,16 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
             without resorting to branching. Such an approach is needed
             since :math:`t = 1.0` should return the index of the final
             segment.
+
+        Parameters
+        ----------
+        t : double
+
+        Returns
+        -------
+        int
+            An integer between ``0`` and ``self._nsegments-1``
+            representing the index of the segment on which ``t`` lies.
 
         """
         cdef int k = floor(t*self._nsegments)
@@ -497,14 +586,23 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cpdef complex get_x(self, double t):
-        """Return the x-part of the path at `t \in [0,1]`.
+        r"""Return the x-part of the path at :math:`t \in [0,1]`.
 
         .. note::
 
-           This RiemannSurfacePath is parameterized for `t \in
+           This RiemannSurfacePath is parameterized for :math:`t \in
            [0,1]`. However, internally, each segment is separately
-           parameterized for `t \in [0,1]`. This routine performs an
-           appropriate scaling.
+           parameterized for :math:`t \in [0,1]`. This routine performs
+           an appropriate scaling.
+
+        Parameters
+        ----------
+        t : double
+
+        Returns
+        -------
+        complex
+
         """
         cdef RiemannSurfacePathPrimitive seg_k
         cdef complex x
@@ -517,22 +615,31 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cpdef complex get_dxdt(self, double t):
-        """Return the derivative of the x-part of the path at `t \in [0,1]`.
+        r"""Return the derivative of the x-part of the path at :math:`t \in
+        [0,1]`.
 
         .. note::
 
-           This RiemannSurfacePath is parameterized for `t \in
+           This RiemannSurfacePath is parameterized for :math:`t \in
            [0,1]`. However, internally, each segment is separately
-           parameterized for `t \in [0,1]`. This routine performs an
-           appropriate scaling.
+           parameterized for :math:`t \in [0,1]`. This routine performs
+           an appropriate scaling.
 
         .. warning::
 
            Riemann surface paths are only piecewise differentiable and
            therefore may have discontinuous derivatives at the
            boundaries. Therefore, it may be more useful to perform
-           segment-wise operations instead of operations on the
-           whole of this object.
+           segment-wise operations instead of operations on the whole of
+           this object.
+
+        Parameters
+        ----------
+        t : double
+
+        Returns
+        -------
+        complex
 
         """
         cdef RiemannSurfacePathPrimitive seg_k
@@ -546,14 +653,23 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cpdef complex[:] get_y(self, double t):
-        """Return the y-fibre of the path at `t \in [0,1]`.
+        r"""Return the y-fibre of the path at :math:`t \in [0,1]`.
 
         .. note::
 
-           This RiemannSurfacePath is parameterized for `t \in
+           This RiemannSurfacePath is parameterized for :math:`t \in
            [0,1]`. However, internally, each segment is separately
-           parameterized for `t \in [0,1]`. This routine performs an
-           appropriate scaling.
+           parameterized for :math:`t \in [0,1]`. This routine performs
+           an appropriate scaling.
+
+        Parameters
+        ----------
+        t : double
+
+        Returns
+        -------
+        complex[:]
+
         """
         cdef RiemannSurfacePathPrimitive seg_k
         cdef complex[:] y
