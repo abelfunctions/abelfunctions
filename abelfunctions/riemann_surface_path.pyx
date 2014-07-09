@@ -4,8 +4,8 @@
 A framework for computing places along paths on Riemann surfaces.
 
 
-The classes in this module follow the Composite design pattern [Design
-Patterns]_ with :py:class:`RiemannSurfacePathPrimitive` acting as the
+The classes in this module follow the composite design pattern [1]_
+with :py:class:`RiemannSurfacePathPrimitive` acting as the
 "component" and :py:class:`RiemannSurfacePath` acting as the
 "composite". The classes :py:class:`RiemannSurfacePathLine` and
 :py:class:`RiemannSurfacePathArc` define partricular types of paths.
@@ -23,7 +23,7 @@ Classes
 References
 ----------
 
-.. [Design Patterns] E. Gamma, R. Helm, R. Johnson, J. Vlissides,
+.. [1] E. Gamma, R. Helm, R. Johnson, J. Vlissides,
    *Design Patterns: Elements of Reusable Object-Oriented Software*,
    Pearson Education, 1994, pg. 163
 
@@ -70,13 +70,20 @@ cdef class RiemannSurfacePathPrimitive:
         Starting x-value of the path.
     y0 : complex[]
         Starting y-fibre of the path.
-    segments : RiemannSurfacePathSegments
+    segments
 
     Methods
     -------
-
-    .. automethod::
-        :annotation:
+    get_x
+    get_dxdt
+    analytically_continue
+    get_y
+    plot_x
+    plot_y
+    plot3d_x
+    plot3d_y
+    
+    
 
     """
     property segments:
@@ -419,7 +426,7 @@ cdef class RiemannSurfacePathPrimitive:
 
     def plot3d_y(self, N, *args, **kwds):
         r"""Plot the y-part of the path in the complex y-plane with the
-        parameter :math:`t \in [0,1] along the perpendicular axis.
+        parameter :math:`t \in [0,1]` along the perpendicular axis.
 
         Additional arguments and keywords are passed to
         ``matplotlib.pyplot.plot``.
@@ -486,17 +493,17 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
     Attributes
     ----------
     R : complex
-        The radius of the semicircle. (Complex type for coercion
-        performance.)
+          The radius of the semicircle. (Complex type for coercion
+          performance.)
     w : complex
         The center of the semicircle.
     theta : complex
-        The starting argument /angle of the semicircle. Usually `0` or
-        `pi`.  (Complex type for coercion performance.)
+        The starting angle (in radians) on the semicircle. Usually 0 or
+        :math:`\pi`.  (Complex type for coercion performance.)
     dtheta : complex
         The number of radians to travel where the sign of `dtheta`
         indicates direction. The absolute value of `dtheta` is equal to
-        the arc length
+        the arc length.
 
     """
     def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
@@ -526,7 +533,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     r"""A continuous, piecewise differentiable path on a Riemann surface.
 
     RiemannSurfacePath is a composite of
-    :class:RiemannSurfacePathPrimitive objects. This path is
+    :py:class:`RiemannSurfacePathPrimitive`xcxcxc objects. This path is
     parameterized for :math:`t \in [0,1]`.
 
     Methods
@@ -588,13 +595,6 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     cpdef complex get_x(self, double t):
         r"""Return the x-part of the path at :math:`t \in [0,1]`.
 
-        .. note::
-
-           This RiemannSurfacePath is parameterized for :math:`t \in
-           [0,1]`. However, internally, each segment is separately
-           parameterized for :math:`t \in [0,1]`. This routine performs
-           an appropriate scaling.
-
         Parameters
         ----------
         t : double
@@ -602,6 +602,13 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         Returns
         -------
         complex
+        
+        Notes
+        -----
+        This RiemannSurfacePath is parameterized for :math:`t \in
+        [0,1]`. However, internally, each segment is separately
+        parameterized for :math:`t \in [0,1]`. This routine performs
+        an appropriate scaling.
 
         """
         cdef RiemannSurfacePathPrimitive seg_k
@@ -618,12 +625,20 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         r"""Return the derivative of the x-part of the path at :math:`t \in
         [0,1]`.
 
-        .. note::
+        Parameters
+        ----------
+        t : double
 
-           This RiemannSurfacePath is parameterized for :math:`t \in
-           [0,1]`. However, internally, each segment is separately
-           parameterized for :math:`t \in [0,1]`. This routine performs
-           an appropriate scaling.
+        Returns
+        -------
+        complex
+
+        Notes
+        -----
+        This RiemannSurfacePath is parameterized for :math:`t \in
+        [0,1]`. However, internally, each segment is separately
+        parameterized for :math:`t \in [0,1]`. This routine
+        performs an appropriate scaling.
 
         .. warning::
 
@@ -633,13 +648,6 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
            segment-wise operations instead of operations on the whole of
            this object.
 
-        Parameters
-        ----------
-        t : double
-
-        Returns
-        -------
-        complex
 
         """
         cdef RiemannSurfacePathPrimitive seg_k
@@ -655,13 +663,6 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     cpdef complex[:] get_y(self, double t):
         r"""Return the y-fibre of the path at :math:`t \in [0,1]`.
 
-        .. note::
-
-           This RiemannSurfacePath is parameterized for :math:`t \in
-           [0,1]`. However, internally, each segment is separately
-           parameterized for :math:`t \in [0,1]`. This routine performs
-           an appropriate scaling.
-
         Parameters
         ----------
         t : double
@@ -669,6 +670,13 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         Returns
         -------
         complex[:]
+
+        Notes
+        -----
+        This RiemannSurfacePath is parameterized for
+        :math:`t \in [0,1]`. However, internally, each segment is
+        separately parameterized for :math:`t \in [0,1]`. This routine
+        performs an appropriate scaling.
 
         """
         cdef RiemannSurfacePathPrimitive seg_k
