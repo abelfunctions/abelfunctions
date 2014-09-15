@@ -1,16 +1,46 @@
-"""
-Differentials
+r"""
+Differentials :mod:`abelfunctions.differentials`
+================================================
 
 This module contains functions for computing a basis of holomorphic
-differentials of a Riemann surface given by a complex plan algebraic
-curve `f \in C[x,y]`.
+differentials of a Riemann surface given by a complex plane algebraic
+curve :math:`f \in \mathbb{C}[x,y]`. A differential :math:`\omega =
+h(x,y)dx` defined on a Riemann surface :math:`X` is holomorphic on
+:math:`X` if it is holomorphic at every point on :math:`X`.
 
-A differential `\omega = h(x,y)dx` defined on a Riemann surface `X` is
-holomorphic on `X` if it is holomorphic at every point on `X`.
+The function :func:`differentials` computes the basis of holomorphic
+differentials from an input algebraic curve :math:`f = f(x,y)`. The
+differentials themselves are encapsulated in a :class:`Differential`
+Cython class.
+
+Classes
+-------
+
+.. autosummary::
+
+    Differential
+
+Functions
+---------
+
+.. autosummary::
+
+    differentials
+    mnuk_conditions
+
+References
+----------
+
+.. [Mnuk] M. Mnuk, "An algebraic approach to computing adjoint curves",
+   Journal of Symbolic Computation, vol. 23 (2-3), pp. 229–40, 1997.
+
+Examples
+--------
+
+Contents
+--------
+
 """
-
-cimport cython
-
 import numpy
 import sympy
 import sympy.mpmath as mpmath
@@ -22,20 +52,42 @@ from .singularities import singularities, _transform, genus
 from .utilities import cached_function
 from .polynomials cimport MultivariatePolynomial
 
-import pdb
+cimport cython
 
-def mnuk_conditions(f,u,v,b,P,c):
-    """
-    Determine the Mnuk conditions on the coefficients, c, of the general
-    adjoint polynomial P at the point x=0.
+def mnuk_conditions(g, u, v, b, P, c):
+    """Determine the Mnuk conditions on the coefficients of :math:`P`.
 
-    Note: it is assume t
+    Determine the conditions on the coefficients `c` of `P` at the
+    integral basis element `b` modulo the curve `g = g(u,v)`. See [Mnuk]
+    for details.
+
+    Attributes
+    ----------
+    g : sympy.Expr
+    u : sympy.Symbol
+    v : sympy.Symbol
+    b : sympy.Expr
+        An integral basis element.
+    P : sympy.Expr
+        A generic adjoint polynomial as provided by
+        :func:`differentials`. Only one instance is created for caching
+        and performance purposes.
+    c : list, sympy.Symbol
+        A list of the unknown symbolic coefficients we wish to solve
+        for.
+
+    Returns
+    -------
+    list, sympy.Expr
+        A list of expressions from which a system of equations is build
+        to determine the differentials.
+
     """
     numer, denom = b.as_numer_denom()
 
-    # reduce b*P modulo f
+    # reduce b*P modulo g
     expr = numer.as_poly(v,u,*c) * P.as_poly(v,u,*c, domain='QQ[I]')
-    q,r = sympy.polytools.reduced(expr,[sympy.poly(f,v,u,*c)])
+    q,r = sympy.reduced(expr,[sympy.poly(g,v,u,*c)])
 
     # divide by the largest power of x appearing in the denominator.
     # this is sufficient since we've shifted the curve and its
@@ -52,17 +104,22 @@ def mnuk_conditions(f,u,v,b,P,c):
                   if monom[0] < mult]
     return conditions
 
+def differentials(f, x, y):
+    """Returns a basis of holomorphic differentials on Riemann surface.
 
-def differentials(f,x,y):
-    """
-    Returns a basis of the holomorphic differentials defined on the
-    Riemann surface `X: f(x,y) = 0`.
+    The surface is given by the desingularization and compactification
+    of the affine complex plane algebraic curve `f = f(x,y)`.
 
-    Input:
+    Attributes
+    ----------
+    f : sympy.Expr
+    x : sympy.Symbol
+    y : sympy.Symbol
 
-    - f: a Sympy object describing a complex plane algebraic curve.
+    Returns
+    -------
+    list, Differential
 
-    - x,y: the independent and dependent variables, respectively.
     """
     # compute the "total degree" (Poly.total_degree doesn't give the
     # desired result). This is the largest monomial degree in the sum
@@ -86,7 +143,7 @@ def differentials(f,x,y):
         # recenter the curve and adjoint polynomial at the
         # singular point: find the affine plane u,v such that
         # the singularity occurs at u=0
-        g,u,v,u0,v0      = _transform(f,x,y,singular_pt)
+        g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
         g = g.subs(u,u+u0)
         Ptilde,u,v,u0,v0 = _transform(P,x,y,singular_pt)
         Ptilde = Ptilde.subs(u,u+u0)
@@ -104,13 +161,12 @@ def differentials(f,x,y):
     P = P.subs(sols).as_poly(*c)
     differentials = [coeff for coeff in P.coeffs() if coeff != 0]
 
-    # sanity check: the number of differentials matches the genus
-    g = genus(f,x,y)
-    if g != -1 and g != len(differentials):
-        raise AssertionError("Number of differentials does not match genus.")
-
-    differentials = [differential/sympy.diff(f,y)
-                     for differential in differentials]
+    # # sanity check: the number of differentials matches the genus
+    # g = genus(f,x,y)
+    # if g != -1 and g != len(differentials):
+    #     raise AssertionError("Number of differentials does not match genus.")
+    dfdy = sympy.diff(f,y)
+    differentials = [differential/dfdy for differential in differentials]
     return map(lambda omega: Differential(omega, x, y), differentials)
 
 
@@ -154,7 +210,7 @@ cdef class Differential:
         return str(self._omega)
 
     cpdef complex eval(self, complex z1, complex z2):
-        """Evaluate the differential at the complex point `(z1,z2)`.
+        """Evaluate the differential at the complex point :math:`(z_1,z_2)`.
 
         Arguments
         ---------
@@ -163,13 +219,31 @@ cdef class Differential:
         Returns
         -------
         complex
-            Returns the value :math:`\omega(z1,z2)`.
+            Returns the value :math:`\omega(z_1,z_2)`.
 
         """
         return self.numer.eval(z1,z2) / self.denom.eval(z1,z2)
 
     def plot(self, gamma, N=256, grid=False, **kwds):
-        """Plot the differential along the path `gamma`"""
+        """Plot the differential along the RiemannSurfacePath `gamma`.
+
+        Attributes
+        ----------
+        gamma : RiemannSurfacePath
+            A path along which to evaluate the differential.
+        N : int
+            Number of interpolating points to use when plotting the
+            value of the differential along the path `gamma`
+        grid : boolean
+            (Default: `False`) If true, draw gridlines at each "segment"
+            of the parameterized RiemannSurfacePath. See the
+            `RiemannSurfacePath` documentation for more information.
+
+        Returns
+        -------
+        matplotlib.Figure
+
+        """
         nsegs = len(gamma.segments)
         ppseg = N/nsegs
 
@@ -199,74 +273,3 @@ cdef class Differential:
         """Returns the differential as a Sympy expression."""
         return self._omega
 
-
-
-
-
-if __name__=='__main__':
-    print '=== Module Test: differentials.py ==='
-    from sympy.abc import x,y
-
-    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    # []
-
-    f2 = y**3 + 2*x**3*y - x**7
-    # [x**3/(2*x**3 + 3*y**2), x*y/(2*x**3 + 3*y**2)]
-
-    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
-    # does not match genus
-
-    f4 = y**2 + x**3 - x**2
-    # []
-
-    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-    # [x**2 + y**2]
-
-    f6 = y**4 - y**2*x + x**2
-
-    f7 = y**3 - (x**3 + y)**2 + 1
-    # does not terminate
-
-    f8 = x**6*y**3 + 2*x**3*y - 1
-    # genus zero
-
-    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-    # (genus 9!)
-    # [x**5/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  x**4/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  x**3/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  x**2*y/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  x**2/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  x*y/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  x/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  y/(2*x**7 + 3*y**2 + 6*y + 3),
-    #  1/(2*x**7 + 3*y**2 + 6*y + 3)]
-
-    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
-    # [x*y/(4*x**3*y**3 + 2*x**3 + 8*x**2*y),
-    #  x/(4*x**3*y**3 + 2*x**3 + 8*x**2*y),
-    #  1/(4*x**3*y**3 + 2*x**3 + 8*x**2*y)]
-
-
-    f12 = y**3 - x**3*y + 2*x**7
-    # [x**3/(-x**3 + 3*y**2), x*y/(-x**3 + 3*y**2)]
-
-    f13 = x**4 + y**4 - 1
-    # (fast! no singular points)
-    # [x/(4*y**3), 1/(4*y**2), 1/(4*y**3)]
-
-    # f = f2
-
-    # import cProfile, pstats
-    # cProfile.run(
-    #     'D = differentials(f,x,y)',
-    #     'differentials.profile',
-    #     )
-    # p = pstats.Stats('differentials.profile')
-    # p.strip_dirs()
-    # p.sort_stats('cumulative').print_stats(20)
-
-    # print "\nDifferentials:"
-    # for omega in D:
-    #     sympy.pretty_print(omega)
-    #     print
