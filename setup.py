@@ -32,12 +32,11 @@ class clean(Command):
     """
     description = "remove all build and trash files"
     user_options = []
-    cleaned_file_extensions = ['.pyc', '~', '.so', '.c', '.html']
+    cleaned_file_extensions = ['.pyc', '~', '.so', '.c']
     ignored_files = [
         './abelfunctions/riemanntheta/lattice_reduction.c',
         './abelfunctions/riemanntheta/lll_reduce.c',
         './abelfunctions/riemanntheta/riemanntheta.c',
-        './doc/themes/sphinx13/layout.html'
         ]
 
     def initialize_options(self):
@@ -203,7 +202,7 @@ setup(
     ext_modules = ext_modules,
     cmdclass = {'test': test_abelfunctions,
                 'clean': clean,
-                'build_ext': build_ext
+                'build_ext': build_ext,
                 },
     platforms = ['Linux', 'Unix', 'Mac OS-X'],
     classifiers = classifiers,

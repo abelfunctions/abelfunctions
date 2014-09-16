@@ -40,8 +40,6 @@ from operator import itemgetter
 from sympy.core.numbers import Zero
 from utilities import cached_function
 
-import pdb
-
 # we use global symbols for Sympy caching performance
 _Z = sympy.Dummy('Z')
 

@@ -7,5 +7,5 @@ The code is available as a git repository at
     https://github.com/cswiercz/abelfunctions
 
 """
-from riemann_surface import RiemannSurface
-from riemanntheta import RiemannTheta
+from .riemann_surface import RiemannSurface
+from .riemanntheta import RiemannTheta
