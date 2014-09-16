@@ -493,8 +493,8 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
     Attributes
     ----------
     R : complex
-          The radius of the semicircle. (Complex type for coercion
-          performance.)
+        The radius of the semicircle. (Complex type for coercion
+        performance.)
     w : complex
         The center of the semicircle.
     theta : complex
@@ -538,7 +538,6 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
 
     Methods
     -------
-
     get_x
     get_dxdt
     get_y
