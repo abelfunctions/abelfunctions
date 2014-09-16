@@ -1,6 +1,3 @@
 numpydoc
 cython
-python-numpy
-python-scipy
-python-matplotlib
-python-sympy
+sympy

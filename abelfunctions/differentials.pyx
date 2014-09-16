@@ -61,7 +61,7 @@ def mnuk_conditions(g, u, v, b, P, c):
     integral basis element `b` modulo the curve `g = g(u,v)`. See [Mnuk]
     for details.
 
-    Attributes
+    Parameters
     ----------
     g : sympy.Expr
     u : sympy.Symbol
@@ -110,7 +110,7 @@ def differentials(f, x, y):
     The surface is given by the desingularization and compactification
     of the affine complex plane algebraic curve `f = f(x,y)`.
 
-    Attributes
+    Parameters
     ----------
     f : sympy.Expr
     x : sympy.Symbol
@@ -170,7 +170,6 @@ def differentials(f, x, y):
     return map(lambda omega: Differential(omega, x, y), differentials)
 
 
-
 cdef class Differential:
     """A differential one-form which can be defined on a Riemann surface.
 
@@ -191,8 +190,8 @@ cdef class Differential:
     def __cinit__(self, omega, x, y):
         """Instantiate a differential form from a sympy Expression.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         omega : Sympy Expression
         x, y : Sympy Symbol
             The differential and its variables. Note in abelfunctions we
@@ -212,8 +211,8 @@ cdef class Differential:
     cpdef complex eval(self, complex z1, complex z2):
         """Evaluate the differential at the complex point :math:`(z_1,z_2)`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         z1,z2 : complex
 
         Returns
@@ -227,7 +226,7 @@ cdef class Differential:
     def plot(self, gamma, N=256, grid=False, **kwds):
         """Plot the differential along the RiemannSurfacePath `gamma`.
 
-        Attributes
+        Parameters
         ----------
         gamma : RiemannSurfacePath
             A path along which to evaluate the differential.
