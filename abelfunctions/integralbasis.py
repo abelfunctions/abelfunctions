@@ -209,7 +209,7 @@ def integral_basis(f, x, y):
     d  = sympy.degree(f, y)
     lc = sympy.LC(f, y)
     if x in lc:
-        f = sympy.ratsimp(f.subs(y, y/lc)*lc**(d-1))
+        f = sympy.ratsimp(f.subs(y,y/lc)*lc**(d-1))
     else:
         f = f/lc
         lc = 1
@@ -219,12 +219,11 @@ def integral_basis(f, x, y):
 
     # reverse leading coefficient scaling
     for i in xrange(1,len(b)):
-        b[i] = (b[i].subs(y, lc*y)).ratsimp()
-
+        b[i] = (b[i].subs(y, lc*y)).together()
     return b
 
 
-def _integral_basis_monic(f, x, y):
+def _integral_basis_monic(f,x,y):
     r"""Returns the integral basis of a monic curve.
 
     Called by :func:`integral_basis` after monicizing its input curve.
@@ -259,17 +258,17 @@ def _integral_basis_monic(f, x, y):
     r = []
     alpha = [sympy.roots(k).keys()[0] for k in df]
     for alphak in alpha:
-        rk = compute_series_truncations(f, x, y, alphak)
+        rk = compute_series_truncations(f,x,y,alphak)
         r.append(rk)
 
     # main loop
-    a = [sympy.Symbol('a%d'%k) for k in range(n)]
+    a = tuple(sympy.Symbol('a%d'%k) for k in range(n))
     b = [sympy.S(1)]
     for d in range(1,n):
-        bd = compute_bd(f, x, y, b, df, r, alpha, a)
+        bd = compute_bd(f,x,y,b,df,r,alpha,a)
         b.append(bd)
-
     return b
+
 
 def compute_bd(f, x, y, b, df, r, alpha, a):
     """Determine the next integral basis element from those already computed.
@@ -297,9 +296,9 @@ def compute_bd(f, x, y, b, df, r, alpha, a):
         The next integral basis element.
 
     """
-    # initialize guess for bd
     d = len(b)
-    bd = y*b[-1]
+    b = tuple(b) # need to make hashable for caching
+    bd = y*b[-1] # guess for next integral basis element
 
     # loop over each k-factor and, therefore, each puiseux series
     # centered at the root of k.
@@ -307,54 +306,77 @@ def compute_bd(f, x, y, b, df, r, alpha, a):
         k = df[l]
         alphak = alpha[l]
         rk = r[l]
-
         found_something = True
         while found_something:
-            equations = []
-
             # for each puiseux rki series at alphak determine the negative
             # power coefficients and add these coeffs to the set of
             # equations we wish to solve for the a0,...,a(d-1)
+            equations = []
             for rki in rk:
-                A = PuiseuxXSeries(f, x, y, alphak, {sympy.S(0):0},
-                                   order=rki.order+1)
-
-                for ai,bi in zip(a[:d] + [1], b + [bd]):
-                    term = evaluate_integral_basis_element(
-                        f, bi, x, y, rki, alphak)
-                    term = term * ai
-                    A = A + term
+                A = evaluate_A(a,b,rki)
+                A = A + evaluate_integral_basis_element(bd,rki)
 
                 # append the coefficients of the terms of order less
                 # than one to the system for the unknown ai's
-                terms = [coeff for exponent,coeff in A.terms if exponent < 1]
+                terms = [coeff for exp,coeff in A.terms if exp < 1]
                 equations.extend(terms)
 
             # the system of equations for the undetermined coefficients
             # is now built. attempt to solve for the unknowns
             sols = solve_coefficient_system(equations, a[:d])
-            if sols is None or sols == []:
-                # no solution was found. the integral basis element is
-                # sufficiently singular at this alphak
-                found_something = False
-            else:
+            if sols:
                 # build next guess for current basis element
                 bdm1 = sum(sols[i]*b[i] for i in range(d))
                 bd = sympy.ratsimp((bdm1 + bd) / k)
+            else:
+                # no solution was found. the integral basis element is
+                # sufficiently singular at this alphak
+                found_something = False
     return bd
 
 
-def solve_coefficient_system(equations, vars):
-    # try a fast polynomial solver first. if that doesn't work then
-    # switch to a generic solver.
-    try:
-        sols = sympy.solve_poly_system(equations, vars)
-        if sols:
-            sols = sols[0]
-    except ZeroDivisionError:
-        sols = sympy.solve(equations, vars)
-        if isinstance(sols, dict):
-            sols = [sols[var] for var in vars]
+def solve_coefficient_system(equations, vars, **kwds):
+    r"""Solve the linear system of `equations` with resp. to `vars`.
+
+    The systems of equations considered in this problem is always
+    linear. This function constructs the linear system and solves
+    it. The format is simliar to `sympy.solve`.
+
+    Parameters
+    ----------
+    equations : list
+        A system of equations in `vars`.
+    vars : list
+        A list of variables to solve for in `equations`.
+
+    Returns
+    -------
+    list or `None`
+        If a unique solution exists, returns as a list. Otherwise,
+        returns `None`.
+
+    """
+    # form augmented matrix. note that we negate the RHS entries because
+    # they originally appear in the LHS equations, themselves
+    polys, opt = sympy.parallel_poly_from_expr(equations,vars)
+    M = [[p.coeff_monomial(ai) for ai in vars] for p in polys]
+    M = sympy.Matrix(M)
+    b = [[-p.coeff_monomial(1)] for p in polys]
+    b = sympy.Matrix(b)
+    system = M.row_join(b)
+
+    # solve the augmented system
+    sols = sympy.solve_linear_system(system, *vars, **kwds)
+
+    # the only case when we have a valid "solution" is in the finite
+    # case. an infinite family of solutions doesn't count.
+    if sols:
+        if len(sols.keys()) < len(vars):
+            sols = None
+        else:
+            sols = [sols[ai] for ai in vars]
+    else:
+        sols = None
     return sols
 
 
@@ -369,21 +391,21 @@ def memoize(f):
 
 
 @memoize
-def evaluate_integral_basis_element(f, b, x, y, rki, alphak):
+def evaluate_integral_basis_element(b,rki):
     r"""Evaluates the integral basis element ``b`` at ``rki``.
 
     Cached for performance considerations.
 
     Parameters
     ----------
-    f : sympy.Expr
-    x : sympy.Symbol
-    y : sympy.Symbol
     b : sympy.Expr
         An integral basis element: a function which is polynomial in
         `y` but rational in `x`.
+    x : sympy.Symbol
+    y : sympy.Symbol
     rki : sympy.Expression
         A Puiseux series in `x`.
+    f : sympy.Expr
     alphak : complex
         The center of the Puiseux series expansion.
 
@@ -399,12 +421,17 @@ def evaluate_integral_basis_element(f, b, x, y, rki, alphak):
     http://github.com/cswiercz/abelfunctions.
 
     """
-    zero = sympy.S(0)
-    val = PuiseuxXSeries(f, x, y, rki.x0, ((zero,zero),), order=rki.order+1)
-    b_num, b_den = b.as_numer_denom()
+    f = rki.f
+    x = rki.x
+    y = rki.y
+    alphak = rki.x0
+    order = rki.order + 1
+    zero = ((sympy.S(0),sympy.S(0)),)
+    val = PuiseuxXSeries(f,x,y,alphak,zero,order=order)
 
     # extract the coefficients and exponents of the numerator as a
     # polynomial in y and evaluate as a PuiseuxXSeries
+    b_num, b_den = b.as_numer_denom()
     b_num = sympy.poly(b_num,y)
     for (exponent,), coeff in b_num.terms():
         val = val + rki**exponent * coeff
@@ -416,37 +443,40 @@ def evaluate_integral_basis_element(f, b, x, y, rki, alphak):
     return val
 
 
-if __name__ == '__main__':
-    from sympy.abc import x,y,T
-    import cProfile, pstats
+@memoize
+def evaluate_A(a,b,rki):
+    r"""Evaluate the expression:
 
-    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
-    f2 = -x**7 + 2*x**3*y + y**3
-    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
-    f4 = y**2 + x**3 - x**2
-    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
-    f6 = y**4 - y**2*x + x**2
-    f7 = y**3 - (x**3 + y)**2 + 1
-    f8 = x**2*y**6 + 2*x**3*y**5 - 1               # XXX
-    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-    f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1  # XXX
+    .. math::
 
-    f8a = -x**10 + 2*x**3*y**5 + y**6;
-    g = 3*y**7 + 3*y**6 + y**5 + 2*y*x**7 + 2*x**7
+        A_i := a_1 b_1(x,r_{ki}) + \cdots + a_n b_n(x,r_{ki})
 
-    fs = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10]
+    An intermediate computation in the evaluation of the integral
+    basis. Cached for performance purposes.
 
-    f = f3
+    Parameters
+    ----------
+    a : list of sympy.Symbol
+    b : sympy.Expr
+        An integral basis element.
+    rki : PuiseuxXSeries
+        The Puiseux series at which to evaluate the "A" expression.
 
-#    b = integral_basis(f, x, y)
-
-    cProfile.run("b = integral_basis(f, x, y)",'intbasis.profile')
-    p = pstats.Stats('intbasis.profile')
-    p.strip_dirs()
-    p.sort_stats('time').print_stats(15)
-    p.sort_stats('cumulative').print_stats(15)
-    p.sort_stats('calls').print_stats(15)
-
-    sympy.pprint(b, use_unicode=False)
-
-
+    Returns
+    -------
+    PuiseuxXSeries
+        `A` evaluated at `rki` as a Puiseux series.
+    """
+    d = len(b)
+    f = rki.f
+    x = rki.x
+    y = rki.y
+    alphak = rki.x0
+    zero = {sympy.S(0):0}
+    order = rki.order + 1
+    A = PuiseuxXSeries(f,x,y,alphak,zero,order=order)
+    for ai,bi in zip(a[:d],b):
+        term = evaluate_integral_basis_element(bi,rki)
+        term = term * ai
+        A = A + term
+    return A

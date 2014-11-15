@@ -771,7 +771,6 @@ class PuiseuxTSeries(object):
         s += '+ O(%s**%s)'%(self.t, self.order)
         return s
 
-
     def xseries(self, all_conjugates=True):
         r"""Returns the corresponding x-series.
 
@@ -1086,7 +1085,7 @@ class PuiseuxXSeries(object):
 
         # intitalize terms from given object
         terms = self.initialize_terms(obj, order=order)
-        self.terms = tuple(sorted(terms, key=itemgetter(0)))
+        self.terms = terms #tuple(sorted(terms, key=itemgetter(0)))
 
         # determine ramification index of this Puiseux series. if not
         # explicitly given in construction it is assumed from the
@@ -1098,9 +1097,7 @@ class PuiseuxXSeries(object):
             ramification_index = sympy.gcd(denoms)
         self.ramification_index = ramification_index
         self.order = order
-
-        # PuiseuxXSeries are immutable. store the hash
-        self._hash = hash((self.f, self.x0, self.terms, self.order))
+        self._hash = None
 
     ##################
     # property: order
@@ -1119,9 +1116,6 @@ class PuiseuxXSeries(object):
         # truncate if new order is less than previous
         self.terms = tuple((exp,coeff) for exp,coeff in self.terms
                            if exp < self._order)
-
-        # update hash
-        self._hash = hash((self.f, self.x0, self._terms, self._order))
     order = property(get_order, set_order)
 
     ##################
@@ -1132,7 +1126,10 @@ class PuiseuxXSeries(object):
     def set_terms(self, terms):
         # filter out zero terms unless the series is the zero
         # series. (useful for accumulation.)
-        terms = tuple((exp,coeff) for exp,coeff in terms if coeff != 0)
+        terms = tuple(sorted(
+            [(exp,coeff) for exp,coeff in terms if coeff != 0],
+            key=itemgetter(0)))
+
         if not terms:
             terms = ((0,0),)
         self._terms = terms
@@ -1142,9 +1139,6 @@ class PuiseuxXSeries(object):
         if not self._order:
             order = max(exp for exp,coeff in self._terms)
             self._order = order if order else sympy.oo
-
-        # update hash
-        self._hash = hash((self.f, self.x0, self._terms, self._order))
     terms = property(get_terms, set_terms)
 
 
@@ -1157,7 +1151,10 @@ class PuiseuxXSeries(object):
         :meth:`abelfucntions.integralbasis.integral_basis`.
 
         """
+        if not self._hash:
+            self._hash = hash((self.x0,self.terms,self.order))
         return self._hash
+
 
     def __repr__(self):
         s = ''
@@ -1232,16 +1229,95 @@ class PuiseuxXSeries(object):
         tuple of 2-tuples
 
         """
+        # optimize for various kinds of expressions
         order = order if order else 5
-        terms = []
+        numer,denom = expr.as_numer_denom()
+        if self.x not in expr:
+            return self._terms_from_sympy_const(expr,order)
+        if numer.is_algebraic_expr() and self.x not in denom:
+            return self._terms_from_sympy_polynomial(expr,order)
+        elif numer.is_algebraic_expr() and denom.is_algebraic_expr():
+            return self._terms_from_sympy_rational(expr,order)
+        else:
+            return self._terms_from_sympy_generic(expr,order)
+
+    def _terms_from_sympy_const(self, expr, order):
+        r"""Returns terms of constant expression.
+        """
+        return ((0,expr),)
+
+    def _terms_from_sympy_polynomial(self, expr, order):
+        r"""Returns terms from polynomial expression."""
+        expr = expr.subs({self.x:self.x+self.x0}).expand()
+        terms = expr.collect(self.x,evaluate=False).items()
+        terms = [(exp.as_coeff_exponent(self.x)[1],coeff)
+                 for exp,coeff in terms]
+        return tuple(terms)
+
+    def _terms_from_sympy_rational(self, expr, order):
+        r"""Returns terms from rational expression.
+
+        Common and potentially slow situation. This method first
+        separates the numerator and denominator. The denominator is
+        written as
+
+        ..math ::
+
+            d(x) = cx^l \tilde{d}(x)
+
+        where :math:`\tilde{d}(0) = 1`. This is so a fast Taylor series
+        calculation can be done on :math:`\tilde{d}`. The factor of
+        :math:`cx^l` is introduced back into the resulting series.
+
+        This approach is similar to the
+        :func:`abelfunctions.differentials.fast_expand` approach using
+        in localizing :class:`Differential` objects.
+
+        """
+        numer,denom = expr.as_numer_denom()
+        numer = numer.subs({self.x:self.x+self.x0}).expand()
+        numer = numer.collect(self.x,evaluate=False).items()
+        denom = denom.subs({self.x:self.x+self.x0}).expand()
+        lead_coeff, lead_exp = denom.leadterm(self.x)
+        denom = (denom/(lead_coeff*self.x**lead_exp)).expand()
+        denom = denom.collect(self.x,evaluate=False).items()
+
+        # forward solve the coefficient system. note that r[0]
+        # (constant coeff of denom) is nonzero by construction
+        N = max(int(round(order)),1)
+        q = [0]*N
+        for n,qn in numer:
+            n = n.as_coeff_exponent(self.x)[1]
+            if n < N:
+                q[n] = qn
+        r = [0]*N
+        for n,rn in denom:
+            n = n.as_coeff_exponent(self.x)[1]
+            if n < N:
+                r[n] = rn
+        s = [0]*N
+        for n in range(N):
+            known_terms = sum(r[n-k]*s[k] for k in range(n))
+            s[n] = (q[n] - known_terms)/r[0]
+
+        terms = [(n-lead_exp,s[n]/lead_coeff) for n in range(N)
+                 if s[n] not in [0,sympy.S(0)]]
+        return tuple(terms)
+
+    def _term_from_sympy_generic(self, expr, order):
+        r"""Returns terms from a generic sympy expression.
+
+        The slowest method. Uses `sympy.lseries`.
+        """
         s = sympy.series(expr, self.x, x0=self.x0, n=None)
         for term in s:
-            term = term.subs(self.x, self.x + self.x0)
+            term = term.subs(self.x,self.x+self.x0)
             coeff, exp = term.as_coeff_exponent(self.x)
             terms.append((exp,coeff))
             if exp >= order:
                 break
         return tuple(terms)
+
 
     ###########################################################################
     # Operator Overloading
@@ -1335,6 +1411,7 @@ class PuiseuxXSeries(object):
         # note: only works when ``other`` is a sympy.Expr
         if not isinstance(other, sympy.Expr):
             raise NotImplementedError('Can only divide by Sympy Expressions.')
+
         return self.__mul__(1/other)
 
     def __pow__(self, e):

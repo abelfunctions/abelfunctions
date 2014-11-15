@@ -83,7 +83,7 @@ def mnuk_conditions(g, u, v, b, P, c):
         to determine the differentials.
 
     """
-    numer, denom = b.as_numer_denom()
+    numer,denom = b.as_numer_denom()
 
     # reduce b*P modulo g
     expr = numer.as_poly(v,u,*c) * P.as_poly(v,u,*c, domain='QQ[I]')
@@ -122,8 +122,8 @@ def differentials(f, x, y):
 
     """
     # compute the "total degree" (Poly.total_degree doesn't give the
-    # desired result). This is the largest monomial degree in the sum
-    # of the degrees in both x and y.
+    # desired result). This is the largest monomial degree in the sum of
+    # the degrees in both x and y.
     d = max(map(sum,f.as_poly(x,y).monoms()))
     n = sympy.degree(f,y)
 
@@ -135,14 +135,14 @@ def differentials(f, x, y):
     c = [cij for ci in c for cij in ci]
 
     # for each singular point [x:y:z] = [alpha:beta:gamma], map f onto
-    # the "most convenient and appropriate" affine subspace, (u,v),
-    # and center at u=0. determine the conditions on P
+    # the "most convenient and appropriate" affine subspace, (u,v), and
+    # center at u=0. determine the conditions on P
     S = singularities(f,x,y)
     conditions = []
     for singular_pt,(m,delta,r) in S:
-        # recenter the curve and adjoint polynomial at the
-        # singular point: find the affine plane u,v such that
-        # the singularity occurs at u=0
+        # recenter the curve and adjoint polynomial at the singular
+        # point: find the affine plane u,v such that the singularity
+        # occurs at u=0
         g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
         g = g.subs(u,u+u0)
         Ptilde,u,v,u0,v0 = _transform(P,x,y,singular_pt)
@@ -160,11 +160,6 @@ def differentials(f, x, y):
     sols = sympy.solve(conditions, c)
     P = P.subs(sols).as_poly(*c)
     differentials = [coeff for coeff in P.coeffs() if coeff != 0]
-
-    # # sanity check: the number of differentials matches the genus
-    # g = genus(f,x,y)
-    # if g != -1 and g != len(differentials):
-    #     raise AssertionError("Number of differentials does not match genus.")
     dfdy = sympy.diff(f,y)
     differentials = [differential/dfdy for differential in differentials]
     return map(lambda omega: Differential(omega, x, y), differentials)
