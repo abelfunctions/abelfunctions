@@ -177,7 +177,6 @@ def _new_polynomial(F,X,Y,tau,l):
         binom = sympy.binomial_coefficients_list(b)
         new_a = int(q*a + m*b)
         for i in range(b+1):
-            # the coefficient of the x***(qa+mb) * y**i term
             new_c = c * (mu**a) * (eta**b) * (binom[i]) * (beta**(b-i))
             try:
                 d[(new_a,i)] += new_c
@@ -192,11 +191,20 @@ def _new_polynomial(F,X,Y,tau,l):
         Fnew = dict(((a-l,b),c) for (a,b),c in d.iteritems()
                     if not numpy.isclose(c,0,rtol=1e-13,atol=1e-13))
 
-    # sanity check(s)
-    if any((a<0 or b<0) or (a==0 and b==0) for a,b in Fnew.keys()):
+    # simplification really slows things down. a valid Newton polynomial
+    # should never have a constant term. if one is detected then its
+    # coefficient necessarily simplifies to zero.
+    if (0,0) in Fnew.keys():
+        if sympy.simplify(Fnew[(0,0)]) != 0:
+            raise ValueError('Error in constructing next Newton polynomial: '
+                             'constant term nonzero.')
+        else:
+            Fnew.pop((0,0))
+
+    # sanity check
+    if any((a<0 or b<0) for a,b in Fnew.keys()):
         raise ValueError('Error in constructing next Newton polynomial: '
-                         'constant term or negative monomial exponents '
-                         'encountered.')
+                         'negative monomial exponents encountered.')
     return Fnew
 
 
@@ -419,6 +427,7 @@ def singular_term(F, X, Y, I):
         for (q,m,l,Phi) in desingularize(F,X,Y):
             roots = Phi.all_roots(radicals=True)
             for eta in roots:
+                eta = sympy.simplify(eta)
                 tau = (q,1,m,1,eta)
                 T.append((tau,0,1))
         return T
@@ -444,8 +453,8 @@ def singular_term(F, X, Y, I):
             # flag, r, indicating whether or not we're done determining
             # the singular term
             for xi in roots:
-                mu = xi**(-v)
-                beta = xi**u
+                mu = sympy.simplify(xi**(-v))
+                beta = sympy.simplify(xi**u)
                 tau = (q,mu,m,beta,1)
                 T.append((tau,l,r))
     return T
@@ -666,7 +675,7 @@ def puiseux(f, x, y, alpha, beta=None, t=sympy.Symbol('t'), parametric=False,
     # compute the puiseux series data and construct the corresponding
     # PuiseuxTSeries objects.
     singular_data = singular(fshift,x,y,[])
-    series = [PuiseuxTSeries(f, x, y, alpha, datum, t=t, exact=exact)
+    series = [PuiseuxTSeries(f,x,y,alpha,datum,t=t,exact=exact)
               for datum in singular_data]
     for P in series:
         P.extend(order=order, nterms=nterms)
@@ -731,10 +740,10 @@ class PuiseuxTSeries(object):
 
     @property
     def is_symbolic(self):
-        return self.__is_symbolic
+        return self._is_symbolic
     @property
     def is_numerical(self):
-        return not self.__is_symbolic
+        return not self._is_symbolic
 
     @property
     def termsn(self):
@@ -772,7 +781,6 @@ class PuiseuxTSeries(object):
         self.y = y
         self.t = t
         self.x0 = x0
-
         extension_terms, extension_polynomial = singular_data
         ramification_index, xcoefficient, terms = build_series(extension_terms)
 
@@ -793,7 +801,7 @@ class PuiseuxTSeries(object):
 
         # coerce data to Numpy numerical types if requested on
         # construction
-        self.__is_symbolic = exact
+        self._is_symbolic = exact
         if self.is_numerical:
             self.coerce_to_numerical()
 
@@ -894,7 +902,7 @@ class PuiseuxTSeries(object):
             for ((i,j),c) in self.extension_polynomial.iteritems()
             )
 
-        self.__is_symbolic = False
+        self._is_symbolic = False
 
     def xseries(self, all_conjugates=True):
         r"""Returns the corresponding x-series.
@@ -1205,25 +1213,25 @@ class PuiseuxXSeries(object):
     """
     @property
     def order(self):
-        return self.__order
+        return self._order
     @order.setter
     def order(self, value):
         # if order isn't specified then set order equal to the exponent
         # of the largest non-zero term plus 1/ramification_index
         if value:
-            self.__order = value
+            self._order = value
         else:
             order = max(exp for exp,coeff in self.terms)
-            self.__order = order + 1/self.ramification_index
+            self._order = order + 1/self.ramification_index
 
         # truncate if new order is less than previous
         self.terms = tuple((exp,coeff) for exp,coeff in self.terms
-                           if exp < self.__order)
-        self.__hash = hash((self.f, self.x0, self.__terms, self.__order))
+                           if exp < self._order)
+        self._hash = hash((self.f, self.x0, self._terms, self._order))
 
     @property
     def terms(self):
-        return self.__terms
+        return self._terms
     @terms.setter
     def terms(self, value):
         # filter out zero terms unless the series is the zero
@@ -1231,21 +1239,21 @@ class PuiseuxXSeries(object):
         terms = tuple((exp,coeff) for exp,coeff in value if coeff != 0)
         if not value:
             value = ((0,0),)
-        self.__terms = value
+        self._terms = value
 
         # if order isn't set then assume all known terms are given. if
         # order ends up being zero then set to infinity
-        if not self.__order:
-            order = max(exp for exp,coeff in self.__terms)
-            self.__order = order if order else sympy.oo
-        self.__hash = hash((self.f, self.x0, self.__terms, self.__order))
+        if not self._order:
+            order = max(exp for exp,coeff in self._terms)
+            self._order = order if order else sympy.oo
+        self._hash = hash((self.f, self.x0, self._terms, self._order))
 
     @property
     def is_symbolic(self):
-        return self.__is_symbolic
+        return self._is_symbolic
     @property
     def is_numerical(self):
-        return not self.__is_symbolic
+        return not self._is_symbolic
 
     def __init__(self, f, x, y, x0, obj, order=None, ramification_index=None):
         r"""Initialize a PuiseuxXSeries.
@@ -1294,8 +1302,8 @@ class PuiseuxXSeries(object):
 
         # intitalize terms from given object. coerce data to Numpy
         # numerical types if requested on construction.
-        self.__terms = None
-        self.__order = None
+        self._terms = None
+        self._order = None
         terms = self.initialize_terms(obj, order=order)
         self.terms = tuple(sorted(terms, key=itemgetter(0)))
 
@@ -1526,7 +1534,6 @@ class PuiseuxXSeries(object):
                 break
         return tuple(terms)
 
-
     ###########################################################################
     # Operator Overloading
     ###########################################################################
@@ -1656,7 +1663,6 @@ class PuiseuxXSeries(object):
         complex
 
         """
-        # [TODO] Change once we start computing infinite series
         return sum(alpha * (x-self.x0)**ne for ne,alpha in self.terms)
 
     def valuation(self):
@@ -1698,5 +1704,3 @@ class PuiseuxXSeries(object):
         for exp, coeff in self.terms:
             expr += coeff*(self.x - self.x0)**exp
         return expr
-
-    
