@@ -166,7 +166,7 @@ def compute_series_truncations(f, x, y, alpha):
     """
     # compute the parametric Puiseix series with the minimal number of
     # terms needed to distinguish them.
-    pt = puiseux(f, x, y, alpha, parametric=True)
+    pt = puiseux(f,x,y,alpha,parametric=True,exact=True)
     px = [p for P in pt for p in P.xseries()]
 
     # compute the orders necessary for the integral basis algorithm
@@ -322,7 +322,7 @@ def compute_bd(f, x, y, b, df, r, alpha, a):
                 equations.extend(terms)
 
             # the system of equations for the undetermined coefficients
-            # is now built. attempt to solve for the unknowns
+            # is now built. attempt to solve for the unknowns.
             sols = solve_coefficient_system(equations, a[:d])
             if sols:
                 # build next guess for current basis element
@@ -441,7 +441,6 @@ def evaluate_integral_basis_element(b,rki):
     # sympy.lseries() and take the appropriate numer of terms.)
     val = val/b_den
     return val
-
 
 @memoize
 def evaluate_A(a,b,rki):

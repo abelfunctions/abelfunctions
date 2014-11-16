@@ -1,3 +1,4 @@
+from abelfunctions.differentials cimport Differential
 from abelfunctions.riemann_surface cimport RiemannSurface
 from abelfunctions.analytic_continuation cimport AnalyticContinuator
 
@@ -15,9 +16,10 @@ cdef class RiemannSurfacePathPrimitive:
     cdef int _nearest_checkpoint_index(self, double)
     cpdef complex get_x(self, double)
     cpdef complex get_dxdt(self, double)
-    cpdef complex[:] analytically_continue(RiemannSurfacePathPrimitive,
-                                           complex, complex[:], complex)
+    cpdef complex[:] analytically_continue(self, complex, complex[:], complex)
     cpdef complex[:] get_y(self, double)
+    cpdef complex integrate(self, Differential)
+    cpdef complex[:] evaluate(self, Differential, double[:])
 
 
 cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
@@ -30,8 +32,7 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
     cdef complex theta
     cdef complex dtheta
 
-
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     cdef int _get_segment_index(self, double)
-    pass
+
 

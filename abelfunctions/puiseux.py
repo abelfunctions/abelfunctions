@@ -1,4 +1,4 @@
-"""Puiseux Series :mod:`abelfunctions.puiseux`
+r"""Puiseux Series :mod:`abelfunctions.puiseux`
 ===========================================
 
 Tools for computing Puiseux series. A necessary component for computing
@@ -43,7 +43,6 @@ from utilities import cached_function
 # we use global symbols for Sympy caching performance
 _Z = sympy.Dummy('Z')
 
-
 def _coefficient(F):
     """Returns a dict of coefficients of ``F`` indexed by monomial powers.
 
@@ -67,10 +66,9 @@ def _coefficient(F):
         True
 
     """
+    # [TODO] legacy. don't touch without refactoring the code
     d = {}
-    monoms = F.monoms()
-    coeffs = F.coeffs()
-    for a,(j,i) in zip(coeffs,monoms):   # lexicographic ordering
+    for (j,i),a in F.items():
         d[(i,j)] = a
     return d
 
@@ -93,7 +91,7 @@ def _bezout(q, m):
     return u,v
 
 
-def _square_free(Phi, var):
+def _square_free(Phi,var):
     r"""Returns the square-free factors of the polynomial ``Phi``.
 
     Returns a list of tuples :math:`(\Psi, r)` such that each
@@ -124,7 +122,7 @@ def _square_free(Phi, var):
     return sympy.sqf_list(Phi,var)[1]
 
 
-def _new_polynomial(F, X, Y, tau, l):
+def _new_polynomial(F,X,Y,tau,l):
     r""" Computes the next iterate of the Newton-Puiseux algorithms.
 
     Given the Puiseux data :math:`\tau = (q,\mu,m,\beta,\eta)`
@@ -163,6 +161,7 @@ def _new_polynomial(F, X, Y, tau, l):
     """
     q,mu,m,beta,eta = tau
     d = {}
+    is_symbolic = any([isinstance(coeff, sympy.Expr) for coeff in F.values()])
 
     # for each monomial of the form
     #
@@ -174,10 +173,10 @@ def _new_polynomial(F, X, Y, tau, l):
     #     x |--> mu * x**q
     #     y |--> eta * x**m * (beta+y)
     #
-    for (a,b),c in F.as_dict().iteritems():
+    for (a,b),c in F.items():
         binom = sympy.binomial_coefficients_list(b)
         new_a = int(q*a + m*b)
-        for i in xrange(b+1):
+        for i in range(b+1):
             # the coefficient of the x***(qa+mb) * y**i term
             new_c = c * (mu**a) * (eta**b) * (binom[i]) * (beta**(b-i))
             try:
@@ -185,16 +184,23 @@ def _new_polynomial(F, X, Y, tau, l):
             except KeyError:
                 d[(new_a,i)] = new_c
 
-    # now perform the polynomial division by x**l. In the case when the
-    # curve is singular there will be a cancellation resulting in a term
-    # of the form (0,0):0 . Creating a new polynomial containing such a
-    # term will result in the zero polynomial.
-    new_d = dict([((a-l,b),c) for (a,b),c in d.iteritems()])
-    Fnew = sympy.Poly.from_dict(new_d, gens=[X,Y], domain=sympy.EX)
+    # now perform the polynomial division by x**l removing all zero or,
+    # if using numeric types, close to zero terms
+    if is_symbolic:
+        Fnew = dict(((a-l,b),c) for (a,b),c in d.iteritems() if c != 0)
+    else:
+        Fnew = dict(((a-l,b),c) for (a,b),c in d.iteritems()
+                    if not numpy.isclose(c,0,rtol=1e-13,atol=1e-13))
+
+    # sanity check(s)
+    if any((a<0 or b<0) or (a==0 and b==0) for a,b in Fnew.keys()):
+        raise ValueError('Error in constructing next Newton polynomial: '
+                         'constant term or negative monomial exponents '
+                         'encountered.')
     return Fnew
 
 
-def polygon(F, X, Y, I):
+def polygon(F,X,Y,I):
     r"""Returns the Newton polygon data corresponding to ``F``.
 
     If ``I=2`` the correspondence is only with the segments with
@@ -229,8 +235,7 @@ def polygon(F, X, Y, I):
 
     """
     # compute the coefficients and support of F
-    P = sympy.poly(F,X,Y)
-    a = _coefficient(P)
+    a = _coefficient(F)
     support = a.keys()
 
     # compute the lower convex hull of F.
@@ -362,13 +367,11 @@ def singular(F, X, Y, pi=None):
         part of a :class:`PuiseuxTSeries`.
 
     """
-    S = []
-
     # set a flag for whether or not this is a new Puiseux t-series we're
     # computing or if we need to compute more terms of an existing
     # t-series dataset.
+    S = []
     I = 2 if pi else 1
-
     for (tau,l,r) in singular_term(F,X,Y,I):
         pi1 = pi + [tau]
         F1 = _new_polynomial(F,X,Y,tau,l)
@@ -409,29 +412,28 @@ def singular_term(F, X, Y, I):
         Puiseux series.
 
     """
-    T = []
-
     # if the curve is singular then compute the singular tuples and
     # return.  otherwise, use the standard newton polygon method
-    if is_singular_curve(F, X, Y):
-        for (q,m,l,Phi) in desingularize(F, X, Y):
-            for eta in Phi.all_roots(radicals=True):
-                eta = sympy.together(eta)
+    T = []
+    if is_singular_curve(F,X,Y):
+        for (q,m,l,Phi) in desingularize(F,X,Y):
+            roots = Phi.all_roots(radicals=True)
+            for eta in roots:
                 tau = (q,1,m,1,eta)
                 T.append((tau,0,1))
         return T
 
     # for each side of the newton polygon
-    for (q,m,l,Phi) in polygon(F, X, Y, I):
+    for (q,m,l,Phi) in polygon(F,X,Y,I):
         u,v = _bezout(q,m)
 
         # each newton polygon side has a characteristic polynomial. For
         # each square-free factor, each root corresponds to a K-term
-        for (Psi,r) in _square_free(Phi, _Z):
+        for (Psi,r) in _square_free(Phi,_Z):
             # compute the roots of Psi. Use the RootOf construct if
             # possible. In the case when Psi is over EX (i.e. when
             # RootOf doesn't work) then compute symbolic roots.
-            Psi = sympy.Poly(Psi, _Z)
+            Psi = sympy.Poly(Psi,_Z)
             try:
                 roots = Psi.all_roots(radicals=True)
             except NotImplementedError:
@@ -443,7 +445,7 @@ def singular_term(F, X, Y, I):
             # the singular term
             for xi in roots:
                 mu = xi**(-v)
-                beta = sympy.together(xi**u)
+                beta = xi**u
                 tau = (q,mu,m,beta,1)
                 T.append((tau,l,r))
     return T
@@ -462,12 +464,10 @@ def is_singular_curve(f,x,y):
     boolean
 
     """
-    p = sympy.Poly(f,x,y)
-    coeffs = _coefficient(p)
-    deg = p.degree(y)
-
     # the expansion is singular if there is no "c y**deg" where c is constant
     # and if there is a constant term
+    coeffs = _coefficient(f)
+    deg = max(j for (i,j) in f.keys())
     sing_coeffs = [(i,j) for (i,j),a in coeffs.iteritems() if i==deg]
     if (0,0) in coeffs.keys() and (deg,0) not in sing_coeffs:
         return True
@@ -542,7 +542,6 @@ def build_qh_dict(q):
             # indexing shift.
             if h2 == h:
                 qh[(h1,h2+1)] = qh1h2*q[h]
-
     return qh
 
 
@@ -607,7 +606,7 @@ def build_series(pi):
         for i in range(0,h):
             alpha_h *= mu[i+1]**sum(m[j]*qh[(j+1,i)] for j in xrange(0,i))
         for i in range(h,R-1):
-            alpha_h *= mu[i+1]**sum(m[j]*qh[(j+1,i)] for j in xrange(0,h))
+            alpha_h *= mu[i+1]**sum(m[j]*qhv[(j+1,i)] for j in xrange(0,h))
         alpha_h *= eta_h*beta[h]
 
         # add to the terms dictionary
@@ -617,7 +616,7 @@ def build_series(pi):
 
 
 def puiseux(f, x, y, alpha, beta=None, t=sympy.Symbol('t'), parametric=False,
-            order=None, nterms=None):
+            order=None, nterms=None, exact=True):
     r"""Returns a list of Puiseux series lying above :math:`x=\alpha`.
 
     Computes a list of :class:`PuiseuxTSeries` objects representing the
@@ -656,16 +655,18 @@ def puiseux(f, x, y, alpha, beta=None, t=sympy.Symbol('t'), parametric=False,
     """
     # scale and shift f accordingly: the algorithms for computing the
     # Puiseux series terms are centered at x=0
-    if alpha == sympy.oo:
-        f = (f.subs(x, 1/x) * x**(f.degree(x)))
+    if alpha in [sympy.oo, numpy.Inf, 'oo']:
+        alpha = sympy.oo
+        dx = sympy.degree(f,x)
+        fshift = f.subs(x, 1/x) * x**dx
     else:
-        f = f.subs(x, x + alpha)
-    f = sympy.Poly(f,[x,y])
+        fshift = f.subs(x, x + alpha)
+    fshift = sympy.Poly(fshift,x,y).as_dict()
 
     # compute the puiseux series data and construct the corresponding
     # PuiseuxTSeries objects.
-    singular_data = singular(f,x,y,[])
-    series = [PuiseuxTSeries(f, x, y, alpha, datum, t=t)
+    singular_data = singular(fshift,x,y,[])
+    series = [PuiseuxTSeries(f, x, y, alpha, datum, t=t, exact=exact)
               for datum in singular_data]
     for P in series:
         P.extend(order=order, nterms=nterms)
@@ -675,10 +676,11 @@ def puiseux(f, x, y, alpha, beta=None, t=sympy.Symbol('t'), parametric=False,
     if beta is not None:
         series = [Pi for Pi in series if Pi.eval_y(0) == beta]
 
-    # compute all x-series if requested
+    # return x-series representations if requested
     if not parametric:
         series = [px for P in series for px in P.xseries()]
     return series
+
 
 
 class PuiseuxTSeries(object):
@@ -718,12 +720,39 @@ class PuiseuxTSeries(object):
     extend
     eval_x
     eval_y
-    evalf_x
-    evalf_y
 
     """
+    @property
+    def xdata(self):
+        return (self.center, self.xcoefficient, self.ramification_index)
+    @xdata.setter
+    def xdata(self, value):
+        self.center, self.xcoefficient, self.ramification_index = value
+
+    @property
+    def is_symbolic(self):
+        return self.__is_symbolic
+    @property
+    def is_numerical(self):
+        return not self.__is_symbolic
+
+    @property
+    def termsn(self):
+        if self.is_numerical:
+            return self.terms
+        else:
+            return [(numpy.int(n), numpy.complex(a)) for n,a in self.terms]
+    @property
+    def xdatan(self):
+        if self.is_numerical:
+            return self.xdata
+        else:
+            return (numpy.complex(self.center),
+                    numpy.complex(self.xcoefficient),
+                    numpy.int(self.ramification_index))
+
     def __init__(self, f, x, y, x0, singular_data, t=sympy.Symbol('t'),
-                 order=None):
+                 order=None, exact=True):
         r"""Initialize a PuiseuxTSeries using a set of :math:`\pi = \{\tau\}`
         data.
 
@@ -744,32 +773,128 @@ class PuiseuxTSeries(object):
         self.t = t
         self.x0 = x0
 
-        pi, F = singular_data
-        ramification_index, lamb, terms = build_series(pi)
-        self._lamb = lamb
-        self._pi = pi
-        self._F = F
-        self.ramification_index = ramification_index
-        self.terms = terms
+        extension_terms, extension_polynomial = singular_data
+        ramification_index, xcoefficient, terms = build_series(extension_terms)
+
+        # store x-part attributes.
+        sign = 1
+        if x0 in [sympy.oo, numpy.Inf, 'oo']:
+            x0 = 0
+            sign = -1
+        self.center = x0
+        self.xcoefficient = xcoefficient
+        self.ramification_index = sign*ramification_index
+
+        # store y-part attributes and y-part extension data
+        self.extension_terms = extension_terms
+        self.extension_polynomial = extension_polynomial
         self.order = order
+        self.terms = terms
+
+        # coerce data to Numpy numerical types if requested on
+        # construction
+        self.__is_symbolic = exact
+        if self.is_numerical:
+            self.coerce_to_numerical()
+
+        # the curve, x-part, and terms output by puiseux make the
+        # puiseux series unique. any mutability only adds terms
+        self._hash = hash((self.f,
+                           self.x0,
+                           self.xcoefficient,
+                           self.ramification_index,
+                           tuple(self.terms)))
 
     def __repr__(self):
         """Print the x- and y-parts of the Puiseux series."""
         # print the x-part
         s = '%s(%s) = '%(self.x,self.t)
-        s += '%s + '%(self.x0) if self.x0 != 0 else ''
-        s += '(%s)%s**%s\n'%(self._lamb, self.t, self.ramification_index)
+        s += '%s + '%(self.center) if self.center != 0 else ''
+        s += '(%s)%s**%s\n'%(self.xcoefficient,self.t,self.ramification_index)
 
         # print the y-part
-        s += '%s(%s) = '%(self.y, self.t)
+        s += '%s(%s) = '%(self.y,self.t)
         ss = '%s'%self.t
         for exp,coeff in self.terms:
             s += ' + (%s)'%coeff
-            if exp != sympy.S(0):
+            if exp != 0:
                 s += ss + '**%s'%exp
-
-        s += '+ O(%s**%s)'%(self.t, self.order)
+        s += ' + O(%s**%s)'%(self.t, self.order)
         return s
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        r"""Check equality.
+
+        A `PuiseuxTSeries` is uniquely identified by the curve it's
+        defined on, its center, x-part terms, and the singular terms of
+        the y-part.
+
+        Parameters
+        ----------
+        other : PuiseuxTSeries
+
+        Returns
+        -------
+        boolean
+
+        """
+        if is_instance(other, PuiseuxTSeries):
+            if self._id == other._id:
+                return True
+        return False
+
+    def coerce_to_numerical(self):
+        r"""Coerces coefficients and data to numerical types.
+
+        In numerical situations it is best to work with numerical types
+        instead of symbolic ones for performance purposes. When
+        `coerce_to_numerical` is executed all internal data structures
+        are converted to Numpy data types.
+
+        List of data coerced to numerical types:
+
+        * x-part terms
+        * y-part terms
+        * y-part series extension data
+
+        .. note::
+
+            Symbolic coefficient data is lost once this is performed.
+
+        Parameters
+        ---
+        None
+
+        Returns
+        ---
+        None
+
+        """
+        # coerce x-part terms
+        self.x0 = numpy.complex(self.x0)
+        self.center = numpy.complex(self.center)
+        self.xcoefficient = numpy.complex(self.xcoefficient)
+        self.ramification_index = numpy.int(self.ramification_index)
+
+        # coerce y-part terms and extension data
+        self.terms = [(numpy.int(n), numpy.complex(a)) for n,a in self.terms]
+        self.extension_terms = [
+            (numpy.int(q),
+            numpy.complex(mu),
+            numpy.int(m),
+            numpy.complex(beta),
+            numpy.complex(eta))
+            for (q,mu,m,beta,eta) in self.extension_terms
+            ]
+        self.extension_polynomial = dict(
+            ((numpy.int(i),numpy.int(j)),numpy.complex(c))
+            for ((i,j),c) in self.extension_polynomial.iteritems()
+            )
+
+        self.__is_symbolic = False
 
     def xseries(self, all_conjugates=True):
         r"""Returns the corresponding x-series.
@@ -788,23 +913,29 @@ class PuiseuxTSeries(object):
 
         """
         e = self.ramification_index
-        lamb = self._lamb
-        xseries = []
+        lamb = self.xcoefficient
         order = self.order
 
         # compute the e-th roots of lambda
-        C = sympy.root(1/lamb,e)
-        if all_conjugates:
-            conjugates = [C*sympy.exp(2*sympy.pi*sympy.I*sympy.Rational(k,e))
+        if self.is_symbolic:
+            mu = sympy.root(1/lamb,e)
+            conjugates = [mu*sympy.exp(2*sympy.pi*sympy.I*sympy.Rational(k,e))
                           for k in range(e)]
         else:
-            conjugates = [C]
+            e = numpy.double(e)
+            mu = (1./lamb)**(1./e)
+            conjugates = [mu*numpy.exp(2.0j*numpy.pi*k/e)
+                          for k in range(int(e))]
+
+        if not all_conjugates:
+            conjugates = conjugates[0:1]
 
         # compute each conjugate x-series
+        xseries = []
         for c in conjugates:
             terms = [(nh/e, alphah*c**nh) for nh,alphah in self.terms]
-            p = PuiseuxXSeries(self.f, self.x, self.y, self.x0, terms,
-                               order=order, ramification_index=e)
+            p = PuiseuxXSeries(self.f,self.x,self.y,self.x0,terms,
+                               order=order, ramification_index=int(e))
             xseries.append(p)
         return xseries
 
@@ -820,7 +951,7 @@ class PuiseuxTSeries(object):
         int
 
         """
-        return len(self._pi)
+        return len(self.terms)
 
     def add_term(self):
         r"""Add the next tau term to this Puiseux t-series in-place.
@@ -838,8 +969,9 @@ class PuiseuxTSeries(object):
 
         Returns
         -------
-        boolean
-            Returns ``False`` if a finite Puiseux expansion is encountered.
+        bool
+            Returns `True` if a new term was added. A term wouldn't be
+            added if the Puiseux series expansion is finite.
 
         .. note::
 
@@ -851,31 +983,30 @@ class PuiseuxTSeries(object):
         """
         # extract the tau data and get the current intermediate
         # polynomial F
-        q,mu,m,beta,eta = self._pi[-1]
-        F = self._F
+        q,mu,m,beta,eta = self.extension_terms[-1]
+        F = self.extension_polynomial
         x = self.x
         y = self.y
 
         # get the set of all exponents j where a_{0,j} x^j is a term in the
         # polynomial F. if this set is empty when we've found a finite
         # puiseux expansion.
-        a = dict(F.terms())
-        ms = [j for (j,i) in a.keys() if i==0 and j!=0]
-        if ms == []:
-            return False
+        ms = [j for (j,i) in F.keys() if i==0 and j!=0]
+        if not ms:
+            return None
 
         # compute the next regular tau term and polynomial: m is equal to
         # the smallest degree x^m term and beta is the raito of the
         # coefficient of this term with the coefficient of y.
         m_next = min(ms)
-        beta_next = sympy.together(-a[(m_next,0)]/a[(0,1)])
-        tau = (1, 1, m_next, beta_next, 1)
-        F = _new_polynomial(F, x, y, tau, m_next)
+        beta_next = -F[(m_next,0)]/F[(0,1)]
+        tau = (1,1,m_next,beta_next,1)
+        F = _new_polynomial(F,x,y,tau,m_next)
 
         # update the internal state, including the computation of the
         # actual y-series term and exponent
-        self._pi.append(tau)
-        self._F = F
+        self.extension_terms.append(tau)
+        self.extension_polynomial = F
 
         # compute the next term of the y-series. the formula for doing
         # so is greatly simplified when tau is regular
@@ -889,7 +1020,7 @@ class PuiseuxTSeries(object):
         return True
 
     def extend(self, order=None, nterms=None):
-        """Extends the series in place.
+        r"""Extends the series in place.
 
         Computes additional terms in the Puiseux series up to the
         specified `order` or with `nterms` number of non-zero terms. If
@@ -914,57 +1045,114 @@ class PuiseuxTSeries(object):
         # build an appropriate comparison function `cmp` and bound for
         # determining if we're done extending this series
         if order:
-            # return the degree of the last term
             cmp = lambda terms: max(terms)[0]
             bound = order
         elif nterms:
-            # return the length of terms
             cmp = lambda terms: len(terms)
             bound = nterms
 
         # main loop: keep adding terms until the stopping condition is
-        # satisfied
+        # satisfied. break if a finite Puiseux series expansion is
+        # encountered
         while cmp(self.terms) < bound:
             if not self.add_term():
-                # encountered a finite Puiseux expansion
                 break
 
-    def eval_x(self, t):
-        r"""Symbolic evaluation of the x-part of the Puiseux series.
+    def extend_to_t(self, t, curve_tol=1e-8, rel_tol=1e-4):
+        r"""Extend the series to accurately determine the y-values at `t`.
 
-        Parameters
-        ----------
-        t : sympy.Expr
-
-        Returns
-        -------
-        complex
-
-        """
-        xval = self.x0 + self._lamb*t**self._e
-        return xval
-
-    def evalf_x(self, t):
-        r"""Numerical evaluation of the x-part of the Puiseux series.
+        Add terms to the t-series until the the regular place
+        :math:`(x(t), y(t))` is within a particular tolerance of the
+        curve that the Puiseux series is approximating.
 
         Parameters
         ----------
         t : complex
+        eps : double
+        curve_tol : double
+            The tolerance for the corresponding point to lie on the curve.
+        rel_tol : double
+            A relative tolerance parameter used to ensure that the point
+            :math:`(x(t_0),y(t_0))` is on the same branch as the center
+            of the Puiseux series.
+
+        Returns
+        -------
+        none
+            The PuiseuxTSeries is modified in-place.
+        """
+        # note that we need to keep track of how much the y-value
+        # changes with each iteration just in case it is intersecting
+        # with a different branch of the curve
+        num_iter = 0
+        max_iter = 16
+        while num_iter < max_iter:
+            xt = sympy.N(self.eval_x(t))
+            yt = sympy.N(self.eval_y(t))
+            n,a = max(self.terms)
+            a = a.n()
+
+            curve_error = abs(sympy.N(self.f.subs({self.x:xt,self.y:yt})))
+            rel_error = abs(sympy.N(a*t**n/yt))
+            if (curve_error < curve_tol) and (rel_error < rel_tol):
+                break
+            else:
+                self.add_term()
+                num_iter += 1
+
+    def extend_to_x(self, x, curve_tol=1e-8, rel_tol=1e-2):
+        r"""Extend the series to accurately determine the y-values at `x`.
+
+        Add terms to the t-series until the the regular place :math:`(x,
+        y)` is within a particular tolerance of the curve that the
+        Puiseux series is approximating.
+
+        Parameters
+        ----------
+        x : complex
+        curve_tol : double
+            The tolerance for the corresponding point to lie on the curve.
+        rel_tol : double
+            A relative tolerance parameter used to ensure that the point
+            :math:`(x(t_0),y(t_0))` is on the same branch as the center
+            of the Puiseux series.
+
+        Returns
+        -------
+        none
+            The PuiseuxTSeries is modified in-place.
+        """
+        # simply convert to t and pass to extend. choose any conjugate
+        # since the convergence rates between each conjugate is equal
+        center, xcoefficient, ramification_index = self.xdata
+        t = numpy.power((x-center)/xcoefficient, 1.0/ramification_index)
+        self.extend_to_t(t, curve_tol=curve_tol, rel_tol=rel_tol)
+
+    def eval_x(self, t):
+        r"""Evaluate the x-part of the Puiseux series at `t`.
+
+        Parameters
+        ----------
+        t : sympy.Expr or complex
 
         Returns
         -------
         complex
 
         """
-        xval = self.eval_x(t)
-        return numpy.complex(xval.n())
+        center, xcoefficient, ramification_index = self.xdata
+        return center + xcoefficient*t**ramification_index
+
+    def eval_dxdt(self, t):
+        center, xcoefficient, ramification_index = self.xdata
+        return xcoefficient*ramification_index*(1/t)**(1-ramification_index)
 
     def eval_y(self, t):
-        r"""Symbolic evaluation of the y-part of the Puiseux series.
+        r"""Evaluate of the y-part of the Puiseux series at `t`.
 
         Parameters
         ----------
-        t : complex
+        t : complex or complex
 
         Returns
         -------
@@ -977,31 +1165,7 @@ class PuiseuxTSeries(object):
         trick.
 
         """
-        yval = sympy.S(0)
-        for n, alpha in self.terms:
-            yval += alpha * t**n
-        return yval
-
-    def evalf_y(self, t):
-        r"""Numerical evaluation of the y-part of the Puiseux series.
-
-        Parameters
-        ----------
-        t : complex
-
-        Returns
-        -------
-        complex
-
-        Notes
-        -----
-
-        This can be sped up using a Holder-like fast exponent evaluation
-        trick.
-
-        """
-        yval = self.eval_y(t)
-        return numpy.complex(yval.n())
+        return sum(alpha*t**n for n,alpha in self.terms)
 
 
 class PuiseuxXSeries(object):
@@ -1039,6 +1203,50 @@ class PuiseuxXSeries(object):
     as_sympy_expr
 
     """
+    @property
+    def order(self):
+        return self.__order
+    @order.setter
+    def order(self, value):
+        # if order isn't specified then set order equal to the exponent
+        # of the largest non-zero term plus 1/ramification_index
+        if value:
+            self.__order = value
+        else:
+            order = max(exp for exp,coeff in self.terms)
+            self.__order = order + 1/self.ramification_index
+
+        # truncate if new order is less than previous
+        self.terms = tuple((exp,coeff) for exp,coeff in self.terms
+                           if exp < self.__order)
+        self.__hash = hash((self.f, self.x0, self.__terms, self.__order))
+
+    @property
+    def terms(self):
+        return self.__terms
+    @terms.setter
+    def terms(self, value):
+        # filter out zero terms unless the series is the zero
+        # series. (useful for accumulation.)
+        terms = tuple((exp,coeff) for exp,coeff in value if coeff != 0)
+        if not value:
+            value = ((0,0),)
+        self.__terms = value
+
+        # if order isn't set then assume all known terms are given. if
+        # order ends up being zero then set to infinity
+        if not self.__order:
+            order = max(exp for exp,coeff in self.__terms)
+            self.__order = order if order else sympy.oo
+        self.__hash = hash((self.f, self.x0, self.__terms, self.__order))
+
+    @property
+    def is_symbolic(self):
+        return self.__is_symbolic
+    @property
+    def is_numerical(self):
+        return not self.__is_symbolic
+
     def __init__(self, f, x, y, x0, obj, order=None, ramification_index=None):
         r"""Initialize a PuiseuxXSeries.
 
@@ -1078,14 +1286,18 @@ class PuiseuxXSeries(object):
         self.y = y
         self.x0 = x0
 
-        # initialize properties
-        self._terms = None
-        self._order = None
+        # intitialize data from x-part
+        if x0 in [sympy.oo, numpy.Inf, 'oo']:
+            x0 = 0
+        self.center = x0
         self.ramification_index = None
 
-        # intitalize terms from given object
+        # intitalize terms from given object. coerce data to Numpy
+        # numerical types if requested on construction.
+        self.__terms = None
+        self.__order = None
         terms = self.initialize_terms(obj, order=order)
-        self.terms = terms #tuple(sorted(terms, key=itemgetter(0)))
+        self.terms = tuple(sorted(terms, key=itemgetter(0)))
 
         # determine ramification index of this Puiseux series. if not
         # explicitly given in construction it is assumed from the
@@ -1141,7 +1353,6 @@ class PuiseuxXSeries(object):
             self._order = order if order else sympy.oo
     terms = property(get_terms, set_terms)
 
-
     def __hash__(self):
         """Returns the hash of this PuiseuxXSeries.
 
@@ -1149,25 +1360,21 @@ class PuiseuxXSeries(object):
         series expansion center, terms, and order. This is necessary for
         memoization of PuiseuxXSeries. Particularly, in
         :meth:`abelfucntions.integralbasis.integral_basis`.
-
         """
         if not self._hash:
             self._hash = hash((self.x0,self.terms,self.order))
         return self._hash
 
-
     def __repr__(self):
         s = ''
-        ss = '%s'%self.x if self.x0 == 0 else '(%s)'%(self.x - self.x0)
+        ss = '%s'%self.x if self.center == 0 else '(%s)'%(self.x-self.center)
         for exp,coeff in self.terms:
             # print the coefficient
             s += ' + (%s)'%coeff
             if exp != 0:
                 s += ss + '**%s'%exp
-
         s += ' + O(%s**%s)'%(ss, self.order)
         return s[3:]
-
 
     def initialize_terms(self, obj, order=None):
         """Initialize the terms of the Puiseux series from the object ``obj``.
@@ -1193,12 +1400,12 @@ class PuiseuxXSeries(object):
         tuple of two-tuples
 
         """
+        if isinstance(obj,list):
+            obj = tuple(obj)
+        elif isinstance(obj,dict):
+            obj = tuple(obj.items())
         if isinstance(obj, tuple):
             return obj
-        elif isinstance(obj, list):
-            return tuple(obj)
-        elif isinstance(obj, dict):
-            return obj.items()
         else:
             try:
                 return self._terms_from_sympy_expression(obj, order)
@@ -1309,6 +1516,7 @@ class PuiseuxXSeries(object):
 
         The slowest method. Uses `sympy.lseries`.
         """
+        terms = []
         s = sympy.series(expr, self.x, x0=self.x0, n=None)
         for term in s:
             term = term.subs(self.x,self.x+self.x0)
@@ -1448,26 +1656,8 @@ class PuiseuxXSeries(object):
         complex
 
         """
-        val = sympy.S(0)
-        for exponent, coefficient in self.terms:
-            val += coefficient * x**exponent
-        return val
-
-    def evalf(self, x):
-        r"""Numerical evaluation of the Puiseux series.
-
-        Parameters
-        ----------
-        x : complex
-
-        Returns
-        -------
-        complex
-
-        """
-        val = self.eval(x)
-        return numpy.complex(val.n())
-
+        # [TODO] Change once we start computing infinite series
+        return sum(alpha * (x-self.x0)**ne for ne,alpha in self.terms)
 
     def valuation(self):
         r"""Returns the valuation of this Puiseux series.
@@ -1508,3 +1698,5 @@ class PuiseuxXSeries(object):
         for exp, coeff in self.terms:
             expr += coeff*(self.x - self.x0)**exp
         return expr
+
+    

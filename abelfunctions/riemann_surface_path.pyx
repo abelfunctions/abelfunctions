@@ -1,14 +1,13 @@
-"""Riemann Surface Paths :mod:`abelfunctions.riemann_surface_path`
+r"""Riemann Surface Paths :mod:`abelfunctions.riemann_surface_path`
 ===============================================================
 
 A framework for computing places along paths on Riemann surfaces.
 
-
-The classes in this module follow the composite design pattern [1]_
-with :py:class:`RiemannSurfacePathPrimitive` acting as the
-"component" and :py:class:`RiemannSurfacePath` acting as the
-"composite". The classes :py:class:`RiemannSurfacePathLine` and
-:py:class:`RiemannSurfacePathArc` define partricular types of paths.
+The classes in this module follow the composite design pattern [1]_ with
+:py:class:`RiemannSurfacePathPrimitive` acting as the "component" and
+:py:class:`RiemannSurfacePath` acting as the "composite". The classes
+:py:class:`RiemannSurfacePathLine` and :py:class:`RiemannSurfacePathArc`
+define partricular types of paths.
 
 Classes
 -------
@@ -43,12 +42,14 @@ import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
+from .analytic_continuation cimport AnalyticContinuatorPuiseux
+from .analytic_continuation_smale cimport AnalyticContinuatorSmale
+
 cdef extern from 'math.h':
     int floor(double)
 cdef extern from 'complex.h':
     complex cexp(complex)
     double cabs(complex)
-
 
 cdef class RiemannSurfacePathPrimitive:
     r"""Primitive Riemann surface path object.
@@ -82,8 +83,6 @@ cdef class RiemannSurfacePathPrimitive:
     plot_y
     plot3d_x
     plot3d_y
-    
-    
 
     """
     property segments:
@@ -118,22 +117,58 @@ cdef class RiemannSurfacePathPrimitive:
         def __get__(self):
             return self._AC
 
-    def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
-                 complex x0, complex[:] y0, int ncheckpoints=8):
+    def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
+                 int ncheckpoints=8):
         r"""Intitialize the `RiemannSurfacePathPrimitive` using a
         `RiemannSurface`, `AnalyticContinuator`, and starting place.
+
+        Note that the starting point must always be regular.
         """
         self._RS = RS
         self._x0 = x0
         self._y0 = y0
-        self._AC = AC
         self._segments = numpy.array([self], dtype=RiemannSurfacePathPrimitive)
         self._ncheckpoints = ncheckpoints
-
-        # RiemannSurfacePath objects are treated as RiemannSurfacePathPrimitive
-        # objects with zero checkpoints
-        if ncheckpoints:
+        if self._ncheckpoints > 0:
+            self.set_analytic_continuator()
             self._initialize_checkpoints()
+
+    def set_analytic_continuator(self):
+        r"""Select and appropriate analytic continuator for this path.
+
+        If either the starting or ending place is at a discriminant
+        point of the underlying curve then use an analytic continuation
+        method that can distinguish between places lying above
+        discriminant points. Otherwise, use a fast numerical method.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        AnalyticContinuator
+            An :class:`AnalyticContinuator` which defines how to
+            analytically continue y-roots along a path.
+
+        Notes
+        -----
+        Currently, this method will only look at the endpoint of the
+        path to determine if it is epsilon close to a discriminant point
+        of the curve. (Meaning that the places lying above the point can
+        only be distinguished by Puiseux series.) A future update should
+        determine if the path crosses through or passes near enough to
+        the discriminant point.
+
+        """
+        # set the analytic continuator by checking if the end of the
+        # path is close to a discriminant point
+        x_end = self.get_x(1.0)
+        b = self._RS.closest_discriminant_point(x_end, exact=True)
+        if numpy.abs(numpy.complex(b) - x_end) < 1e-12:
+            self._AC = AnalyticContinuatorPuiseux(self._RS, self, b)
+        else:
+            self._AC = AnalyticContinuatorSmale(self._RS, self)
 
     def __add__(self, RiemannSurfacePathPrimitive other):
         r"""Add two Riemann surface paths together.
@@ -307,8 +342,7 @@ cdef class RiemannSurfacePathPrimitive:
             The fibre above ``xip1``.
 
         """
-        cdef complex[:] yip1 = self._AC.analytically_continue(
-            self, xi, yi, xip1)
+        cdef complex[:] yip1 = self._AC.analytically_continue(xi, yi, xip1)
         return yip1
 
     @cython.boundscheck(False)
@@ -340,6 +374,46 @@ cdef class RiemannSurfacePathPrimitive:
         xi = self.get_x(t)
         yi = self.analytically_continue(xim1, yim1, xi)
         return yi
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef complex integrate(self, Differential omega):
+        r"""Integrate `omega` on the path using its analytic continuator.
+
+        Delegates integration to the path's
+        :class:`AnalyticContinuator`. The strategy for analytic
+        continuation depends on if this path terminates at a
+        discriminant point of the curve.
+
+        Parameters
+        ----------
+        omega : Differential
+
+        Returns
+        -------
+        complex
+        """
+        return self.AC.integrate(omega)
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef complex[:] evaluate(self, Differential omega, double[:] t):
+        r"""Evaluates `omega` along the path at `t` between 0 and 1.
+
+        Parameters
+        ----------
+        omega : Differential
+        t : double[:]
+            An array of `t` between 0 and 1.
+
+        Returns
+        -------
+        complex[:]
+            The differential omega evaluated along the path at each of
+            the points in `t`.
+        """
+        omega_gamma = self.AC.parameterize(omega)
+        return omega_gamma(t)
 
     def plot_x(self, N, *args, **kwds):
         r"""Plot the x-part of the path in the complex x-plane.
@@ -469,13 +543,12 @@ cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
        The starting and ending points of the complex x-line.
 
     """
-    def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
-                 complex x0, complex[:] y0, complex z0, complex z1,
-                 int ncheckpoints=8):
+    def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
+                 complex z0, complex z1, int ncheckpoints=8):
         self.z0 = z0
         self.z1 = z1
-        RiemannSurfacePathPrimitive.__init__(self, RS, AC, x0, y0,
-                                             ncheckpoints=ncheckpoints)
+        RiemannSurfacePathPrimitive.__init__(
+            self, RS, x0, y0, ncheckpoints=ncheckpoints)
 
     def __str__(self):
         return 'RiemannSurfacePathLine:\nstart: %s\nend:  %s'%(self.z0,self.z1)
@@ -506,15 +579,15 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
         the arc length.
 
     """
-    def __init__(self, RiemannSurface RS, AnalyticContinuator AC,
-                 complex x0, complex[:] y0, complex R, complex w,
-                 complex theta, complex dtheta, int ncheckpoints=8):
+    def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
+                 complex R, complex w, complex theta, complex dtheta,
+                 int ncheckpoints=8):
         self.R = R
         self.w = w
         self.theta = theta
         self.dtheta = dtheta
-        RiemannSurfacePathPrimitive.__init__(self, RS, AC, x0, y0,
-                                             ncheckpoints=ncheckpoints)
+        RiemannSurfacePathPrimitive.__init__(
+            self, RS, x0, y0, ncheckpoints=ncheckpoints)
 
     def __str__(self):
         return 'RiemannSurfacePathArc:\n' + \
@@ -529,11 +602,44 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
             cexp(1.0j*(self.theta + t*self.dtheta))
 
 
+cdef class RiemannSurfacePathRay(RiemannSurfacePathPrimitive):
+    r"""A Riemann surface path for which the x-part goes to infinity.
+
+    Given a starting point :math:`x_0` the x-path :math:`\gamma_x :
+    [0,1] \to \mathbb{C}_x` going to infinity is the one that travels
+    radially outward from the origin :math:`x=0` given by the equation
+
+    .. math::
+
+        \gamma_x(t) = \frac{x_0}{1-t}
+
+    """
+    def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
+                 int ncheckpoints=8):
+        RiemannSurfacePathPrimitive.__init__(
+            self, RS, x0, y0, ncheckpoints=ncheckpoints)
+
+    def __str__(self):
+        return 'RiemannSurfacePathInfinity:\nstart: %s'%(self.x0)
+
+    def set_analytic_continuator(self):
+        self._AC = AnalyticContinuatorPuiseux(self._RS, self, sympy.oo)
+
+    cpdef complex get_x(self, double t):
+        if t == 1.0: t -= 1e-8
+        return self.x0 / (1 - t)
+
+    cpdef complex get_dxdt(self, double t):
+        if t == 1.0: t -= 1e-8
+        return -self.x0 / (1 - t)**2
+
+
+
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     r"""A continuous, piecewise differentiable path on a Riemann surface.
 
     RiemannSurfacePath is a composite of
-    :py:class:`RiemannSurfacePathPrimitive`xcxcxc objects. This path is
+    :py:class:`RiemannSurfacePathPrimitive` objects. This path is
     parameterized for :math:`t \in [0,1]`.
 
     Methods
@@ -541,7 +647,6 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     get_x
     get_dxdt
     get_y
-
 
     """
     def __init__(self, RiemannSurface RS, complex x0, complex[:] y0,
@@ -553,8 +658,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         # Additionally, setting ncheckpoints to "0" prevents
         # self._initialize_checkpoints() from executing, which only
         # makes sense on a single path segment / path primitive.
-        RiemannSurfacePathPrimitive.__init__(self, RS, None, x0, y0,
-                                             ncheckpoints=0)
+        RiemannSurfacePathPrimitive.__init__(self, RS, x0, y0, ncheckpoints=0)
 
         # important: self._segments must be set after the parent
         # intialization call since parent will set self._segments equal
@@ -601,13 +705,13 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         Returns
         -------
         complex
-        
+
         Notes
         -----
         This RiemannSurfacePath is parameterized for :math:`t \in
         [0,1]`. However, internally, each segment is separately
-        parameterized for :math:`t \in [0,1]`. This routine performs
-        an appropriate scaling.
+        parameterized for :math:`t \in [0,1]`. This routine performs an
+        appropriate scaling.
 
         """
         cdef RiemannSurfacePathPrimitive seg_k
@@ -686,3 +790,64 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         y = seg_k.get_y(t_seg)
         return y
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef complex[:] evaluate(self, Differential omega, double[:] t):
+        r"""Evaluates `omega` along the path at `N` uniform points.
+
+        .. todo::
+
+            Note: right now it doesn't matter what the values in `t`
+            are. This function will simply turn `t` into a bunch of
+            uniformly distributed points between 0 and 1.
+
+        Parameters
+        ----------
+        omega : Differential
+        t : double[:]
+            An array of `t` between 0 and 1.
+
+        Returns
+        -------
+        complex[:]
+            The differential omega evaluated along the path at `N` points.
+        """
+        cdef RiemannSurfacePathPrimitive segment
+        cdef int N = len(t)
+        cdef int nsegs = len(self.segments)
+        cdef int ppseg = int(N/nsegs)
+        cdef complex[:] values = numpy.zeros(nsegs*ppseg,dtype=complex)
+        cdef complex[:] values_seg = numpy.zeros(ppseg,dtype=complex)
+        cdef double[:] tseg = numpy.linspace(0,1,ppseg)
+        cdef int j,k
+
+        for k in range(nsegs):
+            segment = self.segments[k]
+            values_seg = segment.evaluate(omega,tseg)
+            for j in range(ppseg):
+                values[k*ppseg+j] = values_seg[j]
+        return values
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef complex integrate(self, Differential omega):
+        r"""Integrate `omega` on the path using its analytic continuator.
+
+        Delegates integration to the path's
+        :class:`AnalyticContinuator`. The strategy for analytic
+        continuation depends on if this path terminates at a
+        discriminant point of the curve.
+
+        Parameters
+        ----------
+        omega : Differential
+
+        Returns
+        -------
+        complex
+        """
+        cdef RiemannSurfacePathPrimitive segment
+        cdef complex integral = 0.0
+        for segment in self.segments:
+            integral += segment.integrate(omega)
+        return integral

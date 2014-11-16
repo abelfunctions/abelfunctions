@@ -6,6 +6,15 @@ This module implements the :class:`RiemannSurfacePathFactory` class, a
 class for generating :class:`RiemannSurfacePath` objects from various
 kinds of input data.
 
+Classes
+-------
+
+RiemannSurfacePathFactory
+
+Functions
+---------
+
+
 Authors
 -------
 
@@ -13,17 +22,13 @@ Authors
 
 """
 
+import pdb
+
 import numpy
 import scipy
 import scipy.linalg as linalg
 import sympy
 
-from .analytic_continuation import (
-    AnalyticContinuator,
-    )
-from .analytic_continuation_smale import (
-    AnalyticContinuatorSmale,
-)
 from .riemann_surface_path import (
     RiemannSurfacePathPrimitive,
     RiemannSurfacePath,
@@ -37,50 +42,97 @@ from .utilities import (
 from .xpath_factory import XPathFactory, XPathFactoryAbel
 from .ypath_factory import YPathFactory
 
-
-import pdb
-
 class RiemannSurfacePathFactory(object):
-    """The Path Factory for Riemann surfaces contains all of the methods
-    needed to construct paths from place to place on the Riemann
-    surface.
+    r"""Factory class for constructing paths on the Riemann surface.
 
-    The path factory makes heavy use of Monodromy and Homology to
-    determine
+    Attributes
+    ----------
+    RS : RiemannSurface
+        The Riemann surface.
+    XPF : XPathFactory
+        A factory object for determining how to navigate the complex
+        x-plane. How to construct paths avoiding, encircling, and
+        approaching discriminant points.
+    YPF : YPathFactory
+        A factory object for determining how to navigate the complex
+        y-plane. Computes the branching structure and homology of the
+        surface. Defines how to swap sheets.
+    _base_sheets : list
+        The ordered sheets of the surface at the base point.
+    _monodromy_group : list
+        The monodromy group of the curve. Used to compute the homology.
+
+    Methods
+    -------
+    base_point
+    base_sheets
+    base_place
+    discriminant_points
+    closest_discriminant_point
+    branch_points
+    path_to_place
+    monodromy_group
+    monodromy_path
+    a_cycles
+    b_cycles
+    c_cycles
+    show_paths
+    RiemannSurfacePath_from_cycle
+    RiemannSurfacePath_from_xpath
+    _path_to_discriminant_place
+    _path_to_regular_place
     """
-    def __init__(self, RS, kappa=3./5., base_point=None, base_sheets=None):
+    def __init__(self, RS, kappa=2./5.):
+        r"""Initialize the Riemann surface path factory.
+
+        The user can manually supply a base point in the complex x-plane
+        as well as an ordering of the base sheets at the base point. The
+        base point must be a regular point of the curve.
+
+        A "relaxation parameter" `kappa` is used when determining the
+        radii of the "bounding circles" around each discriminant point
+        of the curve. Paths in the complex plane inside of these
+        bounding circles need to be constructed with care since the
+        y-roots of the curve are (possibly) beginning to converge to one
+        another.
+
+        Parameters
+        ----------
+        RS : RiemannSurface
+            The Riemann surface.
+        kappa : double
+            A relaxation factor between 0 and 1.
+        base_point : complex
+            An optional user-defined base x-point for the mondromy group
+            and Riemann surface.
+        base_sheets : complex, list
+            An optional user-defined ordered list of y-roots above the
+            base point.
+
+        Returns
+        -------
+        None
+        """
         self.RS = RS
+        self._base_point = self.RS.base_point()
+        self._base_sheets = self.RS.base_sheets()
 
-        # initialize the X- and Y-skeletons at construction. this is
-        # important! Also note that the monodromy group needs to be
-        # computed from the X-Skeleton in order to compute the
-        # Y-Skeleton
-        self.XPF = XPathFactoryAbel(RS, kappa=kappa, base_point=base_point)
-
-        # use custom base sheets if provided. otherwise, numerically
-        # compute a fixed ordering of sheets above the base poitn.
-        if base_sheets:
-            self._base_sheets = base_sheets
-        else:
-            p = RS.f.as_poly(RS.y)
-            a = self.XPF.base_point()
-            coeffs = numpy.array(
-                [c.evalf(subs={RS.x:a}, n=15) for c in p.all_coeffs()],
-                dtype=numpy.complex)
-            poly = numpy.poly1d(coeffs)
-            self._base_sheets = (poly.r).tolist()
-
+        # initialize the X- and Y-PathFactories at construction. Note
+        # that the monodromy group needs to be computed from the
+        # XPathFactory in order to compute the YPathFactory
+        self.XPF = XPathFactoryAbel(RS, kappa=kappa,
+                                    base_point=self._base_point)
         # compute the y-skeleton
         self._monodromy_group = None
         self._monodromy_group = self.monodromy_group()
-        self.YPF = YPathFactory(RS, base_sheets=self._base_sheets,
+        self.YPF = YPathFactory(self.RS, base_sheets=self._base_sheets,
                                 monodromy_group=self._monodromy_group)
 
     def __str__(self):
         return 'Riemann Surface Path Factory for %s'%(self.RS)
 
     def show_paths(self, ax=None, *args, **kwds):
-        """Plots all of the monodromy paths of the curve.
+        r"""Plots all of the monodromy paths of the curve.
 
         Arguments
         ---------
@@ -105,58 +157,109 @@ class RiemannSurfacePathFactory(object):
     def branch_points(self):
         return self._monodromy_group[0]
 
-    def discriminant_points(self):
-        return self.XPF.discriminant_points()
+    def discriminant_points(self, exact=False):
+        r"""Same as :func:`RiemannSurface.discriminant_points`."""
+        return self.RS.discriminant_points(exact=exact)
 
-    def _is_near_discriminant_point(self, P):
-        """Returns `True` if the x-coordinate of `P` is within the bounding
-        circle of a discriminant point.
-
-        Arguments
-        ---------
-        P : complex tuple
-            A place on the Riemann surface.
-        """
-        for bi in self.discriminant_points():
-            if numpy.abs(P[0] - bi) < self.XPF.radius(bi):
-                return True
-        return False
+    def closest_discriminant_point(self, x, exact=True):
+        r"""Same as :func:`RiemannSurface.closest_discriminant_point`."""
+        return self.RS.discriminant_points(x, exact=exact)
 
     def path_to_place(self, P):
-        """Returns a path to a specified place `P` on the Riemann surface.
+        r"""Returns a path to a specified place `P` on the Riemann surface.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         P : complex tuple
             A place on the Riemann surface.
         """
-        # if the x-coordinate of the target place is near a discriminant
-        # point then use a Puiseux series technique to construct the
-        # path leading there.
-        if self._is_near_discriminant_point(P):
-            return self._path_to_near_discriminant_point(P)
+        if P.is_discriminant():
+            return self._path_to_discriminant_place(P)
+        else:
+            return self._path_to_regular_place(P)
 
+    def _path_to_discriminant_place(self, P):
+        r"""Returns a path to a discriminant place on the surface.
+
+        A "discriminant" place :math:`P` is a place on the Riemann
+        surface where Puiseux series are required to determine the x-
+        and y-projections of the place.
+
+        Parameters
+        ----------
+        P : Place
+
+        Returns
+        -------
+        RiemannSurfacePath
+
+        """
+        # compute a valid y-value at x=a=b-R, where b is the
+        # discriminant point center of the series and R is the radius of
+        # bounding circle around b, such that analytically continuing
+        # from that (x,y) to x=b will reach the designated place
+        p = P.puiseux_series
+        center, coefficient, ramification_index = p.xdata
+        R = self.XPF.radius(center)/3.0
+        a = center - R
+        t = (-R/coefficient)**(1.0/ramification_index)
+        # p.coerce_to_numerical()
+        p.extend_to_t(t)
+        y = p.eval_y(t)
+
+        # construct a path going from the base place to this regular
+        # place to the left of the target discriminant point
+        P1 = self.RS(a,y)
+        gamma1 = self._path_to_regular_place(P1)
+
+        # construct the RiemannSurfacePath going from this regular place
+        # to the discriminant point.
+        xend = gamma1.get_x(1.0)
+        yend = gamma1.get_y(1.0)
+        xdata = (a, center)
+        segment = RiemannSurfacePathLine(self.RS, xend, yend, *xdata)
+        gamma = gamma1 + segment
+        return gamma
+
+    def _path_to_regular_place(self, P):
+        r"""
+        Returns a path to a regular place on the surface.
+
+        A "regular" place :math:`P` is a place on the Riemann surface
+        where the x-projection of the place is not a discriminant point
+        of the curve.
+
+        Parameters
+        ----------
+        P : Place
+
+        Returns
+        -------
+        RiemannSurfacePath
+
+        """
         # construct the reverse path from the place to the base x-point
         # in order to determine which sheet the place is on
         P0 = self.base_place()
-        xpath_to_target = self.XPF.xpath_build_avoiding_path(P0[0], P[0])
+        xpath_to_target = self.XPF.xpath_build_avoiding_path(P0[0],P[0])
         gamma = self.RiemannSurfacePath_from_xpath(xpath_to_target)
 
-        # determine the index of the sheet of the base place continues
-        # to the y-component of the target
+        # determine the index of the sheet (sheet_index) of the base
+        # place continues to the y-component of the target
         base_sheets = self.base_sheets()
         end_sheets = numpy.array(gamma.get_y(1.0), dtype=numpy.complex)
         end_diffs = numpy.abs(end_sheets - P[1])
-        if numpy.min(end_diffs) > 1.0e-12:
-            raise ValueError('Error in constructing Abel path.')
+        if numpy.min(end_diffs) > 1.0e-8:
+            raise ValueError('Error in constructing Abel path: end of regular '
+                             'path does not match with target place.')
         sheet_index = numpy.argmin(end_diffs)
 
         # if this sheet index is zero (the base sheet) then simply
-        # return the constructed path gamma
+        # return the constructed path gamma. otherwise, construct the
+        # branch switching path
         if sheet_index != 0:
-            # otherwise, construct the branch switching path
-            ypath = self.YPF.ypath_from_base_to_sheet(sheet_index)  # XXX CLEAN
-            gamma_swap = self.RiemannSurfacePath_from_cycle(ypath)  # XXX CLEAN
+            ypath = self.YPF.ypath_from_base_to_sheet(sheet_index)
+            gamma_swap = self.RiemannSurfacePath_from_cycle(ypath)
             ordered_base_sheets = gamma_swap.get_y(1.0)
 
             # take the new ordering of branch points and construct the
@@ -168,7 +271,7 @@ class RiemannSurfacePathFactory(object):
 
         # sanity check
         yend = gamma.get_y(1.0)[0]
-        if numpy.abs(yend - P[1]) > 1.0e-12:
+        if numpy.abs(yend - P[1]) > 1.0e-8:
             raise ValueError('Error in constructing Abel path.')
         return gamma
 
@@ -334,11 +437,10 @@ class RiemannSurfacePathFactory(object):
         return self.RiemannSurfacePath_from_xpath(xpath)
 
     def RiemannSurfacePath_from_xpath(self, xpath, x0=None, y0=None):
-        """Constructs a :class:`RiemannSurfacePath` object from a list of
-        x-path data.
+        r"""Constructs a :class:`RiemannSurfacePath` object from x-path data.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         xpath : list
             A list of tuples defining the xpath.
         x0 : complex (default `self.base_point()`)
@@ -357,28 +459,24 @@ class RiemannSurfacePathFactory(object):
         if y0 is None:
             y0 = self.base_sheets()
 
-        ACSmale = AnalyticContinuatorSmale(self.RS)
-        # ACPuisuex = AnalyticContinuatorPuiseux(self.RS)
+        # build a list of path segments from each tuple of xdata. build
+        # a line segment or arc depending on xdata input
         x0 = numpy.complex(x0)
         y0 = numpy.array(y0, dtype=numpy.complex)
         x0_segment = x0
         y0_segment = y0
         segments = []
         for data in xpath:
-            # pick an analytic continuator (XXX PROVIDE LOGIC FOR THIS XXX)
-            AC = ACSmale
-
-            # build a segment based on the xpath data
             if len(data) == 2:
-                segment = RiemannSurfacePathLine(self.RS, AC, x0_segment,
+                segment = RiemannSurfacePathLine(self.RS, x0_segment,
                                                  y0_segment, *data)
             else:
-                segment = RiemannSurfacePathArc(self.RS, AC, x0_segment,
+                segment = RiemannSurfacePathArc(self.RS, x0_segment,
                                                 y0_segment, *data)
 
             # determine the starting place of the next segment
-            x0_segment = segment.get_x(1)
-            y0_segment = segment.get_y(1)
+            x0_segment = segment.get_x(1.0)
+            y0_segment = segment.get_y(1.0)
             segments.append(segment)
 
         # build the entire path from the path segments

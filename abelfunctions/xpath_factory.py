@@ -76,8 +76,8 @@ class XPathFactory(object):
         """
         self.RS = RS
         self._base_point = base_point
-        self._discriminant_points = None
-        self._discriminant_points = self.discriminant_points()
+        self._discriminant_points = RS.discriminant_points(exact=False)
+        self._discriminant_points_exact = RS.discriminant_points(exact=True)
         self._radii = self._compute_radii(kappa=kappa)
 
     def base_point(self):
@@ -117,63 +117,33 @@ class XPathFactory(object):
             A discriminant point of the algebraic curve.
 
         """
-        return self._radii[self._discriminant_points == bi][0]
+        if isinstance(bi, sympy.Expr):
+            exact = True
+        else:
+            bi = numpy.complex(bi)
+            exact = False
+        return self._radii[self.discriminant_points(exact=exact) == bi][0]
 
-    def discriminant_points(self):
-        """Returns the ordered discriminant points of the curve.
+    def discriminant_points(self, exact=False):
+        r"""Returns the ordered discriminant points of the curve.
 
         The discriminant points are ordered by increasing argument with
-        the base point.
+        the base point. Exact (`sympy.Expr`) or numerical approximations
+        to these discriminant points can be retrieved by setting the
+        `exact` keyword.
+
+        Parameters
+        ----------
+        exact : boolean
+            (Default: `False`) If true, returns
+
+        Returns
+        -------
+        list
+            The discriminant points of the algebraic curve.
 
         """
-        if not self._discriminant_points is None:
-            return self._discriminant_points
-
-        f = self.RS.f
-        x = self.RS.x
-        y = self.RS.y
-        p = sympy.Poly(f, [x,y])
-        res = sympy.Poly(sympy.resultant(p, p.diff(y), y), x)
-
-        # Compute the numerical roots. Since Sympy has issues balancing
-        # between precision and speed we compute the roots of each
-        # factor of the resultant.
-        dps = sympy.mpmath.mp.dps
-        rts = []
-        for factor,degree in res.factor_list_include():
-            rts.extend(factor.nroots(n=dps+3))
-        rts = map(lambda z: z.as_real_imag(), rts)
-        disc_pts = map(lambda z: sympy.mpmath.mpc(*z), rts)
-
-        # Pop any roots that appear to be equal up to the set
-        # multiprecision. Geometrically, this may cause two roots to be
-        # interpreted as one thus reducing the genus of the curve.
-        N = len(disc_pts)
-        i = 0
-        while i < N:
-            k = 0
-            while k < N:
-                eq = sympy.mpmath.almosteq(disc_pts[i], disc_pts[k])
-                if (k != i) and eq:
-                    disc_pts.remove(disc_pts[k])
-                    N -= 1
-                else:
-                    k += 1
-            i += 1
-
-        # sort the discriminant points first by argument with the base
-        # point and then by distance from the base point.
-        def cmp(z, a=None):
-            return (sympy.mpmath.arg(z - a), sympy.mpmath.absmax(z - a))
-
-        # determine the base point
-        if self._base_point is None:
-            a = min([numpy.complex(bi).real - 1 for bi in disc_pts])
-            self._base_point = a
-
-        disc_pts = sorted(disc_pts, key=lambda z: cmp(z, a=self._base_point))
-        self._discriminant_points = numpy.array(disc_pts, dtype=numpy.complex)
-        return self._discriminant_points
+        return self.RS.discriminant_points(exact=exact)
 
     def xpath_to_discriminant_point(self, bi):
         """Returns the xpath leading to the discriminant point `bi`.
@@ -481,25 +451,27 @@ class XPathFactoryAbel(XPathFactory):
         """
         # compute the set of discriminant points whose bounding circle
         # intersects the line from a to z
+        z0 = numpy.complex(z0)
+        z1 = numpy.complex(z1)
         xpath = []
-        b = numpy.array([bi for bi in self.discriminant_points()
-                         if self._intersects_disc_pt(z0, z1, bi)],
+        b = numpy.array([bi for bi in self.discriminant_points(exact=False)
+                         if self._intersects_disc_pt(z0,z1,bi)],
                         dtype=numpy.complex)
 
         # sort by increasing distance from z0
         b = b.tolist()
-        b.sort(key=lambda bi: numpy.abs(bi - z0))
+        b.sort(key=lambda bi: numpy.abs(bi-z0))
         for bi in b:
             # compute the intersection points of the segment from z0 to
             # z1 with the circle around bi.
-            w0, w1 = self._intersection_points(z0, z1, bi)
+            w0,w1 = self._intersection_points(z0,z1,bi)
 
             # compute the arc going from w0 to w1 avoiding the bounding
             # circle around bi.
-            arc = self._avoiding_arc(w0, w1, bi)
+            arc = self._avoiding_arc(w0,w1,bi)
 
             # add to the path and update the loop
-            xpath.extend([(z0,w0), arc])
+            xpath.extend([(z0,w0),arc])
             z0 = w1
 
         # add the final line segment and return
@@ -513,6 +485,9 @@ class XPathFactoryAbel(XPathFactory):
         """
         # construct the polynomial giving the distance from the line
         # l(t), parameterized by t in [0,1], to bi.
+        z0 = numpy.complex(z0)
+        z1 = numpy.complex(z1)
+        bi = numpy.complex(bi)
         Ri = self.radius(bi)
         v = z1 - z0
         w = z0 - bi
@@ -577,6 +552,9 @@ class XPathFactoryAbel(XPathFactory):
         """
         # first check the perpendicular distance from bi to the line
         # passing through z0 and z1
+        z0 = numpy.complex(z0)
+        z1 = numpy.complex(z1)
+        bi = numpy.complex(bi)
         direction = numpy.sign(numpy.angle(z1-z0) - numpy.angle(bi-z0))
         normv = numpy.abs(z1-z0)
         v = 1.0j*direction*(z1 - z0)

@@ -10,35 +10,35 @@ iteration. A different AnalyticContinuator, such as
 :class:AnalyticContinuatorPuiseux, is required in order to analytically
 continue to such points.
 
-Functions::
+Functions
+---------
 
-  factorial   -- factorial function
-  newton      -- Newton iteration of y-roots
-  smale_alpha -- Smale's alpha function
-  smale_beta  -- Smale's beta function
-  smale_gamma -- Smale's gamma function
+  factorial
+  newton
+  smale_alpha
+  smale_beta
+  smale_gamma
 
-Classes::
+Classes
+-------
 
-  UnivariatePolynomial   -- fast univatriate polynomial evaluation
-  MultivariatePolynomial -- fast bi-variate polynomial evaluation
+  UnivariatePolynomial
+  MultivariatePolynomial
 
 Globals::
 
   ABELFUNCTIONS_SMALE_ALPHA0
 
-Authors
--------
-
-* Chris Swierczewski (January 2013)
 """
 
 cimport cython
 import numpy
 cimport numpy
+import scipy
 import sympy
 
 from .analytic_continuation cimport AnalyticContinuator
+from .differentials cimport Differential
 from .riemann_surface cimport RiemannSurface
 from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 from .polynomials cimport MultivariatePolynomial
@@ -225,26 +225,29 @@ cdef class AnalyticContinuatorSmale(AnalyticContinuator):
     ----------
     RS : RiemannSurface
         The Riemann surface on which analytic continuation takes place.
+    gamma : RiemannSurfacePathPrimitive
+        The path along which the analytic continuation is performed.
     df : MultivariatePolynomial[:]
         A list of all of the y-derivatives of the curve, `f = f(x,y)`.
         These are used by Smale's alpha theory.
+
+    Methods
+    -------
+    analytically_continue
+
     """
-    def __init__(self, RiemannSurface RS):
-        cdef int deg = sympy.degree(RS.f,RS.y)
+    def __init__(self, RiemannSurface RS, RiemannSurfacePathPrimitive gamma):
+        cdef int deg = RS.deg
         self.df = numpy.array(
             [MultivariatePolynomial(sympy.diff(RS.f,RS.y,k),RS.x,RS.y)
             for k in range(deg+1)],
             dtype=MultivariatePolynomial)
+        AnalyticContinuator.__init__(self, RS, gamma)
 
-        self.deg = deg
-        AnalyticContinuator.__init__(self, RS)
-
-    cpdef complex[:] analytically_continue(
-            self,
-            RiemannSurfacePathPrimitive gamma,
-            complex xi,
-            complex[:] yi,
-            complex xip1):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi,
+                                           complex xip1):
         """Analytically continues the fibre `yi` from `xi` to `xip1` using
         Smale's alpha theory.
 
@@ -281,10 +284,8 @@ cdef class AnalyticContinuatorSmale(AnalyticContinuator):
             yij = yi[j]
             if smale_alpha(self.df, xip1, yij) > ABELFUNCTIONS_SMALE_ALPHA0:
                 xiphalf = (xi + xip1)/2.0
-                yiphalf = self.analytically_continue(
-                    gamma, xi, yi, xiphalf)
-                yip1 = self.analytically_continue(
-                    gamma, xiphalf, yiphalf, xip1)
+                yiphalf = self.analytically_continue(xi, yi, xiphalf)
+                yip1 = self.analytically_continue(xiphalf, yiphalf, xip1)
                 return yip1
 
         # next, determine if the approximate solutions will converge to
@@ -296,15 +297,13 @@ cdef class AnalyticContinuatorSmale(AnalyticContinuator):
                 yik = yi[k]
                 betaik = smale_beta(self.df, xip1, yik)
 
-                if cabs(yij-yik) < 3*(betaij + betaik):  #XXX (was 2)
+                if cabs(yij-yik) < 3*(betaij + betaik):
                     # approximate solutions don't lead to distinct
                     # roots. refine the step by analytically continuing
                     # to an intermedite time
                     xiphalf = (xi + xip1)/2.0
-                    yiphalf = self.analytically_continue(
-                        gamma, xi, yi, xiphalf)
-                    yip1 = self.analytically_continue(
-                        gamma, xiphalf, yiphalf, xip1)
+                    yiphalf = self.analytically_continue(xi, yi, xiphalf)
+                    yip1 = self.analytically_continue(xiphalf, yiphalf, xip1)
                     return yip1
 
         # finally, since we know that we have approximate solutions that
@@ -315,4 +314,53 @@ cdef class AnalyticContinuatorSmale(AnalyticContinuator):
             dtype=complex)
         return yip1
 
+    def parameterize(self, Differential omega):
+        r"""Returns the differential omega parameterized on the path.
+
+        Given a differential math:`\omega = \omega(x,y)dx`,
+        `parameterize` returns the differential
+
+        .. math::
+
+            \omega_\gamma(s) = \omega(\gamma_x(s),\gamma_y(s)) \gamma_x'(s)
+
+        where :math:`s \in [0,1]` and :math:`\gamma_x,\gamma_y` and the
+        x- and y-components of the path `\gamma` using this analytic
+        continuator.
+
+        Parameters
+        ----------
+        omega : Differential
+
+        Returns
+        -------
+        function
+        """
+        def omega_gamma(double t):
+            xt = self.gamma.get_x(t)
+            yt = self.gamma.get_y(t)[0]
+            dxdt = self.gamma.get_dxdt(t)
+            return omega.eval(xt,yt) * dxdt
+        return numpy.vectorize(omega_gamma, otypes=[complex])
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef complex integrate(self, Differential omega):
+        r"""Integrate `omega` on the path using this analytic continuator.
+
+        Parameters
+        ----------
+        omega : Differential
+
+        Returns
+        -------
+        complex
+        """
+        cdef complex x
+        cdef complex y
+        cdef complex dxdt
+        cdef complex integral = 0.0
+        omega_gamma = self.parameterize(omega)
+        integral = scipy.integrate.romberg(omega_gamma,0,1)
+        return integral
 

@@ -1,5 +1,4 @@
-r"""
-Differentials :mod:`abelfunctions.differentials`
+r"""Differentials :mod:`abelfunctions.differentials`
 ================================================
 
 This module contains functions for computing a basis of holomorphic
@@ -51,6 +50,7 @@ from .integralbasis import integral_basis
 from .singularities import singularities, _transform, genus
 from .utilities import cached_function
 from .polynomials cimport MultivariatePolynomial
+from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 
 cimport cython
 
@@ -155,8 +155,8 @@ def differentials(f, x, y):
             conditions_bi = mnuk_conditions(g,u,v,bi,Ptilde,c)
             conditions.extend(conditions_bi)
 
-    # solve the system of equations and retreive the coefficents of the c_ij's
-    # contained in the general solution
+    # solve the system of equations and retreive the coefficents of the
+    # c_ij's contained in the general solution
     sols = sympy.solve(conditions, c)
     P = P.subs(sols).as_poly(*c)
     differentials = [coeff for coeff in P.coeffs() if coeff != 0]
@@ -164,6 +164,44 @@ def differentials(f, x, y):
     differentials = [differential/dfdy for differential in differentials]
     return map(lambda omega: Differential(omega, x, y), differentials)
 
+
+def fast_expand(numer,denom,t,order):
+    r"""Quickly compute the Taylor expansion of `numer/denom`.
+
+    Parameters
+    ----------
+    numer, denom : sympy.Expr
+        Polynomials in t.
+    t : sympy.Symbol
+        The dependent variable of `numer` and `denom`.
+    order : int
+        The desired order of the expansion.
+
+    Returns
+    -------
+    sympy.Expr
+    """
+    # convert numerator and denominator to lists of coefficients.  it's
+    # faster to do it "manually" than to coerce to polynomial
+    q = [0]*order
+    for term in numer.args:
+        qn,n = term.as_coeff_exponent(t)
+        if n < order:
+            q[n] = qn
+    r = [0]*order
+    for term in denom.args:
+        rn,n = term.as_coeff_exponent(t)
+        if n < order:
+            r[n] = rn
+
+    # forward solve the coefficient system. note that r[0] (constant
+    # coeff of denom) is nonzero by construction
+    s = [0]*order
+    for n in range(order):
+        known_terms = sum(r[n-k]*s[k] for k in range(n))
+        s[n] = (q[n] - known_terms)/r[0]
+    taylor = sum(s[n]*t**n for n in range(order))
+    return taylor
 
 cdef class Differential:
     """A differential one-form which can be defined on a Riemann surface.
@@ -182,7 +220,7 @@ cdef class Differential:
         Returns the differential as a Sympy object.
 
     """
-    def __cinit__(self, omega, x, y):
+    def __cinit__(self,omega,x,y):
         """Instantiate a differential form from a sympy Expression.
 
         Parameters
@@ -196,6 +234,8 @@ cdef class Differential:
         numer, denom = omega.as_numer_denom()
         numer = numer.expand()
         denom = denom.expand()
+        self.x = x
+        self.y = y
         self.numer = MultivariatePolynomial(numer, x, y)
         self.denom = MultivariatePolynomial(denom, x, y)
         self._omega = omega
@@ -203,23 +243,89 @@ cdef class Differential:
     def __repr__(self):
         return str(self._omega)
 
-    cpdef complex eval(self, complex z1, complex z2):
-        """Evaluate the differential at the complex point :math:`(z_1,z_2)`.
+    cpdef complex eval(self, complex x, complex y):
+        r"""Evaluate the differential at the complex point :math:`(x,y)`.
 
         Parameters
         ----------
-        z1,z2 : complex
+        x,y : complex
 
         Returns
         -------
         complex
-            Returns the value :math:`\omega(z_1,z_2)`.
+            Returns the value :math:`\omega(x,y)`.
 
         """
-        return self.numer.eval(z1,z2) / self.denom.eval(z1,z2)
+        return self.numer.eval(x,y) / self.denom.eval(x,y)
 
-    def plot(self, gamma, N=256, grid=False, **kwds):
-        """Plot the differential along the RiemannSurfacePath `gamma`.
+    def centered_at_place(self, P):
+        r"""Rewrite the differential in terms of the local coordinates at `P`.
+
+        If `P` is a regular place, then returns `self` as a sympy
+        expression. Otherwise, if `P` is a discriminant place
+        :math:`P(t) = \{x(t), y(t)\}` then returns
+
+        .. math::
+
+            \omega |_P = q(x(t),y(t)) x'(t) / \partial_y f(x(t),y(t)).
+
+        Parameters
+        ----------
+        P : Place
+
+        Returns
+        -------
+        sympy.Expr
+        """
+        x = self.x
+        y = self.y
+        if P.is_discriminant():
+            # evaluate the numerator and denominator separately up to
+            # the order of the Puiseux series
+            p = P.puiseux_series
+            t = p.t
+            xt = p.eval_x(t)
+            yt = p.eval_y(t)
+            dxdt = p.eval_dxdt(t)
+
+            numer,denom = self.as_sympy_expr().as_numer_denom()
+            numer = sympy.expand(numer.subs({x:xt,y:yt})*dxdt)
+            denom = sympy.expand(denom.subs({x:xt,y:yt}))
+            numer,denom = sympy.cancel(numer/denom).as_numer_denom()
+            omega = fast_expand(numer,denom,t,p.order)
+        else:
+            omega = self._omega
+        return omega
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef complex[:] evaluate(self, RiemannSurfacePathPrimitive gamma,
+                              double[:] t):
+        r"""Evaluates `omega` along the path at `N` uniform points.
+
+        .. todo::
+
+            Note: right now it doesn't matter what the values in `t`
+            are. This function will simply turn `t` into a bunch of
+            uniformly distributed points between 0 and 1.
+
+        Parameters
+        ----------
+        omega : Differential
+        t : double[:]
+            An array of `t` between 0 and 1.
+
+        Returns
+        -------
+        complex[:]
+            The differential omega evaluated along the path at `N` points.
+        """
+        return gamma.evaluate(self,t)
+
+
+    def plot(self, RiemannSurfacePathPrimitive gamma, N=256, grid=False,
+             **kwds):
+        r"""Plot the differential along the RiemannSurfacePath `gamma`.
 
         Parameters
         ----------
@@ -238,32 +344,28 @@ cdef class Differential:
         matplotlib.Figure
 
         """
-        nsegs = len(gamma.segments)
-        ppseg = N/nsegs
-
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
-        t = numpy.linspace(0,1,ppseg)
-        for k in range(nsegs):
+        ax.hold(True)
+
+        nseg = len(gamma.segments)
+        t = numpy.linspace(0,1,N/nseg)
+        for k in range(nseg):
             segment = gamma.segments[k]
-            xvals = [segment.get_x(ti) for ti in t]
-            yvals = [segment.get_y(ti)[0] for ti in t]
-            ovals = numpy.array(
-                [self.eval(xi,yi) for xi,yi in zip(xvals,yvals)],
-                dtype=numpy.complex)
+            osegment = numpy.array(self.evaluate(segment,t),dtype=complex)
+            tsegment = (t+k)/nseg;
+            ax.plot(tsegment, osegment.real, 'b')
+            ax.plot(tsegment, osegment.imag, 'r--')
 
-            tseg = (t + k)/nsegs
-            ax.plot(tseg, ovals.real, 'b-', **kwds)
-            ax.plot(tseg, ovals.imag, 'r--', **kwds)
-
+        # plot gridlines at the interface between each set of segments
         if grid:
-            ticks = numpy.linspace(0,1,nsegs+1)
+            ticks = numpy.linspace(0,1,len(gamma.segments)+1)
             ax.xaxis.set_ticks(ticks)
             ax.grid(True, which='major')
-
         return fig
 
-    def as_sympy(self):
+
+    def as_sympy_expr(self):
         """Returns the differential as a Sympy expression."""
         return self._omega
 

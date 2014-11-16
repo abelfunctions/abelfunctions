@@ -114,53 +114,61 @@ packages = [
     ]
 
 ext_modules = [
+    Extension('abelfunctions.abelmap',
+              sources = [
+                  'abelfunctions/abelmap.pyx'
+              ],
+              include_dirs = [numpy.get_include()]
+          ),
     Extension('abelfunctions.riemann_surface',
               sources = [
                   'abelfunctions/riemann_surface.pyx',
-                  ],
-              ),
+              ],
+          ),
     Extension('abelfunctions.riemann_surface_path',
               sources = [
                   'abelfunctions/riemann_surface_path.pyx',
-                  ],
+              ],
               include_dirs = [numpy.get_include()]
-              ),
+          ),
     Extension('abelfunctions.analytic_continuation',
               sources = [
                   'abelfunctions/analytic_continuation.pyx',
-                  ],
+              ],
               include_dirs = [numpy.get_include()]
-              ),
+          ),
     Extension('abelfunctions.analytic_continuation_smale',
               sources = [
                   'abelfunctions/analytic_continuation_smale.pyx',
-                  ],
+              ],
               include_dirs = [numpy.get_include()]
-              ),
+          ),
     Extension('abelfunctions.riemanntheta.riemanntheta_cy',
               sources = [
                   'abelfunctions/riemanntheta/riemanntheta_cy.pyx',
                   'abelfunctions/riemanntheta/riemanntheta.c',
-                  ],
+              ],
               include_dirs = [numpy.get_include()]
-              ),
+          ),
     Extension('abelfunctions.riemanntheta.lattice_reduction',
-              sources = ['abelfunctions/riemanntheta/lattice_reduction.pyx',
-                         'abelfunctions/riemanntheta/lll_reduce.c'],
+              sources = [
+                  'abelfunctions/riemanntheta/lattice_reduction.pyx',
+                  'abelfunctions/riemanntheta/lll_reduce.c'
+              ],
               include_dirs = [numpy.get_include()]
-              ),
+          ),
     Extension('abelfunctions.polynomials',
               sources = [
                   'abelfunctions/polynomials.pyx',
-                  ],
+              ],
               include_dirs = [numpy.get_include()]
-              ),
+          ),
     Extension('abelfunctions.differentials',
               sources = [
                   'abelfunctions/differentials.pyx',
-                  ],
+              ],
               include_dirs = [numpy.get_include()]
-              ),
+          ),
     ]
 
 
