@@ -195,7 +195,7 @@ def _new_polynomial(F,X,Y,tau,l):
     # should never have a constant term. if one is detected then its
     # coefficient necessarily simplifies to zero.
     if (0,0) in Fnew.keys():
-        if sympy.simplify(Fnew[(0,0)]) != 0:
+        if abs(Fnew[(0,0)].n(maxn=16)) > 1e-14:
             raise ValueError('Error in constructing next Newton polynomial: '
                              'constant term nonzero.')
         else:
