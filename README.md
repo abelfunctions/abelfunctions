@@ -7,6 +7,11 @@ algebraic curves.  See the
 [Documentation](http://abelfunctions.cswiercz.info) for more
 information.
 
+*Note: abelfunctions is still in early stages of development. Any issues
+should be reported to the
+[Issues Page](https://github.com/cswiercz/abelfunctions/issues) of the
+project.*
+
 Prerequisites
 -------------
 
@@ -40,12 +45,12 @@ Installation
 2. If you have git (http://git-scm.com/) installed, run:
 
         $ git clone https://github.com/cswiercz/abelfunctions.git
-   
+
    and it will download as `abelfunctions` in the current directory.
 
 **Installation**. Enter the main directory, abelfunctions, and run:
 
-    $ python setup.py build_ext --inplace 
+    $ python setup.py build_ext --inplace
 
 for a local (in-place) installation. For a system-wide install, run:
 
@@ -59,4 +64,4 @@ Authors
 
 * Chris Swierczewski <cswiercz@gmail.com>
 * Grady Williams
-
+* James Collins
