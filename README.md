@@ -1,5 +1,6 @@
 Abelfunctions
 =============
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/cswiercz/abelfunctions?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A library for computing with Abelian functions, Riemann surface, and
 algebraic curves.  See the
