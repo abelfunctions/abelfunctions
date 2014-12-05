@@ -109,7 +109,13 @@ class Divisor(object):
         return (self.dict == other.dict) and (self.RS == other.RS)
 
     def __add__(self, other):
-        assert self.RS == other.RS
+        if other == 0 or other == sympy.S(0):
+            return self
+
+        if self.RS != other.RS:
+            raise ValueError('Can only add or subtract divisors defined '
+                             'on the same Riemann surface.')
+
         all_places = set(self.places + other.places)
         d = dict((P, self[P] + other[P]) for P in all_places)
         return Divisor(self.RS, d)
@@ -144,6 +150,11 @@ class Divisor(object):
             raise ValueError('Divisor contains place of multiplicity. '
                              'Cannot coerce to single place.')
         return P
+
+class ZeroDivisor(Divisor):
+    r"""A class representing the zero divisor on a Riemann surface."""
+    def __init__(self, RS):
+        Divisor.__init__(self, RS, {})
 
 
 class Place(Divisor):
@@ -191,34 +202,102 @@ class Place(Divisor):
             value = str((self.x,self.y))
         self._name = value
 
-    def __init__(self, RS, x, y, name=None):
+    def __init__(self, RS, name=None):
         self.RS = RS
-        self.x = x
-        self.y = y
         self.name = name
         Divisor.__init__(self, RS, {self:1})
 
-    def __eq__(self, other):
-        if ((self.RS == other.RS) and
-            (self.x == other.x) and
-            (self.y == other.y)):
-            return True
-        return False
-
     def __repr__(self):
         return self.name
+
+    def __eq__(self, other):
+        raise NotImplementedError('Override in Place subtype.')
 
     def as_place(self):
         return self
 
     def is_discriminant(self):
+        raise NotImplementedError('Override in Place subtype.')
+
+    def valuation(self, omega):
+        r"""Returns the valuation of `omega` at this place.
+
+        The valuation of :math:`\omega` at this place :math:`P` is an
+        integer :math:`m` such that
+
+        .. math::
+
+            \omega |_P = c t^m + O(t^{m+1})
+
+        where :math:`P = P(0)` is given in terms of some local parameter
+        :math:`t`.
+
+        This method is a key ingredient in determining the valuation
+        divisor of a differential :math:`\omega`.
+
+        Parameters
+        ----------
+        omega : Differential
+
+        Returns
+        -------
+        int
+        """
+        raise NotImplementedError('Override in Place subtype')
+
+
+class RegularPlace(Place):
+    r"""A regular place on a Riemann surface.
+
+    """
+    def __init__(self, RS, x, y, **kwds):
+        r"""Initialize a regular place from a point on the curve.
+
+        Parameters
+        ----------
+        RS : RiemannSurface
+        x : complex
+            The x-projection of the place onto the curve.
+        y : complex
+            The y-projection of the place onto the curve.
+        """
+        self.x = x
+        self.y = y
+        Place.__init__(self, RS, **kwds)
+
+    def __eq__(self, other):
+        if isinstance(RegularPlace):
+            if ((self.RS == other.RS) and
+                (self.x == other.x) and
+                (self.y == other.y)):
+                return True
         return False
+
+    def is_discriminant(self):
+        return False
+
+    def valuation(self, omega):
+        x,y = self.RS.x, self.RS.y
+        a,b = self.x, self.y
+
+        def mult(f,x,a):
+            r"""Returns the multiplicity of the zero `a` on `g`."""
+            xpa = map(sum,zip(x,a))
+            subs = dict(zip(x,xpa))
+            p = sympy.poly(f.subs(subs),*x)
+            degs = map(sum, p.monoms())
+            return min(degs)
+
+        numer,denom = omega.as_sympy_expr().cancel().as_numer_denom()
+        zero_mult = mult(numer,(x,y),(a,b))
+        pole_mult = mult(denom,(x,y),(a,b))
+        return zero_mult - pole_mult
 
 
 class DiscriminantPlace(Place):
     r"""A discriminant place on a Riemann surface.
     """
-    def __init__(self, RS, P):
+    def __init__(self, RS, P, **kwds):
         r"""Initialize a disc. place from its Puiseux series representation.
 
         Parameters
@@ -228,9 +307,9 @@ class DiscriminantPlace(Place):
         """
         self.puiseux_series = P
         self.t = P.t
-        x = P.x0
-        y = P.eval_y(0)
-        Place.__init__(self,RS,x,y)
+        self.x = P.x0
+        self.y = P.eval_y(0)
+        Place.__init__(self, RS, **kwds)
 
     def __repr__(self):
         return str(self.puiseux_series)
@@ -241,6 +320,11 @@ class DiscriminantPlace(Place):
             return True
         return False
 
-
     def is_discriminant(self):
         return True
+
+    def valuation(self, omega):
+        omegat = omega.localize(self,nterms=0)
+        coeff,exponent = omegat.expand().leadterm(t)
+        return exponent
+

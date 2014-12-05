@@ -134,14 +134,14 @@ cdef class RiemannSurface:
             if abs(curve_eval) > 1e-8:
                 raise ValueError('The place (%s, %s) does not lie on '
                                  'the curve / surface.')
-            return Place(self, alpha, beta)
+            return RegularPlace(self, alpha, beta)
 
         # otherwise, compute the roots above x=alpha and return a list
         # of places
         falpha = self.f.subs({self.x:alpha})
         palpha = sympy.Poly(falpha, self.y)
         yroots = sympy.roots(palpha, self.y).keys()
-        return [Place(self,alpha,beta) for beta in yroots]
+        return [RegularPlace(self,alpha,beta) for beta in yroots]
 
     def show_paths(self, ax=None, *args, **kwds):
         """Plots all of the monodromy paths of the curve.
@@ -338,8 +338,14 @@ cdef class RiemannSurface:
         """
         f,x,y = self.f, self.x, self.y
         if not self._holomorphic_differentials:
-            self._holomorphic_differentials = differentials(f,x,y)
+            self._holomorphic_differentials = differentials(self)
         return self._holomorphic_differentials
+
+    def holomorphic_oneforms(self):
+        return self.holomorphic_differentials()
+
+    def differentials(self):
+        return self.holomorphic_differentials()
 
     def genus(self):
         if not self._genus:
