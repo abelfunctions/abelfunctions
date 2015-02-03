@@ -25,8 +25,16 @@ References
 .. [Duval] D. Duval, "Rational puiseux expansions", Compositio
    Mathematica, vol. 70, no. 2, pp. 119-154, 1989.
 
+.. [Poteaux] A. Poteaux, M. Rybowicz, "Towards a Symbolic-Numeric Method
+   to Compute Puiseux Series: The Modular Part", preprint
+
 Examples
 --------
+
+Todo
+----
+
+* test y**2 - x: unique pair (-t**2, t)
 
 Contents
 --------
@@ -35,50 +43,123 @@ Contents
 
 import numpy
 import sympy
+import pdb
 
-from operator import itemgetter
-from sympy.core.numbers import Zero
-from utilities import cached_function
+from sympy import (
+    degree, Point, Segment, Poly, poly, Rational, RootOf, gcd, gcdex, LC,
+    expand,
+    )
 
-# we use global symbols for Sympy caching performance
-_Z = sympy.Dummy('Z')
+from abelfunctions.utilities import rootofsimp
 
-def _coefficient(F):
-    """Returns a dict of coefficients of ``F`` indexed by monomial powers.
+_Z = sympy.Symbol('_Z')
+
+
+def newton_polygon_exceptional(H,x,y):
+    r"""Computes the exceptional Newton polygon of `H`"""
+    d = degree(H.eval(x,0), y)
+    return [[(0,0),(d,0)]]
+
+def newton_polygon(H,x,y,additional_points=[]):
+    r"""Computes the Newton polygon of `H`.
+
+    It's assumed that the first generator of `H` here is the "dependent
+    variable". For example, if `H = H(x,y)` and we are aiming to compute
+    a `y`-covering of the complex `x`-sphere then each monomial of `H`
+    is of the form
+
+    .. math::
+
+        a_{ij} x^j y^i.
+
 
     Parameters
     ----------
-    F : sympy.Expr or sympy.Poly
+    H : sympy.Poly
+        Polynomial in `x` and `y`.
+    x : sympy.Symbol
+        Dependent variable.
+    y : sympy.Symbol
+        Independent variable.
 
     Returns
     -------
-    dict
-        A dictionary with keys ``(i,j)`` and values :math:`a_{ij}` where
-        each monomial of ``F`` is of the form :math:`a_{ij} X^j Y^i`.
-
-    Examples
-    --------
-
-        >>> from sympy impport Poly
-        >>> from sympy.abc import x,y
-        >>> f = Poly(y**2 + x**2*(x+1))
-        >>> _coefficient(f) == {(0, 2): -1, (0, 3): -1, (2, 0): 1}
-        True
-
+    list
+        Returns a list where each element is a list, representing a side
+        of the polygon, which in turn contains tuples representing the
+        points on the side.
     """
-    # [TODO] legacy. don't touch without refactoring the code
-    d = {}
-    for (j,i),a in F.items():
-        d[(i,j)] = a
-    return d
+    # because of the way sympy.convex_hull computes the convex hull we
+    # need to remove all points of the form (0,j) and (i,0) where j > j0
+    # and i > i0, the points on the axes closest to the origin
+    H = H.as_poly(y,x)
+    support = map(Point, H.monoms()) + additional_points
+    i0 = min(P.x for P in support if P.y == 0)
+    j0 = min(P.y for P in support if P.x == 0)
+    support = filter(lambda P: (P.x <= i0) and (P.y <= j0), support)
+    convex_hull = sympy.convex_hull(*support)
 
+    # special treatment when the hull is just a point or a segment
+    if isinstance(convex_hull, Point):
+        P = (convex_hull.x,convex_hull.y)
+        return [[P]]
+    elif isinstance(convex_hull, Segment):
+        P = convex_hull.p1
+        convex_hull = generalized_polygon_side(convex_hull)
+        support.remove(P)
+        support.append(convex_hull.p1)
+        sides = [convex_hull]
+    else:
+        # recursive call with generalized point if a generalized newton
+        # polygon is needed.
+        sides = convex_hull.sides
+        first_side = generalized_polygon_side(sides[0])
+        if first_side != sides[0]:
+            P = first_side.p1
+            return newton_polygon(H,x,y,additional_points=[P])
 
-def _bezout(q, m):
+    # convert the sides to lists of points
+    polygon = []
+    for side in sides:
+        polygon_side = [P for P in support if P in side]
+        polygon_side = sorted(map(lambda P: (P.x,P.y), polygon_side))
+        polygon.append(polygon_side)
+
+        # stop the moment we hit the i-axis. despite the filtration at
+        # the start of this function we need this condition to prevent
+        # returning to the starting point of the newton polygon.
+        #
+        # (See test_puiseux.TestNewtonPolygon.test_multiple)
+        if side.p2.y == 0: break
+
+    return polygon
+
+def generalized_polygon_side(side):
+    r"""Returns the generalization of a side on the Newton polygon.
+
+    A generalized Newton polygon is one where every side has slope no
+    less than -1.
+
+    Parameters
+    ----------
+    side : sympy.Segment
+
+    Returns
+    -------
+    side
+    """
+    if side.slope < -1:
+        p1,p2 = side.points
+        p1y = p2.x + p2.y
+        side = Segment((0,p1y),p2)
+    return side
+
+def bezout(q,m):
     r"""Returns :math:`u,v` such that :math:`uq+mv=1`.
 
     Parameters
     ----------
-    q, m : integer
+    q,m : integer
         Two coprime integers with :math:`q > 0`.
 
     Returns
@@ -86,609 +167,363 @@ def _bezout(q, m):
     tuple of integers
 
     """
-    u,v,g = sympy.gcdex(q,m)
-    if u*q+v*m != 1: raise ValueError("Bezout algorithm failed.")
-    return u,v
+    if q == 1:
+        return (1,0)
+    u,v,g = gcdex(q,-m)
+    return (u,v)
 
+def transform_newton_polynomial(H,x,y,q,m,l,xi):
+    r"""Recenters a Newton polynomial at a given singular term.
 
-def _square_free(Phi,var):
-    r"""Returns the square-free factors of the polynomial ``Phi``.
-
-    Returns a list of tuples :math:`(\Psi, r)` such that each
-    :math:`\Psi` is square-free, pairwise coprime, and
+    Given the Puiseux data :math:`x=\mu x^q, y=x^m(\beta+y)` this
+    function returns the polynomial
 
     .. math::
 
-        \Phi = \prod \Psi^r`.
+        \tilde{H} = H(\xi^v x^q, x^m(\xi^u+y)) / x^l.
+
+    where :math:`uq+mv=1`.
+    """
+    u,v = bezout(q,m)
+    newx = ((xi**v)*(x**q)).as_poly(x)
+    newy = ((x**m)*(xi**u + y)).as_poly(y)
+    quo = x**l
+    newH = H.as_poly(x).compose(newx).as_poly(y).compose(newy)
+    newH = newH.exquo(quo).as_poly(x,y)
+    return newH
+
+def newton_data(H,x,y,exceptional=False):
+    r"""Determines the "newton data" associated with each side of the polygon.
+
+    For each side :math:`\Delta` of the Newton polygon of `H` we
+    associate the data :math:`(q,m,l,`phi)` where
+
+    .. math::
+
+        \Delta: qj + mi = l \\
+        \phi_{\Delta}(t) = \sum_{(i,j) \in \Delta} a_{ij} t^{(i-i_0)/q}
+
+    Here, :math:`a_ij x^j y_i` is a term in the polynomial :math:`H` and
+    :math:`i_0` is the smallest value of :math:`i` belonging to the
+    polygon side :math:`\Delta`.
 
     Parameters
     ----------
-    Phi : sympy.Polynomial
-    var : sympy.Symbol
-        A polynomial ``Phi`` in the variable ``var``.
+    H : sympy.Poly
+        Polynomial in `x` and `y`.
 
     Returns
     -------
     list
-        The square-free factors and exponents :math:`(\Psi,r)`.
+        A list of the tuples :math:`(q,m,l,\phi)`.
+    """
+    H = H.as_poly(y,x)
+    if exceptional:
+        newton = newton_polygon_exceptional(H,x,y)
+    else:
+        newton = newton_polygon(H,x,y)
+
+    # special case when the newton polygon is a point
+    if len(newton[0]) == 1:
+        return []
+
+    result = []
+    for side in newton:
+        i0,j0 = side[0]
+        i1,j1 = side[1]
+        slope = Rational(j1-j0,i1-i0)
+        q = slope.q
+        m = -slope.p
+        l = min(q*j0 + m*i0, q*j1 + m*i1)
+        phi = sum(H.coeff_monomial((i,j))*_Z**Rational(i-i0,q) for i,j in side)
+        phi = phi.as_poly(_Z)
+        result.append((q,m,l,phi))
+    return result
+
+
+def newton_iteration(G,t,y,n):
+    r"""Returns a truncated series `y = y(t)` satisfying
+
+    .. math::
+
+        G(t,y(t)) \equiv 0 \bmod{t^r}
+
+    where $r = \ceil{\log_2{n}}$. Based on the algorithm in [XXX].
+
+    Parameters
+    ----------
+    G : sympy.Poly
+        A polynomial in `t` and `y`.
+    n : int
+        Requested degree of the series expansion.
 
     Notes
     -----
-    Such a decomposition can be obtained with derivations and gcd
-    computations without any factorization algorithm. It's implemented
-    in sympy as ``sympy.sqf`` and ``sympy.sqf_list``
+    This algorithm returns the series up to order :math:`2^r > n`. Any
+    choice of order below :math:`2^r` will return the same series.
 
     """
-    return sympy.sqf_list(Phi,var)[1]
+    if n < 0:
+        raise ValueError('Number of terms must be positive. (n=%d'%n)
+    elif n == 0:
+        return sympy.S(0)
+
+    phi = G.as_poly(y)
+    phiprime = phi.diff(y).as_poly(y)
+
+    try:
+        pim1 = Poly(t,t)
+        alpha = G.subs({t:0,y:0})   # recenter in y to handle constant term
+        gim1 = Poly(-alpha,y)
+        sim1 = phiprime.compose(gim1).as_poly(t).invert(pim1)
+    except sympy.NotInvertible:
+        raise ValueError('Newton iteration for computing regular part of '
+                         'Puiseux expansion failed. Curve is not regular '
+                         'at center.')
+
+    r = sympy.ceiling(sympy.log(n,2))
+    for i in range(r):
+        gim1,sim1,pim1 = newton_iteration_step(phi,phiprime,gim1,sim1,pim1,t,y)
+
+    return gim1.as_expr()
 
 
-def _new_polynomial(F,X,Y,tau,l):
-    r""" Computes the next iterate of the Newton-Puiseux algorithms.
-
-    Given the Puiseux data :math:`\tau = (q,\mu,m,\beta,\eta)`
-    :meth:`_new_polynomial` returns
-
-    .. math::
-
-        \tilde{F} = F(\mu X^q, X^m(\beta+Y)) / X^l
-
-    In this algorithm, the choice of parameters will always result in
-
-    .. math::
-
-        \tilde{F} \in \mathbb{L}(\mu,\beta)[X,Y]
-
-    .. note::
-
-        Calling sympy.Poly() with new generators takes a long time.
-        Hence, the manual technique used in this code.
+def newton_iteration_step(phi,phiprime,gim1,sim1,pim1,t,y):
+    r"""Perform a single step of the newton iteration algorithm.
 
     Parameters
     ----------
-    F : sympy.Expr
-    X,Y : sympy.Symbol
-        ``F`` is a polynomial in the variables ``X`` and ``Y``.
-    tau : tuple
-        The Puiseux data from which the new polynomial and term in the
-        Puiseux series is calculated.
-    l : integer
+    phi, phiprime : sympy.Poly
+        Equation and its y-derivative.
+    gim1, sim1 : sympy.Poly
+        Current solution and inverse (conjugate) modulo `pim1`.
+    pim1 : sympy.Poly
+        The current modulus. That is, `gim1` is the Taylor series
+        solution to `phi(t,gim1) = 0` modulo `pim1`.
+    t,y : sympy.Symbol
+        Dependent and independent variables, respectively.
 
     Returns
     -------
-    sympy.Expr
-        The transformed polynomial :math:`\tilde{F}`.
+    gi,si,pi
 
     """
-    q,mu,m,beta,eta = tau
-    d = {}
-    is_symbolic = any([isinstance(coeff, sympy.Expr) for coeff in F.values()])
-
-    # for each monomial of the form
-    #
-    #     c * x**a * y**b
-    #
-    # compute the appropriate new terms after applying the
-    # transformation
-    #
-    #     x |--> mu * x**q
-    #     y |--> eta * x**m * (beta+y)
-    #
-    for (a,b),c in F.items():
-        binom = sympy.binomial_coefficients_list(b)
-        new_a = int(q*a + m*b)
-        for i in range(b+1):
-            new_c = c * (mu**a) * (eta**b) * (binom[i]) * (beta**(b-i))
-            try:
-                d[(new_a,i)] += new_c
-            except KeyError:
-                d[(new_a,i)] = new_c
-
-    # now perform the polynomial division by x**l removing all zero or,
-    # if using numeric types, close to zero terms
-    if is_symbolic:
-        Fnew = dict(((a-l,b),c) for (a,b),c in d.iteritems() if c != 0)
-    else:
-        Fnew = dict(((a-l,b),c) for (a,b),c in d.iteritems()
-                    if not numpy.isclose(c,0,rtol=1e-13,atol=1e-13))
-
-    # simplification really slows things down. a valid Newton polynomial
-    # should never have a constant term. if one is detected then its
-    # coefficient necessarily simplifies to zero.
-    if (0,0) in Fnew.keys():
-        if abs(Fnew[(0,0)].n(maxn=16)) > 1e-14:
-            raise ValueError('Error in constructing next Newton polynomial: '
-                             'constant term nonzero.')
-        else:
-            Fnew.pop((0,0))
-
-    # sanity check
-    if any((a<0 or b<0) for a,b in Fnew.keys()):
-        raise ValueError('Error in constructing next Newton polynomial: '
-                         'negative monomial exponents encountered.')
-    return Fnew
+    pi = pim1 * Poly(t**2,t)
+    gi = gim1.as_poly(t) - phi.compose(gim1).as_poly(t)*sim1
+    gi = (gi % pi).as_poly(y)
+    si = 2*sim1 - phiprime.compose(gi).as_poly(t)*sim1**2
+    si = (si % pi)
+    return gi,si,pi
 
 
-def polygon(F,X,Y,I):
-    r"""Returns the Newton polygon data corresponding to ``F``.
+def puiseux_rational(H,x,y,recurse=False):
+    r"""Puiseux data for the curve :math:`H` above :math:`(x,y)=(0,0)`.
 
-    If ``I=2`` the correspondence is only with the segments with
-    negative slope.
-
-    The segment :math:`\Delta` corresponding to the list
-    :math:`(q,m,l,\Phi)` is on the line :math:`qj + mi = l` in the
-    :math:`(i,j)`-plane and where
-
-    .. math::
-
-        \Phi = \sum_{(i,j) \in \Delta} a_{ij} Z^{(i-i_0)/q}
-
-    where :math:`i_0` is the smallest value of :math:`i` such that there
-    is a point :math:`(i,j) \in \Delta`. Note that :math:`\Phi \in
-    \mathbb{L}[Z]`.
+    Given a polynomial :math:`H = H(x,y)` :func:`puiseux_rational`
+    returns the singular parts of all of the Puiseux series centered at
+    :math:`x=0, y=0`.
 
     Parameters
     ----------
-    F : Sympy Poly
-        A polynomial in :math:`\mathbb{L}[X,Y]`.
-    X,Y : Sympy Symbol
-        The dependent and independent variables, respectively.
-    I : int
+    H : sympy.Poly
+        A plane curve in `x` and `y`.
+    recurse : boolean
+        (Default: `True`) A flag used internally to keep track of which
+        term in the singular expansion is being computed.
 
     Returns
     -------
-    list
-        A list of tuples ``(q,m,l,\Phi)`` where ``q,m,l`` are integers with
-        :math:`(q,m) = 1`, :math:`q>0`, and :math:`\Phi \in
-        \mathbb{L}[Z]`.
-
+    list of `(G,P,Q)`
+        List of tuples where `P` and `Q` are the x- and y-parts of the
+        Puiseux series, respectively, and `G` is a polynomial used in
+        :func:`newton_iteration` to generate additional terms in the
+        y-series.
     """
-    # compute the coefficients and support of F
-    a = _coefficient(F)
-    support = a.keys()
+    H = H.as_poly(x,y)
+    R = []
 
-    # compute the lower convex hull of F.
-    #
-    # since sympy.convex_hull doesn't include points on edges, we need
-    # to compare back to the support. the convex hull will contain all
-    # points. Those on the boundary are considered "outside" by sympy.
-    hull = sympy.convex_hull(*support)
-    if type(hull) == sympy.Segment:
-        hull_with_bdry = support       # colinear support is a newton polygon
-    else:
-        hull_with_bdry = [p for p in support
-                          if not hull.encloses(sympy.Point(p))]
-    newton = []
+    # when recurse is true, return if the leading order of H(0,y) is y
+    if recurse:
+        IH = H.subs(x,0).as_expr().leadterm(y)[1]
+        if IH == 1:
+            return [(H,x,y)]
 
-    # find the start and end points (0,J) and (I,0). Include points
-    # along the i-axis if I==1. Otherwise, only include points with
-    # negative slope if I==2
-    vertices = hull.points if isinstance(hull,sympy.Segment) else hull.vertices
-    JJ = min(pt.y for pt in vertices if pt.x == 0)
-    if I == 2: II = min(pt.x for pt in vertices if pt.y == 0)
-    else:      II = max(pt.x for pt in vertices if pt.y == 0)
-    testslope = -float(JJ)/II
-
-    # determine largest slope with (0,JJ). If this is greater than the
-    # test slope then there exist points above the line connecting
-    # (0,JJ) with (II,0) this fact is used to deal with certain
-    # borderline cases
-    include_borderline_colinear = (type(hull) == sympy.Segment)
-    for (i,j) in hull_with_bdry:
-        # when the point is on the j-axis, the onle one we want is the
-        # point (0,JJ)
-        if i == 0:
-            if j == JJ: slope = -sympy.oo
-            else:       slope = sympy.oo
-        else:           slope = float(j - JJ)/i
-
-        if slope > testslope:
-            include_borderline_colinear = True
-            break
-
-    # loop through all points on the boundary and determine if it's in
-    # the newton polygon using a testslope method
-    for (i,j) in hull_with_bdry:
-        # when the point is on the j-axis, the onle one we want is the
-        # point (0,JJ)
-        if i == 0:
-            if j == JJ: slope = -sympy.oo
-            else:       slope = sympy.oo
-        else:           slope = float(j - JJ)/i
-
-        # if the slope is less than the test slope or if we're in the
-        # case where we include points along the j=0 line then add the
-        # point to the newton polygon
-        if (slope < testslope) or (I==1 and j==0):
-            newton.append((i,j))
-        elif (slope == testslope) and include_borderline_colinear:
-            # borderline case is when there is only one segment from
-            # (0,JJ) to (II,0). When this is the case, include all
-            # points whose slope matches testslope
-            newton.append((i,j))
-
-    newton.sort(key=itemgetter(1),reverse=True) # sort second in j-th coord
-    newton.sort(key=itemgetter(0))              # sort first in i-th coord
+    # for each newton polygon side branch out a new puiseux series
+    data = newton_data(H,x,y,exceptional=(not recurse))
+    R = []
+    for q,m,l,phi in data:
+        u,v = bezout(q,m)
+        for psi,k in phi.factor_list()[1]:
+            z = psi.gen
+            psisimp = rootofsimp(psi)
+            xi = psisimp.as_poly(z).root(0,radicals=False)
+            Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
+            for (G,P,Q) in puiseux_rational(Hprime,x,y,recurse=True):
+                foobar = (G, xi**v*P**q, P**m*(xi**u + Q))
+                R.append(foobar)
+    return R
 
 
-    # now that we have the newton polygon we compute the parameters
-    # (q,m,l,Phi) for each side Delta on the polygon.
-    params = []
-    eps = 1e-14
-    N = len(newton)
-    n = 0
-    while n < N-1:
-        # determine slope of current line
-        side = [newton[n],newton[n+1]]
-        sideslope = sympy.Rational(side[1][1] - side[0][1],
-                                   side[1][0] - side[0][0])
-
-        # check against all following points for colinearity by
-        # comparing slopes. append all colinear points to side
-        k = 1
-        for pt in newton[n+2:]:
-            slope = float(pt[1] - side[0][1])/(pt[0] - side[0][0])
-            if abs(slope - sideslope) < eps:
-                side.append(pt)
-                k += 1
-            else:
-                # when we reach the end of the newton polygon we need to
-                # shift the value of k a little bit so that the last
-                # side is correctly captured if k == N-n-1: k -= 1
-                break
-        n += k
-
-        # compute q,m,l such that qj + mi = l and Phi
-        q   = sideslope.q
-        m   = -sideslope.p
-        l   = q*side[0][1] + m*side[0][0]
-        i0  = min(side, key=itemgetter(0))[0]
-        Phi = sum(a[(i,j)]*_Z**sympy.Rational(i-i0,q) for (i,j) in side)
-        Phi = sympy.Poly(Phi,_Z)
-        params.append((q,m,l,Phi))
-
-    return params
-
-
-def singular(F, X, Y, pi=None):
-    r"""Returns the singular term data of all Puiseux series above some
-    :math:`x=\alpha`.
-
-    Computes a collection of pairs :math:`(\pi_i, F_i)` where
-    :math:`\pi_i` is a collection of :math:`\tau = (q,\mu,m,\beta,\eta)`
-    data representing the "singular parts" of all of the Puiseux series
-    expansions above some :math:`x=\alpha`.
-
-    Parameters
-    ----------
-    F : sympy.Expr
-    X,Y : sympy.Symbol
-        ``F`` is a polynomial in the variables ``X`` and ``Y``.
-    pi : list
-        (Default: ``None``) a list of :math:`\tau` data. When provided
-        it implies that additional singular terms need to be computed.
-        (Note that this algorithm can be recursive.)
-
-    Returns
-    -------
-    list
-        List of pairs :math:`(\pi,F)` each representing the singular
-        part of a :class:`PuiseuxTSeries`.
-
-    """
-    # set a flag for whether or not this is a new Puiseux t-series we're
-    # computing or if we need to compute more terms of an existing
-    # t-series dataset.
-    S = []
-    I = 2 if pi else 1
-    for (tau,l,r) in singular_term(F,X,Y,I):
-        pi1 = pi + [tau]
-        F1 = _new_polynomial(F,X,Y,tau,l)
-
-        # if r == 1 then we've determined the singular part of the
-        # current puiseux t-series. otherwise, we need to compute more
-        # singular terms
-        if r == 1:
-            S.append((pi1,F1))
-        else:
-            S.extend(singular(F1,X,Y,pi1))
-
-    return S
-
-
-def singular_term(F, X, Y, I):
-    """Computes a single set of singular terms of the Puiseux expansions.
-
-    For :math:`I=1`, the function computes the first term of each finite
-    Puiseux series expansion. For :math:`I=2`, it computes the other
-    singular terms of the expansion, if necessary.
-
-    Parameters
-    ----------
-    F : sympy.Expr
-    X,Y : sympy.Symbol
-        A polynomial :math:`F = F(X,Y)`. At first the curve itself but
-        later an intermediate polynomial from which further terms are
-        computed.
-    I : int
-        A flag indicating whether or not to compute the first (``I=1``)
-        or subsequent (``I=2``) singular terms.
-
-    Returns
-    -------
-    list
-        A list of :math:`\tau` data representing the singular part of a
-        Puiseux series.
-
-    """
-    # if the curve is singular then compute the singular tuples and
-    # return.  otherwise, use the standard newton polygon method
-    T = []
-    if is_singular_curve(F,X,Y):
-        for (q,m,l,Phi) in desingularize(F,X,Y):
-            roots = Phi.all_roots(radicals=True)
-            for eta in roots:
-                eta = sympy.simplify(eta)
-                tau = (q,1,m,1,eta)
-                T.append((tau,0,1))
-        return T
-
-    # for each side of the newton polygon
-    for (q,m,l,Phi) in polygon(F,X,Y,I):
-        u,v = _bezout(q,m)
-
-        # each newton polygon side has a characteristic polynomial. For
-        # each square-free factor, each root corresponds to a K-term
-        for (Psi,r) in _square_free(Phi,_Z):
-            # compute the roots of Psi. Use the RootOf construct if
-            # possible. In the case when Psi is over EX (i.e. when
-            # RootOf doesn't work) then compute symbolic roots.
-            Psi = sympy.Poly(Psi,_Z)
-            try:
-                roots = Psi.all_roots(radicals=True)
-            except NotImplementedError:
-                roots = sympy.roots(Psi,_Z).keys()
-
-            # for each root, compute the K-term consisting of a tau
-            # term, the largest x*l factor of the polynomial F, and a
-            # flag, r, indicating whether or not we're done determining
-            # the singular term
-            for xi in roots:
-                mu = sympy.simplify(xi**(-v))
-                beta = sympy.simplify(xi**u)
-                tau = (q,mu,m,beta,1)
-                T.append((tau,l,r))
-    return T
-
-def is_singular_curve(f,x,y):
-    r"""Returns ``True`` if :math:`f = f(x,y)` is singular at :math:`x=0`.
+def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t')):
+    r"""Singular parts of the Puiseux series above :math:`x=\alpha`.
 
     Parameters
     ----------
     f : sympy.Expr
-    x,y : sympy.Symbol
-        A complex plane algebraic curve :math:`f = f(x,y)`.
-
-    Returns
-    -------
-    boolean
-
-    """
-    # the expansion is singular if there is no "c y**deg" where c is constant
-    # and if there is a constant term
-    coeffs = _coefficient(f)
-    deg = max(j for (i,j) in f.keys())
-    sing_coeffs = [(i,j) for (i,j),a in coeffs.iteritems() if i==deg]
-    if (0,0) in coeffs.keys() and (deg,0) not in sing_coeffs:
-        return True
-    else:
-        return False
-
-
-def desingularize(f, x, y):
-    r"""Returns Puiseux expansion data initializing a singular Puiseux series.
-
-    Parameters
-    ----------
-    f : sympy.Expr
-    x,y : sympy.Symbol
-        A complex plane algebraic curve :math:`f = f(x,y)` which is
-        singular (:math:`y = \infty`) at :math:`x = 0`.
-
-    Returns
-    -------
-    list
-        A single :math:`\tau` term initalizing the Puiseux series at
-        this :math:`x = 0`.
-
-    """
-    coeffs = _coefficient(f)
-    c = coeffs.pop((0,0))
-
-    # for each monomial c x**j y**i find the dominant term: that is the
-    # one that cancels out the constant term c. This is done by
-    # substituting x = T**q, y = eta T**m giving the monomial c eta**i *
-    # T**(qj + mi). To balance the equation (kill the constant term) we
-    # need qj + mi = 0. q = i, m = -j satisfies this equation.
-    #
-    # Finally, we need to check that this choice of q,m doesn't
-    # introduce terms with negative exponent in the curve.
-    q,m = (1,1)
-    for (i,j),aij in coeffs.iteritems():
-        g = sympy.gcd(i,j)
-        q = sympy.Rational(i,g)
-        m = -sympy.Rational(j,g)
-
-        # check if the other terms remain positive.
-        if all(q*jj + m*ii>=0 for ii,jj in coeffs.keys()):
-            break
-
-    if (q,m) == (1,1):
-        raise ValueError("Unable to compute singular term.")
-
-    # now compute the values of eta that cancel the constant term c
-    Phi = [aij*_Z**sympy.Rational(i,q) for (i,j) in coeffs.keys()
-           if q*j+m*i == 0]
-    Phi = sympy.Poly(sum(Phi) + c, _Z)
-    return [(q,m,0,Phi)]
-
-
-def build_qh_dict(q):
-    """
-    Given an array, q, of length R efficientily compute
-
-        q_{h_1}^{h_2} = \prod_{k=h_1+1}^{h_2} q[k-1], 0 \leq h1 \leq h2 \leq R
-
-    values used int "Rational pusieux expansions" by D. Duval. Returns
-    a dictionary with keys (h1,h2).
-    """
-    R = len(q)
-    qh = dict(((h,h),1) for h in xrange(R+1))
-
-    # for each q[h], determine which existing entries in the qh dict
-    # we can append to to create new entries.
-    for h in xrange(R):
-        for (h1,h2), qh1h2 in qh.items():
-            # indexing shift.
-            if h2 == h:
-                qh[(h1,h2+1)] = qh1h2*q[h]
-    return qh
-
-
-def build_series(pi):
-    r"""Computes the x- and y-part terms from a singular :math:`\pi`.
-
-    The x- and y-parts of a PuiseuxTSeries are computed using repeated
-    applications of the map
-
-    ..math::
-
-        \tau_i = (q, \mu, m, \beta, \eta),
-        X \mapsto \mu X^q
-        Y \mapsto X^m(\beta + \eta Y)
-
-    where :math:`\tau_i` is the coefficient data of a singular term of
-    the Puiseux series as computed by the functions :func:`singular`.
-
-    Parameters
-    ----------
-    pi : list
-        A list of :math:`\tau` terms representing the singular part of a
-        PuiseuxTSeries.
-
-    Returns
-    -------
-    e, lam, terms
-        The ramification index :math:`e`, the coefficient
-        :math:`\lambda` of the x-part, and a dictionary of terms
-        representing the y-part whose keys are the exponents of the
-        terms and values are the coefficients.
-
-    Notes
-    -----
-
-    Uses the formulas from p. 135,136 of "Rational puiseux expansions"
-    by D. Duval with the change that indexing of m,beta,mu,eta are all
-    shifted down by one. The indexing on qh matches the notation of
-    D. Duval.
-
-    """
-    q,mu,m,beta,eta = zip(*pi)
-    R = len(pi)
-    qh = build_qh_dict(q)
-
-    # compute the parameters appearing in the x-part
-    e = qh[(0,R)]
-    lam = reduce(lambda z1,z2: z1*z2,
-                 (mu[k]**qh[(0,k)] for k in xrange(R)))
-
-    # compute the terms of the y-part
-    terms = {}
-    n_h = sympy.S(0)
-    eta_h = sympy.S(1)
-    for h in range(0,R):
-        # compute a term exponent: n_h
-        eta_h *= eta[h]
-        n_h += m[h] * qh[(h+1,R)]
-
-        # compute a term coefficient: alpha_h
-        alpha_h = sympy.S(1)
-        for i in range(0,h):
-            alpha_h *= mu[i+1]**sum(m[j]*qh[(j+1,i)] for j in xrange(0,i))
-        for i in range(h,R-1):
-            alpha_h *= mu[i+1]**sum(m[j]*qhv[(j+1,i)] for j in xrange(0,h))
-        alpha_h *= eta_h*beta[h]
-
-        # add to the terms dictionary
-        terms[n_h] = alpha_h
-
-    return e, lam, terms.items()
-
-
-def puiseux(f, x, y, alpha, beta=None, t=sympy.Symbol('t'), parametric=False,
-            order=None, nterms=None, exact=True):
-    r"""Returns a list of Puiseux series lying above :math:`x=\alpha`.
-
-    Computes a list of :class:`PuiseuxTSeries` objects representing the
-    Puiseux series at the lift of :math:`x=\alpha`. Each of these series
-    can be further decomposed into :class:`PuiseuxXSeries` objects.
-
-    Parameters
-    ----------
-    f : sympy.Expr
-    x : sympy.Symbol
-    y : sympy.Symbol
+        A plane algebraic curve in `x` and `y`.
     alpha : complex
-        The x-point :math:`x=\alpha` at which to compute the set of
-        Puiseux series. `sympy.oo` is an allowed input
+        The x-point over which to compute the Puiseux series of `f`.
     beta : complex
-        (Default: `None`) If provided, only returns the parametric
-        Puiseux series centered at :math:`(x,y) = (\alpha,\beta)`
-    var : sympy.Symbol
-        (Default: `sympy.Symbol('t')`) The variable in which the
-        parametric Puiseux series expansions are given.
-    parametric : bool
-        (Default: `False`) If `True`, returns a list of
-        `PuiseuxTSeries`. Otherwise, returns a list of `PuiseuxXSeries`.
-    order : int
-        (Default: `None`) If provided, returns Puiseux series expansions
-        up the the specified order.
-    nterms : int
-        (Default: `None`) If provided, returns Puiseux series expansions
-        with the specified number of terms.
+        (Optional) The y-point at which to compute the Puiseux series.
+    t : sympy.Symbol
+        (Optional) Variable used in the Puiseux series expansions.
 
     Returns
     -------
-    list
-        A list of :class:`PuiseuxTSeries` objects.
+    list of PuiseuxTSeries
 
     """
-    # scale and shift f accordingly: the algorithms for computing the
-    # Puiseux series terms are centered at x=0
-    if alpha in [sympy.oo, numpy.Inf, 'oo']:
+    infinities = [sympy.oo, numpy.Inf, 'oo']
+    singular = []
+
+    # recenter the curve in x with the given alpha
+    if alpha in infinities:
         alpha = sympy.oo
-        dx = sympy.degree(f,x)
-        fshift = f.subs(x, 1/x) * x**dx
+        d = degree(f,x)
+        fa = expand(f.subs(x,1/x) * x**d)
     else:
-        fshift = f.subs(x, x + alpha)
-    fshift = sympy.Poly(fshift,x,y).as_dict()
+        fa = expand(f.subs(x,x+alpha))
 
-    # compute the puiseux series data and construct the corresponding
-    # PuiseuxTSeries objects.
-    singular_data = singular(fshift,x,y,[])
-    series = [PuiseuxTSeries(f,x,y,alpha,datum,t=t,exact=exact)
-              for datum in singular_data]
-    for P in series:
-        P.extend(order=order, nterms=nterms)
+    # recenter the curve in y. if the curve is not monic, monicize and
+    # perform the reverse transformation in the series construction step
+    g,transform = almost_monicize(fa,x,y)
+    gx0z = g.subs(x,0).subs(y,_Z).as_poly(_Z)
+    all_roots = gx0z.all_roots(radicals=False,multiple=False)
+    roots,multiplicities = zip(*all_roots)
 
-    # if y-value, beta, is given then return only the puiseux series
-    # such that Py(0) = beta
-    if beta is not None:
-        series = [Pi for Pi in series if Pi.eval_y(0) == beta]
+    # for each y-center compute the singular parts of the puiseux series
+    for beta in roots:
+        H = g.subs(y,y+beta)
+        singular_part_ab = puiseux_rational(H,x,y)
 
-    # return x-series representations if requested
-    if not parametric:
-        series = [px for P in series for px in P.xseries()]
-    return series
+        # move back to (alpha, beta)
+        for G,P,Q in singular_part_ab:
+            if x in transform:
+                Q /= transform.subs(x,P)
+            else:
+                Q += beta
+
+            if alpha in infinities:
+                P = 1/P
+            else:
+                P += alpha
+            singular.append((G,P,Q))
+
+    return singular
+
+
+def almost_monicize(f,x,y):
+    r"""Transform `f` to an "almost monic" polynomial.
+
+    Perform a sequence of substitutions of the form
+
+    .. math::
+
+        f \mapsto x^d f(x,y/x)
+
+    such that :math:`l(0) \neq 0` where :math:`l=l(x)` is the leading
+    order coefficient of :math:`f`.
+
+    Parameters
+    ----------
+    f,x,y : sympy.Expr
+        An algebraic curve in `x` and `y`.
+
+    Returns
+    -------
+    g, transform
+        A new, almost monic polynomial `g` and a polynomial `transform`
+        such that `y -> y/transform`.
+    """
+    f = f.expand()
+    transform = sympy.S(1)
+    monic = False
+    while not monic:
+        if LC(f,y).subs(x,0) == 0:
+            fsubs = f.subs(y,y/x).expand()
+            n,d = fsubs.together().as_numer_denom()
+            f = n.expand()
+            transform *= x
+        else:
+            monic = True
+    return f,transform
+
+
+# def puiseux(f, x, y, alpha, beta=None, t=sympy.Symbol('t'), parametric=False,
+#             order=None, nterms=None, exact=True):
+#     r"""Returns a list of Puiseux series lying above :math:`x=\alpha`.
+
+#     Computes a list of :class:`PuiseuxTSeries` objects representing the
+#     Puiseux series at the lift of :math:`x=\alpha`. Each of these series
+#     can be further decomposed into :class:`PuiseuxXSeries` objects.
+
+#     Parameters
+#     ----------
+#     f : sympy.Expr
+#     x : sympy.Symbol
+#     y : sympy.Symbol
+#     alpha : complex
+#         The x-point :math:`x=\alpha` at which to compute the set of
+#         Puiseux series. `sympy.oo` is an allowed input
+#     beta : complex
+#         (Default: `None`) If provided, only returns the parametric
+#         Puiseux series centered at :math:`(x,y) = (\alpha,\beta)`
+#     var : sympy.Symbol
+#         (Default: `sympy.Symbol('t')`) The variable in which the
+#         parametric Puiseux series expansions are given.
+#     parametric : bool
+#         (Default: `False`) If `True`, returns a list of
+#         `PuiseuxTSeries`. Otherwise, returns a list of `PuiseuxXSeries`.
+#     order : int
+#         (Default: `None`) If provided, returns Puiseux series expansions
+#         up the the specified order.
+#     nterms : int
+#         (Default: `None`) If provided, returns Puiseux series expansions
+#         with the specified number of terms.
+
+#     Returns
+#     -------
+#     list
+#         A list of :class:`PuiseuxTSeries` objects.
+
+#     """
+#     # scale and shift f accordingly: the algorithms for computing the
+#     # Puiseux series terms are centered at x=0
+#     if alpha in [sympy.oo, numpy.Inf, 'oo']:
+#         alpha = sympy.oo
+#         dx = sympy.degree(f,x)
+#         fshift = f.subs(x, 1/x) * x**dx
+#     else:
+#         fshift = f.subs(x, x + alpha)
+#     fshift = sympy.Poly(fshift,x,y).as_dict()
+
+#     # compute the puiseux series data and construct the corresponding
+#     # PuiseuxTSeries objects.
+#     singular_data = singular(fshift,x,y,[])
+#     series = [PuiseuxTSeries(f,x,y,alpha,datum,t=t,exact=exact)
+#               for datum in singular_data]
+#     for P in series:
+#         P.extend(order=order, nterms=nterms)
+
+#     # if y-value, beta, is given then return only the puiseux series
+#     # such that Py(0) = beta
+#     if beta is not None:
+#         series = [Pi for Pi in series if Pi.eval_y(0) == beta]
+
+#     # return x-series representations if requested
+#     if not parametric:
+#         series = [px for P in series for px in P.xseries()]
+#     return series
 
 
 
@@ -1704,3 +1539,59 @@ class PuiseuxXSeries(object):
         for exp, coeff in self.terms:
             expr += coeff*(self.x - self.x0)**exp
         return expr
+
+
+if __name__=='__main__':
+    print '=================================='
+    print '========== Test Puiseux =========='
+    print '==================================\n'
+    import sympy
+    from sympy.abc import x,y,t
+    import time
+
+    # from csympy import *
+    # x,y,t = var('x,y,t')
+    # x = sympy.sympify(x)
+    # y = sympy.sympify(y)
+    # t = sympy.sympify(t)
+
+    f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
+    f2 = -x**7 + 2*x**3*y + y**3
+    f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2
+    f4 = y**2 + x**3 - x**2
+    f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3
+    f6 = y**4 - y**2*x + x**2
+    f7 = y**3 - (x**3 + y)**2 + 1
+    f8 = (x**6)*y**3 + 2*x**3*y - 1
+    f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
+    f10 = (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+    f11 = y**2 - x*(x-1)*(x+1)
+
+    f22 = y**3 - x**5
+    f23 = (y - 1 - 2*x - x**2)*(y - 1 - 2*x - x**7)
+    f27 = (y**2 - 2*x**3)*(y**2-2*x**2)*(y**3-2*x)
+
+    g = x**4 - 2*x**2*y + y**2*(x**2 - x)
+
+    f = f3
+
+    f = expand(x**5*(y**2-1/x**5)*(y**3-x**7))
+
+    for G,P,Q in puiseux(f,x,y,0):
+        print '------------------------------------------------------------'
+        P = rootofsimp(P)
+        Q = rootofsimp(Q)
+        G = rootofsimp(G)
+
+        print '\n(x, y) =\n'
+        sympy.pprint( (P,Q.subs(y,0).expand()) )
+        print '\n(x(t), y(t)) =\n'
+
+        g = newton_iteration(G,x,y,2)
+
+        sympy.pprint(P)
+        print
+        sympy.pprint(Q)
+
+
+    print '\n===== Done ====='
