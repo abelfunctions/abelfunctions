@@ -183,16 +183,27 @@ def fast_expand(numer,denom,t,order):
     """
     # convert numerator and denominator to lists of coefficients.  it's
     # faster to do it "manually" than to coerce to polynomial
-    q = [0]*order
-    for term in numer.args:
-        qn,n = term.as_coeff_exponent(t)
-        if n < order:
-            q[n] = qn
-    r = [0]*order
-    for term in denom.args:
-        rn,n = term.as_coeff_exponent(t)
-        if n < order:
-            r[n] = rn
+
+    # q = [0]*order
+    # for term in numer.args:
+    #     qn,n = term.as_coeff_exponent(t)
+    #     if n < order:
+    #         q[n] = qn
+    # r = [0]*order
+    # for term in denom.args:
+    #     rn,n = term.as_coeff_exponent(t)
+    #     if n < order:
+    #         r[n] = rn
+    def get_terms_list(expr):
+        l = [0]*order
+        for term,coeff in expr.collect(t,evaluate=False).items():
+            _,n = term.as_coeff_exponent(t)
+            if n < order:
+                l[n] = coeff
+        return l
+
+    q = get_terms_list(numer)
+    r = get_terms_list(denom)
 
     # forward solve the coefficient system. note that r[0] (constant
     # coeff of denom) is nonzero by construction
@@ -202,6 +213,7 @@ def fast_expand(numer,denom,t,order):
         s[n] = (q[n] - known_terms)/r[0]
     taylor = sum(s[n]*t**n for n in range(order))
     return taylor
+
 
 cdef class Differential:
     """A differential one-form which can be defined on a Riemann surface.
@@ -288,14 +300,42 @@ cdef class Differential:
             yt = p.eval_y(t)
             dxdt = p.eval_dxdt(t)
 
-            numer,denom = self.as_sympy_expr().as_numer_denom()
-            numer = sympy.expand(numer.subs({x:xt,y:yt})*dxdt)
-            denom = sympy.expand(denom.subs({x:xt,y:yt}))
-            numer,denom = sympy.cancel(numer/denom).as_numer_denom()
+            expr = self.as_sympy_expr()
+            expr = expr.subs({x:xt,y:yt})*dxdt
+
+            print 'differential:', expr
+            numer,denom = sympy.cancel(expr).as_numer_denom()
+            print '\t', numer
+            print '\t', denom
             omega = fast_expand(numer,denom,t,p.order)
         else:
             omega = self._omega
         return omega
+
+    def localize(self, P):
+        return self.centered_at_place(P)
+
+    def valuation(self, P):
+        r"""Returns the valuation of the one-form at a place `P`.
+
+        If `val(P)` is greater than zero then `P` is a zero of the
+        one-form. If `val(P)` is less than zero then `P` is pole of the
+        one-form.
+
+        Parameters
+        ----------
+        P : Place
+
+        Returns
+        -------
+        int
+            The valuation of `self` at `P`.
+        """
+        t = P.puiseux_series.t
+        localization = self.localize(P)
+        coeff, exponent = localization.leadterm(t)
+        return exponent
+
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
