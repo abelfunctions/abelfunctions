@@ -13,8 +13,10 @@ from abelfunctions.puiseux import (
 from .test_abelfunctions import AbelfunctionsTestCase
 
 import sympy
-from sympy.abc import x,y,z
+from sympy.abc import x,y,z,t
 from sympy import Poly, Point, Segment, Polygon, RootOf, sqrt, S
+
+_z = sympy.Symbol('_z')
 
 class TestNewtonPolygon(unittest.TestCase):
 
@@ -70,65 +72,65 @@ class TestNewtonData(unittest.TestCase):
     def test_segment(self):
         H = Poly(2*x + 3*y, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 1, 3*z + 2)])
+                         [(1, 1, 1, (3*_z + 2).as_poly(_z))])
 
         H = Poly(2*x**2 + 3*y**2, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 2, 3*z**2 + 2)])
+                         [(1, 1, 2, (3*_z**2 + 2).as_poly(_z))])
 
         H = Poly(2*x**2 + 3*y**3, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(3, 2, 6, 3*z + 2)])
+                         [(3, 2, 6, (3*_z + 2).as_poly(_z))])
 
         H = Poly(2*x**2 + 3*y**4, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(2, 1, 4, 3*z**2 + 2)])
+                         [(2, 1, 4, (3*_z**2 + 2).as_poly(_z))])
 
     def test_general_segment(self):
         H = Poly(x**2 + y, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 1, z)])
+                         [(1, 1, 1, (_z).as_poly(_z))])
 
         H = Poly(x**3 + y**2, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 2, z**2)])
+                         [(1, 1, 2, (_z**2).as_poly(_z))])
 
         H = Poly(x**5 + y**3, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 3, z**3)])
+                         [(1, 1, 3, (_z**3).as_poly(_z))])
 
     def test_colinear(self):
         H = Poly(2*x**4 + 3*x**2*y**2 + 5*y**4, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 4, 5*z**4 + 3*z**2 + 2)])
+                         [(1, 1, 4, (5*_z**4 + 3*_z**2 + 2).as_poly(_z))])
 
         H = Poly(2*x**4 + 3*x**3*y + 5*x**2*y**2 + 7*y**4, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 4, 7*z**4 + 5*z**2 + 3*z + 2)])
+                         [(1, 1, 4, (7*_z**4 + 5*_z**2 + 3*_z + 2).as_poly(_z))])
 
         H = Poly(2*x**4 + 3*x**2*y**2 + 5*x*y**3 + 7*y**4, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 4, 7*z**4 + 5*z**3 + 3*z**2 + 2)])
+                         [(1, 1, 4, (7*_z**4 + 5*_z**3 + 3*_z**2 + 2).as_poly(_z))])
 
     def test_multiple(self):
         H = Poly(2*x**2 + 3*x*y + 5*y**3, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 2, 3*z + 2),
-                          (2, 1, 3, 5*z + 3)])
+                         [(1, 1, 2, (3*_z + 2).as_poly(_z)),
+                          (2, 1, 3, (5*_z + 3).as_poly(_z))])
 
     def test_general_to_colinear(self):
         H = Poly(2*x**5 + 3*x**2*y**2 + 5*y**4, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 4, 5*z**4 + 3*z**2)])
+                         [(1, 1, 4, (5*_z**4 + 3*_z**2).as_poly(_z))])
 
         H = Poly(2*x**5 + 3*x**3*y + 5*x**2*y**2 + 7*y**4, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 4, 7*z**4 + 5*z**2 + 3*z)])
+                         [(1, 1, 4, (7*_z**4 + 5*_z**2 + 3*_z).as_poly(_z))])
 
         H = Poly(2*x**5 + 3*x**3*y + 5*x**2*y**2 + 7*y**6, y, x)
         self.assertEqual(newton_data(H,x,y),
-                         [(1, 1, 4, 5*z**2 + 3*z),
-                          (2, 1, 6, 7*z**2 + 5)])
+                         [(1, 1, 4, (5*_z**2 + 3*_z).as_poly(_z)),
+                          (2, 1, 6, (7*_z**2 + 5).as_poly(_z))])
 
 
 class TestNewPolynomial(unittest.TestCase):
@@ -177,15 +179,17 @@ class TestNewtonIteration(unittest.TestCase):
         self.assertEqual(S,x**2)
 
     def test_sqrt(self):
-        G = Poly(y**2 - (x+1),x,y)
-        S = newton_iteration(G,x,y,9) + sympy.O(x**9)
-        series = sympy.series(sympy.sqrt(x),x,1,9)
+        # recenter sqrt(x) at x+1
+        G = Poly((y+1)**2 - (x+1),x,y)
+        S = newton_iteration(G,x,y,9) + sympy.O(x**9) + 1
+        series = sympy.series(sympy.sqrt(x),x,1,9).subs(x,x+1)
         self.assertEqual(S,series)
 
     def test_cuberoot(self):
-        G = Poly(y**3 - (x+1), x, y)
-        S = newton_iteration(G,x,y,9) + sympy.O(x**9)
-        series = sympy.series(x**sympy.Rational(1,3),x,1,9)
+        # recenter cuberoot(x) at x+1
+        G = Poly((y+1)**3 - (x+1), x, y)
+        S = newton_iteration(G,x,y,9) + sympy.O(x**9) + 1
+        series = sympy.series(x**sympy.Rational(1,3),x,1,9).subs(x,x+1)
         self.assertEqual(S,series)
 
     def test_geometric(self):
@@ -201,7 +205,7 @@ class TestNewtonIteration(unittest.TestCase):
         self.assertEqual(S,0)
 
         G = Poly(y - x**2, x, y)
-        S = newton_iteration(G,x,y,2)
+        S = newton_iteration(G,x,y,3)
         self.assertEqual(S,x**2)
 
 
@@ -273,8 +277,8 @@ class TestAlmostMonicize(AbelfunctionsTestCase):
         self.assertEqual(transform,x**4)
 
         g,transform = almost_monicize(self.f8,x,y)
-        self.assertEqual(g,y**3 + 2*x*y - 1)
-        self.assertEqual(transform,x**2)
+        self.assertEqual(g,-x**4 + 2*x**2*y**5 + y**6)
+        self.assertEqual(transform,x)
 
 
 class TestPuiseux(AbelfunctionsTestCase):
@@ -287,8 +291,7 @@ class TestPuiseux(AbelfunctionsTestCase):
     def get_PQ(self,f):
         p = puiseux(f,x,y,0)
         if p:
-            G,P,Q = zip(*puiseux(f,x,y,0))
-            series = zip(P,(Qi.subs(y,0).expand() for Qi in Q))
+            series = [(P.xpart,P.ypart.subs(y,0).expand()) for P in p]
         else:
             series = []
         return series
@@ -296,12 +299,12 @@ class TestPuiseux(AbelfunctionsTestCase):
         series = self.get_PQ(self.f1)
         self.assertItemsEqual(
             series,
-            [(x**2,x**4+x**5)])
+            [(t**2,t**4+t**5)])
     def test_PQ_f2(self):
         series = self.get_PQ(self.f2)
         self.assertItemsEqual(
             series,
-            [(x,sympy.S(0)), (-x**2/2,-x**3/2)])
+            [(t,sympy.S(0)), (-t**2/2,-t**3/2)])
     def test_PQ_f3(self):
         # awaiting RootOf simplification issues
         pass
@@ -309,25 +312,36 @@ class TestPuiseux(AbelfunctionsTestCase):
         series = self.get_PQ(self.f4)
         self.assertItemsEqual(
             series,
-            [(x,x),(x,-x)])
+            [(t,t),(t,-t)])
     def test_PQ_f7(self):
         series = self.get_PQ(self.f7)
+        _y = sympy.Symbol('_y')
+        r0 = RootOf(_y**3 - _y**2 + 1, 0, radicals=False)
+        r1 = RootOf(_y**3 - _y**2 + 1, 1, radicals=False)
+        r2 = RootOf(_y**3 - _y**2 + 1, 2, radicals=False)
         self.assertItemsEqual(
             series,
-            [])
+            [(t, r0),(t, r1),(t, r2)])
     def test_PQ_f22(self):
         series = self.get_PQ(self.f22)
         self.assertItemsEqual(
             series,
-            [(x**3,x**5)])
+            [(t**3,t**5)])
     def test_PQ_f23(self):
         series = self.get_PQ(self.f23)
         self.assertItemsEqual(
             series,
-            [(x,1+2*x), (x,1+2*x+x**2)])
+            [(t,1+2*t), (t,1+2*t+t**2)])
     def test_PQ_f27(self):
         series = self.get_PQ(self.f27)
-        sqrt2 = RootOf(x**2-2,0,radicals=False)
+        sqrt2 = RootOf(_z**2-2,0,radicals=False)
         self.assertItemsEqual(
             series,
-            [(x,sqrt2*x), (x**2/2,x**3/2), (x**3/2,x)])
+            [(t,sqrt2*t), (t**2/2,t**3/2), (t**3/2,t)])
+
+class TestPuiseuxTSeries(unittest.TestCase):
+    def test_instantiation(self):
+        # test that the x- and y-parts are instantiated correctly given
+        # the output of puiseux()
+        pass
+

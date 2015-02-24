@@ -34,18 +34,25 @@ def rootofsimp(expr):
     """
     from sympy.polys.rootoftools import RootOf
 
-    for root in expr.find(RootOf):
-        # rewrite the defining polynomial in terms of the root, itself
-        var = sympy.Dummy('root')
-        modulus = root.poly.xreplace({root.poly.gen:var})
-        numer,denom = cancel(expr.xreplace({root:var})).as_numer_denom()
+    expr = sympy.sympify(expr).as_expr()
 
+    # temporarily replace every RootOf with a dummy variable. this is
+    # needed to preserve options such as radical=True when simplifying
+    rootofs = expr.find(RootOf)
+    dummies = [sympy.Dummy() for _ in rootofs]
+    expr = expr.xreplace(dict(zip(rootofs,dummies)))
+
+    # simplify in each root
+    for root,dummy in zip(rootofs,dummies):
+        modulus = root.poly.xreplace({root.poly.gen:dummy})
+        numer,denom = cancel(expr).as_numer_denom()
         try:
-            denom = denom.as_poly(var).invert(modulus)
-            expr = numer.as_poly(var)*denom % modulus
+            denom = denom.as_poly(dummy).invert(modulus)
+            expr = numer.as_poly(dummy)*denom % modulus
         except NotInvertible:
             raise ZeroDivisionError('RootOf expression not invertible '
                                     'modulo %s'%modulus.as_expr())
 
-        expr = expr.xreplace({var:root})
+    # put the RootOfs back in place of the dummy substitutions
+    expr = expr.xreplace(dict(zip(dummies,rootofs)))
     return expr.as_expr()

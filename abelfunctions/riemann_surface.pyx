@@ -23,6 +23,7 @@ from .riemann_surface_path import RiemannSurfacePathPrimitive
 from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 from .riemann_surface_path_factory import RiemannSurfacePathFactory
 from .singularities import genus
+from .utilities import rootofsimp
 
 
 cdef class RiemannSurface:
@@ -118,7 +119,7 @@ cdef class RiemannSurface:
         """
         # first coerce b into an exact discriminant point if it's
         # epsilon close to one
-        exact = isinstance(alpha,sympy.Expr)
+        exact = isinstance(alpha,sympy.Expr) or isinstance(alpha,int)
         b = self.closest_discriminant_point(alpha,exact=exact)
         if abs(numpy.complex(alpha) - numpy.complex(b)) < 1e-12:
             # return discriminant places corresponding to x=alpha y=beta
@@ -199,9 +200,9 @@ cdef class RiemannSurface:
         y = self.y
         p = sympy.Poly(f,[x,y])
         res = sympy.resultant(p,p.diff(y),y).as_poly(x)
-        rts = res.all_roots(multiple=False, radicals=True)
+        rts = res.all_roots(multiple=False, radicals=False)
         rts, multiplicities = zip(*rts)
-        discriminant_points_exact = numpy.array(map(sympy.simplify,rts))
+        discriminant_points_exact = numpy.array(rts)
         discriminant_points = discriminant_points_exact.astype(numpy.complex)
 
         # determine a base_point, if not specified
@@ -283,7 +284,7 @@ cdef class RiemannSurface:
 
         """
         # returned cached base sheets if availabe
-        if not self._base_sheets == None:
+        if not self._base_sheets is None:
             return self._base_sheets
         self._base_sheets = self.lift(self._base_point)
         return self._base_sheets
@@ -340,6 +341,10 @@ cdef class RiemannSurface:
         if not self._holomorphic_differentials:
             self._holomorphic_differentials = differentials(f,x,y)
         return self._holomorphic_differentials
+
+    def holomorphic_oneforms(self):
+        r"""Alias for :meth:`holomorphic_differentials`."""
+        return self.holomorphic_differentials()
 
     def genus(self):
         if not self._genus:
