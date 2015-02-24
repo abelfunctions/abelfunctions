@@ -19,19 +19,20 @@ class TestRCVPaper(unittest.TestCase):
         self.f = x**2*y**3 - x**4 + 1
         self.X = RiemannSurface(self.f,x,y)
 
-    def test_puiseux(self):
+    def test_puiseux_0(self):
         # test over x=0
         places = puiseux(self.f,x,y,0,order=32)
         P = places[0]
         self.assertEqual(len(places), 1)
 
         xpart = -t**3
-        ypart = (-y - 1)/t**2
+        ypart = -(y + 1)/t**2
         extension_polynomial = Poly(-t**24/9 - t**12/3, y)
         self.assertEqual(P.xpart, xpart)
-        self.assertEqual(P.ypart, ypart)
+        self.assertEqual(P.ypart.expand(), ypart.expand())
         self.assertEqual(P._g, extension_polynomial)
 
+    def test_puiseux_1(self):
         # test over x=1
         places = puiseux(self.f,x,y,1,order=7)
         P = places[0]
@@ -44,6 +45,7 @@ class TestRCVPaper(unittest.TestCase):
         self.assertEqual(P.ypart, ypart)
         self.assertEqual(P._g, extension_polynomial)
 
+    def test_puiseux_I(self):
         # test over x=I
         places = puiseux(self.f,x,y,I,order=7)
         P = places[0]
@@ -56,6 +58,7 @@ class TestRCVPaper(unittest.TestCase):
         self.assertEqual(P.ypart, ypart)
         self.assertEqual(P._g, extension_polynomial)
 
+    def test_puiseux_oo(self):
         # test over x=oo
         places = puiseux(self.f,x,y,sympy.oo,order=32)
         P = places[0]
@@ -68,10 +71,11 @@ class TestRCVPaper(unittest.TestCase):
         self.assertEqual(P.ypart, ypart)
         self.assertEqual(P._g, extension_polynomial)
 
+    def test_puiseux_2(self):
         # test over x=2
-        places = puiseux(self.f,x,y,2,order=32)
+        places = puiseux(self.f,x,y,2,order=2)
         P = places[0]
-        self.assertEqual(len(places), 1)
+        self.assertEqual(len(places), 3)
 
         _y = sympy.Symbol('_y')
         r0 = RootOf(4*_y**3-15,0,radicals=False)
@@ -83,7 +87,7 @@ class TestRCVPaper(unittest.TestCase):
         self.assertEqual(P._g, extension_polynomial)
 
     def test_integral_basis(self):
-        actual = [1, y*x, y^2*x^2]
+        actual = [1, y*x, y**2*x**2]
         self.assertItemsEqual(integral_basis(self.f,x,y),
                               actual)
 

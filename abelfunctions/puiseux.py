@@ -348,8 +348,8 @@ def newton_iteration_step(phi,phiprime,g,s,p,t,y):
     gnext = gnext.xreplace(transform)
     snext = snext.xreplace(transform)
 
-    gnext = rootofsimp(gnext)
-    snext = rootofsimp(snext)
+    gnext = rootofsimp(gnext).as_poly(y)
+    snext = rootofsimp(snext).as_poly(t)
     return gnext,snext,pnext
 
 
@@ -646,8 +646,8 @@ class PuiseuxTSeries(object):
 
         # transform back and store
         transform = dict(zip(dummies,rootofs))
-        _phiprime = _phiprime.xreplace(transform)
-        _s = _s.xreplace(transform)
+        _phiprime = _phiprime.xreplace(transform).as_poly(y)
+        _s = _s.xreplace(transform).as_poly(t)
         self._phiprime = rootofsimp(_phiprime)
         self._s = rootofsimp(_s)
 
