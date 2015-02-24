@@ -770,13 +770,14 @@ class PuiseuxTSeries(object):
         order = self.order
 
         # compute the e-th roots of lambda
+#        pdb.set_trace()
         if self.is_symbolic:
-            mu = sympy.root(1/lamb,e)
+            mu = sympy.root(rootofsimp(1/lamb),e)
             conjugates = [mu*sympy.exp(2*sympy.pi*sympy.I*sympy.Rational(k,e))
                           for k in range(e)]
         else:
             e = numpy.double(e)
-            mu = (1./lamb)**(1./e)
+            mu = (sympy.S(1)/lamb).n()**(1./e)
             conjugates = [mu*numpy.exp(2.0j*numpy.pi*k/e)
                           for k in range(int(e))]
 

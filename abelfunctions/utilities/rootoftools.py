@@ -40,19 +40,25 @@ def rootofsimp(expr):
     # needed to preserve options such as radical=True when simplifying
     rootofs = expr.find(RootOf)
     dummies = [sympy.Dummy() for _ in rootofs]
-    expr = expr.xreplace(dict(zip(rootofs,dummies)))
+    transform = dict(zip(rootofs,dummies))
+    expr = expr.xreplace(transform)
 
     # simplify in each root
     for root,dummy in zip(rootofs,dummies):
-        modulus = root.poly.xreplace({root.poly.gen:dummy})
-        numer,denom = cancel(expr).as_numer_denom()
         try:
+            modulus = root.poly.xreplace({root.poly.gen:dummy})
+            numer,denom = cancel(expr).as_numer_denom()
             denom = denom.as_poly(dummy).invert(modulus)
             expr = numer.as_poly(dummy)*denom % modulus
         except NotInvertible:
             raise ZeroDivisionError('RootOf expression not invertible '
                                     'modulo %s'%modulus.as_expr())
+        except TypeError:
+            # most likely this exception occurred because expr is not a
+            # polynomial expression in the rootof.
+            pass
 
     # put the RootOfs back in place of the dummy substitutions
-    expr = expr.xreplace(dict(zip(dummies,rootofs)))
+    transform = dict(zip(dummies,rootofs))
+    expr = expr.xreplace(transform)
     return expr.as_expr()
