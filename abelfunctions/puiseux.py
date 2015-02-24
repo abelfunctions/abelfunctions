@@ -667,7 +667,7 @@ class PuiseuxTSeries(object):
                            self.x0,
                            self.xcoefficient,
                            self.ramification_index,
-                           tuple(self.terms)))
+                           tuple(self.principal_terms)))
 
     def __repr__(self):
         """Print the x- and y-parts of the Puiseux series."""
@@ -695,7 +695,7 @@ class PuiseuxTSeries(object):
 
         """
         if is_instance(other, PuiseuxTSeries):
-            if self._id == other._id:
+            if self._hash == other._hash:
                 return True
         return False
 
@@ -1002,12 +1002,22 @@ class PuiseuxTSeries(object):
         center, xcoefficient, ramification_index = self.xdata
         return xcoefficient*ramification_index*(1/t)**(1-ramification_index)
 
-    def eval_y(self, t):
+    def eval_y(self, t, nterms=None, order=None):
         r"""Evaluate of the y-part of the Puiseux series at `t`.
+
+        The y-part can be evaluated up to a certain order or with a
+        certain number of terms.
 
         Parameters
         ----------
         t : complex or complex
+        nterms : int, optional
+            If provided, only evaluates using `nterms` in the y-part of
+            the series.  If set to zero, will evaluate the principal
+            part of the series: the terms in the series which
+            distinguishes places with the same x-projection.
+        order : int, optional
+            If provided, only evaluates up to `order`.
 
         Returns
         -------
@@ -1020,7 +1030,20 @@ class PuiseuxTSeries(object):
         trick.
 
         """
-        return sum(alpha*t**n for n,alpha in self.terms)
+        self.extend(nterms=nterms,order=order)
+
+        # set which terms will be used for evaluation
+        if nterms >= 0:
+            if nterms == 0:
+                terms = self.principal_terms
+            else:
+                terms = self.terms[:nterms]
+        elif order >= 0:
+            terms = [(n,alpha) for n,alpha in self.terms if n < order]
+        else:
+            terms = self.terms
+
+        return sum(alpha*t**n for n,alpha in terms)
 
 
 class PuiseuxXSeries(object):

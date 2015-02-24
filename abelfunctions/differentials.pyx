@@ -46,6 +46,7 @@ import sympy.mpmath as mpmath
 import matplotlib
 import matplotlib.pyplot as plt
 
+from .divisor import Divisor, Place
 from .integralbasis import integral_basis
 from .singularities import singularities, _transform, genus
 from .utilities import cached_function
@@ -104,7 +105,7 @@ def mnuk_conditions(g, u, v, b, P, c):
                   if monom[0] < mult]
     return conditions
 
-def differentials(f, x, y):
+def differentials(RS):
     """Returns a basis of holomorphic differentials on Riemann surface.
 
     The surface is given by the desingularization and compactification
@@ -121,6 +122,10 @@ def differentials(f, x, y):
     list, Differential
 
     """
+    f = RS.f
+    x = RS.x
+    y = RS.y
+
     # compute the "total degree" (Poly.total_degree doesn't give the
     # desired result). This is the largest monomial degree in the sum of
     # the degrees in both x and y.
@@ -162,7 +167,7 @@ def differentials(f, x, y):
     differentials = [coeff for coeff in P.coeffs() if coeff != 0]
     dfdy = sympy.diff(f,y)
     differentials = [differential/dfdy for differential in differentials]
-    return map(lambda omega: Differential(omega, x, y), differentials)
+    return map(lambda omega: Differential(RS,omega), differentials)
 
 
 def fast_expand(numer,denom,t,order):
@@ -232,7 +237,7 @@ cdef class Differential:
         Returns the differential as a Sympy object.
 
     """
-    def __cinit__(self,omega,x,y):
+    def __cinit__(self,RS,omega):
         """Instantiate a differential form from a sympy Expression.
 
         Parameters
@@ -243,13 +248,14 @@ cdef class Differential:
             consider `y` to be a function of `x`. (A degree d y-cover.)
 
         """
-        numer, denom = omega.as_numer_denom()
+        numer, denom = omega.cancel().as_numer_denom()
         numer = numer.expand()
         denom = denom.expand()
-        self.x = x
-        self.y = y
-        self.numer = MultivariatePolynomial(numer, x, y)
-        self.denom = MultivariatePolynomial(denom, x, y)
+        self.RS = RS
+        self.x = RS.x
+        self.y = RS.y
+        self.numer = MultivariatePolynomial(numer,self.x,self.y)
+        self.denom = MultivariatePolynomial(denom,self.x,self.y)
         self._omega = omega
 
     def __repr__(self):
@@ -270,7 +276,7 @@ cdef class Differential:
         """
         return self.numer.eval(x,y) / self.denom.eval(x,y)
 
-    def centered_at_place(self, P):
+    def centered_at_place(self, P, nterms=None, order=None):
         r"""Rewrite the differential in terms of the local coordinates at `P`.
 
         If `P` is a regular place, then returns `self` as a sympy
@@ -284,6 +290,10 @@ cdef class Differential:
         Parameters
         ----------
         P : Place
+        nterms : int, optional
+            Passed to :meth:`PuiseuxTSeries.eval_y`.
+        nterms : int, optional
+            Passed to :meth:`PuiseuxTSeries.eval_y`.
 
         Returns
         -------
@@ -297,7 +307,7 @@ cdef class Differential:
             p = P.puiseux_series
             t = p.t
             xt = p.eval_x(t)
-            yt = p.eval_y(t)
+            yt = p.eval_y(t,nterms=nterms,order=order)
             dxdt = p.eval_dxdt(t)
 
             expr = self.as_sympy_expr()
@@ -312,29 +322,37 @@ cdef class Differential:
             omega = self._omega
         return omega
 
-    def localize(self, P):
-        return self.centered_at_place(P)
+    def localize(self, *args, **kwds):
+        r"""Same as :meth:`centered_at_place`."""
+        return self.centered_at_place(*args, **kwds)
 
-    def valuation(self, P):
-        r"""Returns the valuation of the one-form at a place `P`.
+    def valuation_divisor(self):
+        r"""Returns the valuation divisor of the place.
 
-        If `val(P)` is greater than zero then `P` is a zero of the
-        one-form. If `val(P)` is less than zero then `P` is pole of the
-        one-form.
+        The valuation divisor
 
-        Parameters
-        ----------
-        P : Place
+        .. math::
 
-        Returns
-        -------
-        int
-            The valuation of `self` at `P`.
+            (\omega)_{val} = p_1 P_1 + \cdots + p_m P_m +
+                             q_1 Q_1 + \cdots + q_n Q_n
+
+        is the collection of all places on the Riemann surface where
+        :math:`\omega` has a zero of multiplicity :math:`p_k` at the
+        place :math:`P_k` and a pole of multiplicity :math:`q_k` at the
+        place :math:`Q_k`.
         """
-        t = P.puiseux_series.t
-        localization = self.localize(P)
-        coeff, exponent = localization.leadterm(t)
-        return exponent
+        D = Divisor(self.RS, {})
+
+        res = sympy.resultant(self.numer,self.RS.f,self.y).as_poly(self.x)
+        roots = res.all_roots(multiple=False, radicals=True)
+        roots, _ = zip(*roots)
+
+        xvalues = roots[:]
+        for alpha in xvalues:
+            for place in self.RS(alpha):
+                mult = place.valuation(self)
+                D += mult * place
+        return D
 
 
     @cython.boundscheck(False)
