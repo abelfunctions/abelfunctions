@@ -221,6 +221,11 @@ class Place(Divisor):
     def __repr__(self):
         return self.name
 
+    def __getitem__(self, key):
+        if key:
+            return self.y
+        return self.x
+
     def __eq__(self, other):
         raise NotImplementedError('Override in Place subtype.')
 
