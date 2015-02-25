@@ -170,7 +170,7 @@ def differentials(RS):
     return map(lambda omega: Differential(RS,omega), differentials)
 
 
-def fast_expand(numer,denom,t,order):
+def fast_expand(numer,denom,t):
     r"""Quickly compute the Taylor expansion of `numer/denom`.
 
     Parameters
@@ -199,6 +199,7 @@ def fast_expand(numer,denom,t,order):
     #     rn,n = term.as_coeff_exponent(t)
     #     if n < order:
     #         r[n] = rn
+    order = max(sympy.degree(numer,t), sympy.degree(denom,t)) + 1
     def get_terms_list(expr):
         l = [0]*order
         for term,coeff in expr.collect(t,evaluate=False).items():
@@ -248,7 +249,7 @@ cdef class Differential:
             consider `y` to be a function of `x`. (A degree d y-cover.)
 
         """
-        numer, denom = omega.cancel().as_numer_denom()
+        numer, denom = omega.as_numer_denom()
         numer = numer.expand()
         denom = denom.expand()
         self.RS = RS
@@ -276,7 +277,7 @@ cdef class Differential:
         """
         return self.numer.eval(x,y) / self.denom.eval(x,y)
 
-    def centered_at_place(self, P, nterms=None, order=None):
+    def centered_at_place(self, P, order=None):
         r"""Rewrite the differential in terms of the local coordinates at `P`.
 
         If `P` is a regular place, then returns `self` as a sympy
@@ -290,9 +291,7 @@ cdef class Differential:
         Parameters
         ----------
         P : Place
-        nterms : int, optional
-            Passed to :meth:`PuiseuxTSeries.eval_y`.
-        nterms : int, optional
+        order : int, optional
             Passed to :meth:`PuiseuxTSeries.eval_y`.
 
         Returns
@@ -307,17 +306,14 @@ cdef class Differential:
             p = P.puiseux_series
             t = p.t
             xt = p.eval_x(t)
-            yt = p.eval_y(t,nterms=nterms,order=order)
+            yt = p.eval_y(t,order=order)
             dxdt = p.eval_dxdt(t)
 
             expr = self.as_sympy_expr()
             expr = expr.subs({x:xt,y:yt})*dxdt
 
-            print 'differential:', expr
             numer,denom = sympy.cancel(expr).as_numer_denom()
-            print '\t', numer
-            print '\t', denom
-            omega = fast_expand(numer,denom,t,p.order)
+            omega = fast_expand(numer,denom,t)
         else:
             omega = self._omega
         return omega
@@ -340,19 +336,50 @@ cdef class Differential:
         :math:`\omega` has a zero of multiplicity :math:`p_k` at the
         place :math:`P_k` and a pole of multiplicity :math:`q_k` at the
         place :math:`Q_k`.
+
+        .. note::
+
+            Todo: For the moment this is only in the case when `self` is
+            a holomorphic differential. The algorithm cuts down on
+            computations by assuming the denominator is equal to dfdy.
+
         """
-        D = Divisor(self.RS, {})
+        # sympy sometimes automatically simplify rational expressions,
+        # especially when the numerator is a monomial. rewrite omega in
+        # the form numer / dfdy. this saves a resultant computation
+        dfdy = self.RS.f.diff(self.y)
+        numer = self.as_sympy_expr() * self.RS.f.diff(self.y)
+        denom = dfdy
 
-        res = sympy.resultant(self.numer,self.RS.f,self.y).as_poly(self.x)
-        roots = res.all_roots(multiple=False, radicals=True)
-        roots, _ = zip(*roots)
+        # get x-roots from numerator
+        res = sympy.resultant(numer,self.RS.f,self.y).as_poly(self.x)
+        numer_roots = res.all_roots(multiple=False, radicals=False)
+        if numer_roots:
+            numer_roots,_ = zip(*numer_roots)
 
-        xvalues = roots[:]
+        # form the set of x-values over which to compute places. reorder
+        # entries such that x=0 and x=oo appear first
+        xvalues = []
+        roots = set([]).union(numer_roots)
+        roots = roots.union(self.RS.discriminant_points())
+        if 0 in roots:
+            xvalues.append(0)
+            roots.discard(0)
+        xvalues.append(sympy.oo)
+        xvalues.extend(roots)
+
+        # compute the valuation divisor. THIS LOOP ASSUMES self IS A
+        # HOLOMORPHIC DIFFERENTIAL. Solution is to subclass and overload
+        D = Divisor(self.RS,0)
+        genus = self.RS.genus()
+        reached_target_genus = False
         for alpha in xvalues:
             for place in self.RS(alpha):
                 mult = place.valuation(self)
                 D += mult * place
-        return D
+                if D.degree == 2*genus - 2:
+                    return D
+        raise ValueError('Could not find divisor of appropriate genus.')
 
 
     @cython.boundscheck(False)

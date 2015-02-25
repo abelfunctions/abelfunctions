@@ -1,8 +1,6 @@
 from .test_abelfunctions import AbelfunctionsTestCase
 from abelfunctions.divisor import (
-    Place,
-    DiscriminantPlace,
-    Divisor
+    Place, DiscriminantPlace, RegularPlace, Divisor
 )
 
 
@@ -10,9 +8,9 @@ class TestDivisor(AbelfunctionsTestCase):
 
     def setUp(self):
         # create some dummy places
-        self.P = Place(None,0,1,name='P')
-        self.Q = Place(None,2,3,name='Q')
-        self.R = Place(None,4,5,name='R')
+        self.P = RegularPlace(None,0,1,name='P')
+        self.Q = RegularPlace(None,2,3,name='Q')
+        self.R = RegularPlace(None,4,5,name='R')
 
     def test_addition(self):
         D1 = self.P + self.Q
@@ -41,6 +39,9 @@ class TestDivisor(AbelfunctionsTestCase):
         self.assertEqual(D1,D2)
 
     def test_zero(self):
+        D = Divisor(None,0)
+        self.assertTrue(D.is_zero())
+
         D = self.P - self.P
         self.assertTrue(D.is_zero())
 

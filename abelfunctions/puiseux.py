@@ -46,7 +46,7 @@ import sympy
 
 from abelfunctions.utilities import rootofsimp
 from operator import itemgetter
-from sympy import ( degree, Point, Segment, Poly, poly, Rational,
+from sympy import ( degree, Point, Segment, Poly, poly, Rational, Dummy,
                     RootOf, gcd, gcdex, LC, expand, cancel, simplify, ratsimp)
 
 
@@ -185,8 +185,8 @@ def transform_newton_polynomial(H,x,y,q,m,l,xi):
     where :math:`uq+mv=1`.
     """
     u,v = bezout(q,m)
-    newx = ((xi**v)*(x**q)).as_poly(x)
-    newy = ((x**m)*(xi**u + y)).as_poly(y)
+    newx = rootofsimp((xi**v)*(x**q)).as_poly(x)
+    newy = rootofsimp((x**m)*(xi**u + y)).as_poly(y)
     quo = x**l
 
     # RootOfs in H are not preserved under the transformation. (that is,
@@ -195,17 +195,18 @@ def transform_newton_polynomial(H,x,y,q,m,l,xi):
     H = rootofsimp(H)
     rootofs = H.find(RootOf)
     dummies = [sympy.Dummy() for _ in rootofs]
-    for rootof,dummy in zip(rootofs,dummies):
-        H = H.xreplace({rootof:dummy})
+    transform = dict(zip(rootofs,dummies))
+    H = H.xreplace(transform)
+    _newx = newx.xreplace(transform).as_poly(x)
+    _newy = newy.xreplace(transform).as_poly(y)
 
     # perform the transformation
-    newH = H.as_poly(x).compose(newx).as_poly(y).compose(newy)
+    newH = H.as_poly(x).compose(_newx).as_poly(y).compose(_newy)
     newH = newH.exquo(quo).as_poly(x,y)
 
     # place the rootofs back in place of the dummy varaiables
-    for rootof,dummy in zip(rootofs,dummies):
-        newH = newH.xreplace({dummy:rootof})
-
+    transform = dict(zip(dummies,rootofs))
+    newH = rootofsimp(newH.xreplace(transform))
     return newH
 
 def newton_data(H,x,y,exceptional=False):
@@ -393,7 +394,21 @@ def puiseux_rational(H,x,y,recurse=False):
         for psi,k in phi.factor_list()[1]:
             _z = psi.gen
             psisimp = rootofsimp(psi)
-            xi = psisimp.as_poly(_z).root(0,radicals=False)
+
+            # if RootOfs still appear in the expression then temporarily
+            # replace them with dummies. this is done to prevent
+            # automatic removal of the "radicals=False" requirement
+            if psisimp.has(RootOf):
+                rootofs = psisimp.find(RootOf)
+                dummies = [Dummy() for _ in rootofs]
+                transform = dict(zip(rootofs,dummies))
+                psisimp = psisimp.xreplace(transform)
+                xi = psisimp.as_poly(_z).root(0,radicals=False)
+                transform = dict(zip(dummies,rootofs))
+                xi = xi.xreplace(transform)
+            else:
+                xi = psisimp.as_poly(_z).root(0,radicals=False)
+
             Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
             for (G,P,Q) in puiseux_rational(Hprime,x,y,recurse=True):
                 singular_term = (G, xi**v*P**q, P**m*(xi**u + Q))
@@ -480,7 +495,8 @@ def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t'),
     # perform the reverse transformation in the series construction step
     g,transform = almost_monicize(fa,x,y)
     _y = sympy.Symbol('_'+str(y))
-    gx0y = g.subs(x,0).subs(y,_y).as_poly(_y)
+    gx0y = rootofsimp(g.subs(x,0))
+    gx0y = gx0y.subs(y,_y).as_poly(_y)
     all_roots = gx0y.all_roots(radicals=False,multiple=False)
     roots,multiplicities = zip(*all_roots)
 
@@ -488,6 +504,7 @@ def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t'),
     for beta in roots:
         H = g.subs(y,y+beta)
         singular_part_ab = puiseux_rational(H,x,y)
+
 
         # move back to (alpha, beta)
         for G,P,Q in singular_part_ab:
@@ -664,10 +681,8 @@ class PuiseuxTSeries(object):
         # the curve, x-part, and terms output by puiseux make the
         # puiseux series unique. any mutability only adds terms
         self._hash = hash((self.f,
-                           self.x0,
-                           self.xcoefficient,
-                           self.ramification_index,
-                           tuple(self.principal_terms)))
+                           self.xpart,
+                           self.ypart))
 
     def __repr__(self):
         """Print the x- and y-parts of the Puiseux series."""
@@ -1002,7 +1017,7 @@ class PuiseuxTSeries(object):
         center, xcoefficient, ramification_index = self.xdata
         return xcoefficient*ramification_index*(1/t)**(1-ramification_index)
 
-    def eval_y(self, t, nterms=None, order=None):
+    def eval_y(self, t, order=None):
         r"""Evaluate of the y-part of the Puiseux series at `t`.
 
         The y-part can be evaluated up to a certain order or with a
@@ -1030,15 +1045,11 @@ class PuiseuxTSeries(object):
         trick.
 
         """
-        self.extend(nterms=nterms,order=order)
+        if order:
+            self.extend(order=order)
 
         # set which terms will be used for evaluation
-        if nterms >= 0:
-            if nterms == 0:
-                terms = self.principal_terms
-            else:
-                terms = self.terms[:nterms]
-        elif order >= 0:
+        if order >= 0:
             terms = [(n,alpha) for n,alpha in self.terms if n < order]
         else:
             terms = self.terms

@@ -24,6 +24,8 @@ Contents
 
 """
 
+import sympy
+
 class Divisor(object):
     r"""A divisor on a Riemann surface.
 
@@ -54,6 +56,10 @@ class Divisor(object):
         return self._d.items()
 
     @property
+    def degree(self):
+        return sum(self.multiplicities)
+
+    @property
     def dict(self):
         return self._d
     @dict.setter
@@ -79,6 +85,9 @@ class Divisor(object):
             self.__dict__ = d.__dict__.copy()
         elif isinstance(d, dict):
             self.dict = d
+        elif d == 0:
+            # construct the zero divisor
+            self.dict = {}
         else:
             raise ValueError('d must be a dictionary')
 
@@ -106,7 +115,9 @@ class Divisor(object):
         return self.dict.iteritems()
 
     def __eq__(self, other):
-        return (self.dict == other.dict) and (self.RS == other.RS)
+        if isinstance(other, Divisor):
+            return (self.dict == other.dict) and (self.RS == other.RS)
+        return False
 
     def __add__(self, other):
         if other == 0 or other == sympy.S(0):
@@ -266,7 +277,7 @@ class RegularPlace(Place):
         Place.__init__(self, RS, **kwds)
 
     def __eq__(self, other):
-        if isinstance(RegularPlace):
+        if isinstance(other, RegularPlace):
             if ((self.RS == other.RS) and
                 (self.x == other.x) and
                 (self.y == other.y)):
@@ -310,6 +321,7 @@ class DiscriminantPlace(Place):
         self.x = P.x0
         self.y = P.eval_y(0)
         Place.__init__(self, RS, **kwds)
+        self.name = str(P)
 
     def __repr__(self):
         return str(self.puiseux_series)
@@ -324,7 +336,7 @@ class DiscriminantPlace(Place):
         return True
 
     def valuation(self, omega):
-        omegat = omega.localize(self,nterms=0)
-        coeff,exponent = omegat.expand().leadterm(t)
+        omegat = omega.localize(self)
+        coeff,exponent = omegat.expand().leadterm(self.t)
         return exponent
 

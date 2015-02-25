@@ -17,7 +17,7 @@ import scipy.linalg
 from .differentials import differentials
 from .differentials import Differential
 from .differentials cimport Differential
-from .divisor import Place, DiscriminantPlace, Divisor
+from .divisor import Place, DiscriminantPlace, RegularPlace, Divisor
 from .puiseux import puiseux
 from .riemann_surface_path import RiemannSurfacePathPrimitive
 from .riemann_surface_path cimport RiemannSurfacePathPrimitive
@@ -117,6 +117,13 @@ cdef class RiemannSurface:
             If multiple places
 
         """
+        # alpha = infinity case
+        infinities = ['oo', sympy.oo, numpy.Inf]
+        if alpha in infinities:
+            p = puiseux(self.f, self.x, self.y, sympy.oo,
+                        parametric=True, exact=True)
+            return [DiscriminantPlace(self, pi) for pi in p]
+
         # first coerce b into an exact discriminant point if it's
         # epsilon close to one
         exact = isinstance(alpha,sympy.Expr) or isinstance(alpha,int)
@@ -139,9 +146,9 @@ cdef class RiemannSurface:
 
         # otherwise, compute the roots above x=alpha and return a list
         # of places
-        falpha = self.f.subs({self.x:alpha})
-        palpha = sympy.Poly(falpha, self.y)
-        yroots = sympy.roots(palpha, self.y).keys()
+        _y = sympy.Symbol('_'+str(self.y))
+        falpha = self.f.subs({self.x:alpha,self.y:_y}).as_poly(_y)
+        yroots = falpha.all_roots(radicals=False)
         return [RegularPlace(self,alpha,beta) for beta in yroots]
 
     def show_paths(self, ax=None, *args, **kwds):
@@ -199,7 +206,8 @@ cdef class RiemannSurface:
         x = self.x
         y = self.y
         p = sympy.Poly(f,[x,y])
-        res = sympy.resultant(p,p.diff(y),y).as_poly(x)
+        _x = sympy.Symbol('_'+str(x))
+        res = sympy.resultant(p,p.diff(y),y).subs(x,_x).as_poly(_x)
         rts = res.all_roots(multiple=False, radicals=False)
         rts, multiplicities = zip(*rts)
         discriminant_points_exact = numpy.array(rts)

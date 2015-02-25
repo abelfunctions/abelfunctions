@@ -17,5 +17,9 @@ Contents
 
 from .abelmap import AbelMap
 
-def riemann_constant_vector():
-    pass
+class RiemannConstantVector(object):
+    def __init__(self, X):
+        pass
+
+    def __call__(self, D):
+        pass
