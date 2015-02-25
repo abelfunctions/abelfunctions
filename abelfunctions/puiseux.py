@@ -1546,6 +1546,26 @@ class PuiseuxXSeries(object):
         """
         return sum(alpha * (x-self.x0)**ne for ne,alpha in self.terms)
 
+    def evalf(self, x, n=8):
+        r"""Numerically evaluate the Puiseux series.
+
+        Parameters
+        ----------
+        x : complex
+        n : int
+            (Default: 8) Number of digits of accuracy.
+
+        Returns
+        -------
+        complex
+        """
+        val = self.eval(x)
+        if (val == sympy.zoo) or (val == sympy.oo):
+            val = numpy.infty
+        else:
+            val = val.n(n=n)
+        return numpy.complex(val)
+
     def valuation(self):
         r"""Returns the valuation of this Puiseux series.
 

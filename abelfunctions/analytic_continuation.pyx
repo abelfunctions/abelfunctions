@@ -227,7 +227,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         px = [[pxi for pxi in Pi.xseries(all_conjugates=True)] for Pi in P]
         ramification_indices = [Pi.ramification_index for Pi in P]
         p = [pxi for sublist in px for pxi in sublist]
-        py = numpy.array([pj.eval(a) for pj in p], dtype=numpy.complex)
+        py = numpy.array([pj.evalf(a) for pj in p], dtype=numpy.complex)
         sigma = matching_permutation(py, gamma.y0)
         p = sigma.action(p)
 
@@ -250,7 +250,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
 
         cdef complex[:] yipi
         # simply evaluate the ordered puiseux series at xip1
-        yip1 = numpy.array([pj.eval(xip1) for pj in self.puiseux_series],
+        yip1 = numpy.array([pj.evalf(xip1) for pj in self.puiseux_series],
                            dtype=numpy.complex)
         return yip1
 
@@ -280,16 +280,16 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         # localize the differential at the discriminant place
         P = self.target_place
         t = P.t
-        omega_local = omega.centered_at_place(P)
+        omega_local = omega.localize(P).n()
         omega_local = sympy.lambdify(t,omega_local,'numpy')
 
         # extract relevant information about the Puiseux series
         p = P.puiseux_series
-        x0 = self.gamma.x0
-        y0 = self.gamma.y0[0]
-        center = p.center
-        xcoefficient = p.xcoefficient
-        e = p.ramification_index
+        x0 = numpy.complex(self.gamma.x0)
+        y0 = numpy.complex(self.gamma.y0[0])
+        center = numpy.complex(p.center)
+        xcoefficient = numpy.complex(p.xcoefficient)
+        e = numpy.int(p.ramification_index)
 
         # the parameter of the path s \in [0,1] does not necessarily
         # match with the local coordinate t of the place. perform the
