@@ -241,14 +241,14 @@ class RiemannSurfacePathFactory(object):
         # construct the reverse path from the place to the base x-point
         # in order to determine which sheet the place is on
         P0 = self.base_place()
-        xpath_to_target = self.XPF.xpath_build_avoiding_path(P0[0],P[0])
+        xpath_to_target = self.XPF.xpath_build_avoiding_path(P0[0],P.x)
         gamma = self.RiemannSurfacePath_from_xpath(xpath_to_target)
 
         # determine the index of the sheet (sheet_index) of the base
         # place continues to the y-component of the target
         base_sheets = self.base_sheets()
         end_sheets = numpy.array(gamma.get_y(1.0), dtype=numpy.complex)
-        end_diffs = numpy.abs(end_sheets - P[1])
+        end_diffs = numpy.abs(end_sheets - P.y)
         if numpy.min(end_diffs) > 1.0e-8:
             raise ValueError('Error in constructing Abel path: end of regular '
                              'path does not match with target place.')
@@ -271,7 +271,7 @@ class RiemannSurfacePathFactory(object):
 
         # sanity check
         yend = gamma.get_y(1.0)[0]
-        if numpy.abs(yend - P[1]) > 1.0e-8:
+        if numpy.abs(yend - P.y) > 1.0e-8:
             raise ValueError('Error in constructing Abel path.')
         return gamma
 
