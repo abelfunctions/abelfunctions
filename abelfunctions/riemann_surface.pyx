@@ -470,7 +470,7 @@ cdef class RiemannSurface:
             Riemann surface.
 
         """
-        if self._riemann_matrix:
+        if not self._riemann_matrix is None:
             return self._riemann_matrix
 
         g = self.genus()
