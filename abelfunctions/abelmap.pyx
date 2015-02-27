@@ -104,7 +104,7 @@ class Jacobian(object):
         # reduces z = alpha + Omega*beta into its fractional components
         # alpha and beta
         g = self.g
-        z = z.reshape((g,1))
+        z = numpy.reshape(z,(g,1))
         w = numpy.zeros((2*g,1), dtype=numpy.double)
         w[:g] = z.real[:]
         w[g:] = z.imag[:]
@@ -173,8 +173,7 @@ cdef class AbelMap_Function:
         """
         if len(args) == 2:
             D1,D2 = args
-            X = D1.RS
-            J = Jacobian(X)
+            J = Jacobian(D1.RS)
             return J(self.eval(D2) - self.eval(D1))
         elif len(args) != 1:
             raise ValueError('Too many arguments.')
@@ -198,7 +197,12 @@ cdef class AbelMap_Function:
         # TODO: use state so that the jacobian doesn't have to re
         # recalculated with every evaluation
         J = Jacobian(RS)
-        return J(numpy.array(val,dtype=complex))
+        g = RS.genus()
+        tau = RS.period_matrix()
+        Ainv = numpy.linalg.inv(tau[:g,:g])
+        val = numpy.array(val, dtype=complex)
+        val = numpy.dot(Ainv,val.T)
+        return J(val)
 
     cpdef complex[:] _eval_primitive(self, P):
         r"""Primitive evaluation of the Abel map at a single place, `P`.
