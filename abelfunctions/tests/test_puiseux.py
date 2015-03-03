@@ -140,17 +140,17 @@ class TestNewPolynomial(unittest.TestCase):
         self.q = sympy.random_poly(y,5,-5,5,domain=sympy.QQ)
 
     def test_null_transform(self):
-        H = (self.p*self.q).expand().as_poly(x,y)
+        H = (self.p*self.q).expand()
         q,m,l,xi = 1,0,0,0
         Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
         Htest = H
         self.assertEqual(Hprime, Htest)
 
     def test_yshift(self):
-        H = (self.p*self.q).expand().as_poly(x,y)
+        H = (self.p*self.q).expand()
         q,m,l,xi = 1,0,0,1
         Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
-        Htest = H.as_poly(y).compose((1+y).as_poly(y)).as_poly(x,y)
+        Htest = H.as_poly(y).compose((1+y).as_poly(y)).expand().as_expr()
         self.assertEqual(Hprime, Htest)
 
     def test_y(self):
@@ -158,12 +158,12 @@ class TestNewPolynomial(unittest.TestCase):
 
         q,m,l,xi = 0,1,0,1
         Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
-        Htest = Poly(x**2*(1+y)**2,x,y)
+        Htest = (x**2*(1 + y)**2).expand()
         self.assertEqual(Hprime, Htest)
 
         q,m,l,xi = 0,1,2,1
         Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
-        Htest = Poly((1+y)**2,x,y)
+        Htest = ((1 + y)**2).expand()
         self.assertEqual(Hprime, Htest)
 
 
@@ -288,31 +288,50 @@ class TestPuiseux(AbelfunctionsTestCase):
         self.f27 = (y**2 - 2*x**3)*(y**2-2*x**2)*(y**3-2*x)
         super(TestPuiseux,self).setUp()
 
-    def get_PQ(self,f):
-        p = puiseux(f,x,y,0)
+    def get_PQ(self,f, a=0):
+        p = puiseux(f,x,y,a)
         if p:
-            series = [(P.xpart,P.ypart.subs(y,0).expand()) for P in p]
+            series = [(P.xpart,P.ypart) for P in p]
         else:
             series = []
         return series
+
     def test_PQ_f1(self):
         series = self.get_PQ(self.f1)
         self.assertItemsEqual(
             series,
-            [(t**2,t**4+t**5)])
+            [(t**2, t**4*(t*(y + 1) + 1))])
+
     def test_PQ_f2(self):
         series = self.get_PQ(self.f2)
         self.assertItemsEqual(
             series,
-            [(t,sympy.S(0)), (-t**2/2,-t**3/2)])
+            [(t, t**2*y),
+             (-t**2/2, -t**3*(y + 1)/2)])
+
+    def test_PQ_f2_oo(self):
+        series = self.get_PQ(self.f2, a='oo')
+        self.assertItemsEqual(
+            series,
+            [(1/t**3, (y + 1)/t**7)])
+
     def test_PQ_f3(self):
         # awaiting RootOf simplification issues
         pass
+
     def test_PQ_f4(self):
         series = self.get_PQ(self.f4)
         self.assertItemsEqual(
             series,
-            [(t,t),(t,-t)])
+            [(t, t*(y + 1)),
+             (t, t*(y - 1))])
+
+    def test_PQ_f4_oo(self):
+        series = self.get_PQ(self.f4, a='oo')
+        self.assertItemsEqual(
+            series,
+            [(-1/t**2, (y + 1)/t**3)])
+
     def test_PQ_f7(self):
         series = self.get_PQ(self.f7)
         _y = sympy.Symbol('_y')
@@ -321,23 +340,51 @@ class TestPuiseux(AbelfunctionsTestCase):
         r2 = RootOf(_y**3 - _y**2 + 1, 2, radicals=False)
         self.assertItemsEqual(
             series,
-            [(t, r0),(t, r1),(t, r2)])
+            [(t, y + r0),
+             (t, y + r1),
+             (t, y + r2)])
+
     def test_PQ_f22(self):
         series = self.get_PQ(self.f22)
         self.assertItemsEqual(
             series,
-            [(t**3,t**5)])
+            [(t**3, t**5*(y + 1))])
+
+    def test_PQ_f22_oo(self):
+        series = self.get_PQ(self.f22, a='oo')
+        self.assertItemsEqual(
+            series,
+            [(1/t**3, (y + 1)/t**5)])
+
     def test_PQ_f23(self):
         series = self.get_PQ(self.f23)
         self.assertItemsEqual(
             series,
-            [(t,1+2*t), (t,1+2*t+t**2)])
+            [(t, t*(t*y + 2) + 1),
+             (t, t*(t*(y + 1) + 2) + 1)])
+
+    def test_PQ_f23_oo(self):
+        series = self.get_PQ(self.f23, a='oo')
+        self.assertItemsEqual(
+            series,
+            [(1/t,y/t**7), (1/t,(1+y)/t**7)])
+
     def test_PQ_f27(self):
         series = self.get_PQ(self.f27)
         sqrt2 = RootOf(_z**2-2,0,radicals=False)
         self.assertItemsEqual(
             series,
-            [(t,sqrt2*t), (t**2/2,t**3/2), (t**3/2,t)])
+            [(t, t*y + t*sqrt2),
+             (t**2/2, t**3(y + 1)/2),
+             (t**3/2, t(y + 1))])
+
+    def test_hyperelliptic_oo(self):
+        f = y**2 - (x**2 - 9)*(x**2 - 4)*(x**2 - 1)
+        series = self.get_PQ(f,a='oo')
+        self.assertItemsEqual(
+            series,
+            [(1/t, (y+1)/t**3),
+             (1/t, (y-1)/t**3)])
 
 class TestPuiseuxTSeries(unittest.TestCase):
     def test_instantiation(self):

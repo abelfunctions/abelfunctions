@@ -508,10 +508,8 @@ def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t'),
 
         # move back to (alpha, beta)
         for G,P,Q in singular_part_ab:
-            if transform.has(x):
-                Q /= transform.subs(x,P)
-            else:
-                Q += beta
+            Q += beta
+            Q /= transform.subs(x,P)
 
             if alpha in infinities:
                 P = 1/P
