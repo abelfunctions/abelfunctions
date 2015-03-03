@@ -375,8 +375,8 @@ class TestPuiseux(AbelfunctionsTestCase):
         self.assertItemsEqual(
             series,
             [(t, t*y + t*sqrt2),
-             (t**2/2, t**3(y + 1)/2),
-             (t**3/2, t(y + 1))])
+             (t**2/2, t**3*(y + 1)/2),
+             (t**3/2, t*(y + 1))])
 
     def test_hyperelliptic_oo(self):
         f = y**2 - (x**2 - 9)*(x**2 - 4)*(x**2 - 1)
