@@ -271,7 +271,8 @@ def _multiplicity(P):
     for Pi in P:
         n,alpha = zip(*Pi.terms)
         ri = abs(Pi.ramification_index)
-        si = abs(min([ni for ni in n if ni != 0]))
+        si = abs(min(n))
+        si = si if si else 1  # if si is zero then assume it's one
         m += min(ri,si)
     return sympy.S(m)
 
