@@ -200,7 +200,7 @@ class RiemannSurfacePathFactory(object):
         # from that (x,y) to x=b will reach the designated place
         p = P.puiseux_series
         center, coefficient, ramification_index = p.xdata
-        R = self.XPF.radius(center)/3.0
+        R = self.XPF.radius(center)
         a = center - R
         t = (-R/coefficient)**(1.0/ramification_index)
         # p.coerce_to_numerical()
