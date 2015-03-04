@@ -299,17 +299,13 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         tall = [unity[k]*tprim for k in range(e)]
         ytprim = numpy.array([p.eval_y(tk) for tk in tall],dtype=numpy.complex)
         k = numpy.argmin(numpy.abs(ytprim - y0))
-        tcoefficient = unity[k]
+        tcoefficient = tall[k]
 
-        @numpy.vectorize
-        def tpath(s):
-            return tcoefficient*(1-s)
-
-        @numpy.vectorize
         def omega_gamma(s):
             dtds = -tcoefficient
-            return omega_local(tpath(s)) * dtds
-        return omega_gamma
+            return omega_local(tcoefficient*(1-s)) * dtds
+
+        return numpy.vectorize(omega_gamma, otypes=[complex])
 
 
     @cython.boundscheck(False)
@@ -325,6 +321,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         Parameters
         ----------
         omega : Differential
+
         """
         omega_gamma = self.parameterize(omega)
         cdef complex value = scipy.integrate.romberg(omega_gamma,0,1)
