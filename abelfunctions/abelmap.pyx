@@ -75,8 +75,9 @@ class Jacobian(object):
             The vector z reduced modulo the lattice Lambda.
         """
         alpha, beta = self.reduced_components(z)
-        zmod = alpha + numpy.dot(self.Omega, beta)
-        return zmod.T
+        zmod = (alpha + numpy.dot(self.Omega, beta)).reshape((1,self.g))
+        return zmod
+
 
     def components(self, z):
         """Decomposes `z` into its components :math:`z=z_1+\Omega z_2`.
@@ -114,8 +115,8 @@ class Jacobian(object):
 
         # round to the nearest 15 digits due to possible floating point
         # error in the components. see note in description.
-        z1 = numpy.around(v[:g], decimals=15)
-        z2 = numpy.around(v[g:], decimals=15)
+        z1 = v[:g]
+        z2 = v[g:]
         return z1,z2
 
     def reduced_components(self, z):
@@ -136,10 +137,21 @@ class Jacobian(object):
         z1, z2 = self.components(z)
         alpha = z1 - numpy.floor(z1)
         beta = z2 - numpy.floor(z2)
+
+        # due to rounding error alpha and beta may have integral
+        # components. subtract off any integral part to obtain the
+        # fractional part
+        g = len(alpha)
+        eps = 1e-14
+        for k in range(g):
+            while alpha[k] > (1-eps):
+                alpha[k] -= 1
+            while beta[k] > (1-eps):
+                beta[k] -= 1
         return alpha,beta
 
 
-cdef class AbelMap_Function:
+class AbelMap_Function(object):
     def __init__(self):
         pass
 
@@ -159,6 +171,9 @@ cdef class AbelMap_Function:
         ----------
         P : Place or Divisor
             The target place or divisor.
+        tol, rtol : double, optional
+            The desired absolute and relative tolerances when
+            numerically integrating. Defaults are 1e-8.
 
         Returns
         -------
@@ -179,32 +194,23 @@ cdef class AbelMap_Function:
             raise ValueError('Too many arguments.')
 
         D = args[0]
-
-        cdef RiemannSurface RS = D.RS
-        cdef int i,j
-        cdef int genus = RS.genus()
-        cdef complex[:] val = numpy.zeros(genus,dtype=complex)
-        cdef complex[:] Pval = numpy.zeros(genus,dtype=complex)
-        cdef complex n
-        if isinstance(D, Place):
-            val = self._eval_primitive(D)
-        else:
-            for P,n in D:
-                Pval = self._eval_primitive(P)
-                for j in range(genus):
-                    val[j] = val[j] + n*Pval[j]
+        RS = D.RS
+        genus = RS.genus()
+        val = numpy.zeros(genus, dtype=numpy.complex)
+        for P,n in D:
+            Pval = self._eval_primitive(P)
+            val += n*Pval
 
         # TODO: use state so that the jacobian doesn't have to re
         # recalculated with every evaluation
         J = Jacobian(RS)
-        g = RS.genus()
         tau = RS.period_matrix()
-        Ainv = numpy.linalg.inv(tau[:g,:g])
-        val = numpy.array(val, dtype=complex)
-        val = numpy.dot(Ainv,val.T)
+        Ainv = numpy.linalg.inv(tau[:genus,:genus])
+        val.resize((genus,1))
+        val = numpy.dot(Ainv,val).reshape((1,genus))
         return J(val)
 
-    cpdef complex[:] _eval_primitive(self, P):
+    def _eval_primitive(self, P):
         r"""Primitive evaluation of the Abel map at a single place, `P`.
 
         In the case when the input to :meth:`AbelMap_Function.eval` is a
@@ -213,20 +219,21 @@ cdef class AbelMap_Function:
         Parameters
         ----------
         P : Place
+        tol, rtol : double, optional
+            The desired absolute and relative tolerances when
+            numerically integrating. Defaults are 1e-8.
 
         Returns
         -------
         complex[:]
             A complex g-vector equal to the abel map
         """
-        cdef RiemannSurface RS = P.RS
-        cdef int i,genus = RS.genus()
-        cdef complex[:] val = numpy.zeros(genus,dtype=complex)
-        cdef RiemannSurfacePathPrimitive gamma = RS.path(P)
-        cdef Differential[:] omega = numpy.array(
-            RS.holomorphic_differentials(), dtype=Differential)
-        for i in range(genus):
-            val[i] = RS.integrate(omega[i],gamma)
+        RS = P.RS
+        genus = RS.genus()
+        gamma = RS.path(P)
+        omega = RS.holomorphic_differentials()
+        val = numpy.array([RS.integrate(omegai,gamma)
+                           for omegai in omega], dtype=numpy.complex)
         return val
 
 AbelMap = AbelMap_Function()
