@@ -164,10 +164,10 @@ def differentials(RS):
     # c_ij's contained in the general solution
     sols = sympy.solve(conditions, c)
     P = P.subs(sols).as_poly(*c)
-    differentials = [coeff for coeff in P.coeffs() if coeff != 0]
+    numerators = [coeff for coeff in P.coeffs() if coeff != 0]
     dfdy = sympy.diff(f,y)
-    differentials = [differential/dfdy for differential in differentials]
-    return map(lambda omega: Differential(RS,omega), differentials)
+    differentials = [Differential(RS,numer,dfdy) for numer in numerators]
+    return differentials
 
 
 def fast_expand(numer,denom,t):
@@ -188,17 +188,6 @@ def fast_expand(numer,denom,t):
     """
     # convert numerator and denominator to lists of coefficients.  it's
     # faster to do it "manually" than to coerce to polynomial
-
-    # q = [0]*order
-    # for term in numer.args:
-    #     qn,n = term.as_coeff_exponent(t)
-    #     if n < order:
-    #         q[n] = qn
-    # r = [0]*order
-    # for term in denom.args:
-    #     rn,n = term.as_coeff_exponent(t)
-    #     if n < order:
-    #         r[n] = rn
     order = max(sympy.degree(numer,t), sympy.degree(denom,t)) + 1
     def get_terms_list(expr):
         l = [0]*order
@@ -232,35 +221,65 @@ cdef class Differential:
 
     Methods
     -------
-    eval(z1,z2)
-        Fast evaluation of the differential.
-    as_sympy()
-        Returns the differential as a Sympy object.
+    eval
+    as_numer_denom
+    as_sympy_expr
+
+    Notes
+    -----
+    To reduce the number of discriminant points to check for computing
+    the valuation divisor we keep separate the numerator and denominator
+    of the Differential. This behavior may change after implementing
+    different types of differentials.
+
+    Todo
+    ----
+    Implement different subclasses of differentials. (First, Second,
+    Thrid kind.)
 
     """
-    def __cinit__(self,RS,omega):
-        """Instantiate a differential form from a sympy Expression.
+    def __cinit__(self, RS, *args):
+        """Create a differential on the Riemann surface `RS`.
 
         Parameters
         ----------
-        omega : Sympy Expression
-        x, y : Sympy Symbol
-            The differential and its variables. Note in abelfunctions we
-            consider `y` to be a function of `x`. (A degree d y-cover.)
+        RS : RiemannSurface
+            The Riemann surface on which the differential is defined.
+        *args : list
+            A differential can be instantiated by a single Sympy
+            expression or by a numerator and denominator. (Also as Sympy
+            expressions.) The latter distinction makes analysis of
+            Abelian differentials of the first kind more computationally
+            efficient.
 
         """
-        numer, denom = omega.as_numer_denom()
-        numer = numer.expand()
-        denom = denom.expand()
+        if (len(args) < 1) or (len(args) > 2):
+            raise ValueError('Instantiate Differential with Sympy expression '
+                             'or numerator/denominator pair.')
+
+        # determine the numerator and denominator of the differentials
+        if len(args) == 1:
+            numer, denom = args[0].as_numer_denom()
+            self.numer = numer
+            self.denom = denom
+        elif len(args) == 2:
+            self.numer = args[0]
+            self.denom = args[1]
+
         self.RS = RS
         self.x = RS.x
         self.y = RS.y
-        self.numer = MultivariatePolynomial(numer,self.x,self.y)
-        self.denom = MultivariatePolynomial(denom,self.x,self.y)
-        self._omega = omega
+        self.numer_n = MultivariatePolynomial(self.numer,self.x,self.y)
+        self.denom_n = MultivariatePolynomial(self.denom,self.x,self.y)
 
     def __repr__(self):
-        return str(self._omega)
+        s = ''
+        if self.numer.is_Add:
+            s += '(' + str(self.numer) + ')'
+        else:
+            s += str(self.numer)
+        s += '/(' + str(self.denom) + ')'
+        return s
 
     cpdef complex eval(self, complex x, complex y):
         r"""Evaluate the differential at the complex point :math:`(x,y)`.
@@ -275,7 +294,7 @@ cdef class Differential:
             Returns the value :math:`\omega(x,y)`.
 
         """
-        return self.numer.eval(x,y) / self.denom.eval(x,y)
+        return self.numer_n.eval(x,y) / self.denom_n.eval(x,y)
 
     def centered_at_place(self, P, order=None):
         r"""Rewrite the differential in terms of the local coordinates at `P`.
@@ -301,17 +320,16 @@ cdef class Differential:
         x = self.x
         y = self.y
         if P.is_discriminant():
-            # evaluate the numerator and denominator separately up to
-            # the order of the Puiseux series
             p = P.puiseux_series
             t = p.t
             xt = p.eval_x(t)
             yt = p.eval_y(t,order=order)
             dxdt = p.eval_dxdt(t)
 
+            # substitute Puiseux series expansion into the differrential
+            # and expand as a Laurent series.
             expr = self.as_sympy_expr()
             expr = expr.subs({x:xt,y:yt})*dxdt
-
             numer,denom = sympy.cancel(expr).as_numer_denom()
             omega = fast_expand(numer,denom,t)
         else:
@@ -344,21 +362,17 @@ cdef class Differential:
             computations by assuming the denominator is equal to dfdy.
 
         """
-        # sympy sometimes automatically simplify rational expressions,
-        # especially when the numerator is a monomial. rewrite omega in
-        # the form numer / dfdy. this saves a resultant computation
-        dfdy = self.RS.f.diff(self.y)
-        numer = self.as_sympy_expr() * self.RS.f.diff(self.y)
-        denom = dfdy
-
         # get x-roots from numerator
+        numer = self.numer
         res = sympy.resultant(numer,self.RS.f,self.y).as_poly(self.x)
         numer_roots = res.all_roots(multiple=False, radicals=False)
         if numer_roots:
             numer_roots,_ = zip(*numer_roots)
 
         # form the set of x-values over which to compute places. reorder
-        # entries such that x=0 and x=oo appear first
+        # entries such that x=0 and x=oo appear first because
+        # differential numerators tend to be monomial, resulting in
+        # better performance.
         xvalues = []
         roots = set([]).union(numer_roots)
         roots = roots.union(self.RS.discriminant_points())
@@ -372,12 +386,12 @@ cdef class Differential:
         # HOLOMORPHIC DIFFERENTIAL. Solution is to subclass and overload
         D = Divisor(self.RS,0)
         genus = self.RS.genus()
-        reached_target_genus = False
+        target_genus = 2*genus - 2
         for alpha in xvalues:
             for place in self.RS(alpha):
                 mult = place.valuation(self)
                 D += mult * place
-                if D.degree == 2*genus - 2:
+                if D.degree == target_genus:
                     return D
         raise ValueError('Could not find divisor of appropriate genus.')
 
@@ -449,8 +463,21 @@ cdef class Differential:
             ax.grid(True, which='major')
         return fig
 
+    def as_numer_denom(self):
+        """Returns the differential as a numerator, denominator pair.
+
+        Returns
+        -------
+        list, sympy.Expr
+        """
+        return self.numer, self.denom
 
     def as_sympy_expr(self):
-        """Returns the differential as a Sympy expression."""
-        return self._omega
+        """Returns the differential as a Sympy expression.
+
+        Returns
+        -------
+        sympy.Expr
+        """
+        return self.numer / self.denom
 

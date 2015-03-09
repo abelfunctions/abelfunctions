@@ -5,8 +5,9 @@ cdef class Differential:
     cdef object RS
     cdef object x
     cdef object y
-    cdef object _omega
-    cdef MultivariatePolynomial numer
-    cdef MultivariatePolynomial denom
+    cdef object numer
+    cdef object denom
+    cdef MultivariatePolynomial numer_n
+    cdef MultivariatePolynomial denom_n
     cpdef complex eval(self, complex, complex)
     cpdef complex[:] evaluate(self, RiemannSurfacePathPrimitive, double[:])
