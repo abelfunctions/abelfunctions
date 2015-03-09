@@ -8,5 +8,6 @@ The code is available as a git repository at
 
 """
 from .abelmap import AbelMap, Jacobian
+from .puiseux import puiseux
 from .riemann_surface import RiemannSurface
 from .riemanntheta import RiemannTheta
