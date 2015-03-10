@@ -273,6 +273,25 @@ cdef class RiemannSurface:
         """
         return self._base_point
 
+    def base_place(self):
+        r"""Returns the base place of the Riemann surface.
+
+        The base place is the place from which all paths on the Riemann
+        surface are constructed. The AbelMap begins integrating from the
+        base place.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Place
+
+        """
+        places = self(self.base_point)
+        return places[0]
+
     def base_sheets(self):
         r"""Returns the base sheets of the Riemann surface.
 

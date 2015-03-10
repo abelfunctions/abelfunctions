@@ -26,6 +26,12 @@ Contents
 
 import sympy
 
+
+def ZeroDivisor(X):
+    r"""Returns a zero Divisor on X."""
+    return Divisor(X,{})
+
+
 class Divisor(object):
     r"""A divisor on a Riemann surface.
 
@@ -230,6 +236,9 @@ class Place(Divisor):
     def is_discriminant(self):
         raise NotImplementedError('Override in Place subtype.')
 
+    def is_infinite(self):
+        raise NotImplementedError('Override in Place subtype.')
+
     def valuation(self, omega):
         r"""Returns the valuation of `omega` at this place.
 
@@ -287,6 +296,9 @@ class RegularPlace(Place):
     def is_discriminant(self):
         return False
 
+    def is_infinite(self):
+        return False
+
     def valuation(self, omega):
         x,y = self.RS.x, self.RS.y
         a,b = self.x, self.y
@@ -334,6 +346,12 @@ class DiscriminantPlace(Place):
 
     def is_discriminant(self):
         return True
+
+    def is_infinite(self):
+        xval = self.puiseux_series.eval_x(0)
+        if xval.has(sympy.oo) or xval.has(sympy.zoo):
+            return True
+        return False
 
     def valuation(self, omega):
         omegat = omega.localize(self)
