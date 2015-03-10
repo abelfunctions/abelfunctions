@@ -163,7 +163,7 @@ class RiemannSurfacePathFactory(object):
 
     def closest_discriminant_point(self, x, exact=True):
         r"""Same as :func:`RiemannSurface.closest_discriminant_point`."""
-        return self.RS.discriminant_points(x, exact=exact)
+        return self.RS.closest_discriminant_point(x, exact=exact)
 
     def path_to_place(self, P):
         r"""Returns a path to a specified place `P` on the Riemann surface.
