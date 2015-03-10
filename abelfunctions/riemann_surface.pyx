@@ -289,7 +289,7 @@ cdef class RiemannSurface:
         Place
 
         """
-        places = self(self.base_point)
+        places = self(self._base_point)
         return places[0]
 
     def base_sheets(self):
