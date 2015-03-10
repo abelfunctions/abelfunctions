@@ -8,8 +8,7 @@ Authors:
 - Chris Swierczewski (November 2012)
 """
 
-import collections
-import functools
+from functools import partial
 
 def cached_function(f):
     r"""Memoization decorator for functions taking multiple arguments.
@@ -51,7 +50,7 @@ def cached_function_fast(f):
     return memodict().__getitem__
 
 
-class cached_property(object):
+class cached_method(object):
     """Memoization decorator for class methods.
 
     The return value from a given method invocation will be cached on

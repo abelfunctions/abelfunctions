@@ -44,6 +44,7 @@ from .divisor import Place, Divisor
 from .riemann_surface cimport RiemannSurface
 from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 from .differentials cimport Differential
+from .utilities import cached_method
 
 import numpy
 
@@ -171,9 +172,6 @@ class AbelMap_Function(object):
         ----------
         P : Place or Divisor
             The target place or divisor.
-        tol, rtol : double, optional
-            The desired absolute and relative tolerances when
-            numerically integrating. Defaults are 1e-8.
 
         Returns
         -------
@@ -210,6 +208,7 @@ class AbelMap_Function(object):
         val = numpy.dot(Ainv,val).reshape((1,genus))
         return J(val)
 
+    @cached_method
     def _eval_primitive(self, P):
         r"""Primitive evaluation of the Abel map at a single place, `P`.
 
@@ -219,9 +218,6 @@ class AbelMap_Function(object):
         Parameters
         ----------
         P : Place
-        tol, rtol : double, optional
-            The desired absolute and relative tolerances when
-            numerically integrating. Defaults are 1e-8.
 
         Returns
         -------
