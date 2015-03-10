@@ -7,6 +7,7 @@ cdef class RiemannSurface:
     cdef object _y
     cdef int _deg
     cdef object _base_point
+    cdef object _base_place
     cdef object _base_sheets
     cdef object _discriminant_points
     cdef object _discriminant_points_exact

@@ -89,6 +89,7 @@ cdef class RiemannSurface:
             self._base_sheets = self.base_sheets()
 
         # cache for key calculations
+        self._base_place = self(self._base_point)[0]
         self._period_matrix = None
         self._riemann_matrix = None
         self._genus = None
@@ -289,8 +290,7 @@ cdef class RiemannSurface:
         Place
 
         """
-        places = self(self._base_point)
-        return places[0]
+        return self._base_place
 
     def base_sheets(self):
         r"""Returns the base sheets of the Riemann surface.
