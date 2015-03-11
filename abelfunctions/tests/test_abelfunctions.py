@@ -6,6 +6,8 @@ from sympy.abc import x,y
 
 class AbelfunctionsTestCase(unittest.TestCase):
     def setUp(self):
+        self.x = x
+        self.y = y
         self.f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4
         self.f2 = -x**7 + 2*x**3*y + y**3
         self.f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2

@@ -1,95 +1,88 @@
-import unittest
-import sympy 
+from abelfunctions.singularities import singularities
+from sympy import sympify, RootOf
 
-from sympy import sympify
-from sympy.abc import x,y
+from .test_abelfunctions import AbelfunctionsTestCase
 
-from abelfunctions.singularities import (
-    singularities,)
+class TestSingularities(AbelfunctionsTestCase):
 
-# === test curves ===
-# Example curves are from "Computing with Plane Algebraic Curves and Riemann 
-# Surfaces" by Deconinck and Patterson, Lecture Notes in Mathematics, 2011
-f1 = (x**2 - x + 1)*y**2 - 2*x**2*y + x**4                   # p. 71
-f2 = y**3 + 2*x**3*y - x**7                                  # p. 73
-f3 = (y**2-x**2)*(x-1)*(2*x-3) - 4*(x**2+y**2-2*x)**2        # p. 75
-f4 = y**2 + x**3 - x**2                                      # p. 82
-f5 = (x**2 + y**2)**3 + 3*x**2*y - y**3                      # p. 84
-f6 = y**4 - y**2*x + x**2                                    # p. 85
-f7 = y**3 - (x**3 + y)**2 + 1                                # p. 85
+    def test_f1(self):
+        s = singularities(self.f1,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,0,1),(2,2,1)),
+             ((0,1,0),(2,1,2))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
-# example singular curves:
-f8 = x**2*y**6 + 2*x**3*y**5 - 1
-f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+    def test_f2(self):
+        s = singularities(self.f2,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,0,1),(3,4,2)),
+             ((0,1,0),(4,9,1))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
+    def test_f3(self):
+        s = singularities(self.f3,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,0,1),(2,1,2)),
+             ((1,-1,1),(2,1,2)),
+             ((1,1,1),(2,1,2))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
-class TestSingularities(unittest.TestCase):
+    def test_f4(self):
+        s = singularities(self.f4,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,0,1),(2,1,2))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
-    def setUp(self):
+    def test_f5(self):
         pass
 
-    def test_singularities(self):
-        S1 = sympify(singularities(f1,x,y))
-        S2 = sympify(singularities(f2,x,y))
-        S3 = sympify(singularities(f3,x,y))
-        S4 = sympify(singularities(f4,x,y))
-        S5 = sympify(singularities(f5,x,y))
-        S6 = sympify(singularities(f6,x,y))
-#         S7 = sympify(singularities(f7,x,y))
-#         S8 = sympify(singularities(f8,x,y))
-        S9 = sympify(singularities(f9,x,y))
-        S10= sympify(singularities(f10,x,y))
+    def test_f6(self):
+        s = singularities(self.f6,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,0,1),(2,2,2)),
+             ((1,0,0),(2,2,2))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
-        rt5 = sympy.roots(x**2 + 1, x).keys()
+    def test_f7(self):
+        s = singularities(self.f7,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,1,0),(3,6,3))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
-        S1act = sympify([
-            ((0,0,1),(2,2,1)),
-            ((0,1,0),(2,1,2))
-            ])
-        S2act = sympify([
-            ((0,0,1),(3,4,2)),
-            ((0,1,0),(4,9,1))
-            ])
-        S3act = sympify([
-            ((0,0,1),(2,1,2)),
-            ((1,-1,1),(2,1,2)),
-            ((1,1,1),(2,1,2))
-            ])
-        S4act = sympify([
-            ((0,0,1),(2,1,2))
-            ])
-        S5act = sympify([
-            ((0,0,1),(3,3,3)),
-            ((1,rt5[1],0),(3,3,3)),
-            ((1,rt5[0],0),(3,3,3))
-            ])
-        S6act = sympify([
-            ((0,0,1),(2,2,2)),
-            ((1,0,0),(2,2,2))
-            ])
-#         S7act = sympify([((0,1,0),(3,6,3))])
-#         S8act = sympify([
-#             ((0,1,0),(6,21,3)),
-#             ((1,0,0),(3,7,2))
-#             ])
-        S9act = sympify([((0,1,0),(5,12,1))])
-        S10act= sympify([
-            ((0,1,0),(3,6,1)),
-            ((1,0,0),(4,6,4))
-            ])
+    def test_f8(self):
+        s = singularities(self.f8,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,1,0),(2,4,2)),
+             ((1,0,0),(5,14,1))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
-        self.assertItemsEqual(S1,S1act)
-        self.assertItemsEqual(S2,S2act)
-        self.assertItemsEqual(S3,S3act)
-        self.assertItemsEqual(S4,S4act)
-        self.assertItemsEqual(S5,S5act)
-        self.assertItemsEqual(S6,S6act)
-#         self.assertItemsEqual(S7,S7act)
-#         self.assertItemsEqual(S8,S8act)
-        self.assertItemsEqual(S9,S9act)
-        self.assertItemsEqual(S10,S10act)
-        
+    def test_f9(self):
+        s = singularities(self.f9,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,1,0),(5,12,1))]
+        )
+        self.assertItemsEqual(s,s_actual)
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_f10(self):
+        s = singularities(self.f10,self.x,self.y)
+        s = sympify(s)
+        s_actual = sympify(
+            [((0,1,0),(3,6,1)),
+             ((1,0,0),(4,6,4))]
+        )
+        self.assertItemsEqual(s,s_actual)
