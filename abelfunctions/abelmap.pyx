@@ -224,12 +224,15 @@ class AbelMap_Function(object):
         complex[:]
             A complex g-vector equal to the abel map
         """
-        RS = P.RS
-        genus = RS.genus()
-        gamma = RS.path(P)
-        omega = RS.holomorphic_differentials()
-        val = numpy.array([RS.integrate(omegai,gamma)
-                           for omegai in omega], dtype=numpy.complex)
+        X = P.RS
+        genus = X.genus()
+        if P == X.base_place():
+            val = numpy.zeros(genus, dtype=numpy.complex)
+        else:
+            gamma = X.path(P)
+            omega = X.holomorphic_differentials()
+            val = numpy.array([X.integrate(omegai,gamma)
+                               for omegai in omega], dtype=numpy.complex)
         return val
 
 AbelMap = AbelMap_Function()

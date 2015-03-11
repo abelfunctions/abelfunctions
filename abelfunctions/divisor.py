@@ -122,7 +122,9 @@ class Divisor(object):
 
     def __eq__(self, other):
         if isinstance(other, Divisor):
-            return (self.dict == other.dict) and (self.RS == other.RS)
+            if ((self.RS == other.RS) and
+                (self.dict.items() == other.dict.items())):
+                return True
         return False
 
     def __add__(self, other):
@@ -339,9 +341,10 @@ class DiscriminantPlace(Place):
         return str(self.puiseux_series)
 
     def __eq__(self, other):
-        if ((self.RS == other.RS) and
-            (self.puiseux_series == other.puiseux_series)):
-            return True
+        if isinstance(other, DiscriminantPlace):
+            if ((self.RS == other.RS) and
+                (self.puiseux_series == other.puiseux_series)):
+                return True
         return False
 
     def is_discriminant(self):
