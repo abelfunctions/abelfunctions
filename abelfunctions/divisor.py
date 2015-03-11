@@ -131,6 +131,9 @@ class Divisor(object):
         if other == 0 or other == sympy.S(0):
             return self
 
+        if not isinstance(other,Divisor):
+            raise ValueError('%s is not a Divisor on %s.'%(other,self.RS))
+
         if self.RS != other.RS:
             raise ValueError('Can only add or subtract divisors defined '
                              'on the same Riemann surface.')
@@ -138,6 +141,9 @@ class Divisor(object):
         all_places = set(self.places + other.places)
         d = dict((P, self[P] + other[P]) for P in all_places)
         return Divisor(self.RS, d)
+
+    def __radd__(self, other):
+        return self.__add__(other)
 
     def __neg__(self):
         d = dict((P,-m) for P,m in self.items)
