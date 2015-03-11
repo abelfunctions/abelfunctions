@@ -293,6 +293,26 @@ class XPathFactory(object):
             reverse_xpath.append(data)
         return reverse_xpath
 
+        # helper functions for plotting line, arcs, and xpaths
+    def plot_line(self, xline, ax, *args, **kwds):
+        t = numpy.linspace(0,1,16)
+        z0, z1 = xline
+        l = z0*(1-t) + z1*t
+        ax.plot(l.real, l.imag, 'k', *args, **kwds)
+
+    def plot_arc(self, xarc, ax, *args, **kwds):
+        t = numpy.linspace(0,1,16)
+        R, w, theta, dtheta = xarc
+        a = R*numpy.exp(1.0j*(theta + dtheta*t)) + w
+        ax.plot(a.real, a.imag, 'k', *args, **kwds)
+
+    def plot_xpath(self, xpath, ax, *args, **kwds):
+        for segment in xpath:
+            if len(segment) == 2:
+                self.plot_line(segment, ax, *args, **kwds)
+            elif len(segment) == 4:
+                self.plot_arc(segment, ax, *args, **kwds)
+
     def show_paths(self, ax=None, *args, **kwds):
         """Plots all of the monodromy paths of the curve.
 
@@ -307,26 +327,6 @@ class XPathFactory(object):
         """
         from matplotlib.patches import Circle, Wedge, Polygon
         from matplotlib.collections import PatchCollection
-
-        # helper functions for plotting line, arcs, and xpaths
-        def plot_line(xline, ax, *args, **kwds):
-            t = numpy.linspace(0,1,16)
-            z0, z1 = xline
-            l = z0*(1-t) + z1*t
-            ax.plot(l.real, l.imag, 'k', *args, **kwds)
-
-        def plot_arc(xarc, ax, *args, **kwds):
-            t = numpy.linspace(0,1,16)
-            R, w, theta, dtheta = xarc
-            a = R*numpy.exp(1.0j*(theta + dtheta*t)) + w
-            ax.plot(a.real, a.imag, 'k', *args, **kwds)
-
-        def plot_xpath(xpath, ax, *args, **kwds):
-            for segment in xpath:
-                if len(segment) == 2:
-                    plot_line(segment, ax, *args, **kwds)
-                elif len(segment) == 4:
-                    plot_arc(segment, ax, *args, **kwds)
 
         # get the current axes / creat one if none is provided
         if ax is None:
@@ -351,7 +351,7 @@ class XPathFactory(object):
         # plot the monodromy paths
         for bi in b:
             xpath = self.xpath_monodromy_path(bi)
-            plot_xpath(xpath, ax, *args, **kwds)
+            self.plot_xpath(xpath, ax, *args, **kwds)
 
 
 

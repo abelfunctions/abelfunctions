@@ -415,7 +415,7 @@ cdef class RiemannSurfacePathPrimitive:
         omega_gamma = self.AC.parameterize(omega)
         return omega_gamma(t)
 
-    def plot_x(self, N, *args, **kwds):
+    def plot_x(self, N=128, t0=0, t1=1, **kwds):
         r"""Plot the x-part of the path in the complex x-plane.
 
         Additional arguments and keywords are passed to
@@ -425,21 +425,25 @@ cdef class RiemannSurfacePathPrimitive:
         ----------
         N : int
             The number of interpolating points used to plot.
+        t0 : double
+            Starting t-value in [0,1].
+        t1 : double
+            Ending t-value in [0,1].
 
         Returns
         -------
         matplotlib lines array.
 
         """
-        t = numpy.linspace(0,1,N)
+        t = numpy.linspace(t0,t1,N)
         x = numpy.array([self.get_x(ti) for ti in t],
                         dtype=numpy.complex)
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
-        lines, = ax.plot(x.real, x.imag, *args, **kwds)
+        lines, = ax.plot(x.real, x.imag, **kwds)
         return fig
 
-    def plot_y(self, N, *args, **kwds):
+    def plot_y(self, N=128, t0=0, t1=1, **kwds):
         r"""Plot the y-part of the path in the complex y-plane.
 
         Additional arguments and keywords are passed to
@@ -449,21 +453,25 @@ cdef class RiemannSurfacePathPrimitive:
         ----------
         N : int
             The number of interpolating points used to plot.
+        t0 : double
+            Starting t-value in [0,1].
+        t1 : double
+            Ending t-value in [0,1].
 
         Returns
         -------
         matplotlib lines array.
 
         """
-        t = numpy.linspace(0,1,N)
+        t = numpy.linspace(t0,t1,N)
         y = numpy.array([self.get_y(ti)[0] for ti in t],
                         dtype=numpy.complex)
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
-        lines, = ax.plot(y.real, y.imag, *args, **kwds)
+        lines, = ax.plot(y.real, y.imag, **kwds)
         return fig
 
-    def plot3d_x(self, N, *args, **kwds):
+    def plot3d_x(self, N=128, t0=0, t1=1, **kwds):
         r"""Plot the x-part of the path in the complex x-plane with the
         parameter :math:`t \in [0,1]` along the perpendicular axis.
 
@@ -474,6 +482,11 @@ cdef class RiemannSurfacePathPrimitive:
         ----------
         N : int
             The number of interpolating points used to plot.
+        t0 : double
+            Starting t-value in [0,1].
+        t1 : double
+            Ending t-value in [0,1].
+
 
         Returns
         -------
@@ -481,12 +494,12 @@ cdef class RiemannSurfacePathPrimitive:
 
         """
         z = numpy.zeros(N)
-        t = numpy.linspace(0,1,N)
+        t = numpy.linspace(t0,t1,N)
         y = numpy.array([self.get_x(ti) for ti in t],
                         dtype=numpy.complex)
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1,projection='3d')
-        ax.plot(y.real, y.imag, t, *args, **kwds)
+        ax.plot(y.real, y.imag, t, **kwds)
 
         # draw a grey "shadow" below the plot
         try:
@@ -497,8 +510,7 @@ cdef class RiemannSurfacePathPrimitive:
         ax.plot(y.real, y.imag, z, color='grey', **kwds)
         return fig
 
-
-    def plot3d_y(self, N, *args, **kwds):
+    def plot3d_y(self, N=128, t0=0, t1=1, **kwds):
         r"""Plot the y-part of the path in the complex y-plane with the
         parameter :math:`t \in [0,1]` along the perpendicular axis.
 
@@ -509,6 +521,10 @@ cdef class RiemannSurfacePathPrimitive:
         ----------
         N : int
             The number of interpolating points used to plot.
+        t0 : double
+            Starting t-value in [0,1].
+        t1 : double
+            Ending t-value in [0,1].
 
         Returns
         -------
@@ -516,12 +532,12 @@ cdef class RiemannSurfacePathPrimitive:
 
         """
         z = numpy.zeros(N)
-        t = numpy.linspace(0,1,N)
+        t = numpy.linspace(t0,t1,N)
         y = numpy.array([self.get_y(ti)[0] for ti in t],
                         dtype=numpy.complex)
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1,projection='3d')
-        ax.plot(y.real, y.imag, t, *args, **kwds)
+        ax.plot(y.real, y.imag, t, **kwds)
 
         # draw a grey "shadow" below the plot
         try:

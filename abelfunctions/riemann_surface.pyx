@@ -17,12 +17,13 @@ import scipy.linalg
 from .differentials import differentials
 from .differentials import Differential
 from .differentials cimport Differential
-from .divisor import Place, DiscriminantPlace, Divisor
+from .divisor import Place, DiscriminantPlace, RegularPlace, Divisor
 from .puiseux import puiseux
 from .riemann_surface_path import RiemannSurfacePathPrimitive
 from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 from .riemann_surface_path_factory import RiemannSurfacePathFactory
 from .singularities import genus
+from .utilities import rootofsimp
 
 
 cdef class RiemannSurface:
@@ -88,6 +89,7 @@ cdef class RiemannSurface:
             self._base_sheets = self.base_sheets()
 
         # cache for key calculations
+        self._base_place = self(self._base_point)[0]
         self._period_matrix = None
         self._riemann_matrix = None
         self._genus = None
@@ -116,9 +118,16 @@ cdef class RiemannSurface:
             If multiple places
 
         """
+        # alpha = infinity case
+        infinities = ['oo', sympy.oo, numpy.Inf]
+        if alpha in infinities:
+            p = puiseux(self.f, self.x, self.y, sympy.oo,
+                        parametric=True, exact=True)
+            return [DiscriminantPlace(self, pi) for pi in p]
+
         # first coerce b into an exact discriminant point if it's
         # epsilon close to one
-        exact = isinstance(alpha,sympy.Expr)
+        exact = isinstance(alpha,sympy.Expr) or isinstance(alpha,int)
         b = self.closest_discriminant_point(alpha,exact=exact)
         if abs(numpy.complex(alpha) - numpy.complex(b)) < 1e-12:
             # return discriminant places corresponding to x=alpha y=beta
@@ -134,14 +143,14 @@ cdef class RiemannSurface:
             if abs(curve_eval) > 1e-8:
                 raise ValueError('The place (%s, %s) does not lie on '
                                  'the curve / surface.')
-            return Place(self, alpha, beta)
+            return RegularPlace(self, alpha, beta)
 
         # otherwise, compute the roots above x=alpha and return a list
         # of places
-        falpha = self.f.subs({self.x:alpha})
-        palpha = sympy.Poly(falpha, self.y)
-        yroots = sympy.roots(palpha, self.y).keys()
-        return [Place(self,alpha,beta) for beta in yroots]
+        _y = sympy.Symbol('_'+str(self.y))
+        falpha = self.f.subs({self.x:alpha,self.y:_y}).as_poly(_y)
+        yroots = falpha.all_roots(radicals=False)
+        return [RegularPlace(self,alpha,beta) for beta in yroots]
 
     def show_paths(self, ax=None, *args, **kwds):
         """Plots all of the monodromy paths of the curve.
@@ -198,10 +207,11 @@ cdef class RiemannSurface:
         x = self.x
         y = self.y
         p = sympy.Poly(f,[x,y])
-        res = sympy.resultant(p,p.diff(y),y).as_poly(x)
-        rts = res.all_roots(multiple=False, radicals=True)
+        _x = sympy.Symbol('_'+str(x))
+        res = sympy.resultant(p,p.diff(y),y).subs(x,_x).as_poly(_x)
+        rts = res.all_roots(multiple=False, radicals=False)
         rts, multiplicities = zip(*rts)
-        discriminant_points_exact = numpy.array(map(sympy.simplify,rts))
+        discriminant_points_exact = numpy.array(rts)
         discriminant_points = discriminant_points_exact.astype(numpy.complex)
 
         # determine a base_point, if not specified
@@ -264,6 +274,24 @@ cdef class RiemannSurface:
         """
         return self._base_point
 
+    def base_place(self):
+        r"""Returns the base place of the Riemann surface.
+
+        The base place is the place from which all paths on the Riemann
+        surface are constructed. The AbelMap begins integrating from the
+        base place.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Place
+
+        """
+        return self._base_place
+
     def base_sheets(self):
         r"""Returns the base sheets of the Riemann surface.
 
@@ -283,7 +311,7 @@ cdef class RiemannSurface:
 
         """
         # returned cached base sheets if availabe
-        if not self._base_sheets == None:
+        if not self._base_sheets is None:
             return self._base_sheets
         self._base_sheets = self.lift(self._base_point)
         return self._base_sheets
@@ -338,8 +366,12 @@ cdef class RiemannSurface:
         """
         f,x,y = self.f, self.x, self.y
         if not self._holomorphic_differentials:
-            self._holomorphic_differentials = differentials(f,x,y)
+            self._holomorphic_differentials = differentials(self)
         return self._holomorphic_differentials
+
+    def holomorphic_oneforms(self):
+        r"""Alias for :meth:`holomorphic_differentials`."""
+        return self.holomorphic_differentials()
 
     def genus(self):
         if not self._genus:
@@ -457,7 +489,7 @@ cdef class RiemannSurface:
             Riemann surface.
 
         """
-        if self._riemann_matrix:
+        if not self._riemann_matrix is None:
             return self._riemann_matrix
 
         g = self.genus()

@@ -623,6 +623,12 @@ Tinv, z, g, R)
             u = np.pi*np.dot(z.imag,np.dot(Yinv,z.imag.T)).item(0,0)
         return u,v
 
+    def exponential_part(self, *args, **kwds):
+        return self.exp_and_osc_at_point(*args, **kwds)[0]
+
+    def oscillatory_part(self, *args, **kwds):
+        return self.exp_and_osc_at_point(*args, **kwds)[1]
+
     """
     TODO: Add documentation
     """

@@ -62,12 +62,12 @@ Contents
 """
 
 import sympy
+import pdb
 
 from functools import wraps, update_wrapper
-from sympy import pprint
-from abelfunctions.puiseux import puiseux, PuiseuxTSeries, PuiseuxXSeries
-
-import pdb
+from sympy import ( pprint, ratsimp, ceiling, RootOf, Dummy )
+from .puiseux import puiseux, PuiseuxTSeries, PuiseuxXSeries
+from .utilities import rootofsimp
 
 def valuation():
     pass
@@ -169,11 +169,14 @@ def compute_series_truncations(f, x, y, alpha):
     pt = puiseux(f,x,y,alpha,parametric=True,exact=True)
     px = [p for P in pt for p in P.xseries()]
 
-    # compute the orders necessary for the integral basis algorithm
+    # compute the orders necessary for the integral basis algorithm. the
+    # orders are on the Puiseux x-series (non-parametric) so scale by
+    # the ramification index of each series
     N = compute_expansion_bounds(px)
     Nmax = max(N)
     for pti in pt:
-        pti.extend(order=Nmax)
+        order = ceiling(Nmax*pti.ramification_index)
+        pti.extend(order=order)
 
     # recompute the corresponding x-series with the extened terms
     px = [p for P in pt for p in P.xseries()]
@@ -208,8 +211,15 @@ def integral_basis(f, x, y):
     # where lc(x) is the leading coefficient of f.
     d  = sympy.degree(f, y)
     lc = sympy.LC(f, y)
-    if x in lc:
+    if lc.has(x):
+        # bug in sympy: preserve any rootofs appearing in f
+        rootofs = f.find(RootOf)
+        dummies = [Dummy() for _ in rootofs]
+        transform = dict(zip(rootofs,dummies))
+        f = f.xreplace(transform)
         f = sympy.ratsimp(f.subs(y,y/lc)*lc**(d-1))
+        transform = dict(zip(dummies,rootofs))
+        f = f.xreplace(transform)
     else:
         f = f/lc
         lc = 1
@@ -257,6 +267,7 @@ def _integral_basis_monic(f,x,y):
     # of `df`. Extend these series to the necessary number of terms.
     r = []
     alpha = [sympy.roots(k).keys()[0] for k in df]
+
     for alphak in alpha:
         rk = compute_series_truncations(f,x,y,alphak)
         r.append(rk)
@@ -327,7 +338,7 @@ def compute_bd(f, x, y, b, df, r, alpha, a):
             if sols:
                 # build next guess for current basis element
                 bdm1 = sum(sols[i]*b[i] for i in range(d))
-                bd = sympy.ratsimp((bdm1 + bd) / k)
+                bd = rootofsimp((bdm1 + bd) / k)
             else:
                 # no solution was found. the integral basis element is
                 # sufficiently singular at this alphak
@@ -472,7 +483,7 @@ def evaluate_A(a,b,rki):
     y = rki.y
     alphak = rki.x0
     zero = {sympy.S(0):0}
-    order = rki.order + 1
+    order = rki.order + 2
     A = PuiseuxXSeries(f,x,y,alphak,zero,order=order)
     for ai,bi in zip(a[:d],b):
         term = evaluate_integral_basis_element(bi,rki)
