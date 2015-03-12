@@ -500,15 +500,21 @@ def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t'),
     all_roots = gx0y.all_roots(radicals=False,multiple=False)
     roots,multiplicities = zip(*all_roots)
 
-    # for each y-center compute the singular parts of the puiseux series
-    for beta in roots:
-        H = g.subs(y,y+beta)
+    # if a beta is requested then only compute the roots for that beta
+    if beta:
+        beta = sympy.sympify(beta)
+        roots = [root for root in roots if root == beta]
+
+    # for each (requested) root, compute the corresponding puiseux
+    # singular parts. transform the solutiosn back to the origin
+    for b in roots:
+        H = g.subs(y,y+b)
         singular_part_ab = puiseux_rational(H,x,y)
 
 
         # move back to (alpha, beta)
         for G,P,Q in singular_part_ab:
-            Q += beta
+            Q += b
             Q /= transform.subs(x,P)
 
             if alpha in infinities:

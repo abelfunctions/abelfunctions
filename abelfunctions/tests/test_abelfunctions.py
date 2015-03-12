@@ -17,7 +17,7 @@ class AbelfunctionsTestCase(unittest.TestCase):
         self.f7 = y**3 - (x**3 + y)**2 + 1
         self.f8 = x**2*y**6 + 2*x**3*y**5 - 1
         self.f9 = 2*x**7*y + 2*x**7 + y**3 + 3*y**2 + 3*y
-        self.f10= (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
+        self.f10 = (x**3)*y**4 + 4*x**2*y**2 + 2*x**3*y - 1
 
         # various classifications
         self.f = [self.f1, self.f2, self.f3, self.f4, self.f5,
