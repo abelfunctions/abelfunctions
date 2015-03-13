@@ -298,7 +298,6 @@ def _multiplicity(P):
     """
     m = 0
     for Pi in P:
-        Pi.add_term()
         n,alpha = zip(*Pi.terms)
         ri = abs(Pi.ramification_index)
         si = abs(min(n))

@@ -56,7 +56,7 @@ _z = sympy.Symbol('_z')
 
 
 def newton_polygon_exceptional(H,x,y):
-    r"""Computes the exceptional Newton polygon of `H`"""
+    r"""Computes the exceptional Newton polygon of `H`."""
     d = degree(H.eval(x,0), y)
     return [[(0,0),(d,0)]]
 
@@ -194,14 +194,18 @@ def transform_newton_polynomial(H,x,y,q,m,l,xi):
     # temporarily replaced by a dummy variable
     H = rootofsimp(H)
     rootofs = H.find(RootOf)
+    rootofs = rootofs.union(newx.find(RootOf))
+    rootofs = rootofs.union(newy.find(RootOf))
     dummies = [sympy.Dummy() for _ in rootofs]
     transform = dict(zip(rootofs,dummies))
+
+    # replace all instances of RootOf with dummy variables
     H = H.xreplace(transform)
-    _newx = newx.xreplace(transform).as_poly(x)
-    _newy = newy.xreplace(transform).as_poly(y)
+    newx = newx.xreplace(transform).as_poly(x)
+    newy = newy.xreplace(transform).as_poly(y)
 
     # perform the transformation
-    newH = H.as_poly(x).compose(_newx).as_poly(y).compose(_newy)
+    newH = H.as_poly(x).compose(newx).as_poly(y).compose(newy)
     newH = newH.exquo(quo).as_poly(x,y)
 
     # place the rootofs back in place of the dummy varaiables
@@ -501,7 +505,7 @@ def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t'),
     roots,multiplicities = zip(*all_roots)
 
     # if a beta is requested then only compute the roots for that beta
-    if beta:
+    if not beta is None:
         beta = sympy.sympify(beta)
         roots = [root for root in roots if root == beta]
 
@@ -789,7 +793,6 @@ class PuiseuxTSeries(object):
         order = self.order
 
         # compute the e-th roots of lambda
-#        pdb.set_trace()
         if self.is_symbolic:
             mu = sympy.root(rootofsimp(1/lamb),e)
             conjugates = [mu*sympy.exp(2*sympy.pi*sympy.I*sympy.Rational(k,e))
@@ -891,7 +894,6 @@ class PuiseuxTSeries(object):
         self._p = p
 
         # dumb transformation necessary to preserve rootofs
-
         rootofs = self.ypart.find(RootOf).union(self._g.find(RootOf))
         dummies = [sympy.Dummy() for _ in rootofs]
         transform = dict(zip(rootofs,dummies))
@@ -902,6 +904,7 @@ class PuiseuxTSeries(object):
 
         transform = dict(zip(dummies,rootofs))
         yseries = yseries.xreplace(transform)
+
         self.terms = self.terms_from_yseries(yseries)
         self.order = self._p.degree()
 
