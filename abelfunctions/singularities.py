@@ -28,8 +28,6 @@ from .puiseux import puiseux
 from .integralbasis import Int
 from .utilities import rootofsimp, cached_function
 
-import pdb
-
 
 def singular_points_finite(f, x, y):
     r"""Returns the finite singular points of `f`.
@@ -202,9 +200,10 @@ def singularities(f,x,y):
     for singular_pt in S:
         # Perform a projective transformation of the curve so it's
         # almost centered at the singular point.
-        pdb.set_trace()
         g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
         P = puiseux(g,u,v,u0,v0)
+        for Pi in P:
+            Pi.add_term()
 
         m = _multiplicity(P)
         delta = _delta_invariant(P)
@@ -300,8 +299,7 @@ def _multiplicity(P):
     for Pi in P:
         n,alpha = zip(*Pi.terms)
         ri = abs(Pi.ramification_index)
-        si = abs(min(n))
-        si = si if si else 0  # if si is zero then assume it's one
+        si = abs(min([ni for ni in n if ni != 0]))
         m += min(ri,si)
     return sympy.S(m)
 
