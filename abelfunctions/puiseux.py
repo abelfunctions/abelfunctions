@@ -414,7 +414,7 @@ def puiseux_rational(H,x,y,recurse=False):
                 roots = map(lambda xi: xi.xreplace(transform), roots)
             else:
                 roots = psisimp.as_poly(_z).all_roots(multiple=False,
-                                                      radicals=False)
+                                                      radicals=True)
                 roots,_ = zip(*roots)
 
             for xi in roots:
