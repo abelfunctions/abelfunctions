@@ -371,10 +371,11 @@ class TestPuiseux(AbelfunctionsTestCase):
 
     def test_PQ_f27(self):
         series = self.get_PQ(self.f27)
-        sqrt2 = RootOf(_z**2-2,0,radicals=False)
+        sqrt2 = sympy.sqrt(2)
         self.assertItemsEqual(
             series,
-            [(t, t*y + t*sqrt2),
+            [(t, t*(y + sqrt2)),
+             (t, t*(y - sqrt2)),
              (t**2/2, t**3*(y + 1)/2),
              (t**3/2, t*(y + 1))])
 

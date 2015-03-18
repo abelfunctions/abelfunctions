@@ -99,5 +99,5 @@ class TestRCVPaper(unittest.TestCase):
     def test_differentials(self):
         basis = [1/(3*y**2*x**2), 1/(3*x*y**2), 1/(3*y*x), 1/(3*y**2)]
         self.assertItemsEqual(map(lambda omega: omega.as_sympy_expr(),
-                                  differentials(self.f,x,y)),
+                                  self.X.holomorphic_differentials()),
                               basis)
