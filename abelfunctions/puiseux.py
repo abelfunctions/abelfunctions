@@ -44,7 +44,7 @@ Contents
 import numpy
 import sympy
 
-from abelfunctions.utilities import rootofsimp
+from abelfunctions.utilities import rootofsimp, cached_function
 from operator import itemgetter
 from sympy import ( degree, Point, Segment, Poly, poly, Rational, Dummy,
                     RootOf, gcd, gcdex, LC, expand, cancel, simplify, ratsimp)
@@ -407,16 +407,21 @@ def puiseux_rational(H,x,y,recurse=False):
                 dummies = [Dummy() for _ in rootofs]
                 transform = dict(zip(rootofs,dummies))
                 psisimp = psisimp.xreplace(transform)
-                xi = psisimp.as_poly(_z).root(0,radicals=False)
+                roots = psisimp.as_poly(_z).all_roots(multiple=False,
+                                                      radicals=False)
+                roots,_ = zip(*roots)
                 transform = dict(zip(dummies,rootofs))
-                xi = xi.xreplace(transform)
+                roots = map(lambda xi: xi.xreplace(transform), roots)
             else:
-                xi = psisimp.as_poly(_z).root(0,radicals=False)
+                roots = psisimp.as_poly(_z).all_roots(multiple=False,
+                                                      radicals=False)
+                roots,_ = zip(*roots)
 
-            Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
-            for (G,P,Q) in puiseux_rational(Hprime,x,y,recurse=True):
-                singular_term = (G, xi**v*P**q, P**m*(xi**u + Q))
-                R.append(singular_term)
+            for xi in roots:
+                Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
+                for (G,P,Q) in puiseux_rational(Hprime,x,y,recurse=True):
+                    singular_term = (G, xi**v*P**q, P**m*(xi**u + Q))
+                    R.append(singular_term)
     return R
 
 
