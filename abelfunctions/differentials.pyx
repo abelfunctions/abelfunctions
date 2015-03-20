@@ -42,7 +42,6 @@ Contents
 """
 import numpy
 import sympy
-import sympy.mpmath as mpmath
 import matplotlib
 import matplotlib.pyplot as plt
 
