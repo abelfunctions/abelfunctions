@@ -56,3 +56,9 @@ class TestIntegralBasis(AbelfunctionsTestCase):
         a = integral_basis(self.f10,x,y)
         b = [1, x*y, x**2*y**2, x**3*y**3]
         self.assertEqual(a,b)
+
+    def test_rcvexample(self):
+        f = x**2*y**3 - x**4 + 1
+        a = integral_basis(f,x,y)
+        b = [1, x*y, x**2*y**2]
+        self.assertEqual(a,b)

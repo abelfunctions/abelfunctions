@@ -70,22 +70,26 @@ class TestSingularPointsFinite(AbelfunctionsTestCase):
 
 class TestSingularPointsInfinite(AbelfunctionsTestCase):
     def test_f1(self):
-        s = singular_points_infinite(self.f1,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f1,self.x,self.y,z)
         s_actual = sympify([(0,1,0)])
         self.assertEqual(s,s_actual)
 
     def test_f2(self):
-        s = singular_points_infinite(self.f2,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f2,self.x,self.y,z)
         s_actual = sympify([(0,1,0)])
         self.assertEqual(s,s_actual)
 
     def test_f3(self):
-        s = singular_points_infinite(self.f3,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f3,self.x,self.y,z)
         s_actual = []
         self.assertEqual(s,s_actual)
 
     def test_f4(self):
-        s = singular_points_infinite(self.f4,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f4,self.x,self.y,z)
         s_actual = []
         self.assertEqual(s,s_actual)
 
@@ -93,28 +97,33 @@ class TestSingularPointsInfinite(AbelfunctionsTestCase):
         pass
 
     def test_f6(self):
-        s = singular_points_infinite(self.f6,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f6,self.x,self.y,z)
         s_actual = sympify([(1,0,0)])
         self.assertEqual(s,s_actual)
 
     # the remaining curves only have singular points at infinity
     def test_f7(self):
-        s = singular_points_infinite(self.f7,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f7,self.x,self.y,z)
         s_actual = sympify([(0,1,0)])
         self.assertEqual(s,s_actual)
 
     def test_f8(self):
-        s = singular_points_infinite(self.f8,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f8,self.x,self.y,z)
         s_actual = sympify([(0,1,0),(1,0,0)])
         self.assertItemsEqual(s,s_actual)
 
     def test_f9(self):
-        s = singular_points_infinite(self.f9,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f9,self.x,self.y,z)
         s_actual = sympify([(0,1,0)])
         self.assertEqual(s,s_actual)
 
     def test_f10(self):
-        s = singular_points_infinite(self.f10,self.x,self.y)
+        z = sympy.Symbol('z')
+        s = singular_points_infinite(self.f10,self.x,self.y,z)
         s_actual = sympify([(0,1,0),(1,0,0)])
         self.assertItemsEqual(s,s_actual)
 

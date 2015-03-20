@@ -216,16 +216,16 @@ def integral_basis(f, x, y):
         rootofs = f.find(RootOf)
         dummies = [Dummy() for _ in rootofs]
         transform = dict(zip(rootofs,dummies))
-        f = f.xreplace(transform)
-        f = sympy.ratsimp(f.subs(y,y/lc)*lc**(d-1))
+        flc = f.xreplace(transform)
+        flc = sympy.ratsimp(flc.subs(y,y/lc)*lc**(d-1))
         transform = dict(zip(dummies,rootofs))
-        f = f.xreplace(transform)
+        flc = flc.xreplace(transform)
     else:
-        f = f/lc
+        flc = f/lc
         lc = 1
 
     # compute the integral basis for the monicized curve
-    b = _integral_basis_monic(f, x, y)
+    b = _integral_basis_monic(flc, x, y)
 
     # reverse leading coefficient scaling
     for i in xrange(1,len(b)):
@@ -259,14 +259,18 @@ def _integral_basis_monic(f,x,y):
     # k**2 divides the resultant
     p = sympy.Poly(f, [x,y])
     n = p.degree(y)
-    res = sympy.resultant(p,p.diff(y),y)
+    res = sympy.resultant(p,p.diff(y),y).as_poly(x)
     factors = sympy.factor_list(res)[1]
-    df = [k for k,deg in factors if (deg > 1) and (sympy.LC(k) == 1)]
+    df = [k.as_expr() for k,deg in factors if (deg > 1) and (sympy.LC(k) == 1)]
 
     # compute the Puiseux series expansions at the roots of each element
     # of `df`. Extend these series to the necessary number of terms.
     r = []
-    alpha = [sympy.roots(k).keys()[0] for k in df]
+    alpha = []
+    for k in df:
+        roots = k.as_poly(x).all_roots(radicals=True, multiple=False)
+        roots, multiplicities = zip(*roots)
+        alpha.extend(roots)
 
     for alphak in alpha:
         rk = compute_series_truncations(f,x,y,alphak)

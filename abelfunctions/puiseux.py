@@ -413,9 +413,10 @@ def puiseux_rational(H,x,y,recurse=False):
                 transform = dict(zip(dummies,rootofs))
                 roots = map(lambda xi: xi.xreplace(transform), roots)
             else:
-                roots = psisimp.as_poly(_z).all_roots(multiple=False,
-                                                      radicals=True)
-                roots,_ = zip(*roots)
+                # roots = psisimp.as_poly(_z).all_roots(multiple=False,
+                #                                       radicals=True)
+                # roots,_ = zip(*roots)
+                roots = sympy.roots(psisimp.as_poly(_z)).keys()
 
             for xi in roots:
                 Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
@@ -614,6 +615,9 @@ class PuiseuxTSeries(object):
             return (numpy.complex(self.center),
                     numpy.complex(self.xcoefficient),
                     numpy.int(self.ramification_index))
+    @property
+    def order(self):
+        return self._singular_order + self._regular_order
 
     def __init__(self, f, x, y, x0, singular_data, t=sympy.Symbol('t'),
                  order=None, exact=True):
@@ -655,10 +659,40 @@ class PuiseuxTSeries(object):
         self.ypart = ypart
         self.terms = self.terms_from_yseries(ypart0)
 
-        # set up y-series extension machinery. RootOfs in expressions
-        # are not preserved under this transformation. (that is, actual
-        # algebraic representations are calculated.) each RootOf is
-        # temporarily replaced by a dummy variable
+        self._initialize_extension(extension_polynomial, t, y)
+
+        # determine the initial order. See the order property
+        self._singular_order = self.ypart.subs(y,sympy.O(t)).expand().getn()
+        self._regular_order = self._p.degree(t)
+
+        # coerce data to Numpy numerical types if requested on
+        # construction
+        self._is_symbolic = exact
+        if self.is_numerical:
+            self.coerce_to_numerical()
+
+        # the curve, x-part, and terms output by puiseux make the
+        # puiseux series unique. any mutability only adds terms
+        self._hash = hash((self.f,
+                           self.xpart,
+                           self.ypart))
+
+    def _initialize_extension(self, extension_polynomial, t, y):
+        r"""Set up regular part extension machinery.
+
+        RootOfs in expressions are not preserved under this
+        transformation. (that is, actual algebraic representations are
+        calculated.) each RootOf is temporarily replaced by a dummy
+        variable
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         _phi = rootofsimp(extension_polynomial.as_poly(y))
         _p = Poly(t,t)
         _g = Poly(0,y)
@@ -681,21 +715,6 @@ class PuiseuxTSeries(object):
         self._phiprime = rootofsimp(_phiprime)
         self._s = rootofsimp(_s)
 
-        # determine the initial order
-        self.order = self._p.degree(t)# + degree(self.ypart,self.t)
-        self.extend(order)
-
-        # coerce data to Numpy numerical types if requested on
-        # construction
-        self._is_symbolic = exact
-        if self.is_numerical:
-            self.coerce_to_numerical()
-
-        # the curve, x-part, and terms output by puiseux make the
-        # puiseux series unique. any mutability only adds terms
-        self._hash = hash((self.f,
-                           self.xpart,
-                           self.ypart))
 
     def __repr__(self):
         """Print the x- and y-parts of the Puiseux series."""
@@ -911,7 +930,7 @@ class PuiseuxTSeries(object):
         yseries = yseries.xreplace(transform)
 
         self.terms = self.terms_from_yseries(yseries)
-        self.order = self._p.degree()
+        self._regular_order = self._p.degree()
 
     def extend(self, order=None):
         r"""Extends the series in place.
@@ -1412,7 +1431,7 @@ class PuiseuxXSeries(object):
                  if s[n] not in [0,sympy.S(0)]]
         return tuple(terms)
 
-    def _term_from_sympy_generic(self, expr, order):
+    def _terms_from_sympy_generic(self, expr, order):
         r"""Returns terms from a generic sympy expression.
 
         The slowest method. Uses `sympy.lseries`.

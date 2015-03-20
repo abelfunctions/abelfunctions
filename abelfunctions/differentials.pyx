@@ -125,6 +125,7 @@ def differentials(RS):
     f = RS.f
     x = RS.x
     y = RS.y
+    z = sympy.Dummy('z')
 
     # compute the "total degree" (Poly.total_degree doesn't give the
     # desired result). This is the largest monomial degree in the sum of
@@ -148,9 +149,9 @@ def differentials(RS):
         # recenter the curve and adjoint polynomial at the singular
         # point: find the affine plane u,v such that the singularity
         # occurs at u=0
-        g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
+        g,u,v,u0,v0 = _transform(f,x,y,z,singular_pt)
         g = g.subs(u,u+u0)
-        Ptilde,u,v,u0,v0 = _transform(P,x,y,singular_pt)
+        Ptilde,u,v,u0,v0 = _transform(P,x,y,z,singular_pt)
         Ptilde = Ptilde.subs(u,u+u0)
 
         # compute the intergral basis at the recentered singular point

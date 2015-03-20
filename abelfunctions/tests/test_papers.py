@@ -27,9 +27,11 @@ class TestRCVPaper(unittest.TestCase):
 
         xpart = -t**3
         ypart = -(y + 1)/t**2
-        extension_polynomial = Poly(-t**24/9 - t**12/3, y)
         self.assertEqual(P.xpart, xpart)
         self.assertEqual(P.ypart.expand(), ypart.expand())
+
+        P.extend(order=22)
+        extension_polynomial = Poly(-t**24/9 - t**12/3, y)
         self.assertEqual(P._g, extension_polynomial)
 
     def test_puiseux_1(self):
@@ -40,9 +42,11 @@ class TestRCVPaper(unittest.TestCase):
 
         xpart = t**3/4 + 1
         ypart = t*(y + 1)
-        extension_polynomial =  Poly(11*t**6/576 - t**3/24, y)
         self.assertEqual(P.xpart, xpart)
         self.assertEqual(P.ypart, ypart)
+
+        P.extend(order=10)
+        extension_polynomial =  Poly(11*t**6/576 - t**3/24, y)
         self.assertEqual(P._g, extension_polynomial)
 
     def test_puiseux_I(self):
@@ -53,9 +57,11 @@ class TestRCVPaper(unittest.TestCase):
 
         xpart = -I*t**3/4 + I
         ypart = t*(y + 1)
-        extension_polynomial = Poly(11*t**6/576 + t**3/24, y)
         self.assertEqual(P.xpart, xpart)
         self.assertEqual(P.ypart, ypart)
+
+        P.extend(order=10)
+        extension_polynomial = Poly(11*t**6/576 + t**3/24, y)
         self.assertEqual(P._g, extension_polynomial)
 
     def test_puiseux_oo(self):
@@ -66,9 +72,11 @@ class TestRCVPaper(unittest.TestCase):
 
         xpart = t**(-3)
         ypart = (y + 1)/t**2
-        extension_polynomial = Poly(-t**24/9 - t**12/3, y)
         self.assertEqual(P.xpart, xpart)
         self.assertEqual(P.ypart, ypart)
+
+        P.extend(order=22)
+        extension_polynomial = Poly(-t**24/9 - t**12/3, y)
         self.assertEqual(P._g, extension_polynomial)
 
     def test_puiseux_2(self):
@@ -81,9 +89,11 @@ class TestRCVPaper(unittest.TestCase):
         r0 = RootOf(4*_y**3-15,0,radicals=False)
         xpart = t + 2
         ypart = y + r0
-        extension_polynomial = Poly(17*t*r0/45, y)
         self.assertEqual(P.xpart, xpart)
         self.assertEqual(P.ypart, ypart)
+
+        P.add_term()
+        extension_polynomial = Poly(17*t*r0/45, y)
         self.assertEqual(P._g, extension_polynomial)
 
     def test_integral_basis(self):

@@ -29,7 +29,7 @@ from .integralbasis import Int
 from .utilities import rootofsimp, cached_function
 
 
-def singular_points_finite(f, x, y):
+def singular_points_finite(f,x,y):
     r"""Returns the finite singular points of `f`.
 
     Parameters
@@ -93,7 +93,7 @@ def singular_points_finite(f, x, y):
     return S
 
 
-def singular_points_infinite(f, x, y):
+def singular_points_infinite(f,x,y,z):
     r"""Returns the singular points of `f` at infinity.
 
     In particualr, returns all of the projective singular points
@@ -103,6 +103,7 @@ def singular_points_infinite(f, x, y):
     ----------
     f, x, y : sympy.Expr, sympy.Symbol
         An affine algebraic curve.
+    z : sympy.Symbol
 
     Returns
     -------
@@ -112,7 +113,6 @@ def singular_points_infinite(f, x, y):
 
     """
     # compute the homogenization of degree d
-    z = sympy.Symbol('_z')
     F = f.as_poly(x,y).homogenize(z)
     d = F.total_degree()
 
@@ -192,15 +192,16 @@ def singularities(f,x,y):
         information.
 
     """
+    z = sympy.Dummy('z')
     S = singular_points_finite(f,x,y)
-    S_oo = singular_points_infinite(f,x,y)
+    S_oo = singular_points_infinite(f,x,y,z)
     S.extend(S_oo)
 
     info = []
     for singular_pt in S:
         # Perform a projective transformation of the curve so it's
         # almost centered at the singular point.
-        g,u,v,u0,v0 = _transform(f,x,y,singular_pt)
+        g,u,v,u0,v0 = _transform(f,x,y,z,singular_pt)
         P = puiseux(g,u,v,u0,v0)
         for Pi in P:
             Pi.add_term()
@@ -214,7 +215,7 @@ def singularities(f,x,y):
     return zip(S,info)
 
 
-def _transform(f,x,y,singular_pt):
+def _transform(f,x,y,z,singular_pt):
     r"""Recenters the affine curve `f` at a singular point.
 
     Returns :math:`(g,u,v,u0,v0)` where :math:`g = g(u,v)` is the
@@ -231,6 +232,7 @@ def _transform(f,x,y,singular_pt):
     f : sympy.Expr
     x : sympy.Symbol
     y : sympy.Symbol
+    z : sympy.Symbol
     singular_pt : list
         A projective singular point of the curve.
 
@@ -250,7 +252,6 @@ def _transform(f,x,y,singular_pt):
         g(u,v) = F(u,beta,v), u0=\alpha, v0=\gamma.
 
     """
-    z = sympy.Dummy('z')
     alpha, beta, gamma = singular_pt
     F = f.as_poly(x,y).homogenize(z)
     d = F.total_degree()
@@ -299,7 +300,19 @@ def _multiplicity(P):
     for Pi in P:
         n,alpha = zip(*Pi.terms)
         ri = abs(Pi.ramification_index)
-        si = abs(min([ni for ni in n if ni != 0]))
+
+        # get the leading order behavior of the y-part. if the initial
+        # Puiseux series expansion only contains constant terms then
+        # extend. we can save compute time if ri == 1.
+        try:
+            si = abs(min([ni for ni in n if ni != 0]))
+        except ValueError:
+            if ri == 1:
+                si = 1
+            else:
+                Pi.add_term()
+                si = abs(min([ni for ni in n if ni != 0]))
+
         m += min(ri,si)
     return sympy.S(m)
 
