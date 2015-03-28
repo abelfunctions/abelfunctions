@@ -143,20 +143,6 @@ ext_modules = [
               ],
               include_dirs = [numpy.get_include()]
           ),
-    Extension('abelfunctions.riemanntheta.riemanntheta_cy',
-              sources = [
-                  'abelfunctions/riemanntheta/riemanntheta_cy.pyx',
-                  'abelfunctions/riemanntheta/riemanntheta.c',
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
-    Extension('abelfunctions.riemanntheta.lattice_reduction',
-              sources = [
-                  'abelfunctions/riemanntheta/lattice_reduction.pyx',
-                  'abelfunctions/riemanntheta/lll_reduce.c'
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
     Extension('abelfunctions.polynomials',
               sources = [
                   'abelfunctions/polynomials.pyx',
@@ -166,6 +152,16 @@ ext_modules = [
     Extension('abelfunctions.differentials',
               sources = [
                   'abelfunctions/differentials.pyx',
+              ],
+              include_dirs = [numpy.get_include()]
+          ),
+    Extension('abelfunctions.riemanntheta'
+              sources = [
+                  'abelfunctions/riemanntheta/riemanntheta_cy.pyx',
+                  'abelfunctions/riemanntheta/integer_points.pyx',
+                  'abelfunctions/riemanntheta/radius.pyx',
+                  'abelfunctions/riemanntheta/finitesum.c',
+                  'abelfunctions/riemanntheta/lll_reduce.c',
               ],
               include_dirs = [numpy.get_include()]
           ),
