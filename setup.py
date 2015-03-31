@@ -9,90 +9,92 @@ just type the command (you'll probably need root privileges for that):
     python setup.py install
 
 This will install the library in the default location. To install in a
-custom directory <dir>, use
+custom directory <dir>, use:
 
-    python setup.py --prefix=<dir>
+    python setup.py install --prefix=<dir>
+
+To install for your user account (recommended) use:
+
+    python setup.py install --user
+
 """
 
 __version__ = '1.0'
 
+import numpy
+
+import glob
+import os
+import shutil
+import unittest
+
 from distutils.core import setup, Command
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
-import unittest
-import os
-import os.path
-import numpy
-
 
 class clean(Command):
-    """
-    Cleans *.pyc and other trash files producing the same copy of the code
-    as in the git repository.
-    """
-    description = "remove all build and trash files"
-    user_options = []
-    cleaned_file_extensions = ['.pyc', '~', '.so', '.c']
-    ignored_files = [
-        './abelfunctions/riemanntheta/lattice_reduction.c',
-        './abelfunctions/riemanntheta/lll_reduce.c',
-        './abelfunctions/riemanntheta/riemanntheta.c',
-        ]
+    """Cleans files so you should get the same copy as in git."""
+    description = 'remove build files'
+    user_options = [('all', 'a', 'the same')]
 
     def initialize_options(self):
-        pass
+        self.all = None
 
     def finalize_options(self):
         pass
 
     def run(self):
-        # helper function for deleting directory and contents
-        def delete_dir(dir):
-            # don't do anything if directory already doesn't exist
-            if not os.path.isdir(dir):
-                return
+        # delete all files ending with certain extensions
+        # currently: '.pyc', '~'
+        dir_setup = os.path.dirname(os.path.realpath(__file__))
+        curr_dir = os.getcwd()
+        for root, dirs, files in os.walk(dir_setup):
+            for file in files:
+                file = os.path.join(root, file)
+                if file.endswith('.pyc') and os.path.isfile(file):
+                    os.remove(file)
+                if file.endswith('~') and os.path.isfile(file):
+                    os.remove(file)
 
-            # dive into directory contents. if file, delete.
-            # if directory, run delete_dir.
-            for f in os.listdir(dir):
-                path = os.path.join(dir,f)
-                try:
-                    if os.path.isfile(path):
-                        os.remove(path)
-                    elif os.path.isdir(path):
-                        delete_dir(path)
-                        os.removedirs(path)
-                except Exception, e:
-                    print e
+        os.chdir(dir_setup)
 
-        # deletes .pyc files that don't have corresponding .py files
-        to_remove = []
-        for root, dirs, files in os.walk('.'):
-            # get absolute path to each file
-            files = map(lambda f: os.path.join(root,f), files)
+        # explicity remove files and directories from 'blacklist'
+        blacklist = ['build', 'dist', 'doc/_build']
+        for file in blacklist:
+            if os.path.isfile(file):
+                os.remove(file)
+            elif os.path.isdir(file):
+                shutil.rmtree(file)
 
-            # filter out various file types
-            for ext in self.cleaned_file_extensions:
-                to_remove.extend(filter(lambda f: f.endswith(ext), files))
+        os.chdir(dir_setup)
 
-        # make sure ignored files are removed from the 'to remove' list
-        for f in self.ignored_files:
-            to_remove.remove(f)
+        # delete temporary cython .c files. be careful to only delete the .c
+        # files corresponding to .pyx files. (keep other .c files)
+        ext_sources = [f for ext in ext_modules for f in ext.sources]
+        for file in ext_sources:
+            file = os.path.join(dir_setup, file)
+            if file.endswith('.pyx') and os.path.isfile(file):
+                (root, ext) = os.path.splitext(file)
+                file_c = root + '.c'
+                if os.path.isfile(file_c):
+                    os.remove(file_c)
 
-        # delete the files slated for removal
-        for f in to_remove:
-            os.unlink(f)
+        os.chdir(dir_setup)
 
-        # delete build directories
-        dirs = ['./build', './doc/build']
-        for d in dirs:
-            delete_dir(d)
+        # delete cython .so modules
+        ext_module_names = [ext.name for ext in ext_modules]
+        for mod in ext_module_names:
+            file = mod.replace('.', os.path.sep) + '.so'
+            file = os.path.join(dir_setup, file)
+            if os.path.isfile(file):
+                os.remove(file)
+
+        os.chdir(curr_dir)
+
 
 
 class test_abelfunctions(Command):
-    """
-    Runs all tests under every abelfunctions/ directory.
-    """
+    """Runs all tests under every abelfunctions/ directory."""
     description = "run all tests and doctests"
     user_options = []
 
@@ -107,7 +109,6 @@ class test_abelfunctions(Command):
         suite = loader.discover('abelfunctions')
         unittest.TextTestRunner(verbosity=2).run(suite)
 
-
 packages = [
     'abelfunctions.riemanntheta',
     'abelfunctions.utilities',
@@ -115,56 +116,32 @@ packages = [
 
 ext_modules = [
     Extension('abelfunctions.abelmap',
-              sources = [
-                  'abelfunctions/abelmap.pyx'
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
+              sources = ['abelfunctions/abelmap.pyx'],
+              include_dirs = [numpy.get_include()]),
     Extension('abelfunctions.riemann_surface',
-              sources = [
-                  'abelfunctions/riemann_surface.pyx',
-              ],
-          ),
+              sources = ['abelfunctions/riemann_surface.pyx']),
     Extension('abelfunctions.riemann_surface_path',
-              sources = [
-                  'abelfunctions/riemann_surface_path.pyx',
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
+              sources = ['abelfunctions/riemann_surface_path.pyx'],
+              include_dirs = [numpy.get_include()]),
     Extension('abelfunctions.analytic_continuation',
-              sources = [
-                  'abelfunctions/analytic_continuation.pyx',
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
+              sources = ['abelfunctions/analytic_continuation.pyx'],
+              include_dirs = [numpy.get_include()]),
     Extension('abelfunctions.analytic_continuation_smale',
-              sources = [
-                  'abelfunctions/analytic_continuation_smale.pyx',
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
+              sources = ['abelfunctions/analytic_continuation_smale.pyx'],
+              include_dirs = [numpy.get_include()]),
     Extension('abelfunctions.polynomials',
-              sources = [
-                  'abelfunctions/polynomials.pyx',
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
+              sources = ['abelfunctions/polynomials.pyx'],
+              include_dirs = [numpy.get_include()]),
     Extension('abelfunctions.differentials',
-              sources = [
-                  'abelfunctions/differentials.pyx',
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
-    Extension('abelfunctions.riemanntheta'
-              sources = [
-                  'abelfunctions/riemanntheta/riemanntheta_cy.pyx',
-                  'abelfunctions/riemanntheta/integer_points.pyx',
-                  'abelfunctions/riemanntheta/radius.pyx',
-                  'abelfunctions/riemanntheta/finitesum.c',
-                  'abelfunctions/riemanntheta/lll_reduce.c',
-              ],
-              include_dirs = [numpy.get_include()]
-          ),
+              sources = ['abelfunctions/differentials.pyx'],
+              include_dirs = [numpy.get_include()]),
+    Extension('abelfunctions.riemanntheta',
+              sources = ['abelfunctions/riemanntheta/riemanntheta_cy.pyx',
+                         'abelfunctions/riemanntheta/integer_points.pyx',
+                         'abelfunctions/riemanntheta/radius.pyx',
+                         'abelfunctions/riemanntheta/finitesum.c',
+                         'abelfunctions/riemanntheta/lll_reduce.c'],
+              include_dirs = [numpy.get_include()]),
     ]
 
 
@@ -185,18 +162,19 @@ classifiers = [
     ]
 
 long_description = '''
-Abelfunctions is a Python library for computing with Abelian
-functions. The primary goal of the application is to make computing with
-Abelian functions as ubiquitous as computing with trigonometric
-functions.  This framework is applied toward solving integrable systems
-of partial differential equations. It is the research work of Chris
-Swierczewski from the Department of Applied Mathematics at the
-University of Washington.'''
+Abelfunctions is a library for computing with Abelian functions, Riemann
+surfaces, and algebraic curves. The primary goal of the application is to make
+computing with Abelian functions as ubiquitous as computing with trigonometric
+functions.  This framework is applied toward solving integrable systems of
+partial differential equations. It is the research work of Chris Swierczewski
+from the Department of Applied Mathematics at the University of Washington.
+'''
 
 setup(
     name = 'abelfunctions',
     version = __version__,
-    description = 'Python library for computing with Abelian functions',
+    description = 'A library for computing with Abelian functions, Riemann '
+                  'surfaces, and algebraic curves.',
     long_description = long_description,
     author = 'Chris Swierczewski',
     author_email = 'cswiercz@gmail.com',
