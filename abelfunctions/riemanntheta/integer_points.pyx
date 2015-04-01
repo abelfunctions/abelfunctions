@@ -351,3 +351,44 @@ def _find_int_points_1(g, R, T, c=None):
             FINISHED = True
     return points
 
+
+def __find_int_points_2(g, R, T, c, start):
+    a_ = c[g] - R/(numpy.sqrt(numpy.pi)*T[g,g])
+    b_ = c[g] + R/(numpy.sqrt(numpy.pi)*T[g,g])
+    a = numpy.ceil(a_)
+    b = numpy.floor(b_)
+
+    # check if we reached the edge of the ellipsoid
+    if not a <= b:
+        return numpy.array([])
+
+    # last dimension reached: append points
+    if g == 0:
+        points = numpy.array([])
+        for i in range(a, b+1):
+            #Note that this algorithm works backwards on the coordinates,
+            #the last coordinate found is x1 if our coordinates are {x1,x2, ... xn}
+            points = numpy.append(numpy.append([i],start), points)
+        return points
+
+    # compute new shifts, radii, start, and recurse
+    newg = g-1
+    newT = T[:(newg+1),:(newg+1)]
+    newTinv = numpy.linalg.inv(newT)
+    pts = []
+    for n in range(a, b+1):
+        chat = c[:newg+1]
+        that = T[:newg+1,g]
+        newc = (chat.T - numpy.dot(newTinv, that)*(n - c[g])).T
+        newR = R**2 - numpy.pi*T[g,g]**2*(n-c[g])**2
+        newR = numpy.sqrt(newR)
+        newstart = numpy.append([n],start)
+        newpts = __find_int_points_2(newg,newR,newT,newc,newstart)
+        pts = numpy.append(pts,newpts)
+    return pts
+
+
+def _find_int_points_2(g, R, T):
+    c = numpy.zeros((g,1))
+    points = __find_int_points_2(g-1, R, T, c, [])
+    return points
