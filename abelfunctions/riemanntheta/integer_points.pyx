@@ -30,13 +30,15 @@ cimport cython
 import numpy
 cimport numpy
 
-from cpython.array cimport array, clone, extend
+from array import array
+from cpython.array cimport clone, extend
+from cpython.array cimport array as c_array
 from libc.math cimport ceil, floor, sqrt, M_PI, lround
 
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef void _reallocate_radii(array rad, double[:] radii, array unit_double):
+cdef void _reallocate_radii(c_array rad, double[:] radii, c_array unit_double):
     r"""Double the current memory for radii storage.
 
     Helper function for :func:`_find_int_points`. Doubles the current
@@ -58,13 +60,13 @@ cdef void _reallocate_radii(array rad, double[:] radii, array unit_double):
 
     """
     cdef int size = sizeof(rad)/sizeof(double)
-    cdef array temp = clone(unit_double, size, zero=False)
+    cdef c_array temp = clone(unit_double, size, zero=False)
     rad = extend(rad, temp)
     radii = rad
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef void _reallocate_points(array pts, int[:] points, array unit_int):
+cdef void _reallocate_points(c_array pts, int[:] points, c_array unit_int):
     r"""Double the current memory for integer points storage.
 
     Helper function for :func:`_find_int_points`. Doubles the current
@@ -86,13 +88,13 @@ cdef void _reallocate_points(array pts, int[:] points, array unit_int):
 
     """
     cdef int size = sizeof(pts)/sizeof(int)
-    cdef array temp = clone(unit_int, size, zero=False)
+    cdef c_array temp = clone(unit_int, size, zero=False)
     pts = extend(pts,temp)
     points = pts
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef void _reallocate_centers(array cen, double[:] centers, array unit_double):
+cdef void _reallocate_centers(c_array cen, double[:] centers, c_array unit_double):
     r"""Double the current memory for center point storage.
 
     Helper function for :func:`_find_int_points`. Doubles the current
@@ -114,15 +116,15 @@ cdef void _reallocate_centers(array cen, double[:] centers, array unit_double):
 
     """
     cdef int size = sizeof(cen)/sizeof(double)
-    cdef array temp = clone(unit_double, size, zero=False)
+    cdef c_array temp = clone(unit_double, size, zero=False)
     cen = extend(cen,temp)
     centers = cen
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef int _reallocate(int max_count, array rad, double[:] radii, array pts,
-                     int[:] points, array cen, double[:] centers,
-                     array unit_int, array unit_double):
+cdef int _reallocate(int max_count, c_array rad, double[:] radii, c_array pts,
+                     int[:] points, c_array cen, double[:] centers,
+                     c_array unit_int, c_array unit_double):
     r"""Double the current memory for radii, integer point, and center point
     storage.
 
@@ -164,8 +166,8 @@ cdef int _reallocate(int max_count, array rad, double[:] radii, array pts,
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef int[:] _find_int_points(int genus, double radius,
-                      double[:,:] T):
+cpdef int[:] _find_int_points(int genus, double radius,
+                              double[:,:] T):
     r"""Calculates the coordinates of the points with integer-valued
     coordinates contained in the ellipsoid defined by the equation
 
@@ -202,15 +204,15 @@ cdef int[:] _find_int_points(int genus, double radius,
     correction = 0.5  # necessary for uniform approximation
 
     # prototypical int and double array sizes
-    cdef array unit_int = array('i', [])
-    cdef array unit_double = array('d', [])
+    cdef c_array unit_int = array('i', [])
+    cdef c_array unit_double = array('d', [])
 
     # initial allocation of radius, point, and center point memory
-    cdef array rad = clone(unit_double, max_count, zero=False)
+    cdef c_array rad = clone(unit_double, max_count, zero=False)
     radii = rad
-    cdef array pts = clone(unit_int, max_count*genus, zero=False)
+    cdef c_array pts = clone(unit_int, max_count*genus, zero=False)
     points = pts
-    cdef array cen = clone(unit_double, max_count*genus, zero=False)
+    cdef c_array cen = clone(unit_double, max_count*genus, zero=False)
     centers = cen
 
     # absolute_bound is the largest unrounded magnitude of an integer
@@ -244,7 +246,7 @@ cdef int[:] _find_int_points(int genus, double radius,
         # consider a smaller selection of the matrix for the next
         # coordinate.
         Tnew = T[:g,:g]
-        Tinv = scipy.linalg.inv(Tnew)
+        Tinv = numpy.linalg.inv(Tnew)
 
         # the secondary loop performs the actual projection based on
         # each of the previously collected coordinates, reducing the
@@ -308,21 +310,23 @@ cdef int[:] _find_int_points(int genus, double radius,
                     points[genus*point_count + (g-1)] = newpoint
                     point_count += 1
 
-    points = numpy.array(points[0:(point_count*genus)], dtype=numpy.int)
+    points = numpy.array(points[0:(point_count*genus)], dtype=numpy.int32)
     return points
 
 
-def _find_int_points_1(int g, c, R, T):
+def _find_int_points_1(g, R, T, c=None):
     cdef int x
     cdef int a,b
+    if c is None:
+        c = numpy.zeros((1,g), dtype=numpy.double)
     points = []
     stack = []
     stack.append(((), g, c, R))
     FINISHED = False
     while (not FINISHED):
         start, g, c, R = stack.pop()
-        a = <int>np.ceil((c[g] - R/T[g,g]).real)
-        b = <int>np.ceil((c[g] + R/T[g,g]).real)
+        a = <int>numpy.ceil((c[g] - R/T[g,g]).real)
+        b = <int>numpy.ceil((c[g] + R/T[g,g]).real)
         #Check if reached the edge of the ellipsoid
         if not a < b:
             if (len(stack) == 0):
@@ -335,12 +339,12 @@ def _find_int_points_1(int g, c, R, T):
                 points.extend(s)
         else:
             newT = T[:g,:g]
-            newTinv = la.inv(newT)
+            newTinv = numpy.linalg.inv(newT)
             for x in range(a, b+1):
                 chat = c[:g]
                 that = T[:g,g]
                 newc = chat - newTinv * that * (x - c[g])
-                newR = np.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
+                newR = numpy.sqrt(R**2 - (T[g,g] * (x - c[g]))**2)
                 newStart = (x,) + start
                 stack.append((newStart, g - 1, newc, newR[0]))
         if (len(stack) == 0):

@@ -1,1 +1,1 @@
-from .riemanntheta import RiemannTheta
+from .riemann_theta import RiemannTheta
