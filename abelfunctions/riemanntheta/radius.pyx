@@ -1,14 +1,15 @@
 r"""Riemann Theta Precision Radius :mod:`abelfunctions.riemanntheta.radius`
 =======================================================================
 
-Functions for computing the primary radius of the bounding ellipsoid of
-the oscillatory part of the Riemann theta function.
+Functions for computing the primary radius of the bounding ellipsoid of the
+oscillatory part of the Riemann theta function.
 
-Each subrouting solves for the radius using:
+Each subroutine solves for the radius using:
+
 * Theorem 3 of [CRTF] (no derivatives)
 * Theorem 5 of [CRTF] (first order derivative)
 * Theorem 7 of [CRTF] (second order derivative)
-* extrapolation of theorems (higher order derivatives)
+* extrapolation of theorems (higher order derivatives, not implemented)
 
 Functions
 ---------
@@ -23,12 +24,12 @@ Functions
 References
 ----------
 
-.. [CRTF] B. Deconinck, M.  Heil, A. Bobenko, M. van Hoeij and
-   M. Schmies, Computing Riemann Theta Functions, Mathematics of
-   Computation, 73, (2004), 1417-1442.
+.. [CRTF] B. Deconinck, M.  Heil, A. Bobenko, M. van Hoeij and M. Schmies,
+   Computing Riemann Theta Functions, Mathematics of Computation, 73, (2004),
+   1417-1442.
 
-.. [DLMF] B. Deconinck, Digital Library of Mathematics Functions -
-   Riemann Theta Functions, http://dlmf.nist.gov/21
+.. [DLMF] B. Deconinck, Digital Library of Mathematical Functions - Riemann
+   Theta Functions, http://dlmf.nist.gov/21
 
 Contents
 --------
@@ -44,16 +45,15 @@ from scipy.optimize import fsolve
 
 cdef extern from 'lll_reduce.h':
     void lll_reduce(double*, int, double, double);
-    void gram_schmidt(double*, double*, double*, int);
 
 def radius(self, epsilon, double[:,:] T, derivs=[], accuracy_radius=5):
-    r"""Returns the primary radius of the bounding ellipsoid for computing
-    the Riemann theta function up to accuracy `epsilon`.
+    r"""Returns the primary radius of the bounding ellipsoid for computing the
+    Riemann theta function up to accuracy `epsilon`.
 
-    The derivative oscillatory part of the Riemann theta function has
-    linear growth in :math:`z` along the directions of the columns of
-    the Riemann matrix. `accuracy_radius` is used to determine a radius
-    resulting in an accurate Riemann theta for all
+    The derivative oscillatory part of the Riemann theta function has linear
+    growth in :math:`z` along the directions of the columns of the Riemann
+    matrix. `accuracy_radius` is used to determine a radius resulting in an
+    accurate Riemann theta for all
 
     .. math ::
 
@@ -71,17 +71,19 @@ def radius(self, epsilon, double[:,:] T, derivs=[], accuracy_radius=5):
     accuracy_radius : double
         Radius for guaranteed region of accuracy. See above.
     """
-    g = numpy.double(T.shape[0])
-    A = lattice_reduce(&T[0,0], g, .50, .75)
+    # compute the LLL-reduction of T
+    cdef double[:,:] A = numpy.array(T, dtype=numpy.double)
+    g = numpy.double(A.shape[0])
+    lll_reduce(&A[0,0], g, .50, .75)
     A = numpy.array(A, dtype=numpy.double)
     r = min(norm(A[:,i]) for i in range(int(g)))
 
-    if len(deriv) == 0:
-        raidus = radius0(epsilon, r, g)
-    elif len(deriv) == 1:
-        radius = raidus1(epsilon, r, g, T, derivs[0], accuracy_radius)
-    elif len(deriv) == 2:
-        radius = raidus2(epsilon, r, g, T, derivs, accuracy_radius)
+    if len(derivs) == 0:
+        radius = radius0(epsilon, r, g)
+    elif len(derivs) == 1:
+        radius = radius1(epsilon, r, g, T, derivs[0], accuracy_radius)
+    elif len(derivs) == 2:
+        radius = radius2(epsilon, r, g, T, derivs, accuracy_radius)
     else:
         raise NotImplementedError('Cannot yet compute higher derivatives of '
                                   'the Riemann theta function.')
@@ -106,7 +108,7 @@ def radius1(eps, r, g, T, deriv, accuracy_radius=5):
     normTinv = norm(inv(T))
     lhs = (eps*(r/2.)**g) / (sqrt(pi)*g*normderiv*normTinv)
 
-    #define lower bound (guess) and attempt to solve for the radius
+    # define lower bound (guess) and attempt to solve for the radius
     lbnd = sqrt(g+2+sqrt(g**2+8)) + r
     def rhs(ins):
         A = gamma((g+1)/2.) * gammaincc((g+1)/2., ins)
@@ -117,8 +119,8 @@ def radius1(eps, r, g, T, deriv, accuracy_radius=5):
     try:
         ins = fsolve(rhs, lbnd)[0]
     except RuntimeWarning:
-        # try a larger initial guess. worse case scenario we have better
-        # Riemann theta precision
+        # try a larger initial guess. worse case scenario we have better Riemann
+        # theta precision
         try:
             ins = fsolve(rhs, 2*lbnd)[0]
         except RuntimeWarning:
@@ -138,7 +140,7 @@ def radius2(eps, r, g, T, derivs, accuracy_radius):
     normTinv = norm(inv(T))
     lhs = (eps*(r/2.0)**g) / (2*pi*g*prodnormderiv*normTinv**2)
 
-    #define lower bound (guess) and attempt to solve for the radius
+    # define lower bound (guess) and attempt to solve for the radius
     lbnd = sqrt(g+4+sqrt(g**2+16)) + r
     def rhs(ins):
         A = gamma((g+2)/2.) * gammaincc((g+2)/2.,ins)
@@ -150,8 +152,8 @@ def radius2(eps, r, g, T, derivs, accuracy_radius):
     try:
         ins = fsolve(rhs, lbnd)[0]
     except RuntimeWarning:
-        # try a larger initial guess. worse case scenario we have better
-        # Riemann theta precision
+        # try a larger initial guess. worse case scenario we have better Riemann
+        # theta precision
         try:
             ins = fsolve(rhs, 2*lbnd)[0]
         except RuntimeWarning:
