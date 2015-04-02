@@ -2,35 +2,16 @@ Abelfunctions
 =============
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/cswiercz/abelfunctions?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A library for computing with Abelian functions, Riemann surface, and
-algebraic curves.  See the
-[Documentation](http://abelfunctions.cswiercz.info) for more
-information.
+A library for computing with Abelian functions, Riemann surfaces, and algebraic curves. Please see the [Documentation](http://abelfunctions.cswiercz.info) for more information.
 
-*Note: abelfunctions is still in early stages of development. Any issues
-should be reported to the
-[Issues Page](https://github.com/cswiercz/abelfunctions/issues) of the
-project.*
+> **Warning:** abelfunctions is still in active development. Any issues should be reported to the [Issues Page](https://github.com/cswiercz/abelfunctions/issues) of the project or you can contact Chris Swierczewski directly at <cswiercz@gmail.com>.
 
 Prerequisites
 -------------
 
-abelfunctions runs well with either
-[Anaconda](https://store.continuum.io/cshop/anaconda/), the [Enthought
-Python Distribution](http://enthought.com/products/epd.php) or
-[Sage](http://www.sagemath.org).  Specifically, abelfunctions requires
-the following Python packages
+abelfunctions runs well with either [Anaconda](https://store.continuum.io/cshop/anaconda/), the [Enthought Python Distribution](http://enthought.com/products/epd.php) or with [Sage](http://www.sagemath.org). See the [documentation](http://abelfunctions.cswiercz.info) for an explicit list of prerequisites.
 
-* gcc (or equivalent)
-* numpy
-* scipy
-* sympy
-* networkx
-* matplotlib
-* Cython
-
-Optionally, the NVIDIA CUDA compiler is needed to compile the
-high-performance CUDA code used in RiemannTheta.
+Optionally, the NVIDIA CUDA compiler is needed to compile the high-performance CUDA code used in computing the Riemann theta function.
 
 
 Installation
@@ -50,18 +31,31 @@ Installation
 
 **Installation**. Enter the main directory, abelfunctions, and run:
 
-    $ python setup.py build_ext --inplace
+    $ python setup.py install --user
 
-for a local (in-place) installation. For a system-wide install, run:
+for a local installation. For a system-wide install, (or if you're installing the package into Sage) run:
 
-    $ python setup.py build_ext
     $ python setup.py install
-
-See the documentation for more information.
 
 Authors
 -------
 
-* Chris Swierczewski <cswiercz@gmail.com>
-* Grady Williams
+* (Primary) Chris Swierczewski (<cswiercz@gmail.com>)
+* Grady Williams - CUDA / GPU Riemann theta
 * James Collins
+
+Citing this Software
+--------------------
+
+How to cite:
+
+> C. Swierczewski et. al., *abelfunctions: A library for computing with Abelian functions, Riemann surfaces, and algebraic curves*, `http://abelfunctions.cswiercz.info`, 2015.
+
+BibTeX:
+
+    @misc{abelfunctions,
+      author = {C. Swierczewski and others},
+      title = {abelfunctions: A library for computing with Abelian functions, Riemann surfaces, and algebraic curves}
+      note= {\tt http://abelfunctions.cswiercz.info},
+      year = 2015
+    }
