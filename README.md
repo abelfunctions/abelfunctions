@@ -55,7 +55,7 @@ BibTeX:
 
     @misc{abelfunctions,
       author = {C. Swierczewski and others},
-      title = {abelfunctions: A library for computing with Abelian functions, Riemann surfaces, and algebraic curves}
+      title = {abelfunctions: A library for computing with Abelian functions, Riemann surfaces, and algebraic curves},
       note= {\tt http://abelfunctions.cswiercz.info},
-      year = 2015
+      year = 2015,
     }
