@@ -11,4 +11,4 @@ from .abelmap import AbelMap, Jacobian
 from .puiseux import puiseux
 from .riemann_constant_vector import RiemannConstantVector
 from .riemann_surface import RiemannSurface
-from .riemanntheta import RiemannTheta
+from .riemann_theta import RiemannTheta

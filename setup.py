@@ -94,7 +94,10 @@ class clean(Command):
 
 
 class test_abelfunctions(Command):
-    """Runs all tests under every abelfunctions/ directory."""
+    """Runs all tests under every abelfunctions/ directory.
+
+    All Cython modules must be built in-place for testing to work.
+    """
     description = "run all tests and doctests"
     user_options = []
 
@@ -110,53 +113,55 @@ class test_abelfunctions(Command):
         unittest.TextTestRunner(verbosity=2).run(suite)
 
 packages = [
-    'abelfunctions.riemanntheta',
+    'abelfunctions.riemann_theta',
     'abelfunctions.utilities',
     ]
 
 ext_modules = [
     Extension('abelfunctions.abelmap',
-              sources = ['abelfunctions/abelmap.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
+              sources=[os.path.join('abelfunctions','abelmap.pyx')]
+          ),
     Extension('abelfunctions.riemann_surface',
-              sources = ['abelfunctions/riemann_surface.pyx'],
-              extra_compile_args = ['-Wno-unused-function']),
+              sources=[os.path.join('abelfunctions','riemann_surface.pyx')]
+          ),
     Extension('abelfunctions.riemann_surface_path',
-              sources = ['abelfunctions/riemann_surface_path.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
+              sources=[os.path.join('abelfunctions','riemann_surface_path.pyx')]
+          ),
     Extension('abelfunctions.analytic_continuation',
-              sources = ['abelfunctions/analytic_continuation.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
+              sources=[os.path.join('abelfunctions',
+                                    'analytic_continuation.pyx')]
+          ),
     Extension('abelfunctions.analytic_continuation_smale',
-              sources = ['abelfunctions/analytic_continuation_smale.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
+              sources=[os.path.join('abelfunctions',
+                                    'analytic_continuation_smale.pyx')]
+          ),
     Extension('abelfunctions.polynomials',
-              sources = ['abelfunctions/polynomials.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
+              sources=[os.path.join('abelfunctions','polynomials.pyx')]
+          ),
     Extension('abelfunctions.differentials',
-              sources = ['abelfunctions/differentials.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
-    Extension('abelfunctions.riemanntheta.radius',
-              sources = ['abelfunctions/riemanntheta/lll_reduce.c',
-                         'abelfunctions/riemanntheta/radius.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
-    Extension('abelfunctions.riemanntheta.integer_points',
-              sources = ['abelfunctions/riemanntheta/integer_points.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
-    Extension('abelfunctions.riemanntheta.riemann_theta',
-               sources = ['abelfunctions/riemanntheta/finite_sum.c',
-                          'abelfunctions/riemanntheta/riemann_theta.pyx'],
-               include_dirs = [numpy.get_include()],
-               extra_compile_args = ['-Wno-unused-function']),
+              sources=[os.path.join('abelfunctions','differentials.pyx')]
+          ),
+    Extension('abelfunctions.riemann_theta.radius',
+              sources=[os.path.join('abelfunctions','riemann_theta',
+                                    'lll_reduce.c'),
+                       os.path.join('abelfunctions','riemann_theta',
+                                    'radius.pyx')]
+          ),
+    Extension('abelfunctions.riemann_theta.integer_points',
+              sources=[os.path.join('abelfunctions','riemann_theta',
+                                    'integer_points.pyx')]
+          ),
+    Extension('abelfunctions.riemann_theta.riemann_theta',
+              sources=[os.path.join('abelfunctions','riemann_theta',
+                                    'finite_sum.c'),
+                       os.path.join('abelfunctions','riemann_theta',
+                                    'riemann_theta.pyx')]
+          ),
     ]
+
+for mod in ext_modules:
+    mod.include_dirs.append(numpy.get_include());
+    mod.extra_compile_args.append('-Wno-unused-function'),
 
 tests = [
     'abelfunctions.tests',
