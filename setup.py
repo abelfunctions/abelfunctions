@@ -152,12 +152,11 @@ ext_modules = [
               include_dirs = [numpy.get_include()],
               extra_compile_args = ['-Wno-unused-function']),
     Extension('abelfunctions.riemanntheta.riemann_theta',
-              sources = ['abelfunctions/riemanntheta/finite_sum.c',
-                         'abelfunctions/riemanntheta/riemann_theta.pyx'],
-              include_dirs = [numpy.get_include()],
-              extra_compile_args = ['-Wno-unused-function']),
+               sources = ['abelfunctions/riemanntheta/finite_sum.c',
+                          'abelfunctions/riemanntheta/riemann_theta.pyx'],
+               include_dirs = [numpy.get_include()],
+               extra_compile_args = ['-Wno-unused-function']),
     ]
-
 
 tests = [
     'abelfunctions.tests',
