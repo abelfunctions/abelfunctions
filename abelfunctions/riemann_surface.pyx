@@ -267,6 +267,18 @@ cdef class RiemannSurface:
     # without subclassing (since it doesn't make sense that a Riemann
     # surface is a type of Monodromy group.)
     def monodromy_group(self):
+        r"""Returns the monodromy group of the underlying curve.
+
+	The monodromy group is represented by a list of four items:
+
+        * `base_point` - a point in the complex x-plane where every monodromy
+          path begins and ends,
+        * `base_sheets` - the y-roots of the curve lying above `base_point`,
+        * `branch_points` - the branch points of the curve,
+        * `permutations` - the permutations of he base sheets corresponding
+          to each branch point.
+
+        """
         return self.PathFactory.monodromy_group()
 
     def base_point(self):

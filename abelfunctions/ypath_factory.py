@@ -171,7 +171,7 @@ def frobenius_transform(A,g):
 
 
 
-def tretkoff_graph(base_sheets, monodromy_group):
+def tretkoff_graph(monodromy_group):
     """
     There are two types of nodes:
 
@@ -183,7 +183,7 @@ def tretkoff_graph(base_sheets, monodromy_group):
     point are in 1-1 correspondence with the cycles of the permuation) these
     occur on the odd levels
     """
-    branch_points, monodromy = monodromy_group
+    base_point, base_sheets, branch_points, monodromy = monodromy_group
 
     # initialize graph with base point: the zero sheet
     C = nx.Graph()
@@ -630,7 +630,7 @@ class YPathFactory(object):
 
     """
 
-    def __init__(self, RS, base_sheets, monodromy_group):
+    def __init__(self, RS, monodromy_group):
         """Initializes the Y-Skeleton by computing the monodromy graph and
         homology cycles of the Riemann surface.
 
@@ -645,7 +645,7 @@ class YPathFactory(object):
 
         """
         self.RS = RS
-        self.C = tretkoff_graph(base_sheets, monodromy_group)
+        self.C = tretkoff_graph(monodromy_group)
 
         # compute the a-, b-, and c-cycles by calling self.homology()
         self._a_cycles, self._b_cycles, self._c_cycles, \
