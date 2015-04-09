@@ -12,6 +12,6 @@ cdef class AnalyticContinuator:
 cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
     cdef object center
     cdef object puiseux_series
-    cdef object target_place
+    cdef object _target_place
 
 

@@ -97,7 +97,8 @@ cdef class RiemannSurface:
         self.PathFactory = RiemannSurfacePathFactory(self)
 
     def __repr__(self):
-        s = 'Riemann surface defined by the algebraic curve %s'%(self.f)
+        s = 'Riemann surface defined by f(%s,%s) = %s'%(
+            self._x, self._y, self._f)
         return s
 
     def __call__(self, alpha, beta=None):

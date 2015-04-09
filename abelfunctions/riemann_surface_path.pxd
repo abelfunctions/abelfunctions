@@ -7,6 +7,7 @@ cdef class RiemannSurfacePathPrimitive:
     cdef AnalyticContinuator _AC
     cdef complex _x0
     cdef complex[:] _y0
+    cdef object _str
     cdef RiemannSurfacePathPrimitive[:] _segments
     cdef int _nsegments
     cdef int _ncheckpoints

@@ -165,13 +165,16 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
     _compute_puisuex_series
 
     """
+    property target_place:
+        def __get__(self):
+            return self._target_place
+
     def __init__(self, RiemannSurface RS, RiemannSurfacePathPrimitive gamma,
                  discriminant_point):
         AnalyticContinuator.__init__(self, RS, gamma)
-        self.target_place = None
+        self._target_place = None
         self.center = discriminant_point
         self.puiseux_series = self._compute_puiseux_series(gamma)
-
 
     def _compute_puiseux_series(self, gamma, epsilon=1e-8):
         r"""Return the Puiseux series at the center in the correct order.
@@ -237,7 +240,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         while px_idx >= 0:
             place_idx += 1
             px_idx -= ramification_indices[place_idx]
-        self.target_place = DiscriminantPlace(self.RS,P[place_idx])
+        self._target_place = DiscriminantPlace(self.RS,P[place_idx])
         return p
 
     @cython.boundscheck(False)
@@ -278,7 +281,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         function
         """
         # localize the differential at the discriminant place
-        P = self.target_place
+        P = self._target_place
         t = P.t
         omega_local = omega.localize(P).n()
         omega_local = sympy.lambdify(t,omega_local,'numpy')
