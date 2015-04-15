@@ -34,6 +34,7 @@ from .riemann_surface_path import (
     RiemannSurfacePath,
     RiemannSurfacePathArc,
     RiemannSurfacePathLine,
+    RiemannSurfacePathRay,
     )
 from .utilities import (
     Permutation,
@@ -173,10 +174,56 @@ class RiemannSurfacePathFactory(object):
         P : complex tuple
             A place on the Riemann surface.
         """
-        if P.is_discriminant():
+        if P.is_infinite():
+            return self._path_to_infinite_place(P)
+        elif P.is_discriminant():
             return self._path_to_discriminant_place(P)
         else:
             return self._path_to_regular_place(P)
+
+    def _path_to_infinite_place(self, P):
+        r"""Returns a path to a place at an infintiy of the surface.
+
+        A place at infinity is one where the `x`-projection of the place is the
+        point `x = \infty` of the complex Riemann sphere. An infinite place is a
+        type of discirminant place.
+
+        Parameters
+        ----------
+        P : Place
+
+        Returns
+        -------
+        RiemannSurfacePath
+
+        """
+        # determine a place Q from where we can reach the target place P. first,
+        # pick an appropriate x-point over which a Q is chosen
+        x0 = self.base_point()
+        if numpy.real(x0) < 0:
+            xa = 5*x0  # move away from the origin
+        else:
+            xa = -5   # arbitrary choice away from the origin
+
+        # next, determine an appropriate y-part from where we can reach the
+        # place at infinity
+        p = P.puiseux_series
+        center, coefficient, ramification_index = p.xdata
+        ta = (xa/coefficient)**(1.0/ramification_index)
+        p.extend_to_t(ta)
+        ya = p.eval_y(ta)
+
+        # construct the place Q and compute the path going from P0 to Q
+        Q = self.RS(xa,ya)
+        gamma_P0_to_Q = self.path_to_place(Q)
+
+        # construct the path going from Q to P
+        xend = gamma_P0_to_Q.get_x(1.0)
+        yend = gamma_P0_to_Q.get_y(1.0)
+        gamma_Q_to_P = RiemannSurfacePathRay(self.RS, xend, yend)
+        gamma = gamma_P0_to_Q + gamma_Q_to_P
+        return gamma
+
 
     def _path_to_discriminant_place(self, P):
         r"""Returns a path to a discriminant place on the surface.

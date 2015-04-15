@@ -177,14 +177,12 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         r"""Return the Puiseux series at the center in the correct order.
 
         In order to analytically continue from the regular places at the
-        beginning of the path :math:`x=a` to the discriminant places at
-        the end of the path :math:`x=b`we need to compute all of the
-        `PuiseuxXSeries` at :math:`x=b`. There are two steps to this
-        calculation:
+        beginning of the path :math:`x=a` to the discriminant places at the end
+        of the path :math:`x=b`we need to compute all of the `PuiseuxXSeries` at
+        :math:`x=b`. There are two steps to this calculation:
 
-        * compute enough terms of the Puiseux series centered at
-          :math:`x=b` in order to accurately capture the y-roots at
-          :math:`x=a`.
+        * compute enough terms of the Puiseux series centered at :math:`x=b` in
+          order to accurately capture the y-roots at :math:`x=a`.
 
         * permute the series accordingly to match up with the y-roots at
           :math:`x=a`.
@@ -192,23 +190,23 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         Parameters
         ----------
         gamma : RiemannSurfacePathPrimitive
-            The path or path segment starting at a regular point and
-            ending at a discriminant point.
+            The path or path segment starting at a regular point and ending at a
+            discriminant point.
 
         Returns
         -------
         list
-            A list of ordered Puiseux series corresponding to each
-            branch at :math:`x=a`.
+            A list of ordered Puiseux series corresponding to each branch at
+            :math:`x=a`.
 
         Notes
         -----
-        A more efficient method of extending the :class:`PuiseuxTSeries`
-        could probably by designed. In particular, some series may
-        "converge" faster than others or may have much higher order terms
-        than the others.
+        A more efficient method of extending the :class:`PuiseuxTSeries` could
+        probably by designed. In particular, some series may "converge" faster
+        than others or may have much higher order terms than the others.
 
         """
+
         # obtian the PuiseuxTSeries at x=b (the center)
         f = self.RS.f
         x = self.RS.x
@@ -216,14 +214,14 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         a = gamma.x0
         P = puiseux(f,x,y,self.center,parametric=True,exact=True)
 
-        # compute enouge terms of each Puiseux series to accurately
-        # capture the y-roots at x=a
+        # compute enouge terms of each Puiseux series to accurately capture the
+        # y-roots at x=a
         for Pi in P:
             Pi.extend_to_x(a,curve_tol=epsilon)
 
-        # now that we have sufficiently many terms we compute the
-        # corresponding x-series and reorder them according to the
-        # ordering of the incoming regular places roots
+        # now that we have sufficiently many terms we compute the corresponding
+        # x-series and reorder them according to the ordering of the incoming
+        # regular places roots
         px = [[pxi for pxi in Pi.xseries(all_conjugates=True)] for Pi in P]
         ramification_indices = [Pi.ramification_index for Pi in P]
         p = [pxi for sublist in px for pxi in sublist]
@@ -236,7 +234,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         place_idx = -1    # index of place corresponding to this x-series
         while px_idx >= 0:
             place_idx += 1
-            px_idx -= ramification_indices[place_idx]
+            px_idx -= abs(ramification_indices[place_idx])
         self.target_place = DiscriminantPlace(self.RS,P[place_idx])
         return p
 
@@ -258,16 +256,15 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
     def parameterize(self, Differential omega):
         r"""Returns the differential omega parameterized on the path.
 
-        Given a differential math:`\omega = \omega(x,y)dx`,
-        `parameterize` returns the differential
+        Given a differential math:`\omega = \omega(x,y)dx`, `parameterize`
+        returns the differential
 
         .. math::
 
             \omega_\gamma(s) = \omega(\gamma_x(s),\gamma_y(s)) \gamma_x'(s)
 
-        where :math:`s \in [0,1]` and :math:`\gamma_x,\gamma_y` and the
-        x- and y-components of the path `\gamma` using this analytic
-        continuator.
+        where :math:`s \in [0,1]` and :math:`\gamma_x,\gamma_y` and the x- and
+        y-components of the path `\gamma` using this analytic continuator.
 
         Parameters
         ----------
@@ -291,12 +288,12 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         xcoefficient = numpy.complex(p.xcoefficient)
         e = numpy.int(p.ramification_index)
 
-        # the parameter of the path s \in [0,1] does not necessarily
-        # match with the local coordinate t of the place. perform the
-        # appropriate scaling on the integral.
+        # the parameter of the path s \in [0,1] does not necessarily match with
+        # the local coordinate t of the place. perform the appropriate scaling
+        # on the integral.
         tprim = ((x0-center)/xcoefficient)**(1./e)
-        unity = [numpy.exp(2.j*numpy.pi*k/e) for k in range(e)]
-        tall = [unity[k]*tprim for k in range(e)]
+        unity = [numpy.exp(2.j*numpy.pi*k/e) for k in range(abs(e))]
+        tall = [unity[k]*tprim for k in range(abs(e))]
         ytprim = numpy.array([p.eval_y(tk) for tk in tall],dtype=numpy.complex)
         k = numpy.argmin(numpy.abs(ytprim - y0))
         tcoefficient = tall[k]
