@@ -125,8 +125,7 @@ class RiemannSurfacePathFactory(object):
         # compute the y-skeleton
         self._monodromy_group = None
         self._monodromy_group = self.monodromy_group()
-        self.YPF = YPathFactory(self.RS, base_sheets=self._base_sheets,
-                                monodromy_group=self._monodromy_group)
+        self.YPF = YPathFactory(self.RS,self._monodromy_group)
 
     def __str__(self):
         return 'Riemann Surface Path Factory for %s'%(self.RS)
@@ -287,11 +286,8 @@ class RiemannSurfacePathFactory(object):
 
         Returns
         -------
-        list of lists
-
-            A list of two lists. The first is the list of branch points.
-            The second is a list of corresponding permutation elements
-            on the y-sheets of the curve.
+        list
+            A list containing the base point, base sheets, 
         """
         if self._monodromy_group:
             return self._monodromy_group
@@ -335,7 +331,7 @@ class RiemannSurfacePathFactory(object):
             else:
                 raise ValueError('Contradictory permutation at infinity.')
 
-        return branch_points, permutations
+        return x0, y0, branch_points, permutations
 
     def monodromy_path(self, bi):
         """Returns the monodromy path around the discriminant point `bi`.

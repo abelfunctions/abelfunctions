@@ -132,6 +132,47 @@ cdef class RiemannSurfacePathPrimitive:
         if self._ncheckpoints > 0:
             self.set_analytic_continuator()
             self._initialize_checkpoints()
+        self._str = None # cache the __str__ output
+
+    def __str__(self):
+        if self._str is None:
+            self._set_str()
+        return self._str
+
+    def _set_str(self):
+        is_cycle = False
+        startx = numpy.complex(self._x0)
+        endx = numpy.complex(self.get_x(1.0))
+
+        # cheap check: if the x-endpoints match
+        if numpy.abs(startx - endx) < 1e-12:
+            starty = numpy.array(self._y0, dtype=complex)
+            endy = numpy.array(self.get_y(1.0), dtype=complex)
+
+            # expensive check: if the y-endpoints match
+            if numpy.linalg.norm(starty - endy) < 1e-12:
+                is_cycle = True
+
+        if is_cycle:
+            self._str = 'Cycle on the %s'%(self._RS.__repr__())
+        else:
+            self._str = self._set_str_noncycle()
+
+    def _set_str_noncycle(self):
+        r"""Generates the string representation of self in the case when self is
+        not a cycle."""
+        xstart = numpy.complex(self._x0)
+        ystart = numpy.complex(self._y0[0])
+        P = str((xstart, ystart))
+
+        last_segment_AC = self.segments[-1].AC
+        if isinstance(last_segment_AC, AnalyticContinuatorSmale):
+            xend = numpy.complex(self.get_x(1.0))
+            yend = numpy.complex(self.get_y(1.0)[0])
+            Q = str((xend,yend))
+        else:
+            Q = str(last_segment_AC.target_place)
+        return 'Path from %s to %s on the %s'%(P,Q,self._RS.__repr__())
 
     def set_analytic_continuator(self):
         r"""Select and appropriate analytic continuator for this path.
@@ -566,8 +607,8 @@ cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
         RiemannSurfacePathPrimitive.__init__(
             self, RS, x0, y0, ncheckpoints=ncheckpoints)
 
-    def __str__(self):
-        return 'RiemannSurfacePathLine:\nstart: %s\nend:  %s'%(self.z0,self.z1)
+    def __repr__(self):
+        return 'Line(%s,%s)'%(self.z0,self.z1)
 
     cpdef complex get_x(self, double t):
         return self.z0*(1 - t) + self.z1*t
@@ -605,9 +646,8 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
         RiemannSurfacePathPrimitive.__init__(
             self, RS, x0, y0, ncheckpoints=ncheckpoints)
 
-    def __str__(self):
-        return 'RiemannSurfacePathArc:\n' + \
-            'radius:  %d\ncenter: %s\ntheta:  %d\ndtheta: %d'
+    def __repr__(self):
+        return 'Arc(%s,%s,%s,%s)'%(self.R,self.w,self.theta,self.dtheta)
 
     cpdef complex get_x(self, double t):
         return self.R*cexp(1.0j*(self.theta + t*self.dtheta)) + \
@@ -635,18 +675,18 @@ cdef class RiemannSurfacePathRay(RiemannSurfacePathPrimitive):
         RiemannSurfacePathPrimitive.__init__(
             self, RS, x0, y0, ncheckpoints=ncheckpoints)
 
-    def __str__(self):
-        return 'RiemannSurfacePathInfinity:\nstart: %s'%(self.x0)
+    def __repr__(self):
+        return 'Ray(%s)'%(self.x0)
 
     def set_analytic_continuator(self):
         self._AC = AnalyticContinuatorPuiseux(self._RS, self, sympy.oo)
 
     cpdef complex get_x(self, double t):
-        if t == 1.0: t -= 1e-8
+        if t == 1.0: t -= 1e-12
         return self.x0 / (1 - t)
 
     cpdef complex get_dxdt(self, double t):
-        if t == 1.0: t -= 1e-8
+        if t == 1.0: t -= 1e-12
         return -self.x0 / (1 - t)**2
 
 
@@ -681,6 +721,10 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         # to "self"
         self._segments = segments
         self._nsegments = len(segments)
+
+    def __repr__(self):
+        s = ','.join(segment.__repr__() for segment in self._segments)
+        return 'RiemannSurfacePath(' + s + ') on the ' + self.RS.__repr__()
 
     cdef int _get_segment_index(self, double t):
         r"""Returns the index of the path segment located at the given :math:`t
