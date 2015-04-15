@@ -812,20 +812,24 @@ class PuiseuxTSeries(object):
             List of PuiseuxXSeries representations of this PuiseuxTSeries.
 
         """
+        exp = sympy.exp
+        pi = sympy.pi
+        I = sympy.I
         e = self.ramification_index
         lamb = self.xcoefficient
         order = self.order
 
-        # compute the e-th roots of lambda
-        if self.is_symbolic:
+        # try to symbollically compute the e-th roots of 1/lambda. if we can't,
+        # resort to numerical approximation
+        try:
             mu = sympy.root(rootofsimp(1/lamb),e)
-            conjugates = [mu*sympy.exp(2*sympy.pi*sympy.I*sympy.Rational(k,e))
-                          for k in range(e)]
-        else:
+            conjugates = [mu*exp(2*pi*I*sympy.Rational(k,abs(e)))
+                          for k in range(abs(e))]
+        except NotImplementedError:
             e = numpy.double(e)
             mu = (sympy.S(1)/lamb).n()**(1./e)
-            conjugates = [mu*numpy.exp(2.0j*numpy.pi*k/e)
-                          for k in range(int(e))]
+            conjugates = [mu*numpy.exp(2.0j*numpy.pi*k/abs(e))
+                          for k in range(int(abs(e)))]
 
         if not all_conjugates:
             conjugates = conjugates[0:1]
@@ -835,8 +839,8 @@ class PuiseuxTSeries(object):
         for c in conjugates:
             terms = [(nh/e, rootofsimp(alphah*c**nh))
                      for nh,alphah in self.terms]
-            p = PuiseuxXSeries(self.f,self.x,self.y,self.x0,terms,
-                               order=order, ramification_index=int(e))
+            p = PuiseuxXSeries(self.f,self.x,self.y,self.x0,terms,order=order,
+                               ramification_index=int(e))
             xseries.append(p)
         return xseries
 
