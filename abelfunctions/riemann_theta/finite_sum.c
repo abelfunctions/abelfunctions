@@ -241,12 +241,11 @@ deriv_prod(double* dpr, double* dpi,
            double* deriv_real, double* deriv_imag, int nderivs,
            int g)
 {
-  double *nmintshift;
-  nmintshift = (double*)malloc(g*sizeof(double));
+  double* nmintshift = (double*)malloc(g*sizeof(double));
 
   double term_real, term_imag;
-  double total_real = 1;
-  double total_imag = 0;
+  double total_real, total_real_tmp;
+  double total_imag, total_imag_tmp;
   int i,j;
 
   // compute n-intshift
@@ -254,8 +253,12 @@ deriv_prod(double* dpr, double* dpi,
     nmintshift[i] = n[i] - intshift[i];
   }
 
-  /* Computes the dot product of each directional derivative and nmintshift Then
-     it computes the product of the resulting complex scalars */
+  /*
+     Computes the dot product of each directional derivative and nmintshift.
+     Then it computes the product of the resulting complex scalars.
+  */
+  total_real = 1;
+  total_imag = 0;
   for (i = 0; i < nderivs; i++) {
     term_real = 0;
     term_imag = 0;
@@ -263,21 +266,27 @@ deriv_prod(double* dpr, double* dpi,
       term_real += deriv_real[j + g*i] * nmintshift[j];
       term_imag += deriv_imag[j + g*i] * nmintshift[j];
     }
-
-    /* Multiplies the dot product that was just computed with the product of all
-       the previous terms. Total_real is the resulting real part of the sum, and
-       total_imag is the resulting imaginary part. */
-    total_real  = total_real * term_real - total_imag * term_imag;
-    total_imag  = total_real * term_imag + total_imag * term_real;
+    /*
+      Multiplies the dot product that was just computed with the product of all
+      the previous terms. Total_real is the resulting real part of the sum, and
+      total_imag is the resulting imaginary part.
+    */
+    total_real_tmp = total_real * term_real - total_imag * term_imag;
+    total_imag_tmp = total_real * term_imag + total_imag * term_real;
+    total_real = total_real_tmp;
+    total_imag = total_imag_tmp;
   }
 
-  // Computes: (2*pi*i)^(nderivs) * (total_real + total_imag*i)
-  double pi_mult = pow(2*M_PI, nderivs);
-  /* Determines what the result of i^nderivs is, and performs the correct
-     multiplication afterwards. */
+  // Compute (2*pi*i)^(nderivs) * (total_real + total_imag*i)
+  double pi_mult = pow(2*M_PI, (double)nderivs);
+
+  /*
+    Determines what the result of i^nderivs is, and performs the correct
+    multiplication afterwards.
+  */
   if (nderivs % 4 == 0) {
-    dpr[0] = pi_mult*total_real;
-    dpi[0] = pi_mult*total_imag;
+    dpr[0] = pi_mult * total_real;
+    dpi[0] = pi_mult * total_imag;
   }
   else if (nderivs % 4 == 1) {
     dpr[0] = -pi_mult * total_imag;
@@ -291,6 +300,8 @@ deriv_prod(double* dpr, double* dpi,
     dpr[0] = pi_mult * total_imag;
     dpi[0] = -pi_mult * total_real;
   }
+
+  free(nmintshift);
 }
 
 
@@ -336,7 +347,6 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     compute the shifted vectors: shift = Yinv*y as well as its integer and
     fractional parts
   */
-
   int k,j;
   double *shift;
   double *intshift;
@@ -362,12 +372,12 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
   // compute the finite sum
   double real_total = 0, imag_total = 0;
   double ept, npt, cpt, spt;
-  double dpr[0];
-  double dpi[0];
+  double* dpr = (double*)malloc(sizeof(double));
+  double* dpi = (double*)malloc(sizeof(double));
   double* n;
   dpr[0] = 0;
   dpi[0] = 0;
-  for(k=0; k < N; k++) {
+  for(k = 0; k < N; k++) {
     // the current point in S \subset ZZ^g
     n = S + k*g;
 
@@ -376,9 +386,9 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     npt = exp(normpart(n, T, fracshift, g));
     cpt = npt * cos(ept);
     spt = npt * sin(ept);
-    deriv_prod(dpr,dpi, n, intshift, deriv_real, deriv_imag,nderivs, g);
+    deriv_prod(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
     real_total += dpr[0] * cpt - dpi[0] * spt;
-    imag_total += dpi[0] * cpt + dpr[0] * spt;
+    imag_total += dpr[0] * spt + dpi[0] * cpt;
   }
 
   // store values to poiners
@@ -389,6 +399,8 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
   free(shift);
   free(intshift);
   free(fracshift);
+  free(dpr);
+  free(dpi);
 }
 
 #ifdef __cplusplus
