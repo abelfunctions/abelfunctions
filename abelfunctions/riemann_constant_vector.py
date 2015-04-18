@@ -55,7 +55,7 @@ Contents
 
 from .abelmap import AbelMap, Jacobian
 from .divisor import Place
-from .riemanntheta import RiemannTheta
+from .riemann_theta import RiemannTheta
 
 import numpy
 from numpy import dot
