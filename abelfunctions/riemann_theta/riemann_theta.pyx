@@ -211,6 +211,8 @@ cdef class RiemannTheta_Function(object):
         """
         # extract the imaginary parts of z and the inverse of the imaginary part
         # of Omega
+        if len(numpy.shape(z)) == 1:
+            z = [z]
         z = numpy.array(z, dtype=numpy.complex)
         Omega = numpy.array(Omega, dtype=numpy.complex)
         y = z.imag
@@ -218,11 +220,11 @@ cdef class RiemannTheta_Function(object):
 
         # apply the quadratic form to each vector in z
         quad = lambda yi: numpy.pi*numpy.dot(yi,numpy.dot(Yinv,yi))
-        if y.shape[0] == 1:
-            exponents = quad(y)
+        exponents = numpy.apply_along_axis(quad, axis, y)
+        if len(exponents) == 1:
+            return exponents[0]
         else:
-            exponents = numpy.apply_along_axis(quad, axis, y)
-        return exponents
+            return exponents
 
 
     def oscillatory_part(self, z, Omega, epsilon=1e-8, derivs=[],
