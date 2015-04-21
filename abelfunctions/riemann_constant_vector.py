@@ -138,7 +138,7 @@ def half_lattice_filter(half_lattice_vectors, J, C, D, epsilon=1e-8):
     while j < n:
         h = half_lattice_vectors[j]
         kappa = J(h.T + Z)
-        theta = RiemannTheta.oscillatory_part(kappa, J.Omega, prec=epsilon)
+        theta = RiemannTheta.oscillatory_part(kappa, J.Omega, epsilon=epsilon)
         if abs(theta) > epsilon:
             half_lattice_vectors.pop(j)
             n -= 1
