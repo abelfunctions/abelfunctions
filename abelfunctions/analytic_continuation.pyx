@@ -238,7 +238,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         while px_idx >= 0:
             place_idx += 1
             px_idx -= abs(ramification_indices[place_idx])
-        self.target_place = DiscriminantPlace(self.RS,P[place_idx])
+        self._target_place = DiscriminantPlace(self.RS,P[place_idx])
         return p
 
     @cython.boundscheck(False)
