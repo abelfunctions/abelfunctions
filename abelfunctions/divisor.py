@@ -357,7 +357,8 @@ class DiscriminantPlace(Place):
         return True
 
     def is_infinite(self):
-        xval = self.puiseux_series.eval_x(0)
+        zero = sympy.S(0)
+        xval = self.puiseux_series.eval_x(zero)
         if xval.has(sympy.oo) or xval.has(sympy.zoo):
             return True
         return False

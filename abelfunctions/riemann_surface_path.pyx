@@ -683,12 +683,11 @@ cdef class RiemannSurfacePathRay(RiemannSurfacePathPrimitive):
 
     cpdef complex get_x(self, double t):
         if t == 1.0: t -= 1e-12
-        return self.x0 / (1 - t)
+        return self._x0 / (1 - t)
 
     cpdef complex get_dxdt(self, double t):
         if t == 1.0: t -= 1e-12
-        return -self.x0 / (1 - t)**2
-
+        return -self._x0 / (1 - t)**2
 
 
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):

@@ -33,6 +33,9 @@ cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
     cdef complex theta
     cdef complex dtheta
 
+cdef class RiemannSurfacePathRay(RiemannSurfacePathPrimitive):
+    pass
+
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     cdef int _get_segment_index(self, double)
 
