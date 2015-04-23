@@ -67,6 +67,14 @@ class TestSingularPointsFinite(AbelfunctionsTestCase):
         s_actual = []
         self.assertEqual(s,s_actual)
 
+    def test_issue71(self):
+        x = self.x
+        y = self.y
+        f = -x**5 + x + y**3
+        s = singular_points_finite(f,x,y)
+        s_actual = []
+        self.assertEqual(s,s_actual)
+
 
 class TestSingularPointsInfinite(AbelfunctionsTestCase):
     def test_f1(self):
@@ -127,6 +135,14 @@ class TestSingularPointsInfinite(AbelfunctionsTestCase):
         s_actual = sympify([(0,1,0),(1,0,0)])
         self.assertItemsEqual(s,s_actual)
 
+    def test_issue71(self):
+        x = self.x
+        y = self.y
+        z = sympy.Symbol('z')
+        f = -x**5 + x + y**3
+        s = singular_points_infinite(f,x,y,z)
+        s_actual = sympify([(0,1,0)])
+        self.assertEqual(s,s_actual)
 
 
 class TestSingularities(AbelfunctionsTestCase):
@@ -212,3 +228,13 @@ class TestSingularities(AbelfunctionsTestCase):
              ((1,0,0),(4,6,4))]
         )
         self.assertItemsEqual(s,s_actual)
+
+    def test_issue71(self):
+        x = self.x
+        y = self.y
+        f = -x**5 + x + y**3
+        s = singularities(f,x,y)
+        s_actual = sympify(
+            [((0,1,0),(2,2,1))]
+        )
+        self.assertEqual(s,s_actual)

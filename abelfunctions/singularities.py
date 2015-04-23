@@ -199,13 +199,27 @@ def singularities(f,x,y):
 
     info = []
     for singular_pt in S:
-        # Perform a projective transformation of the curve so it's
-        # almost centered at the singular point.
+        # Perform a projective transformation of the curve so it's almost
+        # centered at the singular point.
         g,u,v,u0,v0 = _transform(f,x,y,z,singular_pt)
         P = puiseux(g,u,v,u0,v0)
-        for Pi in P:
-            Pi.add_term()
 
+        # filter out any places with infinite v-part: they are being handled by
+        # other centerings / transformations
+        def has_finite_v(Pi):
+            # make sure the order of the y-part is positive
+            n,alpha = zip(*Pi.terms)
+            while Pi.order <= 0:
+                Pi.add_term()
+
+            # if there are still no terms then they are positive exponent
+            if n == []:
+                return True
+            elif min(n) >= 0:
+                return True
+            return False
+
+        P = filter(has_finite_v,P)
         m = _multiplicity(P)
         delta = _delta_invariant(P)
         r = _branching_number(P)
@@ -301,17 +315,21 @@ def _multiplicity(P):
         n,alpha = zip(*Pi.terms)
         ri = abs(Pi.ramification_index)
 
-        # get the leading order behavior of the y-part. if the initial
-        # Puiseux series expansion only contains constant terms then
-        # extend. we can save compute time if ri == 1.
+        # get the leading order behavior of the y-part. we can save time if the
+        # order of the y-part exceeds the ramification index, ri
         try:
-            si = abs(min([ni for ni in n if ni != 0]))
+            si = min([ni for ni in n if ni != 0])
         except ValueError:
-            if ri == 1:
-                si = 1
+            if Pi.order >= ri:
+                si = ri
             else:
-                Pi.add_term()
-                si = abs(min([ni for ni in n if ni != 0]))
+                # extend to order ri. if there are still no non-zero terms then
+                # used the shortcut above
+                Pi.extend(ri+1)
+                try:
+                    si = min([ni for ni in n if ni != 0])
+                except ValueError:
+                    si = ri
 
         m += min(ri,si)
     return sympy.S(m)
