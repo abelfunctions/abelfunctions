@@ -449,7 +449,7 @@ def almost_monicize(f,x,y):
         A new, almost monic polynomial `g` and a polynomial `transform`
         such that `y -> y/transform`.
     """
-    f = f.expand()
+    f = f.expand().as_expr()
     transform = sympy.S(1)
     monic = False
     while not monic:

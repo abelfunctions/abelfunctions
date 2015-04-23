@@ -280,6 +280,12 @@ class TestAlmostMonicize(AbelfunctionsTestCase):
         self.assertEqual(g,-x**4 + 2*x**2*y**5 + y**6)
         self.assertEqual(transform,x)
 
+    def test_issue70(self):
+        f = Poly(-x**5 + x*_z**4 + _z**2, x, _z, domain='ZZ')
+        g, transform = almost_monicize(f,x,_z)
+        self.assertEqual(g,_z**4 + _z**2*x - x**8)
+        self.assertEqual(transform,x)
+
 
 class TestPuiseux(AbelfunctionsTestCase):
     def setUp(self):
