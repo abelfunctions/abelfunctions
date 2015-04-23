@@ -1,14 +1,13 @@
 r"""Singularities :mod:`abelfunctions.singularities`
 ================================================
 
-A module for computing the singular points of a complex plane algebraic
-curve including their multiplicities, branching numbers, multiplicities,
-and delta invariants.
+A module for computing the singular points of a complex plane algebraic curve
+including their multiplicities, branching numbers, multiplicities, and delta
+invariants.
 
-Each singularity :math:`P = (x,y,z)` on the projectivization of the
-curve has associated with it a three-tuple :math:`(m, \delta, r)`
-representing the multiplicity, delta invariant, and branching number of
-the multiplicity.
+Each singularity :math:`P = (x,y,z)` on the projectivization of the curve has
+associated with it a three-tuple :math:`(m, \delta, r)` representing the
+multiplicity, delta invariant, and branching number of the multiplicity.
 
 Functions
 ---------
@@ -46,39 +45,38 @@ def singular_points_finite(f,x,y):
     """
     S = []
 
-    # the discriminant points (roots of resultant) contain the x-points
-    # where singularities may occur. todo: reuse
-    # RiemannSurface.discriminant_points()
+    # the discriminant points (roots of resultant) contain the x-points where
+    # singularities may occur. todo: reuse RiemannSurface.discriminant_points()
     p = f.as_poly(x,y)
     n  = p.degree(y)
     res = sympy.resultant(p,p.diff(y),y).as_poly(x)
     xroots = res.all_roots(multiple=False, radicals=False)
     for xk,deg in xroots:
         if deg > 1:
-            # evaluate p at xk. we use xreplace in case xk is a
-            # RootOf. (Sympy does not always preserve radical=True)
+            # evaluate p at xk. we use xreplace in case xk is a RootOf. (Sympy
+            # does not always preserve radical=True)
             pxk = p.as_expr().xreplace({x:xk})
             pxk = rootofsimp(pxk).as_poly(y)
 
-            # compute y-roots at x=xk. an error will be thrown if
-            # RootOfs still appear in p(x=xk). in this case, use the
-            # algebraic expressions of the roots
+            # compute y-roots at x=xk. an error will be thrown if RootOfs still
+            # appear in p(x=xk). in this case, use the algebraic expressions of
+            # the roots
             try:
                 yroots = pxk.all_roots(multiple=False,radicals=False)
             except NotImplementedError:
                 yroots = pxk.all_roots(multiple=False,radicals=True)
 
-            # for each y-root ykj above xk, record a singular point if
-            # the gradient vanishes at (xk,ykj)
+            # for each y-root ykj above xk, record a singular point if the
+            # gradient vanishes at (xk,ykj)
             fxk = sympy.Poly(f.subs({x:xk}),y)
             for ykj,_ in sympy.roots(fxk,y).iteritems():
                 subs = {x:xk,y:ykj}
                 dfdx = rootofsimp(f.diff(x).subs(subs))
                 dfdy = rootofsimp(f.diff(y).subs(subs))
 
-                # if there are any leftover RootOfs we should
-                # approximate the vanishing numerically. this is done to
-                # handle situations such as I + (-I) = 0
+                # if there are any leftover RootOfs we should approximate the
+                # vanishing numerically. this is done to handle situations such
+                # as I + (-I) = 0
                 if dfdx.has(RootOf):
                     dfdx_is_zero = abs(dfdx.n(n=18)) < 1e-16
                 else:
@@ -108,16 +106,16 @@ def singular_points_infinite(f,x,y,z):
     Returns
     -------
     list
-        A list of three-tuples :math:`(x_k,y_k,0)` representing the
-        infinite singular points of the curve :math:`f = f(x,y)`
+        A list of three-tuples :math:`(x_k,y_k,0)` representing the infinite
+        singular points of the curve :math:`f = f(x,y)`
 
     """
     # compute the homogenization of degree d
     F = f.as_poly(x,y).homogenize(z)
     d = F.total_degree()
 
-    # find the possible singular points at infinity. these consist of
-    # the roots of F(1,y,0) = 0 and F(x,1,0) = 0
+    # find the possible singular points at infinity. these consist of the roots
+    # of F(1,y,0) = 0 and F(x,1,0) = 0
     F0 = F.subs(z,0)
     F0x1 = F0.subs({x:1,y:z}).as_poly(z)
     F0y1 = F0.subs({x:z,y:1}).as_poly(z)
@@ -126,10 +124,9 @@ def singular_points_infinite(f,x,y,z):
     all_points = [(1,yi,0) for yi,_ in solsx1]
     all_points.extend([(xi,1,0) for xi,_ in solsy1])
 
-    # these possible singularities are in projective space, so filter
-    # out equal points such as (0,1,I) == (0,-I,1). normalize these
-    # projective points such that 1 appears in either the x- or y-
-    # coordinate, where appropriate
+    # these possible singularities are in projective space, so filter out equal
+    # points such as (0,1,I) == (0,-I,1). normalize these projective points
+    # such that 1 appears in either the x- or y- coordinate, where appropriate
     normalized_points = []
     zero = sympy.S(0)
     for xi,yi,zi in all_points:
@@ -144,9 +141,8 @@ def singular_points_infinite(f,x,y,z):
         grad_vals = [dFi.subs({x:xi,y:yi,z:zi}) for dFi in grad]
         grad_vals = map(rootofsimp, grad_vals)
 
-        # if there are any leftover RootOfs we should approximate the
-        # vanishing numerically. this is done to handle situations such
-        # as I + (-I) = 0
+        # if there are any leftover RootOfs we should approximate the vanishing
+        # numerically. this is done to handle situations such as I + (-I) = 0
         #
         # [XXX] the following is messy but works.
         is_zero = True
@@ -168,15 +164,14 @@ def singular_points_infinite(f,x,y,z):
 def singularities(f,x,y):
     r"""Returns the singularities of the curve `f` in projective space.
 
-    Returns all of the projective singular points :math:`(z_k,x_k,y_k)`
-    on the curve :math:`f(x,y) = 0`. For each singular point a
-    three-tuple :math:`(m, \delta, r)` is given representing the
-    multiplicity, delta invariant, and branching number of the
-    singularity.
+    Returns all of the projective singular points :math:`(x_k,y_k,z_k)` on the
+    curve :math:`f(x,y) = 0`. For each singular point a three-tuple :math:`(m,
+    \delta, r)` is given representing the multiplicity, delta invariant, and
+    branching number of the singularity.
 
-    This information is used to resolve singularities for the purposes
-    of computing a Riemann surface. The singularities are resolved using
-    Puiseux series.
+    This information is used to resolve singularities for the purposes of
+    computing a Riemann surface. The singularities are resolved using Puiseux
+    series.
 
     Parameters
     ----------
@@ -187,9 +182,8 @@ def singularities(f,x,y):
     Returns
     -------
     list
-        A list of the singularities, both finite and infinite, along
-        with their multiplicity, delta invariant, and branching number
-        information.
+        A list of the singularities, both finite and infinite, along with their
+        multiplicity, delta invariant, and branching number information.
 
     """
     z = sympy.Dummy('z')
@@ -232,14 +226,14 @@ def singularities(f,x,y):
 def _transform(f,x,y,z,singular_pt):
     r"""Recenters the affine curve `f` at a singular point.
 
-    Returns :math:`(g,u,v,u0,v0)` where :math:`g = g(u,v)` is the
-    transformed polynomial and :math:`u0,v0` is the projection of
-    :math:`[\alpha : \beta : \gamma]` on the appropriate affine plane.
+    Returns :math:`(g,u,v,u0,v0)` where :math:`g = g(u,v)` is the transformed
+    polynomial and :math:`u0,v0` is the projection of :math:`[\alpha : \beta :
+    \gamma]` on the appropriate affine plane.
 
-    If the singular point :math:`[\gamma : \alpha : \beta]` is on the
-    line at infinity (i.e. :math:`\gamma = 0`) then make the appropriate
-    transformation to the curve :math:`f(x,y) = 0` so we can compute
-    Puiseux series at the point.
+    If the singular point :math:`[\gamma : \alpha : \beta]` is on the line at
+    infinity (i.e. :math:`\gamma = 0`) then make the appropriate transformation
+    to the curve :math:`f(x,y) = 0` so we can compute Puiseux series at the
+    point.
 
     Parameters
     ----------
@@ -253,8 +247,8 @@ def _transform(f,x,y,z,singular_pt):
     Returns
     -------
     sympy.Expr, sympy.Symbol, sympy.Symbol, complex, complex
-        Returns the transformed curve, :math:`g(u,v)` along with the
-        variable :math:`u, v` and the centers :math:`u_0, v_0`.
+        Returns the transformed curve, :math:`g(u,v)` along with the variable
+        :math:`u, v` and the centers :math:`u_0, v_0`.
 
     Examples
     --------
@@ -285,8 +279,8 @@ def _transform(f,x,y,z,singular_pt):
 def _multiplicity(P):
     r"""Computes the multiplicity of the singularity at :math:`u_0,v_0`.
 
-    The singularity is given on an affine plane along with the curve
-    recentered at the point.
+    The singularity is given on an affine plane along with the curve recentered
+    at the point.
 
     For each (parametric) Puiseux series
 
@@ -294,15 +288,14 @@ def _multiplicity(P):
 
         P_j = \{ x = x(t),  y = y(t) \}
 
-    at :math:`(1 : \alpha : \beta) the contribution from :math:`P_j` to
-    the multiplicity is the minimum of the degree of x and the degree of
-    y.
+    at :math:`(1 : \alpha : \beta) the contribution from :math:`P_j` to the
+    multiplicity is the minimum of the degree of x and the degree of y.
 
     Parameters
     ----------
     P : list
-        A list of PuiseuxTSeries of `g = g(u,v)` centered at some
-        `(u_0,v_0)` where `g` is a complex affine algebraic curve.
+        A list of PuiseuxTSeries of `g = g(u,v)` centered at some `(u_0,v_0)`
+        where `g` is a complex affine algebraic curve.
 
     Returns
     -------
@@ -339,14 +332,14 @@ def _branching_number(P):
     r"""Computes the branching number of the singularity at :math:`u_0,v_0`.
 
     The braching number is simply the number of distinct branches
-    (i.e. non-interacting branches) at the place. In parametric form,
-    this is simply the number of Puiseux series at the place.
+    (i.e. non-interacting branches) at the place. In parametric form, this is
+    simply the number of Puiseux series at the place.
 
     Parameters
     ----------
     P : list
-        A list of PuiseuxTSeries of `g = g(u,v)` centered at some
-        `(u_0,v_0)` where `g` is a complex affine algebraic curve.
+        A list of PuiseuxTSeries of `g = g(u,v)` centered at some `(u_0,v_0)`
+        where `g` is a complex affine algebraic curve.
 
     Returns
     -------
@@ -363,8 +356,8 @@ def _delta_invariant(P):
     Parameters
     ----------
     P : list
-        A list of PuiseuxTSeries of `g = g(u,v)` centered at some
-        `(u_0,v_0)` where `g` is a complex affine algebraic curve.
+        A list of PuiseuxTSeries of `g = g(u,v)` centered at some `(u_0,v_0)`
+        where `g` is a complex affine algebraic curve.
 
     Returns
     -------
@@ -372,10 +365,8 @@ def _delta_invariant(P):
         The delta invariant of the singularity :math:`(u_0, v_0)`.
 
     """
-    # compute the puiseux series at (u0,v0). get the parametric forms as
-    # well as an x-representative of each parametric form
-    # Px = [p.xseries(all_conjugates=True) for p in P]
-    # Px_all = [item for sublist in Px for item in sublist]
+    # compute the puiseux series at (u0,v0). get the parametric forms as well
+    # as an x-representative of each parametric form
     Px = [p.xseries(all_conjugates=False)[0] for p in P]
     Px_all = [p.xseries(all_conjugates=True) for p in P]
     Px_all = [item for sublist in Px_all for item in sublist]
@@ -383,17 +374,16 @@ def _delta_invariant(P):
     # for each place compute its contribution to the delta invariant
     delta = sympy.Rational(0,1)
     for i in range(len(Px)):
-        # compute Int of each x-representation. note that it's
-        # sufficient to only look at the Puiseux series with the given
-        # v0 since, for all other puiseux series, the contribution to
-        # Int() will be zero.
+        # compute Int of each x-representation. note that it's sufficient to
+        # only look at the Puiseux series with the given v0 since, for all
+        # other puiseux series, the contribution to Int() will be zero.
         Pxi = Px[i]
         j = Px_all.index(Pxi)
         IntPxi = Int(j,Px_all)
 
         # obtain the ramification index by retreiving the corresponding
-        # parametric form. By definition, this parametric series
-        # satisfies Y(t=0) = v0
+        # parametric form. By definition, this parametric series satisfies
+        # Y(t=0) = v0
         ri = Pxi.ramification_index
         delta += sympy.Rational(ri * IntPxi - ri + 1, 2)
     return sympy.numer(delta)
@@ -403,10 +393,9 @@ def _delta_invariant(P):
 def genus(f,x,y):
     """Returns the genus of the Riemann surface given by :math:`f=f(x,y)`.
 
-    Uses the singularity structure of the curve to compute the
-    genus. This algebraic approach is used as confirmation for the
-    geometric approach done in the homology computation in
-    `riemann_surface_path_factory`.
+    Uses the singularity structure of the curve to compute the genus. This
+    algebraic approach is used as confirmation for the geometric approach done
+    in the homology computation in `riemann_surface_path_factory`.
 
     Parameters
     ----------
