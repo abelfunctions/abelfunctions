@@ -48,11 +48,11 @@ cdef extern from 'complex.h':
 cdef class AnalyticContinuator:
     r"""Abstract class for analytically continuing along a curve.
 
-    An analytic continutator object dictates how to continue a y-fibre
-    from one x-point :math:`x_i` to another point :math:`x_{i+1}` along
-    a :class:`RiemannSurfacePath` object. (Technically, a
-    :class:`RiemannSurfacePathPrimitive` object which serves as the base
-    class for all path types.)
+    An analytic continutator object dictates how to continue a y-fibre from one
+    x-point :math:`x_i` to another point :math:`x_{i+1}` along a
+    :class:`RiemannSurfacePath` object. (Technically, a
+    :class:`RiemannSurfacePathPrimitive` object which serves as the base class
+    for all path types.)
 
     Attributes
     ----------
@@ -97,16 +97,15 @@ cdef class AnalyticContinuator:
     def parameterize(self, Differential omega):
         r"""Returns the differential omega parameterized on the path.
 
-        Given a differential math:`\omega = \omega(x,y)dx`,
-        `parameterize` returns the differential
+        Given a differential math:`\omega = \omega(x,y)dx`, `parameterize`
+        returns the differential
 
         .. math::
 
             \omega_\gamma(s) = \omega(\gamma_x(s),\gamma_y(s)) \gamma_x'(s)
 
-        where :math:`s \in [0,1]` and :math:`\gamma_x,\gamma_y` and the
-        x- and y-components of the path `\gamma` using this analytic
-        continuator.
+        where :math:`s \in [0,1]` and :math:`\gamma_x,\gamma_y` and the x- and
+        y-components of the path `\gamma` using this analytic continuator.
 
         Parameters
         ----------
@@ -140,10 +139,9 @@ cdef class AnalyticContinuator:
 cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
     r"""Riemann surface path analytic continuation using Puiseux series.
 
-    We must use Puiseux series in order to analytically continue a
-    y-fibre to a discriminant point :math:`x=b`. The initial y-fibre
-    establishes the ordering of the :class:`PuiseuxXSeries` at
-    :math:`x=b`.
+    We must use Puiseux series in order to analytically continue a y-fibre to a
+    discriminant point :math:`x=b`. The initial y-fibre establishes the
+    ordering of the :class:`PuiseuxXSeries` at :math:`x=b`.
 
     Attributes
     ----------
@@ -152,12 +150,11 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
     gamma : RiemannSurfacePathPrimitive
         The path along which the analytic continuation is performed.
     center : sympy.Expr
-        The center of the Puiseux series expansions. Usually a
-        discriminant point of the underlying curve of the Riemann
-        surface.
+        The center of the Puiseux series expansions. Usually a discriminant
+        point of the underlying curve of the Riemann surface.
     puiseux_series : list, PuiseuxXSeries
-        An ordered list of :class:`PuiseuxXSeries` corresponding to the
-        nearby branches of the curve.
+        An ordered list of :class:`PuiseuxXSeries` corresponding to the nearby
+        branches of the curve.
 
     Methods
     -------
@@ -181,8 +178,8 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
 
         In order to analytically continue from the regular places at the
         beginning of the path :math:`x=a` to the discriminant places at the end
-        of the path :math:`x=b`we need to compute all of the `PuiseuxXSeries` at
-        :math:`x=b`. There are two steps to this calculation:
+        of the path :math:`x=b`we need to compute all of the `PuiseuxXSeries`
+        at :math:`x=b`. There are two steps to this calculation:
 
         * compute enough terms of the Puiseux series centered at :math:`x=b` in
           order to accurately capture the y-roots at :math:`x=a`.
@@ -193,8 +190,8 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         Parameters
         ----------
         gamma : RiemannSurfacePathPrimitive
-            The path or path segment starting at a regular point and ending at a
-            discriminant point.
+            The path or path segment starting at a regular point and ending at
+            a discriminant point.
 
         Returns
         -------
