@@ -3,7 +3,7 @@ import unittest
 from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_surface import RiemannSurface
 from abelfunctions.integralbasis import integral_basis
-from abelfunctions.singularities import singularities
+from abelfunctions.singularities import singularities, genus
 from abelfunctions.differentials import differentials
 from .test_abelfunctions import AbelfunctionsTestCase
 
@@ -105,6 +105,10 @@ class TestRCVPaper(unittest.TestCase):
         actual = [((0, 1, 0), (2, 2, 1))]
         self.assertItemsEqual(singularities(self.f,x,y),
                               actual)
+
+    def test_genus(self):
+        g = genus(self.f,x,y)
+        self.assertEqual(g,4)
 
     def test_differentials(self):
         basis = [1/(3*y**2*x**2), 1/(3*x*y**2), 1/(3*y*x), 1/(3*y**2)]
