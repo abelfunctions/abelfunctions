@@ -278,7 +278,13 @@ cdef class Differential:
             s += '(' + str(self.numer) + ')'
         else:
             s += str(self.numer)
-        s += '/(' + str(self.denom) + ')'
+
+        s += '/'
+
+        if self.denom.is_Add:
+            s += '(' + str(self.denom) + ')'
+        else:
+            s += str(self.denom)
         return s
 
     cpdef complex eval(self, complex x, complex y):
