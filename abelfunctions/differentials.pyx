@@ -186,6 +186,18 @@ def fast_expand(numer,denom,t):
     -------
     sympy.Expr
     """
+    numer = numer.expand()
+    denom = denom.expand()
+
+    # if denom is a single term then simply divide through
+    if denom.is_Mul:
+        return (numer/denom).expand()
+
+    # factor out t. denom should be of the form 't**denom_order(c + O(t))'
+    # where c is nonzero. this is necessary for the fast expansion to work
+    denom_order = denom.leadterm(t)[1]
+    denom = (denom/t**denom_order).expand()
+
     # convert numerator and denominator to lists of coefficients.  it's
     # faster to do it "manually" than to coerce to polynomial
     order = max(sympy.degree(numer,t), sympy.degree(denom,t)) + 1
@@ -200,13 +212,13 @@ def fast_expand(numer,denom,t):
     q = get_terms_list(numer)
     r = get_terms_list(denom)
 
-    # forward solve the coefficient system. note that r[0] (constant
-    # coeff of denom) is nonzero by construction
+    # forward solve the coefficient system. note that r[0] (constant coeff of
+    # denom) is nonzero by construction
     s = [0]*order
     for n in range(order):
         known_terms = sum(r[n-k]*s[k] for k in range(n))
         s[n] = (q[n] - known_terms)/r[0]
-    taylor = sum(s[n]*t**n for n in range(order))
+    taylor = sum(s[n]*t**(n-denom_order) for n in range(order))
     return taylor
 
 
