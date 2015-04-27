@@ -210,7 +210,7 @@ class RiemannSurfacePathFactory(object):
         center, coefficient, ramification_index = p.xdata
         ta = (xa/coefficient)**(1.0/ramification_index)
         p.extend_to_t(ta)
-        ya = p.eval_y(ta)
+        ya = numpy.complex(p.eval_y(ta))
 
         # construct the place Q and compute the path going from P0 to Q
         Q = self.RS(xa,ya)

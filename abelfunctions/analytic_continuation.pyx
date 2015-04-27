@@ -235,7 +235,7 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         while px_idx >= 0:
             place_idx += 1
             px_idx -= abs(ramification_indices[place_idx])
-        self.target_place = DiscriminantPlace(self.RS,P[place_idx])
+        self._target_place = DiscriminantPlace(self.RS,P[place_idx])
         return p
 
     @cython.boundscheck(False)
@@ -291,8 +291,8 @@ cdef class AnalyticContinuatorPuiseux(AnalyticContinuator):
         # the parameter of the path s \in [0,1] does not necessarily match with
         # the local coordinate t of the place. perform the appropriate scaling
         # on the integral.
-        tprim = ((x0-center)/xcoefficient)**(1./e)
-        unity = [numpy.exp(2.j*numpy.pi*k/e) for k in range(abs(e))]
+        tprim = numpy.complex((x0-center)/xcoefficient)**(1./e)
+        unity = [numpy.exp(2.j*numpy.pi*k/abs(e)) for k in range(abs(e))]
         tall = [unity[k]*tprim for k in range(abs(e))]
         ytprim = numpy.array([p.eval_y(tk) for tk in tall],dtype=numpy.complex)
         k = numpy.argmin(numpy.abs(ytprim - y0))
