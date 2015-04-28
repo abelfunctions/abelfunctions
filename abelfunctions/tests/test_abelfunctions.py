@@ -25,6 +25,10 @@ class AbelfunctionsTestCase(unittest.TestCase):
         self.monicf = [self.f2, self.f4, self.f5, self.f6, self.f7, self.f9]
         self.nonmonicf = [self.f1, self.f3, self.f8, self.f10]
 
-class RiemannSurfaceTestCase(AbelfunctionsTestCase):
-    def setUp(self):
-        pass
+    @classmethod
+    def setUpClass(cls):
+        cls.f2 = -x**7 + 2*x**3*y + y**3
+        cls.X2 = abelfunctions.RiemannSurface(cls.f2,x,y)
+        cls.f11 = x**2*y**3 - x**4 + 1
+        cls.X11 = abelfunctions.RiemannSurface(cls.f11,x,y)
+

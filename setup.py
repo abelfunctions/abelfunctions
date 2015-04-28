@@ -161,7 +161,8 @@ ext_modules = [
 
 for mod in ext_modules:
     mod.include_dirs.append(numpy.get_include());
-    mod.extra_compile_args.append('-Wno-unused-function'),
+    mod.extra_compile_args.append('-Wno-unused-function')
+    mod.extra_compile_args.append('-Wno-#warnings')
 
 tests = [
     'abelfunctions.tests',
