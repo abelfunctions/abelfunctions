@@ -15,14 +15,14 @@ where
 
 * :math:`P_0` is a fixed "base place" on the Riemann surface,
 
-* :math:`\omega_1, \ldots, \omega_g` are a basis of g holomorphic
-  one-forms defined on the surface,
+* :math:`\omega_1, \ldots, \omega_g` are a basis of g holomorphic one-forms
+  defined on the surface,
 
 * :math:`P` is a target place
 
-To invoke the Abel map in `abelfunctions` use `AbelMap(P)` where `P` is
-a place on a Riemann surface or `AbelMap(D)` where `D` is a divisor on a
-Riemann surface.
+To invoke the Abel map in `abelfunctions` use `AbelMap(P)` where `P` is a place
+on a Riemann surface or `AbelMap(D)` where `D` is a divisor on a Riemann
+surface.
 
 
 Classes
@@ -50,6 +50,8 @@ import numpy
 
 class Jacobian(object):
     def __init__(self, X):
+        r"""Initialize using a `RiemannSurface`.
+        """
         Omega = X.riemann_matrix()
         g = X.genus()
 
@@ -81,7 +83,7 @@ class Jacobian(object):
 
 
     def components(self, z):
-        """Decomposes `z` into its components :math:`z=z_1+\Omega z_2`.
+        r"""Decomposes `z` into its components :math:`z=z_1+\Omega z_2`.
 
         Parameters
         ----------
@@ -95,16 +97,16 @@ class Jacobian(object):
 
         Notes
         -----
-        This is often used with :meth:`reduce_components`. In some cases
-        when `z` is equal lattice element, floating point error can case
-        :meth:`reduce_components` to incorrectly indicate this. (Two
-        zero vectors should be returned in this case.) At the end of
-        this routine we round the results to the nearest 15th decimal
-        place in an attempt to rectify this error.
+        This is often used with :meth:`reduce_components`. In some cases when
+        `z` is equal lattice element, floating point error can case
+        :meth:`reduce_components` to incorrectly indicate this. (Two zero
+        vectors should be returned in this case.) At the end of this routine we
+        round the results to the nearest 15th decimal place in an attempt to
+        rectify this error.
 
         """
-        # reduces z = alpha + Omega*beta into its fractional components
-        # alpha and beta
+        # reduces z = alpha + Omega*beta into its fractional components alpha
+        # and beta
         g = self.g
         z = numpy.reshape(z,(g,1))
         w = numpy.zeros((2*g,1), dtype=numpy.double)
@@ -114,15 +116,15 @@ class Jacobian(object):
         # solve linear system to decompose z = z1 + Omega z2
         v = numpy.linalg.solve(self.M,w)
 
-        # round to the nearest 15 digits due to possible floating point
-        # error in the components. see note in description.
+        # round to the nearest 15 digits due to possible floating point error
+        # in the components. see note in description.
         z1 = v[:g]
         z2 = v[g:]
         return z1,z2
 
     def reduced_components(self, z):
-        r"""Decomposes `z` into its components :math:`z=\alpha+\Omega\beta`
-        where :math:`\alpha,\beta \in [0,1)^g`.
+        r"""Decomposes `z` into its components :math:`z=\alpha+\Omega\beta` where
+        :math:`\alpha,\beta \in [0,1)^g`.
 
         Parameters
         ----------
@@ -139,9 +141,8 @@ class Jacobian(object):
         alpha = z1 - numpy.floor(z1)
         beta = z2 - numpy.floor(z2)
 
-        # due to rounding error alpha and beta may have integral
-        # components. subtract off any integral part to obtain the
-        # fractional part
+        # due to rounding error alpha and beta may have integer components.
+        # subtract off any integral part to obtain the fractional part
         g = len(alpha)
         eps = 1e-14
         for k in range(g):
@@ -163,10 +164,9 @@ class AbelMap_Function(object):
     def eval(self, *args):
         r"""Evaluate the Abel map at a place or divisor.
 
-        Constructs a `RiemannSurfacePath` :math:`\gamma : [0,1] \to X`
-        starting at the base place :math:`P_0` and ending at
-        :math:`P`. Then, simply integrates each of the holomorphic
-        one-forms along this path.
+        Constructs a `RiemannSurfacePath` :math:`\gamma : [0,1] \to X` starting
+        at the base place :math:`P_0` and ending at :math:`P`. Then, simply
+        integrates each of the holomorphic one-forms along this path.
 
         Parameters
         ----------
@@ -184,13 +184,36 @@ class AbelMap_Function(object):
             recalculated every time AbelMap is evaluated.
 
         """
-        if len(args) == 2:
-            D1,D2 = args
-            J = Jacobian(D1.RS)
-            return J(self.eval(D2) - self.eval(D1))
-        elif len(args) != 1:
+        if len(args) > 2:
             raise ValueError('Too many arguments.')
+        elif len(args) == 2:
+            # it's always assumed that the first input is a place and that the
+            # inputs live on the same Riemann surface
+            P,D = args
+            if P.degree != 1:
+                raise ValueError('First argument must be a place. (A divisor '
+                                 'of order one.)')
+            if P.RS != D.RS:
+                raise ValueError('Inputs must be on the same Riemann surface')
 
+            # perform the necessary transformation when the first place is
+            # changed:
+            #
+            #   A(P,D) = A(P0,D) - (deg D)A(P0,P)
+            #
+            J = Jacobian(P.RS)
+            val = self.eval(D) - (D.degree)*self.eval(P)
+            return J(val)
+
+        # compute the sum of the scaled Abel maps on the consituent places of
+        # the divisor: if
+        #
+        #   D = \sum_i n_i P_i
+        #
+        # then
+        #
+        #   A(P0,D) = \sum n_i A(P0,P_i)
+        #
         D = args[0]
         RS = D.RS
         genus = RS.genus()
@@ -199,8 +222,12 @@ class AbelMap_Function(object):
             Pval = self._eval_primitive(P)
             val += n*Pval
 
-        # TODO: use state so that the jacobian doesn't have to re
-        # recalculated with every evaluation
+        # the definition of the Abel map involves the normalized holomorphic
+        # differentials. achieve the same result by scaling the output with
+        # respect to the "normalization" matrix A^{-1} of the period matrix
+        #
+        # TODO: use state so that the jacobian doesn't have to re recalculated
+        # with every evaluation
         J = Jacobian(RS)
         tau = RS.period_matrix()
         Ainv = numpy.linalg.inv(tau[:genus,:genus])
