@@ -43,7 +43,7 @@ from numpy.linalg import norm, inv
 from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 
-cdef extern: # from lll_reduce.c
+cdef extern from *:
     void lll_reduce(double*, int, double, double);
 
 def radius(epsilon, double[:,:] T, derivs=[], accuracy_radius=5):
