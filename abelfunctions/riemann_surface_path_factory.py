@@ -210,7 +210,7 @@ class RiemannSurfacePathFactory(object):
         center, coefficient, ramification_index = p.xdata
         ta = (xa/coefficient)**(1.0/ramification_index)
         p.extend_to_t(ta)
-        ya = p.eval_y(ta)
+        ya = numpy.complex(p.eval_y(ta))
 
         # construct the place Q and compute the path going from P0 to Q
         Q = self.RS(xa,ya)
@@ -294,7 +294,7 @@ class RiemannSurfacePathFactory(object):
         # place continues to the y-component of the target
         base_sheets = self.base_sheets()
         end_sheets = numpy.array(gamma.get_y(1.0), dtype=numpy.complex)
-        end_diffs = numpy.abs(end_sheets - P.y)
+        end_diffs = numpy.abs(end_sheets - numpy.complex(P.y))
         if numpy.min(end_diffs) > 1.0e-8:
             raise ValueError('Error in constructing Abel path: end of regular '
                              'path does not match with target place.')

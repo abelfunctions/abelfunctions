@@ -308,7 +308,9 @@ cdef class RiemannSurfacePathPrimitive:
         cdef complex[:] yim1,yi
 
         n = self._ncheckpoints
-        t = numpy.linspace(0, 1, n)
+#        tend = 1. - 1./(n+1)
+        tend = 1
+        t = numpy.linspace(0, tend, n)
         x = numpy.array([self.get_x(ti) for ti in t], dtype=complex)
         y = numpy.zeros((n, self._RS.deg), dtype=complex)
 

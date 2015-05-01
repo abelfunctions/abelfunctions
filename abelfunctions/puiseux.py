@@ -1579,7 +1579,7 @@ class PuiseuxXSeries(object):
         complex
 
         """
-        return sum(alpha * (x-self.x0)**ne for ne,alpha in self.terms)
+        return sum(alpha * (x-self.center)**ne for ne,alpha in self.terms)
 
     def evalf(self, x, n=8):
         r"""Numerically evaluate the Puiseux series.
