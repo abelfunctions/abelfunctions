@@ -294,7 +294,7 @@ class RiemannSurfacePathFactory(object):
         # place continues to the y-component of the target
         base_sheets = self.base_sheets()
         end_sheets = numpy.array(gamma.get_y(1.0), dtype=numpy.complex)
-        end_diffs = numpy.abs(end_sheets - P.y)
+        end_diffs = numpy.abs(end_sheets - numpy.complex(P.y))
         if numpy.min(end_diffs) > 1.0e-8:
             raise ValueError('Error in constructing Abel path: end of regular '
                              'path does not match with target place.')
