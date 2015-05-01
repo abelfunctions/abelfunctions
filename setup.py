@@ -25,6 +25,7 @@ import numpy
 
 import glob
 import os
+import sys
 import shutil
 import unittest
 
@@ -110,7 +111,10 @@ class test_abelfunctions(Command):
     def run(self):
         loader = unittest.TestLoader()
         suite = loader.discover('abelfunctions')
-        unittest.TextTestRunner(verbosity=2).run(suite)
+        result = unittest.TextTestRunner(verbosity=1).run(suite)
+        errno = not result.wasSuccessful()
+        sys.exit(errno)
+
 
 packages = [
     'abelfunctions.riemann_theta',
