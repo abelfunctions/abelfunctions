@@ -46,7 +46,37 @@ from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 from .differentials cimport Differential
 from .utilities import cached_method
 
-import numpy
+
+def fractional_part(z, tol=1e-8):
+    r"""Returns the fractional part of a vector.
+
+    This function is different from using `numpy.floor` to determine the
+    fractional part of a vector in the sense that it can handle components that
+    are `*close* to integers. That is `fractional_part(0.99999999999)` should
+    return `0` since it's close to an integer.
+
+    Parameters
+    ----------
+    z : array
+    tol : double
+        (Default: 1e-8) Tolerance for determining when an entry is close to one
+
+    Returns
+    -------
+    array
+    """
+    # subtract off the integer part
+    z = numpy.array(z)
+    w = z - numpy.floor(z)
+
+    # zero out any component of the form
+    #
+    #   w[i] = 1 - tol
+    #
+    # if any component is close to an integer, (in this case the integer should
+    # be 1) set it equal to zero
+    w[numpy.isclose(w,1)] = 0
+    return w
 
 class Jacobian(object):
     def __init__(self, X):
@@ -77,7 +107,9 @@ class Jacobian(object):
         z mod Lambda
             The vector z reduced modulo the lattice Lambda.
         """
-        alpha, beta = self.reduced_components(z)
+        alpha, beta = self.components(z)
+        alpha = fractional_part(alpha)
+        beta = fractional_part(beta)
         zmod = (alpha + numpy.dot(self.Omega, beta)).reshape((1,self.g))
         return zmod
 
@@ -141,15 +173,9 @@ class Jacobian(object):
         alpha = z1 - numpy.floor(z1)
         beta = z2 - numpy.floor(z2)
 
-        # due to rounding error alpha and beta may have integer components.
-        # subtract off any integral part to obtain the fractional part
-        g = len(alpha)
-        eps = 1e-14
-        for k in range(g):
-            while alpha[k] > (1-eps):
-                alpha[k] -= 1
-            while beta[k] > (1-eps):
-                beta[k] -= 1
+        eps = 1e-8
+        alpha[numpy.isclose(alpha,1)] = 0
+        beta[numpy.isclose(beta,1)] = 0
         return alpha,beta
 
 

@@ -87,7 +87,6 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         degree = oneforms[3].valuation_divisor().degree
         self.assertEqual(degree,2*g-2)
 
-    @unittest.expectedFailure
     def test_canonical_X11(self):
         X = self.X11
         J = Jacobian(X)
@@ -98,19 +97,19 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         C = [omega.valuation_divisor() for omega in oneforms]
 
         # these fail
-        W = 2*RiemannConstantVector(P0) + AbelMap(P0,C[0])
+        W = 2*RiemannConstantVector(P0) + AbelMap(C[0])
         W = J(W)
-        self.assertLess(norm(W),1e-7,'broken')
+        self.assertLess(norm(W),1e-7)
 
-        W = 2*RiemannConstantVector(P0) + AbelMap(P0,C[1])
+        W = 2*RiemannConstantVector(P0) + AbelMap(C[1])
         W = J(W)
-        self.assertLess(norm(W),1e-7,'broken')
+        self.assertLess(norm(W),1e-7)
 
-        W = 2*RiemannConstantVector(P0) + AbelMap(P0,C[2])
+        W = 2*RiemannConstantVector(P0) + AbelMap(C[2])
         W = J(W)
-        self.assertLess(norm(W),1e-7,'broken')
+        self.assertLess(norm(W),1e-7)
 
         # this one succeeds
-        W = 2*RiemannConstantVector(P0) + AbelMap(P0,C[3])
+        W = 2*RiemannConstantVector(P0) + AbelMap(C[3])
         W = J(W)
         self.assertLess(norm(W),1e-7)
