@@ -6,10 +6,11 @@
 .. image:: _static/header.png
     :align: center
 
-`abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python
-library for computing with complex algebraic curves, Riemann surfaces,
-and Abelian functions. If this is your first time using abelfunctions
-then I suggest you begin with the :doc:`quick_tutorial`.
+`abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python library
+for computing with complex algebraic curves, Riemann surfaces, and Abelian
+functions. If this is your first time using abelfunctions then I suggest you
+begin with the :doc:`quick_tutorial`. See :doc:`reference/index` for a list
+of common functions as well as a complete reference to the source code.
 
 Contents
 --------
