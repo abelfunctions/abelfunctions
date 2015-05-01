@@ -317,7 +317,7 @@ class RiemannSurfacePathFactory(object):
 
         # sanity check
         yend = gamma.get_y(1.0)[0]
-        if numpy.abs(yend - P.y) > 1.0e-8:
+        if numpy.abs(yend - numpy.complex(P.y)) > 1.0e-8:
             raise ValueError('Error in constructing Abel path.')
         return gamma
 
