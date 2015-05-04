@@ -46,6 +46,16 @@ from scipy.optimize import fsolve
 cdef extern from *:
     void lll_reduce(double*, int, double, double);
 
+
+def lll(M, lc=.5, uc=.75):
+    cdef int g = M.shape[0]
+    cdef double dlc=lc, duc=uc
+    cdef double[:,:] A = numpy.ascontiguousarray(
+        M.astype(numpy.double), dtype=numpy.double)
+    lll_reduce(&A[0,0], g, dlc, duc)
+    return numpy.array(A, dtype=numpy.double)
+
+
 def radius(epsilon, double[:,:] T, derivs=[], accuracy_radius=5):
     r"""Returns the primary radius of the bounding ellipsoid for computing the
     Riemann theta function up to accuracy `epsilon`.
