@@ -21,13 +21,21 @@ import unittest
 import numpy
 
 from numpy.linalg import norm
-from sympy.mpmath import jtheta
 from abelfunctions.riemann_theta import RiemannTheta
 
 
-class RiemannThetaValueTest(unittest.TestCase):
+class TestRiemannThetaValues(unittest.TestCase):
     def setup(self):
         pass
+
+    def test_issue84(self):
+        theta_actual = 0.963179246467 - 6.2286820685j
+        z = [0.5-1.10093687j,-0.11723434j]
+        omega = [[0.5+2j, 0.5+1j],[0.5+1j, 1+1.5j]]
+        for i in range(100):
+            theta = RiemannTheta(z,omega)
+            error = abs(theta-theta_actual)
+            self.assertLess(error, 1e-5)
 
     # def test_value_at_point(self):
     #     Omega = np.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
