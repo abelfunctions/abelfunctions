@@ -20,22 +20,43 @@ References
 import unittest
 import numpy
 
-from numpy.linalg import norm
+from numpy.linalg import norm, cholesky
 from abelfunctions.riemann_theta import RiemannTheta
+from abelfunctions.riemann_theta.radius import radius
 
 
 class TestRiemannThetaValues(unittest.TestCase):
     def setup(self):
         pass
 
-    def test_issue84(self):
+    def test_issue84_value(self):
+        z = [0.5-1.10093687j, -0.11723434j]
+        Omega = [[0.5+2j, 0.5+1j],
+                 [0.5+1j, 1+1.5j]]
+
         theta_actual = 0.963179246467 - 6.2286820685j
-        z = [0.5-1.10093687j,-0.11723434j]
-        omega = [[0.5+2j, 0.5+1j],[0.5+1j, 1+1.5j]]
-        for i in range(100):
-            theta = RiemannTheta(z,omega)
-            error = abs(theta-theta_actual)
-            self.assertLess(error, 1e-5)
+        for _ in range(1000):
+            theta = RiemannTheta(z,Omega)
+            error = abs(theta - theta_actual)
+            self.assertLess(error, 1e-5,
+                            '%s not less than %s'
+                            '\ntheta:  %s\nactual: %s'%(
+                                error,1e-5,theta, theta_actual))
+
+    def test_issue84_radius(self):
+        Omega = [[0.5+2j, 0.5+1j],
+                 [0.5+1j, 1+1.5j]]
+        Omega = numpy.array(Omega)
+        Y = Omega.imag
+        T = cholesky(Y).T
+
+        R_actual = 5.01708695504
+        for _ in range(1000):
+            R = radius(1e-8,T)
+            error = abs(R - R_actual)
+            self.assertLess(error, 1e-8)
+
+
 
     # def test_value_at_point(self):
     #     Omega = np.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
