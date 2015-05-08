@@ -28,10 +28,10 @@ cimport cython
 import numpy
 
 from libc.stdlib cimport malloc
-from .radius import radius
-from .integer_points import integer_points_python
+from abelfunctions.riemann_theta.radius import radius
+from abelfunctions.riemann_theta.integer_points import integer_points_python
 
-cdef extern: # from riemann_theta.c
+cdef extern from *:
     void finite_sum_without_derivatives(double*, double*, double*,
                                         double*, double*, double*,
                                         double*, double*, int, int)

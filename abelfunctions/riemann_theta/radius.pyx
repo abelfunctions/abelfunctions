@@ -46,6 +46,28 @@ from scipy.optimize import fsolve
 cdef extern from *:
     void lll_reduce(double*, int, double, double);
 
+
+def lll(M, lc=.5, uc=.75):
+    r"""Returns the LLL-reduction of the columns of `M`.
+
+    Parameters
+    ----------
+    M : array
+        A real, square matrix.
+    lc, uc : double
+        Parameters between 0 and 1 used in the LLL algorithm.
+
+    Returns
+    -------
+    array
+    """
+    cdef int g = M.shape[0]
+    cdef double dlc=lc, duc=uc
+    cdef double[:,:] A = numpy.ascontiguousarray(
+        M.astype(numpy.double), dtype=numpy.double)
+    lll_reduce(&A[0,0], g, dlc, duc)
+    return numpy.array(A, dtype=numpy.double)
+
 def radius(epsilon, T, derivs=[], accuracy_radius=5):
     r"""Returns the primary radius of the bounding ellipsoid for computing the
     Riemann theta function up to accuracy `epsilon`.
@@ -71,12 +93,11 @@ def radius(epsilon, T, derivs=[], accuracy_radius=5):
     accuracy_radius : double
         Radius for guaranteed region of accuracy. See above.
     """
-    cdef int g = T.shape[0]
-    cdef double[:,:] A = numpy.ascontiguousarray(T, dtype=numpy.double)
-    cdef double lc=0.5
-    cdef double uc=0.75
-    lll_reduce(&A[0,0], g, lc, uc)
-    r = min(norm(A[:,i]) for i in range(g))
+    # compute the LLL-reduction of T
+    T = numpy.array(T, dtype=numpy.double)
+    g = T.shape[0]
+    U = lll(T)
+    r = min(norm(U[:,i]) for i in range(g))
 
     if len(derivs) == 0:
         radius = radius0(epsilon, r, g)

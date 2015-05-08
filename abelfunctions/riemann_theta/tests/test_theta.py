@@ -21,8 +21,8 @@ import unittest
 import numpy
 
 from numpy.linalg import norm, cholesky
-from abelfunctions.riemann_theta import RiemannTheta
 from abelfunctions.riemann_theta.radius import radius
+from abelfunctions.riemann_theta.riemann_theta import RiemannTheta
 
 
 class TestRiemannThetaValues(unittest.TestCase):
