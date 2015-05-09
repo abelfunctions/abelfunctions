@@ -11,3 +11,10 @@ cdef class Differential:
     cdef MultivariatePolynomial denom_n
     cpdef complex eval(self, complex, complex)
     cpdef complex[:] evaluate(self, RiemannSurfacePathPrimitive, double[:])
+
+cdef class AbelianDifferentialFirstKind(Differential):
+    pass
+
+cdef class AbelianDifferentialSecondKind(Differential):
+    pass
+

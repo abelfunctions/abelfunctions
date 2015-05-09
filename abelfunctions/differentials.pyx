@@ -47,10 +47,11 @@ import matplotlib.pyplot as plt
 
 from .divisor import Divisor, Place
 from .integralbasis import integral_basis
+from .polynomials cimport MultivariatePolynomial
+from .puiseux import puiseux
+from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 from .singularities import singularities, _transform, genus
 from .utilities import cached_function
-from .polynomials cimport MultivariatePolynomial
-from .riemann_surface_path cimport RiemannSurfacePathPrimitive
 
 cimport cython
 
@@ -166,7 +167,8 @@ def differentials(RS):
     P = P.subs(sols).as_poly(*c)
     numerators = [coeff for coeff in P.coeffs() if coeff != 0]
     dfdy = sympy.diff(f,y)
-    differentials = [Differential(RS,numer,dfdy) for numer in numerators]
+    differentials = [AbelianDifferentialFirstKind(RS,numer,dfdy)
+                     for numer in numerators]
     return differentials
 
 
@@ -337,82 +339,32 @@ cdef class Differential:
         """
         x = self.x
         y = self.y
+
+        # by default, non-discriminant places do not store Pusieux series
+        # expansions. this might change in the future
         if P.is_discriminant():
             p = P.puiseux_series
-            t = p.t
-            xt = p.eval_x(t)
-            yt = p.eval_y(t,order=order)
-            dxdt = p.eval_dxdt(t)
-
-            # substitute Puiseux series expansion into the differrential
-            # and expand as a Laurent series.
-            expr = self.as_sympy_expr()
-            expr = expr.subs({x:xt,y:yt})*dxdt
-            numer,denom = sympy.cancel(expr).as_numer_denom()
-            omega = fast_expand(numer,denom,t)
+            t = P.t
         else:
-            omega = self._omega
+            t = sympy.Symbol('t')
+            p = puiseux(self.RS.f,self.x,self.y,P.x,P.y,t)[0]
+
+        # symbolically evaluate the x, y, and dx parts of the series
+        xt = p.eval_x(t)
+        yt = p.eval_y(t,order=order)
+        dxdt = p.eval_dxdt(t)
+
+        # substitute Puiseux series expansion into the differrential and expand
+        # as a Laurent series. Sympy's nseries is slow in some rational exprs
+        expr = self.as_sympy_expr()
+        expr = expr.subs({x:xt,y:yt})*dxdt
+        numer,denom = sympy.cancel(expr).as_numer_denom()
+        omega = fast_expand(numer,denom,t)
         return omega
 
     def localize(self, *args, **kwds):
         r"""Same as :meth:`centered_at_place`."""
         return self.centered_at_place(*args, **kwds)
-
-    def valuation_divisor(self):
-        r"""Returns the valuation divisor of the place.
-
-        The valuation divisor
-
-        .. math::
-
-            (\omega)_{val} = p_1 P_1 + \cdots + p_m P_m +
-                             q_1 Q_1 + \cdots + q_n Q_n
-
-        is the collection of all places on the Riemann surface where
-        :math:`\omega` has a zero of multiplicity :math:`p_k` at the
-        place :math:`P_k` and a pole of multiplicity :math:`q_k` at the
-        place :math:`Q_k`.
-
-        .. note::
-
-            Todo: For the moment this is only in the case when `self` is
-            a holomorphic differential. The algorithm cuts down on
-            computations by assuming the denominator is equal to dfdy.
-
-        """
-        # get x-roots from numerator
-        numer = self.numer
-        res = sympy.resultant(numer,self.RS.f,self.y).as_poly(self.x)
-        numer_roots = res.all_roots(multiple=False, radicals=False)
-        if numer_roots:
-            numer_roots,_ = zip(*numer_roots)
-
-        # form the set of x-values over which to compute places. reorder
-        # entries such that x=0 and x=oo appear first because
-        # differential numerators tend to be monomial, resulting in
-        # better performance.
-        xvalues = []
-        roots = set([]).union(numer_roots)
-        roots = roots.union(self.RS.discriminant_points())
-        if 0 in roots:
-            xvalues.append(0)
-            roots.discard(0)
-        xvalues.append(sympy.oo)
-        xvalues.extend(roots)
-
-        # compute the valuation divisor. THIS LOOP ASSUMES self IS A
-        # HOLOMORPHIC DIFFERENTIAL. Solution is to subclass and overload
-        D = Divisor(self.RS,0)
-        genus = self.RS.genus()
-        target_genus = 2*genus - 2
-        for alpha in xvalues:
-            for place in self.RS(alpha):
-                mult = place.valuation(self)
-                D += mult * place
-                if D.degree == target_genus:
-                    return D
-        raise ValueError('Could not find divisor of appropriate genus.')
-
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -439,6 +391,108 @@ cdef class Differential:
         """
         return gamma.evaluate(self,t)
 
+    def _find_necessary_xvalues(self):
+        r"""Returns a list of x-points over which the places appearing in the
+        valuation divisor are found.
+
+        :py:meth:`valuation_divisor` requires a necessary list of x-values from
+        which to compute places which may appear in the valuation divisor of
+        the differential.
+
+        In the case when `self.denom` is equal to :math:`\partial_y f` we
+        simply use the discriminant points of the curve.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        list
+        """
+        f = self.RS.f
+        x = self.x
+        y = self.y
+
+        # get possible x-values from the numerator by computing the roots of
+        # the resolvent with the curve f
+        numer = self.numer
+        res = sympy.resultant(numer,f,y).as_poly(x)
+        numer_roots = res.all_roots(multiple=False, radicals=False)
+        if numer_roots:
+            numer_roots,_ = zip(*numer_roots)
+
+        # get possible x-values from the denominator. in the case when the
+        # denominator is dfdy these are simply the discriminant points
+        denom = self.denom
+        if (denom.expand() == f.diff(y).expand()):
+            denom_roots = self.RS.discriminant_points()
+        else:
+            res = sympy.resultant(denom,f,y).as_poly(x)
+            denom_roots = res.all_roots(multiple=False, radicals=False)
+            if denom_roots:
+                denom_roots,_ = zip(*denom_roots)
+
+        # finally, the possible x-points contributed by dx are the discriminant
+        # points of the curve
+        discriminant_points = self.RS.discriminant_points()
+
+        # form the set of x-values over which to compute places. reorder
+        # entries such that x=0 and x=oo appear first because differential
+        # numerators tend to be monomial, resulting in better performance.
+        xvalues = []
+        roots = set([]).union(numer_roots)
+        roots = roots.union(denom_roots)
+        roots = roots.union(discriminant_points)
+        if 0 in roots:
+            xvalues.append(0)
+            roots.discard(0)
+        xvalues.append(sympy.oo)  # account for all places at infinity
+        xvalues.extend(roots)
+        return xvalues
+
+    def valuation_divisor(self, **kwds):
+        r"""Returns the valuation divisor of the differential.
+
+        This is a generic algorithm for computing valuation divisors and should
+        only be used if nothing is known about the differential in question.
+
+        If the differential is Abelian of the first kind (holomorphic) then
+        create an instance of :class:`AbelianDifferentialFirstKind`. Similarly,
+        if the differential is Abelian of the second kind then create an
+        instance of :class:`AbelianDifferentialSecondKind`. These implement
+        versions of :meth:`valuation_divisor` that use properties of the
+        differential to save on time.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        Divisor
+
+        """
+        xvalues = self._find_necessary_xvalues()
+
+        # for each xvalue, compute the places above it and determine the
+        # valuation of the differential over each of these places
+        D = Divisor(self.RS,0)
+        genus = self.RS.genus()
+        for alpha in xvalues:
+            places_above_alpha = self.RS(alpha)
+            for P in places_above_alpha:
+                n = P.valuation(self)
+                D += n*P
+
+        # the valuation divisor of a generic meromorphic differential is still
+        # canonical. check the degree condition
+        target_genus = 2*genus - 2
+        if D.degree != target_genus:
+            raise ValueError(
+                'Could not compute valuation divisor of %s: '
+                'did not reach genus requirement.'%self)
+        return D
 
     def plot(self, RiemannSurfacePathPrimitive gamma, N=256, grid=False,
              **kwds):
@@ -499,3 +553,116 @@ cdef class Differential:
         """
         return self.numer / self.denom
 
+
+cdef class AbelianDifferentialFirstKind(Differential):
+    def valuation_divisor(self, proof=False, **kwds):
+        r"""Returns the valuation divisor of the Abelian differential of the
+        first kind.
+
+        Because Abelian differentials of the first kind are holomorphic on the
+        Riemann surface, the valuation divisor is of the form
+
+        .. math::
+
+            (\omega)_{val} = p_1 P_1 + \cdots + p_m P_m
+
+        where :math:`\omega` has a zero of multiplicity :math:`p_k` at the
+        place :math:`P_k`.
+
+        Parameters
+        ----------
+        proof : bool
+            If set to `True`, will provably return the valuation divisor by
+            computing the valuation at every necessary place on `X`. Slow.
+
+        Notes
+        -----
+        This valuation divisor overload takes advantage of the fact that the
+        differential admits no poles. Therefore, as places on the Riemann
+        surface are checked, the degree of the valuation divisor is
+        non-decreasing. We can terminate the search the moment the degree
+        reaches :math:`2g-2`. If `proof=True` then ignore this trick and
+        compute over every possible place.
+
+        """
+        xvalues = self._find_necessary_xvalues()
+
+        # for each xvalue, compute the places above it and determine valuation
+        # of the differential over each of these places.
+        D = Divisor(self.RS,0)
+        genus = self.RS.genus()
+        target_genus = 2*genus - 2
+        for alpha in xvalues:
+            places_above_alpha = self.RS(alpha)
+            for P in places_above_alpha:
+                n = P.valuation(self)
+                D += n*P
+
+                # abelian differentials of the first kind should have no poles
+                if n < 0:
+                    raise ValueError(
+                        'Could not compute valuation divisor of %s: '
+                        'found a pole of differential of first kind.'%self)
+
+                # break out if the target degree is met
+                if (D.degree == target_genus) and (not proof):
+                    return D
+
+        if D.degree != target_genus:
+            raise ValueError('Could not compute valuation divisor of %s: '
+                             'did not reach genus requirement.'%self)
+        return D
+
+
+cdef class AbelianDifferentialSecondKind(Differential):
+    r"""Defines an Abelian Differential of the second kind.
+
+    An Abelian differential of the second kind is one constructed in the
+    following way: given a place :math:`P \in X` and a positive integer
+    :math:`m` an Abelian differential of second kind is a meromorphic
+    differential with a pole only at :math:`P` of order :math:`m+1`.
+    """
+    def valuation_divisor(self, **kwds):
+        r"""Returns the valuation divisor of the Abelian differential of the
+        second kind.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        Divisor
+
+        """
+        xvalues = self._find_necessary_xvalues()
+
+        # for each xvalue, compute the places above it and determine valuation
+        # of the differential over each of these places.
+        D = Divisor(self.RS,0)
+        genus = self.RS.genus()
+        target_genus = 2*genus - 2
+        num_poles = 0
+        for alpha in xvalues:
+            places_above_alpha = self.RS(alpha)
+            for P in places_above_alpha:
+                n = P.valuation(self)
+                D += n*P
+
+                # differentials of the second kind should have a single
+                # pole. raise an error if more are found
+                if n < 0: num_poles += 1
+                if num_poles > 1:
+                    raise ValueError(
+                        'Could not compute valuation divisor of %s: '
+                        'found more than one pole.'%self)
+
+                # break out if (a) the degree requirement is met and (b) the
+                # pole was found.
+                if (D.degree == target_genus) and (num_poles):
+                    return D
+
+        if D.degree != target_genus:
+            raise ValueError('Could not compute valuation divisor of %s: '
+                             'did not reach genus requirement.'%self)
+        return D
