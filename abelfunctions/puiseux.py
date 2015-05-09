@@ -507,8 +507,14 @@ def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t'),
     _y = sympy.Symbol('_'+str(y))
     gx0y = rootofsimp(g.subs(x,0))
     gx0y = gx0y.subs(y,_y).as_poly(_y)
-    all_roots = gx0y.all_roots(radicals=False,multiple=False)
-    roots,multiplicities = zip(*all_roots)
+    try:
+        all_roots = gx0y.all_roots(radicals=False,multiple=False)
+        roots,multiplicities = zip(*all_roots)
+    except:
+        raise NotImplementedError('Cannot construct puiseux series expansions '
+                                  'of %s at %s=%s: Sympy does not support '
+                                  'computing roots of polynomials with '
+                                  'non-rational coefficients.'%(f,x,a))
 
     # if a beta is requested then only compute the roots for that beta
     if not beta is None:
