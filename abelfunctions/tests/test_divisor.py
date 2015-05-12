@@ -1,6 +1,6 @@
 from .test_abelfunctions import AbelfunctionsTestCase
 from abelfunctions.divisor import (
-    Place, DiscriminantPlace, RegularPlace, Divisor
+    Place, DiscriminantPlace, RegularPlace, Divisor, ZeroDivisor
 )
 
 
@@ -31,6 +31,14 @@ class TestDivisor(AbelfunctionsTestCase):
     def test_equality(self):
         D1 = self.P + self.Q
         D2 = self.Q + self.P
+        self.assertEqual(D1,D2)
+
+        D1 = self.P + self.P
+        D2 = 2*self.P
+        self.assertEqual(D1,D2)
+
+        D1 = self.P - self.P
+        D2 = ZeroDivisor(None)
         self.assertEqual(D1,D2)
 
     def test_associativity(self):
