@@ -10,15 +10,30 @@ The primary module for computing the Riemann theta function.
                         e^{2 \pi i \left( \tfrac{1}{2} n \cdot \Omega n
                            + n \cdot z \right)}
 
+Classes
+-------
+
+RiemannTheta_Function
+
 Functions
 ---------
 
 oscillatory_part
 
-Classes
--------
+References
+----------
 
-RiemannTheta_Function
+.. [CRTF] B. Deconinck, M.  Heil, A. Bobenko, M. van Hoeij and M. Schmies,
+   Computing Riemann Theta Functions, Mathematics of Computation, 73, (2004),
+   1417-1442.
+
+.. [DLMF] B. Deconinck, Digital Library of Mathematics Functions - Riemann Theta
+   Functions, http://dlmf.nist.gov/21
+
+.. [SAGE] Computing Riemann theta functions in Sage with applications.
+   C. Swierczewski and B. Deconinck.Submitted for publication.  Available online
+   at http://depts.washington.edu/bdecon/papers/pdfs/Swierczewski_Deconinck1.pdf
+
 
 Contents
 --------
@@ -267,6 +282,104 @@ cdef class RiemannTheta_Function(object):
         """
         return oscillatory_part(z, Omega, epsilon, derivs,
                                 accuracy_radius, axis)
+
+    def oscillatory_part_gradient(self, z, Omega, epsilon=1e-8,
+                                  accuracy_radius=5, axis=1, **kwds):
+        r"""Returns the oscillatory part of the gradient of Riemann theta.
+
+        A helper function for :meth:`gradient`. Useful in it's own right for
+        detecting if the gradient vanishes since the exponential part of
+        Riemann theta never does.
+
+        Parameters
+        ----------
+        (see :meth:`oscillatory_part`)
+
+        Returns
+        -------
+        Returns
+        -------
+        array
+            If a single z-argument is given then returns a 1-dimensional Numpy
+            array representing the gradient. If multiple z-arguments are given
+            then returns a 2-dimensional Numpy array of gradients where each
+            gradient is listed along `axis`.
+        """
+        # get the genus and number of z-vectors
+        Omega = numpy.array(Omega, dtype=numpy.complex)
+        g = Omega.shape[0]
+        gradients = numpy.zeros_like(z, dtype=numpy.complex)
+
+        for i in range(g):
+            # construct the direction derivative \partial z_i and compute the
+            # derivatives in that direction
+            derivs = [[0]*g]
+            derivs[0][i] = 1
+            partial_zi = oscillatory_part(z, Omega, epsilon, derivs,
+                                          accuracy_radius, axis)
+
+            # if axis=1 then store gradients in rows (since input z-vectors are
+            # given as rows of a matrix). otherwise, store column-wise
+            if axis:
+                gradients[:,i] = partial_zi
+            else:
+                gradients[i,:] = partial_zi
+
+        return gradients
+
+    def gradient(self, z, Omega, epsilon=1e-8, accuracy_radius=5,
+                 axis=1, **kwds):
+        r"""Returns the gradient of Riemann theta.
+
+        The gradient of :math:`\theta((z_1, \ldots, z_g), \Omega)` is defined
+        to be
+
+        .. math::
+
+            \grad \theta(z,\Omega)
+            =
+            \left( \ldots, \partial_{z_i} \theta(z,\Omega), \ldots \right)
+
+        where :math:`\partial_{z_i}` denote the directional derivative in the
+        :math:`[\ldots,0,1,0,\ldots]` direction. (The "1" occurs in the
+        :math:`i`th position.)
+
+        See Also
+        ---------
+        oscillatory_part_gradient
+
+        Parameters
+        ----------
+        (see :meth:`oscillatory_part`)
+
+        Returns
+        -------
+        array
+            If a single z-argument is given then returns a 1-dimensional Numpy
+            array representing the gradient. If multiple z-arguments are given
+            then returns a 2-dimensional Numpy array of gradients where each
+            gradient is listed along `axis`.
+
+        Notes
+        -----
+        This could be made shorter by using :meth:`eval` but we choose not to
+        for performance reasons. (We avoid having to compute the exponential
+        part multiple times.)
+
+        """
+        # compute the gradient of the oscillatory part, the exponential part,
+        # and combine "axis-wise": if the z-vectors are given as row vectors
+        # then multiply each column of the gradient of the oscillatory part by
+        # the exponential part
+        osc_gradients = self.oscillatory_part_gradient(
+            z, Omega, epsilon, accuracy_radius, axis, **kwds)
+        exp_parts = self.exponential_part(z, Omega, **kwds)
+        exp_parts = numpy.exp(exp_parts)
+        gradients = numpy.apply_along_axis(
+            lambda dz: exp_parts*dz,
+            (axis+1)%2,
+            osc_gradients)
+        return gradients
 
 # declaration of Riemann theta
 RiemannTheta = RiemannTheta_Function()

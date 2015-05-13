@@ -56,6 +56,29 @@ class TestRiemannThetaValues(unittest.TestCase):
             error = abs(R - R_actual)
             self.assertLess(error, 1e-8)
 
+    def test_gradient(self):
+        Omega = [[1.j, 0.5, 0.5],
+                 [0.5, 1.j, 0.5],
+                 [0.5, 0.5, 1.j]]
+
+        # generate random test z-values
+        N = 32
+        u = numpy.random.rand(N,3)
+        v = numpy.random.rand(N,3)
+        W = u + 1.0j*v
+
+        # manually compute gradients
+        dz0 = RiemannTheta(W,Omega,derivs=[[1,0,0]])
+        dz1 = RiemannTheta(W,Omega,derivs=[[0,1,0]])
+        dz2 = RiemannTheta(W,Omega,derivs=[[0,0,1]])
+        grad1 = numpy.zeros_like(W, dtype=numpy.complex)
+        grad1[:,0] = dz0
+        grad1[:,1] = dz1
+        grad1[:,2] = dz2
+
+        # compute using "gradient"
+        grad2 = RiemannTheta.gradient(W,Omega)
+        self.assertLess(numpy.linalg.norm(grad1-grad2), 1e-14)
 
 
     # def test_value_at_point(self):
