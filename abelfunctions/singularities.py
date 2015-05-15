@@ -21,7 +21,7 @@ Contents
 --------
 """
 import sympy
-from sympy import RootOf, Rational
+from sympy import RootOf, Rational, Poly
 
 from .puiseux import puiseux
 from .integralbasis import Int
@@ -64,12 +64,11 @@ def singular_points_finite(f,x,y):
             try:
                 yroots = pxk.all_roots(multiple=False,radicals=False)
             except NotImplementedError:
-                yroots = pxk.all_roots(multiple=False,radicals=True)
+                yroots = sympy.roots(pxk,y).items()
 
             # for each y-root ykj above xk, record a singular point if the
             # gradient vanishes at (xk,ykj)
-            fxk = sympy.Poly(f.subs({x:xk}),y)
-            for ykj,_ in sympy.roots(fxk,y).iteritems():
+            for ykj,_ in yroots:
                 subs = {x:xk,y:ykj}
                 dfdx = rootofsimp(f.diff(x).subs(subs))
                 dfdy = rootofsimp(f.diff(y).subs(subs))
@@ -77,16 +76,13 @@ def singular_points_finite(f,x,y):
                 # if there are any leftover RootOfs we should approximate the
                 # vanishing numerically. this is done to handle situations such
                 # as I + (-I) = 0
-                if dfdx.has(RootOf):
-                    dfdx_is_zero = abs(dfdx.n(n=18)) < 1e-16
-                else:
-                    dfdx_is_zero = dfdx == 0
-                if dfdy.has(RootOf):
-                    dfdy_is_zero = abs(dfdy.n(n=18)) < 1e-16
-                else:
-                    dfdy_is_zero = dfdy == 0
+                def is_zero(expr):
+                    if expr.has(RootOf):
+                        return abs(dfdx.n(n=18)) < 1e-16
+                    else:
+                        return rootofsimp(expr).simplify() == 0
 
-                if dfdx_is_zero and dfdy_is_zero:
+                if is_zero(dfdx) and is_zero(dfdy):
                     S.append((xk,ykj,sympy.S(1)))
     return S
 
