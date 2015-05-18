@@ -399,24 +399,30 @@ def puiseux_rational(H,x,y,recurse=False):
             _z = psi.gen
             psisimp = rootofsimp(psi)
 
-            # if RootOfs still appear in the expression then temporarily
-            # replace them with dummies. this is done to prevent
-            # automatic removal of the "radicals=False" requirement
-            if psisimp.has(RootOf):
+            # try to compute the roots in terms
+            try:
+                roots = psisimp.as_poly(_z).all_roots(multiple=False,
+                                                      radicals=False)
+                roots = roots.keys()
+            except:
+                pass
+
+            # RootOfs still appear in the expression then temporarily replace
+            # them with dummies and compute radical roots. this is done to
+            # prevent automatic removal of the "radicals=False" requirement
+            try:
                 rootofs = psisimp.find(RootOf)
                 dummies = [Dummy() for _ in rootofs]
                 transform = dict(zip(rootofs,dummies))
-                psisimp = psisimp.xreplace(transform)
-                roots = psisimp.as_poly(_z).all_roots(multiple=False,
-                                                      radicals=False)
-                roots,_ = zip(*roots)
+                _psisimp = psisimp.xreplace(transform)
+                roots = sympy.roots(_psisimp, _z).keys()
                 transform = dict(zip(dummies,rootofs))
                 roots = map(lambda xi: xi.xreplace(transform), roots)
-            else:
-                # roots = psisimp.as_poly(_z).all_roots(multiple=False,
-                #                                       radicals=True)
-                # roots,_ = zip(*roots)
-                roots = sympy.roots(psisimp.as_poly(_z)).keys()
+            except NotImplementedError:
+                raise NotImplementedError(
+                    'Cannot construct puiseux series expansions of %s at '
+                    '%s=%s: Sympy does not support computing roots of '
+                    'polynomials with non-rational coefficients.'%(f,x,alpha))
 
             for xi in roots:
                 Hprime = transform_newton_polynomial(H,x,y,q,m,l,xi)
@@ -511,10 +517,10 @@ def puiseux(f,x,y,alpha,beta=None,t=sympy.Symbol('t'),
         all_roots = gx0y.all_roots(radicals=False,multiple=False)
         roots,multiplicities = zip(*all_roots)
     except:
-        raise NotImplementedError('Cannot construct puiseux series expansions '
-                                  'of %s at %s=%s: Sympy does not support '
-                                  'computing roots of polynomials with '
-                                  'non-rational coefficients.'%(f,x,alpha))
+        raise NotImplementedError(
+            'Cannot construct puiseux series expansions of %s at '
+            '%s=%s: Sympy does not support computing roots of '
+            'polynomials with non-rational coefficients.'%(f,x,alpha))
 
     # if a beta is requested then only compute the roots for that beta
     if not beta is None:
