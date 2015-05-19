@@ -289,14 +289,13 @@ cdef class RiemannTheta_Function(object):
 
         A helper function for :meth:`gradient`. Useful in it's own right for
         detecting if the gradient vanishes since the exponential part of
-        Riemann theta never does.
+        Riemann theta never does as well as for controlling exponential growth in
+        rational functions of theta.
 
         Parameters
         ----------
         (see :meth:`oscillatory_part`)
 
-        Returns
-        -------
         Returns
         -------
         array
@@ -380,6 +379,72 @@ cdef class RiemannTheta_Function(object):
             (axis+1)%2,
             osc_gradients)
         return gradients
+
+    def oscillatory_part_hessian(self, z, Omega, epsilon=1e-8,
+                                 accuracy_radius=5, axis=1, **kwds):
+        r"""Returns the oscillatory part of the Hessian of Riemann theta.
+
+        A helper function for :meth:`hessian`.  Useful in it's own right for
+        detecting if the Hessian vanishes since the exponential part of Riemann
+        theta never does as well as for controlling exponential growth in
+        rational functions of theta.
+
+        Parameters
+        ----------
+        (see :meth:`oscillatory_part`)
+
+        Returns
+        -------
+        array
+            If a single z-argument is givne then returns a 2-dimensional Numpy
+            array representing the Hessian. If multiple z-arguments are given
+            then returns a 3-dimensional Numpy array of Hessians where each
+            Hessian is indexed by the 0th coordinate.
+        """
+        # get the genus and number of z-vectors
+        Omega = numpy.array(Omega, dtype=numpy.complex)
+        g = Omega.shape[0]
+        z = numpy.array(z, dtype=numpy.complex)
+        if len(z.shape) == 1:
+            n = 1
+        else:
+            n = z.shape[(axis+1) % 2]
+        hessians = numpy.zeros((n,g,g), dtype=numpy.complex)
+
+        # since Riemann theta is analytic we only need to compute the lower
+        # triangular portion of the Hessian and symmetrize
+        lower_derivs = []
+        for i in range(g):
+            d1 = [0]*g
+            d1[i] = 1
+            for j in range(i):
+                d2 = [0]*g
+                d2[j] = 1
+
+                # construct the derivative and evaluate the corresponding zi zj
+                # derivative across all input vectors
+                derivs = [d1, d2]
+                partial_zizj = oscillatory_part(z, Omega, epsilon, derivs,
+                                                accuracy_radius, axis)
+                hessians[:,i,j] = partial_zizj
+
+        # symmetrize
+        hessians += hessians.transpose((0,2,1))
+
+        # finally, compute the diagonal entries of each hessian
+        for i in range(g):
+            d1 = [0]*g
+            d1[i] = 1
+            derivs = [d1,d1]
+            partial_zizi = oscillatory_part(z, Omega, epsilon, derivs,
+                                            accuracy_radius, axis)
+            hessians[:,i,i] = partial_zizi
+
+        if n == 1:
+            return hessians[0,:,:]
+        else:
+            return hessians
+
 
 # declaration of Riemann theta
 RiemannTheta = RiemannTheta_Function()

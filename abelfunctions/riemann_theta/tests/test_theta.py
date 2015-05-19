@@ -25,6 +25,77 @@ from abelfunctions.riemann_theta.radius import radius
 from abelfunctions.riemann_theta.riemann_theta import RiemannTheta
 
 
+class TestMaple(unittest.TestCase):
+    def setUp(self):
+        self.Omega1 = numpy.array(
+            [[1.j, 0.5, 0.5],
+             [0.5, 1.j, 0.5],
+             [0.5, 0.5, 1.j]], dtype=numpy.complex)
+
+    def test_value(self):
+        z = [0,0,0]
+        Omega = self.Omega1
+
+        value = RiemannTheta(z, Omega, epsilon=1e-14)
+        maple = 1.2362529854204190 - 0.52099320642367818e-10j
+        error = abs(value - maple)
+        self.assertLess(error, 1e-8)
+
+        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        value = RiemannTheta(w, Omega, epsilon=1e-14)
+        maple = 1.2544694041047501 - 0.77493173321770725j
+        error = abs(value - maple)
+        self.assertLess(error, 1e-8)
+
+    def test_first_derivatives(self):
+        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        Omega = self.Omega1
+
+        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1,0,0]])
+        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,1,0]])
+        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,1]])
+
+        maple_z1 = -5.7295900733729553 - 0.89199375315523345j
+        maple_z2 = -0.16300987772384356 - 0.65079269102999180j
+        maple_z3 = 1.0115406077003542 + 0.030528533907836019j
+
+        error_z1 = abs(value_z1 - maple_z1)
+        error_z2 = abs(value_z2 - maple_z2)
+        error_z3 = abs(value_z3 - maple_z3)
+
+        self.assertLess(error_z1, 1e-8)
+        self.assertLess(error_z2, 1e-8)
+        self.assertLess(error_z3, 1e-8)
+
+
+    def test_second_derivatives(self):
+        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        Omega = self.Omega1
+
+        H = RiemannTheta.oscillatory_part_hessian(w, Omega, epsilon=1e-14)
+
+        maple_00 = -2.160656081990225 + 14.02434682346524j
+        maple_01 = -1.483857302597929 - 0.9449250397349686j
+        maple_02 = 1.954110529051029 - 1.042434632145520j
+        maple_11 = 1.037397682580653 + 0.1077503940181105j
+        maple_12 = 0.09466454944980265 - 0.3593388338083318j
+        maple_22 = -0.3227275082474401 - 2.585609638196203j
+
+        error_00 = abs(H[0,0] - maple_00)
+        error_01 = abs(H[0,1] - maple_01)
+        error_02 = abs(H[0,2] - maple_02)
+        error_11 = abs(H[1,1] - maple_11)
+        error_12 = abs(H[1,2] - maple_12)
+        error_22 = abs(H[2,2] - maple_22)
+
+        self.assertLess(error_00, 1e-8)
+        self.assertLess(error_01, 1e-8)
+        self.assertLess(error_02, 1e-8)
+        self.assertLess(error_11, 1e-8)
+        self.assertLess(error_12, 1e-8)
+        self.assertLess(error_22, 1e-8)
+
+
 class TestRiemannThetaValues(unittest.TestCase):
     def setup(self):
         pass
@@ -80,6 +151,40 @@ class TestRiemannThetaValues(unittest.TestCase):
         grad2 = RiemannTheta.gradient(W,Omega)
         self.assertLess(numpy.linalg.norm(grad1-grad2), 1e-14)
 
+    def test_second_derivative_symmetric(self):
+        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        Omega = [[1.j, 0.5, 0.5],
+                 [0.5, 1.j, 0.5],
+                 [0.5, 0.5, 1.j]]
+
+        dz_01 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[1,0,0],[0,1,0]])
+        dz_10 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[0,1,0],[1,0,0]])
+        dz_02 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[1,0,0],[0,0,1]])
+        dz_20 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[0,0,1],[1,0,0]])
+        dz_12 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[0,1,0],[0,0,1]])
+        dz_21 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[0,0,1],[0,1,0]])
+
+        error_01_10 = abs(dz_01 - dz_10)
+        error_02_20 = abs(dz_02 - dz_20)
+        error_12_21 = abs(dz_12 - dz_21)
+
+        self.assertLess(error_01_10, 1e-8)
+        self.assertLess(error_02_20, 1e-8)
+        self.assertLess(error_12_21, 1e-8)
+
+
+    def test_symmetric_hessian(self):
+        pass
+
+
+    def test_hessian(self):
+        pass
 
     # def test_value_at_point(self):
     #     Omega = np.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
