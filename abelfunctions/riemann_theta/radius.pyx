@@ -157,7 +157,7 @@ def radius2(eps, r, g, T, derivs, accuracy_radius):
     r"""Compute the radius with two deriviatives."""
     pi = numpy.pi
     L = accuracy_radius
-    prodnormderiv = prod([numpy.array(d) for d in derivs])
+    prodnormderiv = prod([norm(d) for d in derivs])
     normTinv = norm(inv(T))
     lhs = (eps*(r/2.0)**g) / (2*pi*g*prodnormderiv*normTinv**2)
 
