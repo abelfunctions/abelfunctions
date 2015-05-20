@@ -110,7 +110,7 @@ class Jacobian(object):
         alpha, beta = self.components(z)
         alpha = fractional_part(alpha)
         beta = fractional_part(beta)
-        zmod = (alpha + numpy.dot(self.Omega, beta)).reshape((1,self.g))
+        zmod = alpha + numpy.dot(self.Omega, beta)
         return zmod
 
 
@@ -140,8 +140,7 @@ class Jacobian(object):
         # reduces z = alpha + Omega*beta into its fractional components alpha
         # and beta
         g = self.g
-        z = numpy.reshape(z,(g,1))
-        w = numpy.zeros((2*g,1), dtype=numpy.double)
+        w = numpy.zeros(2*g, dtype=numpy.double)
         w[:g] = z.real[:]
         w[g:] = z.imag[:]
 
@@ -241,9 +240,9 @@ class AbelMap_Function(object):
         #   A(P0,D) = \sum n_i A(P0,P_i)
         #
         D = args[0]
-        RS = D.RS
-        genus = RS.genus()
-        val = numpy.zeros(genus, dtype=numpy.complex)
+        X = D.RS
+        g = X.genus()
+        val = numpy.zeros(g, dtype=numpy.complex)
         for P,n in D:
             Pval = self._eval_primitive(P)
             val += n*Pval
@@ -254,11 +253,10 @@ class AbelMap_Function(object):
         #
         # TODO: use state so that the jacobian doesn't have to re recalculated
         # with every evaluation
-        J = Jacobian(RS)
-        tau = RS.period_matrix()
-        Ainv = numpy.linalg.inv(tau[:genus,:genus])
-        val.resize((genus,1))
-        val = numpy.dot(Ainv,val).reshape((1,genus))
+        J = Jacobian(X)
+        tau = X.period_matrix()
+        A = tau[:g,:g]
+        val = numpy.linalg.solve(A,val)
         return J(val)
 
     @cached_method

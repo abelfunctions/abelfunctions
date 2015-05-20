@@ -3,7 +3,7 @@ from abelfunctions.integralbasis import (
     integral_basis,
 )
 import sympy
-from sympy.abc import x,y
+from sympy.abc import x,y,z
 
 class TestIntegralBasis(AbelfunctionsTestCase):
 
@@ -61,4 +61,11 @@ class TestIntegralBasis(AbelfunctionsTestCase):
         f = x**2*y**3 - x**4 + 1
         a = integral_basis(f,x,y)
         b = [1, x*y, x**2*y**2]
+        self.assertEqual(a,b)
+
+    def test_issue86(self):
+        f = -x**7 + 2*x*z**5 + z**4
+        a = integral_basis(f,x,z)
+        b = [1, 2*x*z, 2*z*(2*x*z + 1)/x, 4*z**2*(2*x*z + 1)/x**3,
+             8*z**3*(2*x*z + 1)/x**5]
         self.assertEqual(a,b)

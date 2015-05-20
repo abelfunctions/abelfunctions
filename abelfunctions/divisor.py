@@ -122,8 +122,7 @@ class Divisor(object):
 
     def __eq__(self, other):
         if isinstance(other, Divisor):
-            if ((self.RS == other.RS) and
-                (self.dict.items() == other.dict.items())):
+            if (self.RS == other.RS) and (self.dict == other.dict):
                 return True
         return False
 

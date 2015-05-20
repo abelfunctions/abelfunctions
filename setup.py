@@ -18,9 +18,6 @@ To install for your user account (recommended) use:
     python setup.py install --user
 
 """
-
-__version__ = '1.0'
-
 import numpy
 
 import glob
@@ -195,7 +192,6 @@ from the Department of Applied Mathematics at the University of Washington.
 
 setup(
     name = 'abelfunctions',
-    version = __version__,
     description = 'A library for computing with Abelian functions, Riemann '
                   'surfaces, and algebraic curves.',
     long_description = long_description,

@@ -41,8 +41,8 @@ class TestJacobian(AbelfunctionsTestCase):
         g = self.X11.genus()
         J = Jacobian(self.X11)
 
-        v = 2*numpy.random.rand(g,1)
-        w = 3*numpy.random.rand(g,1)
+        v = 2*numpy.random.rand(g)
+        w = 3*numpy.random.rand(g)
         errorv = numpy.linalg.norm(J(v) - J(J(v)))
         errorw = numpy.linalg.norm(J(v) - J(J(v)))
 
@@ -55,8 +55,8 @@ class TestJacobian(AbelfunctionsTestCase):
         Omega = self.X11.riemann_matrix()
 
         # create a random lattice vector
-        alpha = numpy.random.randint(-5,5,size=(g,1))
-        beta = numpy.random.randint(-5,5,size=(g,1))
+        alpha = numpy.random.randint(-5,5,g)
+        beta = numpy.random.randint(-5,5,g)
         z = alpha + numpy.dot(Omega,beta)
         error = numpy.linalg.norm(J(z))
         self.assertLess(error, 1e-14)
@@ -70,9 +70,9 @@ class TestJacobian(AbelfunctionsTestCase):
         h1 = list(itertools.product((0,0.5),repeat=g))
         h2 = list(itertools.product((0,0.5),repeat=g))
         for hj in h1:
-            hj = numpy.array(hj, dtype=numpy.complex).reshape((g,1))
+            hj = numpy.array(hj, dtype=numpy.complex)
             for hk in h2:
-                hk = numpy.array(hk, dtype=numpy.complex).reshape((g,1))
+                hk = numpy.array(hk, dtype=numpy.complex)
                 z = hj + numpy.dot(Omega,hk)
                 error = numpy.linalg.norm(J(2*z))
                 self.assertLess(error, 1e-14)

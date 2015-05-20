@@ -65,7 +65,7 @@ import sympy
 import pdb
 
 from functools import wraps, update_wrapper
-from sympy import ( pprint, ratsimp, ceiling, RootOf, Dummy )
+from sympy import (ratsimp, ceiling, RootOf, Dummy)
 from .puiseux import puiseux, PuiseuxTSeries, PuiseuxXSeries
 from .utilities import rootofsimp
 
@@ -169,13 +169,16 @@ def compute_series_truncations(f, x, y, alpha):
     pt = puiseux(f,x,y,alpha,parametric=True,exact=True)
     px = [p for P in pt for p in P.xseries()]
 
-    # compute the orders necessary for the integral basis algorithm. the
-    # orders are on the Puiseux x-series (non-parametric) so scale by
-    # the ramification index of each series
+    # compute the orders necessary for the integral basis algorithm. the orders
+    # are on the Puiseux x-series (non-parametric) so scale by the ramification
+    # index of each series
     N = compute_expansion_bounds(px)
-    Nmax = max(N)
+    for i in range(len(N)):
+        e = px[i].ramification_index
+        N[i] = ceiling(N[i]*e)
+
+    order = max(N) + 1
     for pti in pt:
-        order = ceiling(Nmax*pti.ramification_index)
         pti.extend(order=order)
 
     # recompute the corresponding x-series with the extened terms
@@ -440,7 +443,7 @@ def evaluate_integral_basis_element(b,rki):
     x = rki.x
     y = rki.y
     alphak = rki.x0
-    order = rki.order + 1
+    order = rki.order
     zero = ((sympy.S(0),sympy.S(0)),)
     val = PuiseuxXSeries(f,x,y,alphak,zero,order=order)
 
@@ -487,7 +490,7 @@ def evaluate_A(a,b,rki):
     y = rki.y
     alphak = rki.x0
     zero = {sympy.S(0):0}
-    order = rki.order + 2
+    order = rki.order
     A = PuiseuxXSeries(f,x,y,alphak,zero,order=order)
     for ai,bi in zip(a[:d],b):
         term = evaluate_integral_basis_element(bi,rki)

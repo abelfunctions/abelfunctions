@@ -218,7 +218,8 @@ cdef class RiemannSurface:
         # determine a base_point, if not specified
         if self._base_point is None:
             a = min(bi.real - 1 for bi in discriminant_points)
-            self._base_point = a
+            aint = numpy.complex(numpy.floor(a))
+            self._base_point = aint
 
         # sort the discriminant points first by argument with the base
         # point and then by distance from the base point.
