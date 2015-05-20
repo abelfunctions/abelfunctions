@@ -83,16 +83,10 @@ def initialize_half_lattice_vectors(X):
 
     # compute a list of all vectors in {0,1/2}^g
     half = list(product((0,0.5),repeat=g))
-    half_lattice_vectors = []
-
-    # from each pair of vectors in {0,1/2}^g compute and store the
-    # corresponding half-lattice vector
-    for h1 in half:
-        h1 = numpy.array(h1, dtype=numpy.complex).reshape((g,1))
-        for h2 in half:
-            h2 = numpy.array(h2, dtype=numpy.complex).reshape((g,1))
-            h = h1 + dot(Omega,h2)
-            half_lattice_vectors.append(h)
+    half_lattice_vectors = numpy.array(
+        [h1 + dot(Omega,h2) for h1 in half for h2 in half],
+        dtype=numpy.complex
+    )
     return half_lattice_vectors
 
 def half_lattice_filter(half_lattice_vectors, J, C, D, epsilon=1e-8):
@@ -127,23 +121,20 @@ def half_lattice_filter(half_lattice_vectors, J, C, D, epsilon=1e-8):
         A filtered list of half-lattice vectors.
 
     """
+    # construct the set of "shifted" half-lattice vectors: the vectors
+    # J(h + A(D) - 0.5*A(C)) where h is a half-lattice vector
     Z = AbelMap(D) - 0.5*AbelMap(C)
+    shifted_half_lattice_vectors = map(J, half_lattice_vectors + Z)
 
-    # if we try a simple half_lattice_vectors.remove(h) then we get an
-    # error "ValueError: The truth value of an array with more than one
-    # element is ambiguous. Use a.any() or a.all()". Therefore, we need
-    # to do an index tracking in conjunction with pop
-    n = len(half_lattice_vectors)
-    j = 0
-    while j < n:
-        h = half_lattice_vectors[j]
-        kappa = J(h.T + Z)
-        theta = RiemannTheta.oscillatory_part(kappa, J.Omega, epsilon=epsilon)
-        if abs(theta) > epsilon:
-            half_lattice_vectors.pop(j)
-            n -= 1
-            j -= 1
-        j += 1
+    # evaluate Riemann theta at each of these half-lattice vectors.
+    theta_values = RiemannTheta.oscillatory_part(
+        shifted_half_lattice_vectors, J.Omega, epsilon=epsilon
+    )
+    theta_values = abs(theta_values)
+
+    # return only the half-lattice vectors for which the corresponding theta
+    # values are less than epsilon in absolute value
+    half_lattice_vectors = half_lattice_vectors[theta_values < epsilon]
     return half_lattice_vectors
 
 def find_regular_places(X, n):
