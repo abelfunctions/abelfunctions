@@ -34,10 +34,13 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'numpydoc',
+    'releases',
     ]
 
 numpydoc_show_class_members = False
 numpydoc_class_members_toctree = False
+
+releases_github_path = u'cswiercz/abelfunctions'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
