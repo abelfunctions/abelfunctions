@@ -20,9 +20,27 @@ References
 import unittest
 import numpy
 
+from numpy.random import randn
 from numpy.linalg import norm, cholesky
 from abelfunctions.riemann_theta.radius import radius
 from abelfunctions.riemann_theta.riemann_theta import RiemannTheta
+
+# try to import mpmath's jtheta function
+NO_JTHETA = False
+try:
+    from sympy.mpmath import jtheta
+except ImportError:
+    try:
+        from mpmath import jtheta
+    except ImportError:
+        NO_JTHETA = True
+
+def thetag1(z,tau,N=2048):
+    r"""Naive implementation of genus 1 theta function."""
+    return sum(numpy.exp(numpy.pi*1.j*tau*n**2 + 2.j*numpy.pi*n*z)
+               for n in range(-N,N))
+thetag1 = numpy.vectorize(thetag1, otypes=(numpy.complex,), excluded=(1,2))
+
 
 
 class TestMaple(unittest.TestCase):
@@ -185,6 +203,86 @@ class TestRiemannThetaValues(unittest.TestCase):
 
     def test_hessian(self):
         pass
+
+    def test_against_naive_implementation_genus1(self):
+        # tests the genus 1 Riemann theta function against the naive
+        # implementation written above (directly using the summation formula).
+
+        # first test the relative error using values close to the origin,
+        # avoiding the double-exponential growth
+        N = 64
+        sigma = 0.1
+        z = sigma*randn(N) + 1.j*sigma*randn(N)
+        z = z.reshape((N,1))
+        tau = [[1.0j]]
+
+        values1 = RiemannTheta(z,tau,epsilon=1e-16)
+        values2 = thetag1(z,tau[0][0])[:,0]
+
+        rel_error = abs((values1-values2)/values1)
+        rel_error_max = numpy.max(rel_error)
+        rel_error_avg = numpy.mean(rel_error)
+        self.assertLess(rel_error_max,1e-14)
+        self.assertLess(rel_error_avg,1e-14)
+
+        # next, test the relative error using larger magnitude values. we don't
+        # test the max error due to possible numerical roundoff issues
+        sigma = 3
+        z = sigma*randn(N) + 1.j*sigma*randn(N)
+        z = z.reshape((N,1))
+        tau = [[1.0j]]
+
+        values1 = RiemannTheta(z,tau,epsilon=1e-16)
+        values2 = thetag1(z,tau[0][0])[:,0]
+
+        rel_error = abs((values1-values2)/values1)
+        rel_error_avg = numpy.mean(rel_error)
+        self.assertLess(rel_error_avg,1e-14)
+
+        # repeat for different tau
+        tau = [[1.0 + 2.5j]]
+
+        values1 = RiemannTheta(z,tau,epsilon=1e-16)
+        values2 = thetag1(z,tau[0][0])[:,0]
+
+        rel_error = abs((values1-values2)/values1)
+        rel_error_avg = numpy.mean(rel_error)
+        self.assertLess(rel_error_avg,1e-14)
+
+    @unittest.skipIf(NO_JTHETA, 'Could not find sympy.mpmath.jtheta')
+    def test_against_sympy_jtheta(self):
+        N = 64
+        sigma = 2
+        z = sigma*randn(N) + 1.j*sigma*randn(N)
+        z = z.reshape((N,1))
+        tau = [[1.0j]]
+
+        # jtheta inputs
+        w = numpy.pi*z[:,0]
+        q = numpy.exp(numpy.pi*1.0j*tau[0][0])
+
+        values1 = RiemannTheta(z,tau,epsilon=1e-16)
+        values2 = numpy.array([jtheta(3,wi,q) for wi in w],
+                              dtype=numpy.complex)
+
+        rel_error = abs((values1-values2)/values1)
+        rel_error_avg = numpy.mean(rel_error)
+        self.assertLess(rel_error_avg,1e-14)
+
+        # repeat for different tau
+        tau = [[1.0 + 2.5j]]
+        q = numpy.exp(numpy.pi*1.0j*tau[0][0])
+
+        values1 = RiemannTheta(z,tau,epsilon=1e-16)
+        values2 = numpy.array([jtheta(3,wi,q) for wi in w],
+                              dtype=numpy.complex)
+
+        rel_error = abs((values1-values2)/values1)
+        rel_error_avg = numpy.mean(rel_error)
+        self.assertLess(rel_error_avg,1e-14)
+
+
+
 
     # def test_value_at_point(self):
     #     Omega = np.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
