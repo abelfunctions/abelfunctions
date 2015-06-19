@@ -5,8 +5,7 @@ This document presents a brief overview of the capabilities of Abelfunctions by
 working through a simple example. For extended examples and particular
 applications, please see the :doc:`indepth_tutorials/index` page.
 
-Riemann Surfaces
-----------------
+**Riemann Surfaces**
 
 One of the primary objects we can construct with abelfunctions is a Riemann
 surface. In particular, a Riemann surface :math:`X` obtained by desingularizing
@@ -31,8 +30,7 @@ corresponding information to determine the genus.
   >>> print X.genus()
   2
 
-Holomorphic Differentials
--------------------------
+**Holomorphic Differentials**
 
 We can compute a basis for the space of holomorphic differentials
 :math:`\{\tilde{\omega}_1, \ldots, \tilde{\omega}_g\}` defined on
@@ -47,8 +45,7 @@ We can compute a basis for the space of holomorphic differentials
   x**3/(2*x**3 + 3*y**2)
 
 
-Homology Basis
---------------
+**Homology Basis**
 
 Dual to the holomorphic differentials is the first homology group of
 :math:`X`. This space is spanned by a canonical basis of cycles :math:`\{ a_1,
@@ -79,8 +76,7 @@ and :math:`y` planes.
   :figwidth: 100%
 
 
-Period Matrices and Riemann Matrices
-------------------------------------
+**Period Matrices and Riemann Matrices**
 
 Using the above two ingredients, we can compute the period matrix :math:`\tau =
 [A \; \vert \; B] \in \mathbb{C}^{g \times 2g}` and Riemann matrix
@@ -119,8 +115,7 @@ We numerically verify that :math:`\Omega` is a Riemann matrix: a complex
   [ 0.464905  1.661722]
 
 
-Riemann Theta Functions
------------------------
+**Riemann Theta Functions**
 
 Another major feature of Abelfunctions is the ability to efficiently compute
 the Riemann theta function :math:`\theta : \mathbb{C}^g \times \mathfrak{h}_g`
