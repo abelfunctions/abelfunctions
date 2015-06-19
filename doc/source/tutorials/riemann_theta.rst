@@ -16,9 +16,7 @@ where :math:`\mathfrak{h}_g` is the space of :math:`g \times g` Riemann
 matrices. It can computed by calling ``RiemannTheta()``, which is located in
 :class:`abelfunctions.riemann_theta.riemann_theta.RiemannTheta` of the code.
 
-
-Evaluating Theta
-----------------
+**Evaluating Theta**
 
 First, we need a :math:`3 \times 3` Riemann matrix: a complex symmetric with
 positive definite imaginary part. Throughout this document we will use the
@@ -109,8 +107,7 @@ Second derivatives are computed similarly.
    (-5.5449651294619331+35.991137389193163j)
 
 
-Plotting Slices of Theta
-------------------------
+**Plotting Slices of Theta**
 
 Continuing with this example, we wish to evaluate :math:`\theta(z,\Omega)` on
 1-complex dimensional slice of :math:`\mathbb{C}^3` and plot the real an
