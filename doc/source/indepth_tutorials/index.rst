@@ -1,5 +1,5 @@
-In-Depth Tutorial
-=================
+In-Depth Tutorials
+==================
 
 Here we give a more in-depth view of abelfunctions's capabilities and
 objects.

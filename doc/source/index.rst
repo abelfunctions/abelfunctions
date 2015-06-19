@@ -20,7 +20,7 @@ Contents
 
    install
    quick_tutorial
-   indepth_tutorial/index.rst
+   indepth_tutorials/index.rst
    applications/index.rst
    reference/index.rst
    develop/index.rst
