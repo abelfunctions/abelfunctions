@@ -1,9 +1,10 @@
-Quick Tutorial
-==============
+Getting Started
+===============
 
 This document presents a brief overview of the capabilities of Abelfunctions by
 working through a simple example. For extended examples and particular
-applications, please see the :doc:`indepth_tutorials/index` page.
+applications, please see the :doc:`tutorials/index` page. See the
+:doc:`install` guide if you need to obtain and install Abelfunctions.
 
 **Riemann Surfaces**
 

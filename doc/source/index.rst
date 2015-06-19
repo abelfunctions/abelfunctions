@@ -6,31 +6,23 @@
 .. image:: _static/header.png
     :align: center
 
-`abelfunctions <http://github.com/cswiercz/abelfunctions>`_ is a Python library
-for computing with complex algebraic curves, Riemann surfaces, and Abelian
-functions. If this is your first time using abelfunctions then I suggest you
-begin with the :doc:`quick_tutorial`. See :doc:`reference/index` for a list
-of common functions as well as a complete reference to the source code.
+Abelfunctions is a library for computing with Abelian functions, Riemann
+surfaces, and algebraic curves. If you are new to Abelfunctions, begin with the
+:doc:`getting_started` guide. More tutorials, application areas, and complete
+software reference is presented in the documentation below.
+
 
 Contents
---------
+========
 
 .. toctree::
    :maxdepth: 2
 
    install
-   quick_tutorial
-   indepth_tutorials/index.rst
+   getting_started
+   tutorials/index.rst
    applications/index.rst
    reference/index.rst
    develop/index.rst
    changelog
    authors
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
