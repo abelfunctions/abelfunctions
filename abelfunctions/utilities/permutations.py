@@ -40,8 +40,8 @@ class Permutation(object):
         2. Permutations can be initialized by a list representing the
            permutation in cycle notation. Fixed cycles must be provided.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         l : iterable
             Either an iterable (list) of integers from `0` to `n-1` or
             an iterable of iterables.
@@ -207,8 +207,8 @@ def matching_permutation(a, b):
     elements of `a` and `b` need not be exactly the same but close
     enough to each other that it's unambiguous which elements match.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     a,b : iterable
         Lists of approximately the same elements.
 

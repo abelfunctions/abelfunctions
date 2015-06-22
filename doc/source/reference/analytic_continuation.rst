@@ -1,4 +1,4 @@
-.. automodule:: abelfunctions.riemann_surface_path
+.. automodule:: abelfunctions.analytic_continuation
     :members:
     :show-inheritance:
     :private-members:

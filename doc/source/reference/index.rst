@@ -35,8 +35,19 @@ source code are provided as well.
 .. toctree::
    :maxdepth: 1
 
-   puiseux
-   integralbasis
-   singularities
+   abelmap
+   analytic_continuation
+   analytic_continuation_smale
    differentials
+   divisor
+   integralbasis
+   polynomials
+   puiseux
+   riemann_constant_vector
+   riemann_surface
    riemann_surface_path
+   riemann_surface_path_factory
+   riemann_theta/index
+   singularities
+   xpath_factory
+   ypath_factory

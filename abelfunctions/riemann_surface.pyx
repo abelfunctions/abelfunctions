@@ -156,8 +156,8 @@ cdef class RiemannSurface:
     def show_paths(self, ax=None, *args, **kwds):
         """Plots all of the monodromy paths of the curve.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         ax : matplotlib.Axes
             The figure axes on which to plot the paths.
 

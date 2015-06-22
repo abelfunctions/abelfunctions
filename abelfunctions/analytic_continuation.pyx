@@ -14,7 +14,6 @@ Classes
 
   AnalyticContinuator
   AnalyticContinuatorPuiseux
-  AnalyticContinuatorSmale
 
 Functions
 ---------

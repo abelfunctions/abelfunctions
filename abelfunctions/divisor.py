@@ -13,8 +13,14 @@ Classes
     Divisor
     Place
 
+
 Functions
 ---------
+
+.. autosummary::
+
+    ZeroDivisor
+
 
 Examples
 --------
@@ -45,8 +51,11 @@ class Divisor(object):
     where the places :math:`P_i` are distinct.
 
     Attributes
-
     ----------
+    places : list
+        A list of the distinct places in this divisor.
+    multiplicities : list
+        The corresponding multiplicities of the places in this divisor.
 
     """
     @property
