@@ -856,11 +856,11 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     cpdef complex[:] evaluate(self, Differential omega, double[:] t):
         r"""Evaluates `omega` along the path at `N` uniform points.
 
-        .. todo::
+        .. note::
 
-            Note: right now it doesn't matter what the values in `t`
-            are. This function will simply turn `t` into a bunch of
-            uniformly distributed points between 0 and 1.
+            Right now it doesn't matter what the values in `t` are. This
+            function will simply turn `t` into a bunch of uniformly distributed
+            points between 0 and 1.
 
         Parameters
         ----------

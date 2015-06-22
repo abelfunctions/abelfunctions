@@ -1,4 +1,4 @@
-.. automodule:: abelfunctions.riemann_surface_path
+.. automodule:: abelfunctions.riemann_constant_vector
     :members:
     :show-inheritance:
     :private-members:

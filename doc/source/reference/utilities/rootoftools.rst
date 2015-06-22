@@ -1,4 +1,4 @@
-.. automodule:: abelfunctions.riemann_surface_path
+.. automodule:: abelfunctions.utilities.rootoftools
     :members:
     :show-inheritance:
     :private-members:

@@ -43,8 +43,8 @@ cdef class UnivariatePolynomial:
     def __cinit__(self,f,x):
         """Initialize a UnivariatePolynomial from a SymPy Poly.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         f : SymPy Poly
         x : SymPy symbol
             The polynomial and its independent varaible.
@@ -80,8 +80,8 @@ cdef class UnivariatePolynomial:
     cdef complex eval(self, complex z) nogil:
         """Evaluate the polynomial at the complex point `z`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         z : complex
 
         Returns
@@ -130,8 +130,8 @@ cdef class MultivariatePolynomial:
     def __cinit__(self,f,x,y):
         """Initialize a MultivariatePolynomial from a SymPy Poly.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         f : SymPy Poly
         x : SymPy symbol
         y : SymPy symbol
@@ -164,10 +164,9 @@ cdef class MultivariatePolynomial:
     cdef complex eval(self,complex z1,complex z2):
         """Evaluate the polynomial at the complex point `z1,z2`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         z1,z2 : complex
-
 
         Returns
         -------

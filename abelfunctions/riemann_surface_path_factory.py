@@ -134,8 +134,8 @@ class RiemannSurfacePathFactory(object):
     def show_paths(self, ax=None, *args, **kwds):
         r"""Plots all of the monodromy paths of the curve.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         ax : matplotlib.Axes
             The figure axes on which to plot the paths.
 
@@ -268,8 +268,7 @@ class RiemannSurfacePathFactory(object):
         return gamma
 
     def _path_to_regular_place(self, P):
-        r"""
-        Returns a path to a regular place on the surface.
+        r"""Returns a path to a regular place on the surface.
 
         A "regular" place :math:`P` is a place on the Riemann surface
         where the x-projection of the place is not a discriminant point
@@ -383,8 +382,8 @@ class RiemannSurfacePathFactory(object):
     def monodromy_path(self, bi):
         """Returns the monodromy path around the discriminant point `bi`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         bi : complex
             A discriminant point of the curve.
         nrots : optional, integer
@@ -430,9 +429,9 @@ class RiemannSurfacePathFactory(object):
         """Returns the c-cycles of the Riemann surface and the linear
         combination matrix defining the a- and b-cycles from the c-cycles.
 
-        The a- and b- cycles of the Riemann surface are formed from
-        linear combinations of the c-cycles. These linear combinations
-        are obtained from the :method:`linear_combinations` method.
+        The a- and b- cycles of the Riemann surface are formed from linear
+        combinations of the c-cycles. These linear combinations are obtained
+        from the :py::meth:`linear_combinations` method.
 
         .. note::
 
@@ -468,8 +467,8 @@ class RiemannSurfacePathFactory(object):
         """Constructs a :class:`RiemannSurfacePath` object from a list of
         x-path data.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         ypath : list
             A list fo tuples defining a y-path. The output of
             `self.a_cycles()`, `self.b_cycles()`, etc.

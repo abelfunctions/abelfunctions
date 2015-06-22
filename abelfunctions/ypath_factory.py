@@ -1,11 +1,10 @@
-"""
-Y-Skeleton
-==========
+"""Y-Path Factory :mod:`abelfunctions.ypath_factory`
+=================================================
 
-This module defines the y-skeleton of the Riemann surface. That is, a
-means of not only computing the a- and b-cycles of the first homology
-group of the Riemann surface but also mechanisms for travelling from one
-sheet to another on the Riemann surface.
+This module defines the y-skeleton of the Riemann surface. That is, a means of
+not only computing the a- and b-cycles of the first homology group of the
+Riemann surface but also mechanisms for travelling from one sheet to another on
+the Riemann surface.
 
 """
 import numpy
@@ -21,14 +20,12 @@ from .singularities import genus
 
 
 def find_cycle(pi, j):
-    """
-    Returns the cycle (as a list) of the permutation pi
-    containing j.
+    """Returns the cycle (as a list) of the permutation pi containing j.
 
-    Note: The ordering of a cycle is important for the homology functions
-    since cycles are used to index dictionaries. For example, although
-    "(0 7 4)" and "(7 4 0)" are the same cycle, this function outputs
-    the cycles sith the smallest element of the cycle first.
+    The ordering of a cycle is important for the homology functions since
+    cycles are used to index dictionaries. For example, although "(0 7 4)" and
+    "(7 4 0)" are the same cycle, this function outputs the cycles sith the
+    smallest element of the cycle first.
     """
     if isinstance(pi, list):
 	pi = Permutation(pi)
@@ -40,10 +37,11 @@ def find_cycle(pi, j):
 
 
 def smallest(l):
-    """
-    The cycles of the homology are written with their smallest sheet
-    number first. This function finds the smallest sheet number in the
-    cycle l = (sheet, branch point, sheet, branch point, ...)
+    """Returns a cycles with the smallest sheet appearing first.
+
+    The cycles of the homology are written with their smallest sheet number
+    first. This function finds the smallest sheet number in the cycle l =
+    (sheet, branch point, sheet, branch point, ...)
     """
     a = l[:]
 
@@ -57,9 +55,11 @@ def smallest(l):
 
 
 def reorder_cycle(c, j=None):
-    """
-    Returns a cycle (as a list) with the element "j" occuring first. If
-    "j" isn't provided then assume sorting by the smallest element
+    """Reorder a cycle.
+
+    Returns a cycle (as a list) with the element "j" occuring first. If "j"
+    isn't provided then assume sorting by the smallest element
+
     """
     n = len(c)
     try:
@@ -76,15 +76,16 @@ def reorder_cycle(c, j=None):
 
 
 def frobenius_transform(A,g):
-    """
-    This procedure brings any intersection matrix a to its canonical
-    form b by a transformation alpha * a * transpose(alpha)=b. If
-    2g=rank(a) and d is the size of the square matrix a, then b has
-    d-2g null rows and d-2g null columns. These are moved to the lower
-    right corner. On its diagonal, b has 2 gxg null blocks. Above the
-    diagonal is a gxg identity block. Below the diagonal is a gxg
-    negative identity block. The output of the procedure is the
-    transformation matrix alpha.
+    """Perform the Frobenius transform on the matrix `A`.
+
+    This procedure brings any intersection matrix a to its canonical form b by
+    a transformation alpha * a * transpose(alpha)=b. If 2g=rank(a) and d is the
+    size of the square matrix a, then b has d-2g null rows and d-2g null
+    columns. These are moved to the lower right corner. On its diagonal, b has
+    2 gxg null blocks. Above the diagonal is a gxg identity block. Below the
+    diagonal is a gxg negative identity block. The output of the procedure is
+    the transformation matrix alpha.
+
     """
     if not isinstance(A,numpy.matrix):
 	K = numpy.matrix(A, dtype=numpy.int)
@@ -172,16 +173,18 @@ def frobenius_transform(A,g):
 
 
 def tretkoff_graph(monodromy_group):
-    """
+    """Construct the Tretkoff graph from a monodromy group.
+
     There are two types of nodes:
 
-    - sheets: (integer) these occur on the even levels
+    * sheets: (integer) these occur on the even levels
 
-    - branch places: (complex, permutation) the first elements is the
-    projection of the place in the complex x-plane. the second element
-    is a cycle appearing in the monodromy element. (places above a branch
-    point are in 1-1 correspondence with the cycles of the permuation) these
-    occur on the odd levels
+    * branch places: (complex, permutation) the first elements is the
+      projection of the place in the complex x-plane. the second element is a
+      cycle appearing in the monodromy element. (places above a branch point
+      are in 1-1 correspondence with the cycles of the permuation) these occur
+      on the odd levels
+
     """
     base_point, base_sheets, branch_points, monodromy = monodromy_group
 
@@ -312,15 +315,14 @@ def tretkoff_graph(monodromy_group):
 
 
 def final_edges(C):
-    """
-    Returns a list of final edges from the homology graph.
+    """Returns a list of final edges from the homology graph.
 
     The final edges are those that define the c-cycles on the Riemann
-    surface. Note that the edges returned are such that the nodes of the
-    edge are _both_ final nodes.
+    surface. Note that the edges returned are such that the nodes of the edge
+    are _both_ final nodes.
 
-    The final edges are ordered such that the sheet number appears first
-    in the edge.
+    The final edges are ordered such that the sheet number appears first in the
+    edge.
 
     Input:
 
@@ -357,9 +359,10 @@ def final_edges(C):
 
 
 def intersection_matrix(final_edges, g):
-    """
-    Compute the intersection matrix of the c-cycles from the
-    Tretkoff graph and final edge data output by `tretkoff_graph()`.
+    """Returns the intersection matrix from a list of final edges.
+
+    Compute the intersection matrix of the c-cycles from the Tretkoff graph and
+    final edge data output by `tretkoff_graph()`.
 
     Input:
 
@@ -369,14 +372,15 @@ def intersection_matrix(final_edges, g):
 
     - g: the expected genus of the riemann surface as given by
       singularities.genus()
+
     """
     def intersection_number(ei,ej):
-	"""
-	Returns the intersection number of two edges of the Tretkoff graph.
+	"""Returns the intersection number of two edges of the Tretkoff graph.
 
 	Note: Python is smart and uses lexicographical ordering on lists which
 	is exactly what we need.
-	"""
+
+        """
 	ei_start,ei_end = ei
 	ej_start,ej_end = ej
 
@@ -426,8 +430,7 @@ def intersection_matrix(final_edges, g):
 
 
 def compute_c_cycles(tretkoff_graph, final_edges):
-    """
-    Returns the c-cycles of the Riemann surface.
+    """Returns the c-cycles of the Riemann surface.
 
     Input:
 
@@ -600,12 +603,11 @@ class YPathFactory(object):
     and rotation numbers, to take order to define homology basis cycles
     as well as sheet switching paths.
 
-    .. todo::
+    .. note::
 
         This class is a light wrapper around legacy code. This legacy
         code should eventually be made part of this class. What's
         implemented here is a temporary hack.
-
 
     Attributes
     ----------
@@ -615,18 +617,13 @@ class YPathFactory(object):
 
     Methods
     -------
-    a_cycles
-        Returns the y-paths of the a-cycles.
-    b_cycles
-        Returns the y-paths of the b-cycles.
-    c_cycles
-        Returns the y-paths of the c-cycles as well as a matrix
-        representing which linear combinations of the c-cycles make up
-        the a- and b- cycles. These data are useful for period matrix
-        optimization.
-    y_path_sheet_swap
-        Given two sheets, returns the y-path leading from the first
-        sheet to the second.
+
+    .. autosummary::
+
+        a_cycles
+        b_cycles
+        c_cycles
+        y_path_sheet_swap
 
     """
 
@@ -634,8 +631,8 @@ class YPathFactory(object):
         """Initializes the Y-Skeleton by computing the monodromy graph and
         homology cycles of the Riemann surface.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         RS : RiemannSurface
         base_sheets : complex, list
             An ordered list of the sheets above the base point.
@@ -679,8 +676,8 @@ class YPathFactory(object):
             ypath is starting at / closer to the base place and ending
             further away.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         ypath : list
             A list of nodes on the y-skeleton `self.C`.
 
@@ -725,8 +722,8 @@ class YPathFactory(object):
         """Returns a ypath from the base sheet of the Riemann surface to
         `sheet`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         sheet : int
             The index of the target sheet.
         """
@@ -748,8 +745,8 @@ class YPathFactory(object):
             This is simply a reversal of
             :py:meth:`ypath_from_base_to_sheet`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         sheet : int
             The index of the target sheet.
 
@@ -782,11 +779,11 @@ class YPathFactory(object):
             matrix giving the linear combination of c-cycles for each a-
             and b-cycle.
 
-        .. todo::
+        .. note::
 
             Move compress cycle to :py:class:`RiemannSurfacePathFactory`?
 
-        .. todo::
+        .. note::
 
             Delete legacy behavior of including sheet numbers in y-paths.
 
@@ -832,9 +829,9 @@ class YPathFactory(object):
         linear combination matrix defining the a- and b-cycles from the
         c-cycles.
 
-        The a- and b- cycles of the Riemann surface are formed from
-        linear combinations of the c-cycles. These linear combinations
-        are obtained from the :method:`linear_combinations` method.
+        The a- and b- cycles of the Riemann surface are formed from linear
+        combinations of the c-cycles. These linear combinations are obtained
+        from the :py::meth:`linear_combinations` method.
 
         .. note::
 

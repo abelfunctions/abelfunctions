@@ -1,9 +1,13 @@
 Writing Documentation
 =====================
 
-This document describes how to contribute to abelfunctions's
-documentation. All of the documentation is written using the `Sphinx
-<http://sphinx-doc.org/>`_ Python package.
+This document describes how to contribute to Abelfunctions's documentation. The
+following packages are required to build the documentation, in addition to the
+usual Abelfunctions :ref:`prerequisites <prerequisites>`:
+
+* `sphinx <http://sphinx-doc.org>`_
+* `releases <http://releases.readthedocs.org/en/latest/index.html>`_
+
 
 Documentation Structure
 -----------------------

@@ -1,4 +1,3 @@
-#cython: embedsignature=True
 r"""Riemann Theta Function :mod:`abelfunctions.riemann_theta.riemann_theta`
 =======================================================================
 
@@ -13,12 +12,16 @@ The primary module for computing the Riemann theta function.
 Classes
 -------
 
-RiemannTheta_Function
+.. autosummary::
+
+    RiemannTheta_Function
 
 Functions
 ---------
 
-oscillatory_part
+.. autosummary::
+
+    oscillatory_part
 
 References
 ----------
@@ -27,13 +30,17 @@ References
    Computing Riemann Theta Functions, Mathematics of Computation, 73, (2004),
    1417-1442.
 
-.. [DLMF] B. Deconinck, Digital Library of Mathematics Functions - Riemann Theta
-   Functions, http://dlmf.nist.gov/21
+.. [DLMF] B. Deconinck, Digital Library of Mathematics Functions - Riemann
+   Theta Functions, http://dlmf.nist.gov/21
 
 .. [SAGE] Computing Riemann theta functions in Sage with applications.
-   C. Swierczewski and B. Deconinck.Submitted for publication.  Available online
-   at http://depts.washington.edu/bdecon/papers/pdfs/Swierczewski_Deconinck1.pdf
+   C. Swierczewski and B. Deconinck.Submitted for publication.  Available
+   online at
+   http://depts.washington.edu/bdecon/papers/pdfs/Swierczewski_Deconinck1.pdf
 
+
+Examples
+--------
 
 Contents
 --------
@@ -152,11 +159,18 @@ cdef class RiemannTheta_Function(object):
 
     This class is globally instantiated as `RiemannTheta`.
 
+    Attributes
+    ----------
+    none
+
     Methods
     -------
-    eval
     exponential_part
     oscillatory_part
+    oscillatory_part_gradient
+    gradient
+    oscillatory_part_hessian
+    eval
 
     """
     def __init__(self, accuracy_radius=5):
@@ -335,16 +349,14 @@ cdef class RiemannTheta_Function(object):
 
         .. math::
 
-            \grad \theta(z,\Omega)
-            =
-            \left( \ldots, \partial_{z_i} \theta(z,\Omega), \ldots \right)
+            \grad \theta(z,\Omega) = \left( \ldots, \partial_{z_i} \theta(z,\Omega), \ldots \right)
 
-        where :math:`\partial_{z_i}` denote the directional derivative in the
+        where :math:`\partial_{z_i}` denotes the directional derivative in the
         :math:`[\ldots,0,1,0,\ldots]` direction. (The "1" occurs in the
-        :math:`i`th position.)
+        :math:`i` th position.)
 
         See Also
-        ---------
+        --------
         oscillatory_part_gradient
 
         Parameters

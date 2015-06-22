@@ -57,8 +57,8 @@ cdef double ABELFUNCTIONS_SMALE_ALPHA0 = 1.1884471871911697 #(13-2*sqrt(17))/4
 cdef int factorial(int n) nogil:
     """Fast evaluation of `n` factorial.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     n : int
 
     Returns
@@ -85,8 +85,8 @@ cdef complex newton(MultivariatePolynomial[:] df,
     :math:`x_{i+1}`, this function returns a complex number
     :math:`y_{i+1,j}` such that :math:`f(x_{i+1},y_{i+1,j}) = 0`.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     df : MultivariatePolynomial[:]
         A list of all of the y-derivatives of f, including the function
         f itself.
@@ -123,7 +123,7 @@ cdef double smale_beta(MultivariatePolynomial[:] df,
 
     The Smale beta function is simply the size of a Newton iteration
 
-    Arguments
+    Parameters
     ---------
     df : MultivariatePolynomial[:]
         A list of all of the y-derivatives of f, including the function
@@ -150,8 +150,8 @@ cdef double smale_gamma(MultivariatePolynomial[:] df,
                         complex yij):
     """Compute the Smale gamma function.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     df : MultivariatePolynomial
         a list of all of the y-derivatives of f (up to the y-degree)
     xip1 : complex
@@ -185,8 +185,8 @@ cdef double smale_alpha(MultivariatePolynomial[:] df,
                         complex yij):
     """Compute Smale alpha.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     df : MultivariatePolynomial
         a list of all of the y-derivatives of f (up to the y-degree)
     xip1 : complex
@@ -251,8 +251,8 @@ cdef class AnalyticContinuatorSmale(AnalyticContinuator):
         """Analytically continues the fibre `yi` from `xi` to `xip1` using
         Smale's alpha theory.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         gamma : RiemannSurfacePathPrimitive
             A Riemann surface path-type object.
         xi : complex

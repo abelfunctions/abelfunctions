@@ -246,11 +246,6 @@ cdef class Differential:
     of the Differential. This behavior may change after implementing
     different types of differentials.
 
-    Todo
-    ----
-    Implement different subclasses of differentials. (First, Second,
-    Thrid kind.)
-
     """
     def __cinit__(self, RS, *args):
         """Create a differential on the Riemann surface `RS`.
@@ -372,7 +367,7 @@ cdef class Differential:
                               double[:] t):
         r"""Evaluates `omega` along the path at `N` uniform points.
 
-        .. todo::
+        .. note::
 
             Note: right now it doesn't matter what the values in `t`
             are. This function will simply turn `t` into a bunch of

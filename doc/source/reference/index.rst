@@ -9,20 +9,10 @@ a comprehensive list of all functions written in abelfunctions but, rather, the
 functions and classes one will most likely interact with when solving problems
 using the software.
 
-* :class:`RiemannTheta`
-* :func:`RiemannTheta.oscillatory_part`
-* :func:`RiemannTheta.exponential_part`
-* :class:`RiemannSurface`
-* :meth:`RiemannSurface.riemann_matrix`
-* :meth:`RiemannSurface.period_matrix`
-* :meth:`RiemannSurface.path`
-* :meth:`RiemannSurface.holomorphic_oneforms`
-* :meth:`RiemannSurface.a_cycles`
-* :meth:`RiemannSurface.b_cycles`
-* :class:`AbelMap`
-* :class:`Jacobian`
-* :class:`RiemannConstantVector`
-
+* :class:`abelfunctions.riemann_surface.RiemannSurface`
+* :class:`abelfunctions.divisor.Place`
+* :class:`abelfunctions.divisor.Divisor`
+* (and several others)
 
 
 Module Reference
@@ -35,8 +25,20 @@ source code are provided as well.
 .. toctree::
    :maxdepth: 1
 
-   puiseux
-   integralbasis
-   singularities
+   abelmap
+   analytic_continuation
+   analytic_continuation_smale
    differentials
+   divisor
+   integralbasis
+   polynomials
+   puiseux
+   riemann_constant_vector
+   riemann_surface
    riemann_surface_path
+   riemann_surface_path_factory
+   riemann_theta/index
+   singularities
+   utilities/index
+   xpath_factory
+   ypath_factory

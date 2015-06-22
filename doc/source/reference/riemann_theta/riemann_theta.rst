@@ -1,4 +1,4 @@
-.. automodule:: abelfunctions.riemann_surface_path
+.. automodule:: abelfunctions.riemann_theta.riemann_theta
     :members:
     :show-inheritance:
     :private-members:

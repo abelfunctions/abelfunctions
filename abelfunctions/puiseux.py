@@ -31,11 +31,6 @@ References
 Examples
 --------
 
-Todo
-----
-
-* test y**2 - x: unique pair (-t**2, t)
-
 Contents
 --------
 

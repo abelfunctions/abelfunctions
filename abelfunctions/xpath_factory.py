@@ -1,8 +1,9 @@
-"""
-Monodromy
+"""X-Path Factory :mod:`abelfunctions.xpath_factory`
+=================================================
 
 Module for computing the monodromy group of the set of discriminant points
 of a complex plane algebraic curve.
+
 """
 
 import numpy
@@ -38,27 +39,16 @@ class XPathFactory(object):
 
     Methods
     -------
-    discriminant_points
-        Returns the discriminant points of the curve.
-    xpath_to_discriminant_point
-        Returns an x-path from the base point to the bounding circle
-        around a given discriminant point. (Implemented in subclasses.)
-    xpath_circle_discriminant_point
-        Returns an x-path parameterizing the bounding circle around a
-        given discriminant point with start and end equal to the ending
-        point of `xpath_to_discriminant_point()`. (Implemented in
-        subclasses.)
-    xpath_monodromy_path
-        Returns the x-path representing the monodromy path of the given
-        discriminant point. Used in computing the monodromy group of the
-        curve.
-    xpath_to_point
-        Returns an x-path to an arbitrary point in the complex
-        plane. (Implemented in subclasses.)
-    xpath_reverse
-        Reverses an x-path.
-    show_paths
-        Plots all of the monodromy paths of the curve.
+
+    .. autosummary::
+
+        discriminant_points
+        xpath_to_discriminant_point
+        xpath_circle_discriminant_point
+        xpath_monodromy_path
+        xpath_to_point
+        xpath_reverse
+        show_paths
 
     """
     def __init__(self, RS, base_point=None, kappa=3./5.):
@@ -67,8 +57,8 @@ class XPathFactory(object):
         Subclasses should overload how to compute a base point if none
         is provided.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         RS : RiemannSurface
         base_point : complex
         kappa : double
@@ -90,8 +80,8 @@ class XPathFactory(object):
     def _compute_radii(self, kappa=3./5.):
         """Returns the radii of the boudnding circles.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         kappa : double
             A scaling factor between 0.5 and 1.0. `kappa = 1.0` means
             that the bounding circles are taken to be as large as
@@ -111,8 +101,8 @@ class XPathFactory(object):
     def radius(self, bi):
         """Returns the raidus of the bounding circle around `bi`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         bi : complex
             A discriminant point of the algebraic curve.
 
@@ -148,8 +138,8 @@ class XPathFactory(object):
     def xpath_to_discriminant_point(self, bi):
         """Returns the xpath leading to the discriminant point `bi`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         bi : complex
             A discriminant point of the curve.
 
@@ -162,8 +152,8 @@ class XPathFactory(object):
 
         The sign of `nrots` indicates the sign of the direction.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         bi : complex
             A discriminant point of the curve.
         nrots : integer (default `1`)
@@ -179,8 +169,8 @@ class XPathFactory(object):
 
         The sign of `nrots` indicates the sign of the direction.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         bi : complex
             A discriminant point.
         nrots : integer (default `1`)
@@ -211,8 +201,8 @@ class XPathFactory(object):
         points but also stay sufficiently outside the bounding circles
         of the points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         nrots : integer, (default `1`)
             The number of rotations around infinity.
 
@@ -252,8 +242,8 @@ class XPathFactory(object):
     def xpath_to_point(self, x):
         """Returns an xpath to an arbitrary point `x`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x : complex
             A point on the complex x-sphere.
 
@@ -266,8 +256,8 @@ class XPathFactory(object):
         Useful for building the return path from a discriminant point to
         the base point.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         xpath : list
             A list of tuples defining lines and semicircles in the
             complex x-plane.
@@ -316,8 +306,8 @@ class XPathFactory(object):
     def show_paths(self, ax=None, *args, **kwds):
         """Plots all of the monodromy paths of the curve.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         ax : matplotlib.Axes
             The figure axes on which to plot the paths.
 
@@ -366,37 +356,26 @@ class XPathFactoryAbel(XPathFactory):
 
     Methods
     -------
-    See :py:class:`XPathFactory`. Additional methods and overloads are
-    listed below.
 
-    xpath_to_discriminant_point
-        Returns an x-path from the base point to the bounding circle
-        around a given discriminant point. (Implemented in subclasses.)
-    xpath_circle_discriminant_point
-        Returns an x-path parameterizing the bounding circle around a
-        given discriminant point with start and end equal to the ending
-        point of `xpath_to_discriminant_point()`. (Implemented in
-        subclasses.)
-    xpath_to_point
-        Returns an x-path to an arbitrary point in the complex
-        plane. (Implemented in subclasses.)
-    xpath_build_avoiding_path
-        Returns an xpath to an arbitrary point in the complex plane that
-        avoids the bounding circles of the discriminant points.
+    .. autosummary::
+
+        xpath_to_discriminant_point
+        xpath_circle_discriminant_point
+        xpath_to_point
+        xpath_build_avoiding_path
 
     References
     ----------
 
-    .. [1] B. Deconinck and M. Patterson, "Computing the Abel map",
-    Physica D: Nonlinear Phenomena, v. 237, no. 24, pp. 3214--3232,
-    2008.
+    .. [1] B. Deconinck and M. Patterson, "Computing the Abel map", Physica D:
+       Nonlinear Phenomena, v. 237, no. 24, pp. 3214--3232, 2008.
 
     """
     def xpath_to_discriminant_point(self, bi):
         """Returns the xpath leading to the discriminant point `bi`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         bi : complex
             A discriminant point of the curve.
 
@@ -411,8 +390,8 @@ class XPathFactoryAbel(XPathFactory):
 
         The sign of `nrots` indicates the sign of the direction.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         bi : complex
             A discriminant point of the curve.
         nrots : integer (default `1`)
@@ -432,12 +411,12 @@ class XPathFactoryAbel(XPathFactory):
     def xpath_to_point(self, x):
         """Returns an xpath to an arbitrary point `x`.
 
-        .. todo::
+        .. note::
 
             Implement this.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x : complex
             A point on the complex x-sphere.
 
