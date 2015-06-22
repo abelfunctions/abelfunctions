@@ -1,5 +1,5 @@
-"""
-abelfunctions: cache.py
+r"""Cache :mod:`abelfunctions.utilities.cache`
+==========================================
 
 Code for cacheing functions.
 

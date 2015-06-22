@@ -1,3 +1,8 @@
+r"""RootOf Tools :mod:`abelfunctions.utilities.rootoftools`
+=======================================================
+
+"""
+
 import sympy
 from sympy.polys import (cancel, NotInvertible)
 
