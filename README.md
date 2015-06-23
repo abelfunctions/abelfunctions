@@ -3,7 +3,6 @@ Abelfunctions
 
 [![Build Status](https://travis-ci.org/cswiercz/abelfunctions.svg?branch=master)](https://travis-ci.org/cswiercz/abelfunctions)
 
---------------------------------------------------------------------------------
 A library for computing with Abelian functions, Riemann surfaces, and algebraic
 curves. Abelfunctions is the Ph.D thesis work of Chris Swierczewski. Please see
 the [Documentation](http://abelfunctions.cswiercz.info) for more information.
