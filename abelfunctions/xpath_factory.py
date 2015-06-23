@@ -1,4 +1,4 @@
-"""X-Path Factory :mod:`abelfunctions.xpath_factory`
+r"""X-Path Factory :mod:`abelfunctions.xpath_factory`
 =================================================
 
 Module for computing the monodromy group of the set of discriminant points
@@ -39,16 +39,13 @@ class XPathFactory(object):
 
     Methods
     -------
-
-    .. autosummary::
-
-        discriminant_points
-        xpath_to_discriminant_point
-        xpath_circle_discriminant_point
-        xpath_monodromy_path
-        xpath_to_point
-        xpath_reverse
-        show_paths
+    discriminant_points
+    xpath_to_discriminant_point
+    xpath_circle_discriminant_point
+    xpath_monodromy_path
+    xpath_to_point
+    xpath_reverse
+    show_paths
 
     """
     def __init__(self, RS, base_point=None, kappa=3./5.):
@@ -356,13 +353,10 @@ class XPathFactoryAbel(XPathFactory):
 
     Methods
     -------
-
-    .. autosummary::
-
-        xpath_to_discriminant_point
-        xpath_circle_discriminant_point
-        xpath_to_point
-        xpath_build_avoiding_path
+    xpath_to_discriminant_point
+    xpath_circle_discriminant_point
+    xpath_to_point
+    xpath_build_avoiding_path
 
     References
     ----------

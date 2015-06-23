@@ -1,4 +1,4 @@
-"""Y-Path Factory :mod:`abelfunctions.ypath_factory`
+r"""Y-Path Factory :mod:`abelfunctions.ypath_factory`
 =================================================
 
 This module defines the y-skeleton of the Riemann surface. That is, a means of
@@ -617,13 +617,10 @@ class YPathFactory(object):
 
     Methods
     -------
-
-    .. autosummary::
-
-        a_cycles
-        b_cycles
-        c_cycles
-        y_path_sheet_swap
+    a_cycles
+    b_cycles
+    c_cycles
+    y_path_sheet_swap
 
     """
 
