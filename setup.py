@@ -181,20 +181,13 @@ classifiers = [
     'Operating System :: MaxOS'
     ]
 
-long_description = '''
-Abelfunctions is a library for computing with Abelian functions, Riemann
-surfaces, and algebraic curves. The primary goal of the application is to make
-computing with Abelian functions as ubiquitous as computing with trigonometric
-functions.  This framework is applied toward solving integrable systems of
-partial differential equations. It is the research work of Chris Swierczewski
-from the Department of Applied Mathematics at the University of Washington.
-'''
+exec(open('abelfunctions/version.py').read())
 
 setup(
     name = 'abelfunctions',
+    version = __version__,
     description = 'A library for computing with Abelian functions, Riemann '
                   'surfaces, and algebraic curves.',
-    long_description = long_description,
     author = 'Chris Swierczewski',
     author_email = 'cswiercz@gmail.com',
     url = 'https://github.com/cswiercz/abelfunctions',
