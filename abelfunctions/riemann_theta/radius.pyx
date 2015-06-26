@@ -44,7 +44,7 @@ from scipy.special import gamma, gammaincc, gammainccinv
 from scipy.optimize import fsolve
 
 cdef extern from *:
-    void lll_reduce(double*, int, double, double);
+    void lll_reduce(double*, int, double, double)
 
 
 def lll(M, lc=.5, uc=.75):
