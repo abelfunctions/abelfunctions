@@ -119,9 +119,6 @@ packages = [
     ]
 
 ext_modules = [
-    Extension('abelfunctions.abelmap',
-              sources=[os.path.join('abelfunctions','abelmap.pyx')]
-          ),
     Extension('abelfunctions.riemann_surface',
               sources=[os.path.join('abelfunctions','riemann_surface.pyx')]
           ),
