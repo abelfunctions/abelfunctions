@@ -17,16 +17,6 @@ Thumbs.db
 
 # Cython output files #
 #######################
-Cython-Riemann.c
-Cython-Riemann.html
-riemanntheta_cy.c
-riemanntheta_cy.html
-lattice_reduction.c
-lattice_reduction.html
-riemann_surface.c
-riemann_surface.html
-riemann_surface_path.c
-riemann_surface_path.html
 abelmap.c
 abelmap.html
 analytic_continuation.c
@@ -35,8 +25,20 @@ analytic_continuation_smale.c
 analytic_continuation_smale.html
 differentials.c
 differentials.html
+integer_points.c
+integer_points.html
+lattice_reduction.c
+lattice_reduction.html
 polynomials.c
 polynomials.html
+radius.c
+radius.html
+riemann_theta.c
+riemann_theta.html
+riemann_surface.c
+riemann_surface.html
+riemann_surface_path.c
+riemann_surface_path.html
 
 
 # Documentation #
