@@ -108,7 +108,7 @@ class test_abelfunctions(Command):
     def run(self):
         loader = unittest.TestLoader()
         suite = loader.discover('abelfunctions')
-        result = unittest.TextTestRunner(verbosity=1).run(suite)
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
         errno = not result.wasSuccessful()
         sys.exit(errno)
 
