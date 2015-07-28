@@ -146,10 +146,14 @@ class TestMaple(unittest.TestCase):
         Omega = self.Omega4
         w = [-0.37704918-0.18456279j, 0.63934426+0.42591413j,
              0.54918033+0.09937996j, -0.21721311-0.07808426j]
-        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1,0,0,0]])
-        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,1,0,0]])
-        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,1,0]])
-        value_z4 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,0,1]])
+        value_z1 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[1,0,0,0]])
+        value_z2 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[0,1,0,0]])
+        value_z3 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[0,0,1,0]])
+        value_z4 = RiemannTheta.oscillatory_part(
+            w, Omega, epsilon=1e-14, derivs=[[0,0,0,1]])
 
         maple_z1 = 1.723280564 + 1.281445835j
         maple_z2 = -1.507523639 + 2.909483373j
