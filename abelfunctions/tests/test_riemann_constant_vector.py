@@ -7,6 +7,7 @@ import unittest
 
 from abelfunctions import (AbelMap, Jacobian, RiemannTheta,
                            RiemannConstantVector)
+from abelfunctions.divisor import ZeroDivisor
 from numpy.linalg import norm
 from sympy import prod
 from sympy.abc import x,y,z,t
@@ -87,29 +88,60 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         degree = oneforms[3].valuation_divisor().degree
         self.assertEqual(degree,2*g-2)
 
-    def test_canonical_X11(self):
+    def test_canonical_X11_0(self):
         X = self.X11
         J = Jacobian(X)
         g = X.genus()
         P0 = X.base_place()
-
         oneforms = X.holomorphic_oneforms()
-        C = [omega.valuation_divisor() for omega in oneforms]
+        C = oneforms[0].valuation_divisor()
+        W = 2*RiemannConstantVector(P0) + AbelMap(C)
+        self.assertLess(norm(J(W)),1e-7)
 
-        # these fail
-        W = 2*RiemannConstantVector(P0) + AbelMap(C[0])
-        W = J(W)
-        self.assertLess(norm(W),1e-7)
+    def test_canonical_X11_1(self):
+        X = self.X11
+        J = Jacobian(X)
+        g = X.genus()
+        P0 = X.base_place()
+        oneforms = X.holomorphic_oneforms()
+        C = oneforms[1].valuation_divisor()
+        W = 2*RiemannConstantVector(P0) + AbelMap(C)
+        self.assertLess(norm(J(W)),1e-7)
 
-        W = 2*RiemannConstantVector(P0) + AbelMap(C[1])
-        W = J(W)
-        self.assertLess(norm(W),1e-7)
+    def test_canonical_X11_2(self):
+        X = self.X11
+        J = Jacobian(X)
+        g = X.genus()
+        P0 = X.base_place()
+        oneforms = X.holomorphic_oneforms()
+        C = oneforms[2].valuation_divisor()
+        W = 2*RiemannConstantVector(P0) + AbelMap(C)
+        self.assertLess(norm(J(W)),1e-7)
 
-        W = 2*RiemannConstantVector(P0) + AbelMap(C[2])
-        W = J(W)
-        self.assertLess(norm(W),1e-7)
+    def test_canonical_X11_3(self):
+        X = self.X11
+        J = Jacobian(X)
+        g = X.genus()
+        P0 = X.base_place()
+        oneforms = X.holomorphic_oneforms()
+        C = oneforms[3].valuation_divisor()
+        W = 2*RiemannConstantVector(P0) + AbelMap(C)
+        self.assertLess(norm(J(W)),1e-7)
 
-        # this one succeeds
-        W = 2*RiemannConstantVector(P0) + AbelMap(C[3])
-        W = J(W)
-        self.assertLess(norm(W),1e-7)
+class TestErrors(AbelfunctionsTestCase):
+    r"""Tests that certain errors are raised when incorrect input is given."""
+
+    def test_degree_requirement(self):
+        X = self.X11
+        P = X.base_place()
+        C = ZeroDivisor(X)
+        with self.assertRaises(ValueError):
+            RiemannConstantVector(P,C=C)
+
+    def test_same_surface_requirement(self):
+        X11 = self.X11
+        X2 = self.X2
+        P = X11.base_place()
+        C = (2*X11.genus()-2)*X2.base_place() # satisfies degree requirement
+        with self.assertRaises(ValueError):
+            RiemannConstantVector(P,C=C)
