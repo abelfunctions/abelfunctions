@@ -1,4 +1,5 @@
 language: python
+sudo: false
 
 # note: abelfunctions depends on the git version of sympy due to a related bug
 matrix:
