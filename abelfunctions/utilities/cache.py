@@ -8,86 +8,35 @@ Authors:
 - Chris Swierczewski (November 2012)
 """
 
-from functools import partial
+import decorator
 
-def cached_function(f):
-    r"""Memoization decorator for functions taking multiple arguments.
+def cached_function(obj):
+    r"""Decorator for argument and keyword caching.
 
-    Parameters
-    ----------
-    f : function
+    This memoizing decorator caches over arguments as well as
+    keywords. Including keywords does come at a large performance cost but is
+    completely general.
 
-    References
-    ----------
-    Taken from `http://code.activestate.com/recipes/578231-probably-the-fastest-memoization-decorator-in-the-/`.
-    """
-    class memodict(dict):
-        def __getitem__(self, *key):
-            return dict.__getitem__(self, key)
-
-        def __missing__(self, key):
-            ret = self[key] = f(*key)
-            return ret
-
-    return memodict().__getitem__
-
-
-def cached_function_fast(f):
-    r"""Memoization decorator for functions taking a single argument.
+    The use of ``decorator.decorator`` ensures that function signatures,
+    documentation, etc. pass along to the decorated function.
 
     Parameters
     ----------
-    f : function
+    obj : object
 
-    References
-    ----------
-    Taken from `http://code.activestate.com/recipes/578231-probably-the-fastest-memoization-decorator-in-the-/`.
+    Returns
+    -------
+    decorated : function or instancemethod
     """
-    class memodict(dict):
-        def __missing__(self, key):
-            ret = self[key] = f(key)
-            return ret
-    return memodict().__getitem__
+    cache = obj.cache = {}
+    def memoizer(obj, *args, **kwargs):
+        key = str(args) + str(kwargs)
+        if key not in cache:
+            cache[key] = obj(*args, **kwargs)
+        return cache[key]
 
+    decorated = decorator.decorator(memoizer, func=obj)
+    return decorated
 
-class cached_method(object):
-    """Memoization decorator for class methods.
-
-    The return value from a given method invocation will be cached on
-    the instance whose method was invoked. All arguments passed to a
-    method decorated with memoize must be hashable.
-
-    If a memoized method is invoked directly on its class the result will not
-    be cached.
-
-    References
-    ----------
-
-    http://code.activestate.com/recipes/577452-a-memoize-decorator-for-instance-methods/
-    """
-    def __init__(self, func):
-        self.func = func
-
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self.func
-        pobj = partial(self, obj)
-        pobj.__doc__ = self.func.__doc__
-        pobj.__name__ = self.func.__name__
-        pobj.__module__ = self.func.__module__
-        return pobj
-
-    def __call__(self, *args, **kw):
-        obj = args[0]
-        try:
-            cache = obj.__cache
-        except AttributeError:
-            cache = obj.__cache = {}
-
-        key = (self.func, args[1:], frozenset(kw.items()))
-        try:
-            res = cache[key]
-        except KeyError:
-            res = cache[key] = self.func(*args, **kw)
-        return res
-
+cached_function_fast = cached_function
+cached_method = cached_function
