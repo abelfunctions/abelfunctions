@@ -1,11 +1,28 @@
 r"""Cache :mod:`abelfunctions.utilities.cache`
 ==========================================
 
-Code for cacheing functions.
+Module defining cached function decorators.
 
-Authors:
+The decorator :func:`cached_function` works with instance methods as well. It
+relies on the ``decorator`` module for forwarding function signatures and
+documentation. (Results in poorer caching performance than some other decorator
+designs but doesn't break the reference documenation.)
 
-- Chris Swierczewski (November 2012)
+Functions
+---------
+
+.. autosummary::
+
+    cached_function
+    cached_function_fast
+    cached_method
+
+Examples
+--------
+
+Contents
+--------
+
 """
 
 import decorator
@@ -22,7 +39,7 @@ def cached_function(obj):
 
     Parameters
     ----------
-    obj : object
+    obj : function object
 
     Returns
     -------
@@ -35,7 +52,7 @@ def cached_function(obj):
             cache[key] = obj(*args, **kwargs)
         return cache[key]
 
-    decorated = decorator.decorator(memoizer, func=obj)
+    decorated = decorator.decorator(memoizer, obj)
     return decorated
 
 cached_function_fast = cached_function
