@@ -15,4 +15,5 @@ from .permutations import (
 
 from .rootoftools import (
     rootofsimp,
+    all_roots,
     )

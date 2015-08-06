@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :enhancement:`108` Compute roots of polynomials with ``RootOf`` in
+  coefficients
 * :docs:`91` Complete reference section of documentation
 
   * Every file in Abelfunctions should now have a reference to it in the
