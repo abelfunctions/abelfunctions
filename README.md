@@ -1,6 +1,8 @@
 Abelfunctions
 =============
 
+> **Notice:** I am in the process of rewriting Abelfunctions to use Sage (www.sagemath.org) exclusively. This is a large undertaking but will vastly improve the performance and range of problems the software can solve. The primary motivation behind this rewrite is due to Sympy's minimal support for computing over number fields. (In particular, the lacking `RootOf` construct.) See [Issue #83](https://github.com/cswiercz/abelfunctions/issues/83) for additional motivation behind this rewrite.
+
 [![Build Status](https://travis-ci.org/cswiercz/abelfunctions.svg?branch=master)](https://travis-ci.org/cswiercz/abelfunctions)
 
 A library for computing with Abelian functions, Riemann surfaces, and algebraic
