@@ -17,20 +17,14 @@ Thumbs.db
 
 # Cython output files #
 #######################
-abelmap.c
-abelmap.html
-analytic_continuation.c
-analytic_continuation.html
-analytic_continuation_smale.c
-analytic_continuation_smale.html
-differentials.c
-differentials.html
+complex_path.c
+complex_path.html
 integer_points.c
 integer_points.html
 lattice_reduction.c
 lattice_reduction.html
-polynomials.c
-polynomials.html
+puiseux_series_ring_element.c
+puiseux_series_ring_element.html
 radius.c
 radius.html
 riemann_theta.c

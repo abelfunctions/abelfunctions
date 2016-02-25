@@ -2,15 +2,15 @@ r"""Differentials :mod:`abelfunctions.differentials`
 ================================================
 
 This module contains functions for computing a basis of holomorphic
-differentials of a Riemann surface given by a complex plane algebraic
-curve :math:`f \in \mathbb{C}[x,y]`. A differential :math:`\omega =
-h(x,y)dx` defined on a Riemann surface :math:`X` is holomorphic on
-:math:`X` if it is holomorphic at every point on :math:`X`.
+differentials of a Riemann surface given by a complex plane algebraic curve
+:math:`f \in \mathbb{C}[x,y]`. A differential :math:`\omega = h(x,y)dx` defined
+on a Riemann surface :math:`X` is holomorphic on :math:`X` if it is holomorphic
+at every point on :math:`X`.
 
 The function :func:`differentials` computes the basis of holomorphic
 differentials from an input algebraic curve :math:`f = f(x,y)`. The
-differentials themselves are encapsulated in a :class:`Differential`
-Cython class.
+differentials themselves are encapsulated in a :class:`Differential` Cython
+class.
 
 Classes
 -------
@@ -30,8 +30,8 @@ Functions
 References
 ----------
 
-.. [Mnuk] M. Mnuk, "An algebraic approach to computing adjoint curves",
-   Journal of Symbolic Computation, vol. 23 (2-3), pp. 229–40, 1997.
+.. [Mnuk] M. Mnuk, "An algebraic approach to computing adjoint curves", Journal
+   of Symbolic Computation, vol. 23 (2-3), pp. 229-40, 1997.
 
 Examples
 --------
@@ -40,191 +40,212 @@ Contents
 --------
 
 """
+from abelfunctions.divisor import Divisor, Place
+from abelfunctions.integralbasis import integral_basis
+from abelfunctions.puiseux import puiseux
+from abelfunctions.singularities import singularities, _transform, genus
+
+from sage.all import solve, infinity, CC, fast_callable
+from sage.rings.polynomial.all import PolynomialRing
+from sage.rings.rational_field import QQ
+from sage.rings.qqbar import QQbar
+
 import numpy
-import sympy
-import matplotlib
-import matplotlib.pyplot as plt
+# import matplotlib
+# import matplotlib.pyplot as plt
 
-from .divisor import Divisor, Place
-from .integralbasis import integral_basis
-from .polynomials cimport MultivariatePolynomial
-from .puiseux import puiseux
-from .riemann_surface_path cimport RiemannSurfacePathPrimitive
-from .singularities import singularities, _transform, genus
-from .utilities import cached_function
-
-cimport cython
-
-def mnuk_conditions(g, u, v, b, P, c):
+def mnuk_conditions(g, b, generic_adjoint):
     """Determine the Mnuk conditions on the coefficients of :math:`P`.
 
-    Determine the conditions on the coefficients `c` of `P` at the
-    integral basis element `b` modulo the curve `g = g(u,v)`. See [Mnuk]
-    for details.
+    Determine the conditions on the coefficients `c` of `P` at the integral
+    basis element `b` modulo the curve `g = g(u,v)`. See [Mnuk] for details.
 
     Parameters
     ----------
-    g : sympy.Expr
-    u : sympy.Symbol
-    v : sympy.Symbol
-    b : sympy.Expr
-        An integral basis element.
-    P : sympy.Expr
-        A generic adjoint polynomial as provided by
-        :func:`differentials`. Only one instance is created for caching
-        and performance purposes.
-    c : list, sympy.Symbol
-        A list of the unknown symbolic coefficients we wish to solve
-        for.
+    g : curve
+        An algebraic curve.
+    b : integral basis function
+        An an element of the basis of the integral closure of the coordinate
+        ring of `g`. See :func:`abelfunctions.integralbasis.integral_basis`.
+    generic_adjoint : polynomial
+        A generic adjoint polynomial as provided by :func:`differentials`. Only
+        one instance is created for caching and performance purposes.
 
     Returns
     -------
-    list, sympy.Expr
-        A list of expressions from which a system of equations is build
-        to determine the differentials.
+    conditions : list
+        A list of expressions from which a system of equations is build to
+        determine the differentials.
 
     """
-    numer,denom = b.as_numer_denom()
+    # extract rings. the generic adjoint should be a member of R[*c][u,v] where
+    # *c is a vector of the indeterminants. we will need to convert it to a
+    # polynomial in R[u,v,*c] and then back (see below)
+    R = g.parent()
+    S = generic_adjoint.parent()
+    B = S.base_ring()
+    c = B.gens()
+    T = QQbar[R.variable_names() + B.variable_names()]
 
-    # reduce b*P modulo g
-    expr = numer.as_poly(v,u,*c) * P.as_poly(v,u,*c, domain='QQ[I]')
-    q,r = sympy.reduced(expr,[sympy.poly(g,v,u,*c)])
+    # compute b_num(x,y) * P(x,y) and reduce modulo the defining polynomial g.
+    # we do this by casting the polynomial into the ring QQbar(x,*c)[y]. (the
+    # coefficients of y in g need to be units)
+    B = PolynomialRing(QQbar, [R.variable_names()[0]] + list(B.variable_names()))
+    Q = B.fraction_field()[R.variable_names()[1]]
+    u,v = map(Q,R.gens())
+    numer = b.numerator()
+    denom = b.denominator()
+    expr = numer(u,v) * generic_adjoint(u,v)
+    modulus = g(u,v)
+    r_reduced_mod_g = expr % modulus
 
-    # divide by the largest power of x appearing in the denominator.
-    # this is sufficient since we've shifted the curve and its
-    # singularity to appear at
-    try:
-        mult = sympy.roots(denom.as_poly(u))[sympy.S(0)]
-    except KeyError:
-        mult = 0
+    # now mod out by the denominator to get the remaining component, R(x,y). we
+    # need to cast into the ring QQbar[y,*c][x] in order to do so. (note that
+    # we don't need a base fraction field since the denominator is univariate
+    # and therefore the leading coefficient is always a unit)
+    u,v = map(T, R.gens())
+    r = r_reduced_mod_g(v).numerator()
+    r_reduced_mod_denom = r.polynomial(u) % T(denom).polynomial(u)
 
-    r = r.as_poly(u,v)
-    coeffs = r.coeffs()
-    monoms = r.monoms()
-    conditions = [coeff for coeff,monom in zip(coeffs,monoms)
-                  if monom[0] < mult]
+    # finally, coerce the result to QQbar[*c][x,y] in order to obtain the
+    # coefficients as linear combinations of the c_ij's.
+    r = r_reduced_mod_denom(u)  # first need to coerce to "largest" ring, T
+    u,v = map(S, R.gens())
+    c = map(S, c)
+    args = [u,v] + c
+    r = r(*args)
+    conditions = r.coefficients()
     return conditions
 
-def differentials(RS):
-    """Returns a basis of holomorphic differentials on Riemann surface.
+def recenter_curve(g, singular_point):
+    r"""Returns a curve centered at a given singular point.
 
-    The surface is given by the desingularization and compactification
-    of the affine complex plane algebraic curve `f = f(x,y)`.
+    Given a singular point :math:`(x : y : z) = (\alpha : \beta : \gamma)`on a
+    Riemann surface :func:`recenter_curve` returns an affine curve :math:`h =
+    h(u,v)` such that the singularity occurs at :math:`u = 0` where
+
+    * :math:`u,v = x,y` if :math:`\gamma = 1`
+    * :math:`u,v = x,z` if :math:`\gamma = 0`
+
+    :func:`recenter_curve` is written in such a way to preserve the base ring
+    of the original curve in the case when it's a polynomial ring. For example,
+    if :math:`g \in R[c][x,y]` then `h \in R[c][u,v]`.
+
+    See Also
+    --------
+    abelfunctions.singularities._transform : recenters a given curve at the
+    singular point such that the singularity occurs at :math:`u = u0`
+
+    """
+    # recenter the curve and adjoint polynomial at the singular point: find
+    # the affine plane u,v such that the singularity occurs at u=0
+    gsing,u0,v0 = _transform(g,singular_point)
+    R = gsing.parent()
+    u,v = R.gens()
+    h = gsing(u+u0,v)
+    return h
+
+
+def differentials_numerators(f):
+    """Return the numerators of a basis of holomorphic differentials on a Riemann
+    surface.
 
     Parameters
     ----------
-    f : sympy.Expr
-    x : sympy.Symbol
-    y : sympy.Symbol
+    f : plane algebraic curve
 
     Returns
     -------
-    list, Differential
+    differentials : list
+        A list of :class:`Differential`s representing *a* basis of Abelian
+        differentials of the first kind.
 
     """
-    f = RS.f
-    x = RS.x
-    y = RS.y
-    z = sympy.Dummy('z')
+    # homogenize and compute total degree
+    R = f.parent().change_ring(QQbar)
+    x,y = R.gens()
+    d = f.total_degree()
 
-    # compute the "total degree" (Poly.total_degree doesn't give the
-    # desired result). This is the largest monomial degree in the sum of
-    # the degrees in both x and y.
-    d = max(map(sum,f.as_poly(x,y).monoms()))
-    n = sympy.degree(f,y)
+    # construct the generalized adjoint polynomial. we want to think of it as
+    # an element of B[*c][x,y] where B is the base ring of f and *c are the
+    # indeterminates
+    cvars = ['c_%d_%d'%(i,j) for i in range(d-2) for j in range(d-2)]
+    vars = list(R.variable_names()) + cvars
+    C = PolynomialRing(QQbar, cvars)
+    S = PolynomialRing(C, [x,y])
+    T = PolynomialRing(QQbar, vars)
+    c = S.base_ring().gens()
+    x,y = S(x),S(y)
+    P = sum(c[j+(d-2)*i] * x**i * y**j
+            for i in range(d-2) for j in range(d-2)
+            if i+j <= d-3)
 
-    # define the "generalized" adjoint polynomial.
-    c = sympy.symarray('c',(d-2,d-2)).tolist()
-    P = sum( c[i][j] * x**i * y**j
-             for i in range(d-2) for j in range(d-2)
-             if i+j <= d-3)
-    c = [cij for ci in c for cij in ci]
-
-    # for each singular point [x:y:z] = [alpha:beta:gamma], map f onto
-    # the "most convenient and appropriate" affine subspace, (u,v), and
-    # center at u=0. determine the conditions on P
-    S = singularities(f,x,y)
+    # for each singular point [x:y:z] = [alpha:beta:gamma], map f onto the
+    # "most convenient and appropriate" affine subspace, (u,v), and center at
+    # u=0. determine the conditions on P
+    singular_points = singularities(f)
     conditions = []
-    for singular_pt,(m,delta,r) in S:
-        # recenter the curve and adjoint polynomial at the singular
-        # point: find the affine plane u,v such that the singularity
-        # occurs at u=0
-        g,u,v,u0,v0 = _transform(f,x,y,z,singular_pt)
-        g = g.subs(u,u+u0)
-        Ptilde,u,v,u0,v0 = _transform(P,x,y,z,singular_pt)
-        Ptilde = Ptilde.subs(u,u+u0)
+    for singular_point, _ in singular_points:
+        # recenter the curve and adjoint polynomial at the singular point: find
+        # the affine plane u,v such that the singularity occurs at u=0
+        g = recenter_curve(f, singular_point)
+        Ptilde = recenter_curve(P, singular_point)
 
         # compute the intergral basis at the recentered singular point
         # and determine the Mnuk conditions of the adjoint polynomial
-        b = integral_basis(g,u,v)
+        b = integral_basis(g)
         for bi in b:
-            conditions_bi = mnuk_conditions(g,u,v,bi,Ptilde,c)
+            conditions_bi = mnuk_conditions(g, bi, Ptilde)
             conditions.extend(conditions_bi)
 
-    # solve the system of equations and retreive the coefficents of the
-    # c_ij's contained in the general solution
-    sols = sympy.solve(conditions, c)
-    P = P.subs(sols).as_poly(*c)
-    numerators = [coeff for coeff in P.coeffs() if coeff != 0]
-    dfdy = sympy.diff(f,y)
-    differentials = [AbelianDifferentialFirstKind(RS,numer,dfdy)
-                     for numer in numerators]
-    return differentials
+    # reduce the general adjoint modulo the ideal generated by the integral
+    # basis conditions. the coefficients of the remaining c_ij's form the
+    # numerators of a basis of abelian differentials of the first kind.
+    #
+    # additionally, we try to coerce the conditions to over QQ for speed. it's
+    # questionable in this situation whether there is a noticible performance
+    # gain but it does suppress the "slow toy implementation" warning.
+    try:
+        T = T.change_ring(QQ)
+        ideal = T.ideal(conditions)
+        basis = ideal.groebner_basis()
+    except:
+        pass
 
+    ideal = T.ideal(conditions)
+    basis = ideal.groebner_basis()
+    P_reduced = P(T(x),T(y)).reduce(basis)
+    U = R[S.base_ring().variable_names()]
+    args =  [U(x),U(y)] + [U(ci) for ci in c]
+    Pc = P_reduced(*args)
+    numerators = Pc.coefficients()
+    return numerators
 
-def fast_expand(numer,denom,t):
-    r"""Quickly compute the Taylor expansion of `numer/denom`.
+def differentials(RS):
+    r"""Returns a basis for the space of Abelian differentials of the first kind on
+    the Riemann surface obtained from the curve `f`.
 
     Parameters
     ----------
-    numer, denom : sympy.Expr
-        Polynomials in t.
-    t : sympy.Symbol
-        The dependent variable of `numer` and `denom`.
-    order : int
-        The desired order of the expansion.
+    f : curve
+        A plane algebraic curve.
 
     Returns
     -------
-    sympy.Expr
+    diffs : list
+        A holomorphic differentials basis.
     """
-    numer = numer.expand()
-    denom = denom.expand()
+    f = RS.f.change_ring(QQbar)
+    R = f.parent()
+    x,y = R.gens()
 
-    # if denom is a single term then simply divide through
-    if denom.is_Mul:
-        return (numer/denom).expand()
-
-    # factor out t. denom should be of the form 't**denom_order(c + O(t))'
-    # where c is nonzero. this is necessary for the fast expansion to work
-    denom_order = denom.leadterm(t)[1]
-    denom = (denom/t**denom_order).expand()
-
-    # convert numerator and denominator to lists of coefficients.  it's
-    # faster to do it "manually" than to coerce to polynomial
-    order = max(sympy.degree(numer,t), sympy.degree(denom,t)) + 1
-    def get_terms_list(expr):
-        l = [0]*order
-        for term,coeff in expr.collect(t,evaluate=False).items():
-            _,n = term.as_coeff_exponent(t)
-            if n < order:
-                l[n] = coeff
-        return l
-
-    q = get_terms_list(numer)
-    r = get_terms_list(denom)
-
-    # forward solve the coefficient system. note that r[0] (constant coeff of
-    # denom) is nonzero by construction
-    s = [0]*order
-    for n in range(order):
-        known_terms = sum(r[n-k]*s[k] for k in range(n))
-        s[n] = (q[n] - known_terms)/r[0]
-    taylor = sum(s[n]*t**(n-denom_order) for n in range(order))
-    return taylor
+    dfdy = f.derivative(y)
+    numers = differentials_numerators(f)
+    diffs = [AbelianDifferentialFirstKind(RS, numer, dfdy) for numer in numers]
+    return diffs
 
 
-cdef class Differential:
+class Differential:
     """A differential one-form which can be defined on a Riemann surface.
 
     Attributes
@@ -241,26 +262,14 @@ cdef class Differential:
 
     Notes
     -----
-    To reduce the number of discriminant points to check for computing
-    the valuation divisor we keep separate the numerator and denominator
-    of the Differential. This behavior may change after implementing
-    different types of differentials.
+    To reduce the number of discriminant points to check for computing the
+    valuation divisor we keep separate the numerator and denominator of the
+    Differential. This behavior may change after implementing different types
+    of differentials.
 
     """
-    def __cinit__(self, RS, *args):
+    def __init__(self, RS, *args):
         """Create a differential on the Riemann surface `RS`.
-
-        Parameters
-        ----------
-        RS : RiemannSurface
-            The Riemann surface on which the differential is defined.
-        *args : list
-            A differential can be instantiated by a single Sympy
-            expression or by a numerator and denominator. (Also as Sympy
-            expressions.) The latter distinction makes analysis of
-            Abelian differentials of the first kind more computationally
-            efficient.
-
         """
         if (len(args) < 1) or (len(args) > 2):
             raise ValueError('Instantiate Differential with Sympy expression '
@@ -268,48 +277,31 @@ cdef class Differential:
 
         # determine the numerator and denominator of the differentials
         if len(args) == 1:
-            numer, denom = args[0].as_numer_denom()
-            self.numer = numer
-            self.denom = denom
+            self.numer = args[0].numerator()
+            self.denom = args[0].denominator()
         elif len(args) == 2:
             self.numer = args[0]
             self.denom = args[1]
 
+        x,y = RS.f.parent().gens()
         self.RS = RS
-        self.x = RS.x
-        self.y = RS.y
-        self.numer_n = MultivariatePolynomial(self.numer,self.x,self.y)
-        self.denom_n = MultivariatePolynomial(self.denom,self.x,self.y)
+        self.differential = self.numer / self.denom
+        self.numer_n = fast_callable(self.numer.change_ring(CC), vars=[x,y],
+                                     domain=numpy.complex)
+        self.denom_n = fast_callable(self.denom.change_ring(CC), vars=[x,y],
+                                     domain=numpy.complex)
 
     def __repr__(self):
-        s = ''
-        if self.numer.is_Add:
-            s += '(' + str(self.numer) + ')'
-        else:
-            s += str(self.numer)
+        return str(self.differential)
 
-        s += '/'
+    def __call__(self, *args, **kwds):
+        return self.eval(*args, **kwds)
 
-        if self.denom.is_Add:
-            s += '(' + str(self.denom) + ')'
-        else:
-            s += str(self.denom)
-        return s
-
-    cpdef complex eval(self, complex x, complex y):
+    def eval(self, *args, **kwds):
         r"""Evaluate the differential at the complex point :math:`(x,y)`.
-
-        Parameters
-        ----------
-        x,y : complex
-
-        Returns
-        -------
-        complex
-            Returns the value :math:`\omega(x,y)`.
-
         """
-        return self.numer_n.eval(x,y) / self.denom_n.eval(x,y)
+        val = self.numer_n(*args, **kwds) / self.denom_n(*args, **kwds)
+        return numpy.complex(val)
 
     def centered_at_place(self, P, order=None):
         r"""Rewrite the differential in terms of the local coordinates at `P`.
@@ -332,39 +324,26 @@ cdef class Differential:
         -------
         sympy.Expr
         """
-        x = self.x
-        y = self.y
-
         # by default, non-discriminant places do not store Pusieux series
         # expansions. this might change in the future
         if P.is_discriminant():
             p = P.puiseux_series
-            t = P.t
         else:
-            t = sympy.Symbol('t')
-            p = puiseux(self.RS.f,self.x,self.y,P.x,P.y,t)[0]
-
-        # symbolically evaluate the x, y, and dx parts of the series
-        xt = p.eval_x(t)
-        yt = p.eval_y(t,order=order)
-        dxdt = p.eval_dxdt(t)
+            p = puiseux(self.RS.f)[0]
 
         # substitute Puiseux series expansion into the differrential and expand
-        # as a Laurent series. Sympy's nseries is slow in some rational exprs
-        expr = self.as_sympy_expr()
-        expr = expr.subs({x:xt,y:yt})*dxdt
-        numer,denom = sympy.cancel(expr).as_numer_denom()
-        omega = fast_expand(numer,denom,t)
+        # as a Laurent series
+        xt = p.xpart
+        yt = p.ypart.add_bigoh(p.order)
+        dxdt = xt.derivative()
+        omega = self.numer(xt,yt) * dxdt / self.denom(xt,yt)
         return omega
 
     def localize(self, *args, **kwds):
         r"""Same as :meth:`centered_at_place`."""
         return self.centered_at_place(*args, **kwds)
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    cpdef complex[:] evaluate(self, RiemannSurfacePathPrimitive gamma,
-                              double[:] t):
+    def evaluate(self, gamma, t):
         r"""Evaluates `omega` along the path at `N` uniform points.
 
         .. note::
@@ -384,7 +363,7 @@ cdef class Differential:
         complex[:]
             The differential omega evaluated along the path at `N` points.
         """
-        return gamma.evaluate(self,t)
+        return gamma.evaluate(self, t)
 
     def _find_necessary_xvalues(self):
         r"""Returns a list of x-points over which the places appearing in the
@@ -405,32 +384,29 @@ cdef class Differential:
         -------
         list
         """
-        f = self.RS.f
-        x = self.x
-        y = self.y
+        # we need to work over QQbar anyway
+        f = self.RS.f.change_ring(QQbar)
+        R = f.parent()
+        x,y = R.gens()
 
         # get possible x-values from the numerator by computing the roots of
         # the resolvent with the curve f
         numer = self.numer
-        res = sympy.resultant(numer,f,y).as_poly(x)
-        numer_roots = res.all_roots(multiple=False, radicals=False)
-        if numer_roots:
-            numer_roots,_ = zip(*numer_roots)
+        res = f.resultant(numer,y).univariate_polynomial()
+        numer_roots = res.roots(ring=QQbar, multiplicities=False)
 
         # get possible x-values from the denominator. in the case when the
         # denominator is dfdy these are simply the discriminant points
-        denom = self.denom
-        if (denom.expand() == f.diff(y).expand()):
-            denom_roots = self.RS.discriminant_points()
+        denom = self.differential.denominator()
+        if denom == f.derivative(y):
+            denom_roots = self.RS.discriminant_points
         else:
-            res = sympy.resultant(denom,f,y).as_poly(x)
-            denom_roots = res.all_roots(multiple=False, radicals=False)
-            if denom_roots:
-                denom_roots,_ = zip(*denom_roots)
+            res = f.resultant(denom,y).univariate_polynomial()
+            denom_roots = res.roots(ring=QQbar, multiplicities=False)
 
         # finally, the possible x-points contributed by dx are the discriminant
         # points of the curve
-        discriminant_points = self.RS.discriminant_points()
+        discriminant_points = self.RS.discriminant_points
 
         # form the set of x-values over which to compute places. reorder
         # entries such that x=0 and x=oo appear first because differential
@@ -442,7 +418,7 @@ cdef class Differential:
         if 0 in roots:
             xvalues.append(0)
             roots.discard(0)
-        xvalues.append(sympy.oo)  # account for all places at infinity
+        xvalues.append(infinity)  # account for all places at infinity
         xvalues.extend(roots)
         return xvalues
 
@@ -489,8 +465,7 @@ cdef class Differential:
                 'did not reach genus requirement.'%self)
         return D
 
-    def plot(self, RiemannSurfacePathPrimitive gamma, N=256, grid=False,
-             **kwds):
+    def plot(self, gamma, N=256, grid=False, **kwds):
         r"""Plot the differential along the RiemannSurfacePath `gamma`.
 
         Parameters
@@ -536,23 +511,26 @@ cdef class Differential:
         Returns
         -------
         list, sympy.Expr
+
+        Note
+        ----
+        Artifact syntax from Sympy implementation days.
         """
         return self.numer, self.denom
 
-    def as_sympy_expr(self):
+    def as_expression(self):
         """Returns the differential as a Sympy expression.
 
         Returns
         -------
         sympy.Expr
         """
-        return self.numer / self.denom
+        return self.differential
 
 
-cdef class AbelianDifferentialFirstKind(Differential):
+class AbelianDifferentialFirstKind(Differential):
     def valuation_divisor(self, proof=False, **kwds):
-        r"""Returns the valuation divisor of the Abelian differential of the
-        first kind.
+        r"""Returns the valuation divisor of the Abelian differential of the first kind.
 
         Because Abelian differentials of the first kind are holomorphic on the
         Riemann surface, the valuation divisor is of the form
@@ -609,7 +587,7 @@ cdef class AbelianDifferentialFirstKind(Differential):
         return D
 
 
-cdef class AbelianDifferentialSecondKind(Differential):
+class AbelianDifferentialSecondKind(Differential):
     r"""Defines an Abelian Differential of the second kind.
 
     An Abelian differential of the second kind is one constructed in the
@@ -618,8 +596,8 @@ cdef class AbelianDifferentialSecondKind(Differential):
     differential with a pole only at :math:`P` of order :math:`m+1`.
     """
     def valuation_divisor(self, **kwds):
-        r"""Returns the valuation divisor of the Abelian differential of the
-        second kind.
+        r"""Returns the valuation divisor of the Abelian differential of the second
+        kind.
 
         Parameters
         ----------

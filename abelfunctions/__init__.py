@@ -8,7 +8,6 @@ The code is available as a git repository at
 
 """
 from abelfunctions.version import __version__
-
 from abelfunctions.abelmap import AbelMap, Jacobian
 from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_constant_vector import RiemannConstantVector

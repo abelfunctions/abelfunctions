@@ -1,47 +1,72 @@
-from .test_abelfunctions import AbelfunctionsTestCase
-from abelfunctions.differentials import Differential, differentials
+import unittest
 
-import sympy
-from sympy.abc import x,y
+from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
+from abelfunctions.differentials import (
+    mnuk_conditions,
+    recenter_curve,
+    differentials_numerators,
+    differentials
+)
 
-# class TestDifferentials(AbelfunctionsTestCase):
+from sage.rings.rational_field import QQ
 
-#     def test_f1(self):
-#         a = differentials(self.f1,x,y)
-#         a = map(lambda omega: omega.as_sympy_expr(), a)
-#         b = []
-#         self.assertEqual(a,b)
+class DummyRS:
+    def __init__(self, f):
+        self.f = f
 
-#     def test_f2(self):
-#         a = differentials(self.f2,x,y)
-#         a = map(lambda omega: omega.as_sympy_expr(), a)
-#         b = [x*y/(2*x**3+3*y**2), x**3/(2*x**3+3*y**2)]
-#         self.assertEqual(a,b)
+class TestDifferentialsNumerators(AbelfunctionsTestCase):
 
-#     def test_f4(self):
-#         a = differentials(self.f4,x,y)
-#         a = map(lambda omega: omega.as_sympy_expr(), a)
-#         b = []
-#         self.assertEqual(a,b)
+    def test_f1(self):
+        x,y = self.f1.parent().gens()
+        a = differentials_numerators(self.f1)
+        b = []
+        self.assertEqual(a,b)
 
-#     def test_f5(self):
-#         a = differentials(self.f5,x,y)
-#         a = map(lambda omega: omega.as_sympy_expr(), a)
-#         b = [(x**2+y**2)/(2*x**4*y+4*x**2*y**3+2*y**5+x**2-y**2)]
-#         self.assertEqual(a,b)
+    def test_f2(self):
+        x,y = self.f2.parent().gens()
+        a = differentials_numerators(self.f2)
+        b = [x*y, x**3]
+        self.assertEqual(a,b)
 
-#     def test_f7(self):
-#         a = differentials(self.f7,x,y)
-#         a = map(lambda omega: omega.as_sympy_expr(), a)
-#         b = [1/(2*x**3-3*y**2+2*y),
-#              y/(2*x**3-3*y**2+2*y),
-#              x/(2*x**3-3*y**2+2*y),
-#              x**2/(2*x**3-3*y**2+2*y)]
-#         self.assertEqual(a,b)
+    def test_f4(self):
+        x,y = self.f4.parent().gens()
+        a = differentials_numerators(self.f4)
+        b = []
+        self.assertEqual(a,b)
 
-#     def test_f8(self):
-#         a = differentials(self.f8,x,y)
-#         a = map(lambda omega: omega.as_sympy_expr(), a)
-#         b = []
-#         self.assertEqual(a,b)
+    # def test_f5(self):
+    #     x,y = self.f5.parent().gens()
+    #     a = differentials_numerators(self.f5)
+    #     b = [(x**2 + y**2)]
+    #     self.assertEqual(a,b)
+
+    def test_f7(self):
+        x,y = self.f7.parent().gens()
+        a = differentials_numerators(self.f7)
+        b = [1, y, x, x**2]
+        self.assertEqual(a,b)
+
+    def test_f8(self):
+        x,y = self.f8.parent().gens()
+        a = differentials_numerators(self.f8)
+        b = [y, x*y**3, x*y**4]
+        self.assertEqual(a,b)
+
+class TestDifferentials(AbelfunctionsTestCase):
+
+    def test_f1(self):
+        x,y = self.f1.parent().gens()
+        dfdy = self.f1.derivative(y)
+        X = DummyRS(self.f1)
+        a = map(lambda omega: omega.as_expression(), differentials(X))
+        b = []
+        self.assertEqual(a,b)
+
+    def test_f2(self):
+        x,y = self.f2.parent().gens()
+        dfdy = self.f2.derivative(y)
+        X = DummyRS(self.f2)
+        a = map(lambda omega: omega.as_expression(), differentials(X))
+        b = [x*y/dfdy, x**3/dfdy]
+        self.assertEqual(a,b)
 

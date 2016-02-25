@@ -11,6 +11,13 @@ surfaces, and algebraic curves. If you are new to Abelfunctions, begin with the
 :doc:`getting_started` guide. More tutorials, application areas, and complete
 software reference is presented in the documentation below.
 
+.. note::
+
+   Abelfunctions was recently rewritten to use Sage instead of Sympy for
+   symbolic calculations. As a result, some of the documentation may be out of
+   data. Please be patient as we (Chris) update the documentation to reflect
+   these changes.
+
 
 Contents
 ========
@@ -24,5 +31,4 @@ Contents
    applications/index.rst
    reference/index.rst
    develop/index.rst
-   changelog
    authors

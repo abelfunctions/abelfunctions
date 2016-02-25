@@ -1,42 +1,33 @@
-from abelfunctions.differentials cimport Differential
-from abelfunctions.riemann_surface cimport RiemannSurface
-from abelfunctions.analytic_continuation cimport AnalyticContinuator
+from sage.ext.interpreters.wrapper_el cimport Wrapper_el
+from abelfunctions.complex_path cimport ComplexPathPrimitive
 
 cdef class RiemannSurfacePathPrimitive:
-    cdef RiemannSurface _RS
-    cdef AnalyticContinuator _AC
-    cdef complex _x0
-    cdef complex[:] _y0
-    cdef object _str
+    cdef object _riemann_surface
     cdef RiemannSurfacePathPrimitive[:] _segments
     cdef int _nsegments
+    cdef ComplexPathPrimitive _complex_path
+    cdef complex _x0
+    cdef complex[:] _y0
     cdef int _ncheckpoints
-    cdef double[:] _tcheckpoints
+    cdef double[:] _scheckpoints
     cdef complex[:] _xcheckpoints
     cdef complex[:,:] _ycheckpoints
-    cdef int _nearest_checkpoint_index(self, double)
-    cpdef complex get_x(self, double)
-    cpdef complex get_dxdt(self, double)
-    cpdef complex[:] analytically_continue(self, complex, complex[:], complex)
-    cpdef complex[:] get_y(self, double)
-    cpdef complex integrate(self, Differential)
-    cpdef complex[:] evaluate(self, Differential, double[:])
+    cdef object _repr
 
-
-cdef class RiemannSurfacePathLine(RiemannSurfacePathPrimitive):
-    cdef complex z0
-    cdef complex z1
-
-cdef class RiemannSurfacePathArc(RiemannSurfacePathPrimitive):
-    cdef complex R
-    cdef complex w
-    cdef complex theta
-    cdef complex dtheta
-
-cdef class RiemannSurfacePathRay(RiemannSurfacePathPrimitive):
-    pass
+    cpdef int _nearest_checkpoint_index(self, double s)
+    cpdef complex get_x(self, double s)
+    cpdef complex get_dxds(self, double s)
+    cpdef complex[:] get_y(self, double s)
+    cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1)
 
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
-    cdef int _get_segment_index(self, double)
+    cdef int segment_index_at_parameter(self, double s)
 
+cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
+    cdef object puiseux_series
+    cdef object target_point
+    cdef object target_place
 
+cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
+    cdef int _degree
+    cdef Wrapper_el[:] _df

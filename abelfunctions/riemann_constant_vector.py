@@ -69,14 +69,15 @@ Contents
 --------
 """
 
-from .abelmap import AbelMap, Jacobian
-from .divisor import Place
-from .riemann_theta import RiemannTheta
-from .utilities import cached_function
+from abelfunctions.abelmap import AbelMap, Jacobian
+from abelfunctions.divisor import Place
+from abelfunctions.riemann_theta import RiemannTheta
 
 import numpy
 from numpy import dot
 from itertools import product
+
+from sage.all import cached_function
 
 def initialize_half_lattice_vectors(X):
     r"""Generate a list of all half-lattice vectors.
@@ -245,7 +246,7 @@ def half_lattice_vector(X, C, epsilon1, epsilon2):
     g = X.genus()
 
     # filter pass #1: D = (g-1)*P0
-    D = (g-1)*X.base_place()
+    D = (g-1)*X.base_place
     h = half_lattice_filter(h, J, C, D, epsilon=epsilon1)
     if len(h) == 1:
         return h[0].T
@@ -393,6 +394,6 @@ def RiemannConstantVector(P, epsilon1=1e-6, epsilon2=1e-8, C=None):
     J = Jacobian(X)
     g = numpy.complex(X.genus())
     K0 = compute_K0(X, epsilon1, epsilon2, C)
-    if P == X.base_place():
+    if P == X.base_place:
         return K0
     return J(K0 + (g-1)*AbelMap(P))

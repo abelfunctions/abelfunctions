@@ -35,7 +35,7 @@ from cpython.array cimport clone, extend
 from cpython.array cimport array as c_array
 from libc.math cimport ceil, floor, sqrt, M_PI, lround
 
-from abelfunctions.utilities import cached_function
+from sage.all import cached_function
 
 
 @cython.boundscheck(False)

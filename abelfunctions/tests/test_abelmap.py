@@ -2,15 +2,11 @@ from .test_abelfunctions import AbelfunctionsTestCase
 
 import abelfunctions
 import numpy
-import sympy
 import unittest
 
-from abelfunctions import (AbelMap, Jacobian, RiemannTheta,
-                           RiemannConstantVector)
+from abelfunctions.abelmap import AbelMap, Jacobian
 from numpy.linalg import norm
-from sympy import prod
-from sympy.abc import x,y,z,t
-
+from sage.all import I
 
 class TestDivisors(AbelfunctionsTestCase):
     def setUp(self):
@@ -18,8 +14,8 @@ class TestDivisors(AbelfunctionsTestCase):
         self.X11_Jacobian = Jacobian(self.X11)
         self.X11_P = self.X11(0)[0]
         self.X11_Q = self.X11(1)[0]
-        self.X11_R = self.X11(sympy.I)[0]
-        self.X11_P0 = self.X11.base_place()
+        self.X11_R = self.X11(I)[0]
+        self.X11_P0 = self.X11.base_place
 
     def test_divisors_X11(self):
         J = self.X11_Jacobian

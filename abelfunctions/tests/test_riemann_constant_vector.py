@@ -41,7 +41,7 @@ class TestRCVTheta(AbelfunctionsTestCase):
         self.assertLess(abs(u),prec)
 
     def test_theta_X11(self):
-        P0 = self.X11.base_place()
+        P0 = self.X11.base_place
         W0 = RiemannConstantVector(P0)
         self.is_theta_zero(self.X11,W0)
 
@@ -92,7 +92,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         X = self.X11
         J = Jacobian(X)
         g = X.genus()
-        P0 = X.base_place()
+        P0 = X.base_place
         oneforms = X.holomorphic_oneforms()
         C = oneforms[0].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
@@ -102,7 +102,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         X = self.X11
         J = Jacobian(X)
         g = X.genus()
-        P0 = X.base_place()
+        P0 = X.base_place
         oneforms = X.holomorphic_oneforms()
         C = oneforms[1].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
@@ -112,7 +112,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         X = self.X11
         J = Jacobian(X)
         g = X.genus()
-        P0 = X.base_place()
+        P0 = X.base_place
         oneforms = X.holomorphic_oneforms()
         C = oneforms[2].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
@@ -122,7 +122,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         X = self.X11
         J = Jacobian(X)
         g = X.genus()
-        P0 = X.base_place()
+        P0 = X.base_place
         oneforms = X.holomorphic_oneforms()
         C = oneforms[3].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
@@ -133,7 +133,7 @@ class TestErrors(AbelfunctionsTestCase):
 
     def test_degree_requirement(self):
         X = self.X11
-        P = X.base_place()
+        P = X.base_place
         C = ZeroDivisor(X)
         with self.assertRaises(ValueError):
             RiemannConstantVector(P,C=C)
@@ -141,7 +141,7 @@ class TestErrors(AbelfunctionsTestCase):
     def test_same_surface_requirement(self):
         X11 = self.X11
         X2 = self.X2
-        P = X11.base_place()
-        C = (2*X11.genus()-2)*X2.base_place() # satisfies degree requirement
+        P = X11.base_place
+        C = (2*X11.genus()-2)*X2.base_place # satisfies degree requirement
         with self.assertRaises(ValueError):
             RiemannConstantVector(P,C=C)

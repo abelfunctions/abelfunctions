@@ -20,25 +20,28 @@ Examples
 Contents
 --------
 """
-import sympy
-from sympy import RootOf, Rational, Poly
+from abelfunctions.puiseux import puiseux
+from abelfunctions.integralbasis import Int
 
-from .puiseux import puiseux
-from .integralbasis import Int
-from .utilities import rootofsimp, cached_function
+from sage.all import I, pi
+from sage.misc.cachefunc import cached_function, cached_method
+from sage.rings.infinity import infinity
+from sage.rings.integer_ring import ZZ
+from sage.rings.qqbar import QQbar
+from sage.rings.rational_field import QQ
 
 
-def singular_points_finite(f,x,y):
+def singular_points_finite(f):
     r"""Returns the finite singular points of `f`.
 
     Parameters
     ----------
-    f, x, y : sympy.Expr, sympy.Symbol
-        An affine algebraic curve.
+    f : polynomial
+        A plane algebraic curve.
 
     Returns
     -------
-    list
+    S : list
         A list of three-tuples :math:`(x_k,y_k,1)` representing the
         affine (finite) singular points of the curve :math:`f = f(x,y)`
 
@@ -47,47 +50,27 @@ def singular_points_finite(f,x,y):
 
     # the discriminant points (roots of resultant) contain the x-points where
     # singularities may occur. todo: reuse RiemannSurface.discriminant_points()
-    p = f.as_poly(x,y)
-    n  = p.degree(y)
-    res = sympy.resultant(p,p.diff(y),y).as_poly(x)
-    xroots = res.all_roots(multiple=False, radicals=False)
+    R = f.parent()
+    x,y = R.gens()
+    n  = f.degree(y)
+    res = f.resultant(f.derivative(y),y).univariate_polynomial()
+    xroots = res.roots(ring=QQbar, multiplicities=True)
     for xk,deg in xroots:
         if deg > 1:
-            # evaluate p at xk. we use xreplace in case xk is a RootOf. (Sympy
-            # does not always preserve radical=True)
-            pxk = p.as_expr().xreplace({x:xk})
-            pxk = rootofsimp(pxk).as_poly(y)
-
-            # compute y-roots at x=xk. an error will be thrown if RootOfs still
-            # appear in p(x=xk). in this case, use the algebraic expressions of
-            # the roots
-            try:
-                yroots = pxk.all_roots(multiple=False,radicals=False)
-            except NotImplementedError:
-                yroots = sympy.roots(pxk,y).items()
+            # compute the y-roots above x=xk
+            fxk = f(xk,y).univariate_polynomial()
+            yroots = fxk.roots(ring=QQbar, multiplicities=True)
 
             # for each y-root ykj above xk, record a singular point if the
             # gradient vanishes at (xk,ykj)
             for ykj,_ in yroots:
-                subs = {x:xk,y:ykj}
-                dfdx = rootofsimp(f.diff(x).subs(subs))
-                dfdy = rootofsimp(f.diff(y).subs(subs))
-
-                # if there are any leftover RootOfs we should approximate the
-                # vanishing numerically. this is done to handle situations such
-                # as I + (-I) = 0
-                def is_zero(expr):
-                    if expr.has(RootOf):
-                        return abs(dfdx.n(n=18)) < 1e-16
-                    else:
-                        return rootofsimp(expr).simplify() == 0
-
-                if is_zero(dfdx) and is_zero(dfdy):
-                    S.append((xk,ykj,sympy.S(1)))
+                dfdx = f.derivative(x)(xk,ykj)
+                dfdy = f.derivative(y)(xk,ykj)
+                if (dfdx == 0) and (dfdy == 0):
+                    S.append((xk,ykj,1))
     return S
 
-
-def singular_points_infinite(f,x,y,z):
+def singular_points_infinite(f):
     r"""Returns the singular points of `f` at infinity.
 
     In particualr, returns all of the projective singular points
@@ -95,9 +78,8 @@ def singular_points_infinite(f,x,y,z):
 
     Parameters
     ----------
-    f, x, y : sympy.Expr, sympy.Symbol
-        An affine algebraic curve.
-    z : sympy.Symbol
+    f : polynomial
+        A plane algebraic curve
 
     Returns
     -------
@@ -106,17 +88,21 @@ def singular_points_infinite(f,x,y,z):
         singular points of the curve :math:`f = f(x,y)`
 
     """
-    # compute the homogenization of degree d
-    F = f.as_poly(x,y).homogenize(z)
+    S = []
+
+    # homogenize
+    F = f.homogenize('z')
+    R = F.parent()
+    x,y,z = R.gens()
     d = F.total_degree()
 
     # find the possible singular points at infinity. these consist of the roots
     # of F(1,y,0) = 0 and F(x,1,0) = 0
-    F0 = F.subs(z,0)
-    F0x1 = F0.subs({x:1,y:z}).as_poly(z)
-    F0y1 = F0.subs({x:z,y:1}).as_poly(z)
-    solsx1 = F0x1.all_roots(multiple=False,radicals=False)
-    solsy1 = F0y1.all_roots(multiple=False,radicals=False)
+    F0 = F(x,y,0)
+    F0x1 = R(F0(1,y,0)).univariate_polynomial()
+    F0y1 = R(F0(x,1,0)).univariate_polynomial()
+    solsx1 = F0x1.roots(ring=QQbar, multiplicities=True)
+    solsy1 = F0y1.roots(ring=QQbar, multiplicities=True)
     all_points = [(1,yi,0) for yi,_ in solsx1]
     all_points.extend([(xi,1,0) for xi,_ in solsy1])
 
@@ -124,40 +110,23 @@ def singular_points_infinite(f,x,y,z):
     # points such as (0,1,I) == (0,-I,1). normalize these projective points
     # such that 1 appears in either the x- or y- coordinate, where appropriate
     normalized_points = []
-    zero = sympy.S(0)
     for xi,yi,zi in all_points:
-        P = (1,yi/xi,0) if xi != zero else (xi/yi,1,0)
+        P = (1,yi/xi,0) if xi != 0 else (xi/yi,1,0)
         if not P in normalized_points:
             normalized_points.append(P)
 
     # finally, check the gradient condition to get the actual singular points
-    S = []
-    grad = [F.diff(var) for var in (x,y,z)]
+    grad = F.gradient()
     for xi,yi,zi in normalized_points:
-        grad_vals = [dFi.subs({x:xi,y:yi,z:zi}) for dFi in grad]
-        grad_vals = map(rootofsimp, grad_vals)
-
-        # if there are any leftover RootOfs we should approximate the vanishing
-        # numerically. this is done to handle situations such as I + (-I) = 0
-        #
-        # [XXX] the following is messy but works.
-        is_zero = True
-        for val in grad_vals:
-            if val.has(RootOf):
-                val_is_zero = abs(val.n(n=18)) < 1e-16
-            else:
-                val_is_zero = val == 0
-            if not val_is_zero:
-                is_zero = False
-                break
-
+        grad_vals = [dFi(xi,yi,zi) for dFi in grad]
+        is_zero = all(map(lambda arg: arg.is_zero(), grad_vals))
         if is_zero:
             S.append((xi,yi,zi))
     return S
 
 
 @cached_function
-def singularities(f,x,y):
+def singularities(f):
     r"""Returns the singularities of the curve `f` in projective space.
 
     Returns all of the projective singular points :math:`(x_k,y_k,z_k)` on the
@@ -171,9 +140,8 @@ def singularities(f,x,y):
 
     Parameters
     ----------
-    f : sympy.Expr
-    x : sympy.Symbol
-    y : sympy.Symbol
+    f : polynomial
+        A plane algebraic curve.
 
     Returns
     -------
@@ -182,25 +150,24 @@ def singularities(f,x,y):
         multiplicity, delta invariant, and branching number information.
 
     """
-    z = sympy.Dummy('z')
-    S = singular_points_finite(f,x,y)
-    S_oo = singular_points_infinite(f,x,y,z)
+    S = singular_points_finite(f)
+    S_oo = singular_points_infinite(f)
     S.extend(S_oo)
 
     info = []
     for singular_pt in S:
-        # Perform a projective transformation of the curve so it's almost
+        # perform a projective transformation of the curve so it's almost
         # centered at the singular point.
-        g,u,v,u0,v0 = _transform(f,x,y,z,singular_pt)
-        P = puiseux(g,u,v,u0,v0)
+        g,u0,v0 = _transform(f,singular_pt)
+        P = puiseux(g,u0,v0)
 
         # filter out any places with infinite v-part: they are being handled by
         # other centerings / transformations
         def has_finite_v(Pi):
             # make sure the order of the y-part is positive
-            n,alpha = zip(*Pi.terms)
             while Pi.order <= 0:
                 Pi.add_term()
+            n,alpha = zip(*Pi.terms)
 
             # if there are still no terms then they are positive exponent
             if n == []:
@@ -209,17 +176,18 @@ def singularities(f,x,y):
                 return True
             return False
 
-        P = filter(has_finite_v,P)
+        P = filter(has_finite_v, P)
+
+        # P now consists of the places that project to (u0,v0) on the curve
         m = _multiplicity(P)
         delta = _delta_invariant(P)
         r = _branching_number(P)
-
         info.append((m,delta,r))
 
     return zip(S,info)
 
 
-def _transform(f,x,y,z,singular_pt):
+def _transform(f, singular_pt):
     r"""Recenters the affine curve `f` at a singular point.
 
     Returns :math:`(g,u,v,u0,v0)` where :math:`g = g(u,v)` is the transformed
@@ -233,10 +201,8 @@ def _transform(f,x,y,z,singular_pt):
 
     Parameters
     ----------
-    f : sympy.Expr
-    x : sympy.Symbol
-    y : sympy.Symbol
-    z : sympy.Symbol
+    f : polynomial
+        A plane algebraic curve.
     singular_pt : list
         A projective singular point of the curve.
 
@@ -253,24 +219,31 @@ def _transform(f,x,y,z,singular_pt):
 
     .. math::
 
-        g(u,v) = F(u,beta,v), u0=\alpha, v0=\gamma.
+        g(u,v) = F(u,\beta,v), u0=\alpha, v0=\gamma.
 
     """
     alpha, beta, gamma = singular_pt
-    F = f.as_poly(x,y).homogenize(z)
-    d = F.total_degree()
 
+    # if the point is affine then return the affine curve and point
     if gamma == 1:
-        return f,x,y,alpha,beta
+        return f,alpha,beta
+
+    # otherwise, homogenize and recenter at the singular point
+    F = f.homogenize('z')
+    R = F.parent()
+    x,y,z = R.gens()
+    if alpha == 0:
+        g = F(x,beta,z)
+        S = g.base_ring()[g.variables()]
+        x,z = S.gens()
+        g = g(x,0,z)
+        return g,alpha,gamma
     else:
-        if alpha == 0:
-            g = F.subs(y,beta)
-            return g,x,z,alpha,gamma
-        else:
-            g = F.subs(x,alpha)
-            return g,y,z,beta,gamma
-
-
+        g = F(alpha,y,z)
+        S = g.base_ring()[g.variables()]
+        y,z = S.gens()
+        g = g(0,y,z)
+        return g,beta,gamma
 
 def _multiplicity(P):
     r"""Computes the multiplicity of the singularity at :math:`u_0,v_0`.
@@ -321,7 +294,7 @@ def _multiplicity(P):
                     si = ri
 
         m += min(ri,si)
-    return sympy.S(m)
+    return ZZ(m)
 
 
 def _branching_number(P):
@@ -343,7 +316,7 @@ def _branching_number(P):
         The branching number of the singularity :math:`(u_0, v_0)`.
 
     """
-    return sympy.S(len(P))
+    return len(P)
 
 
 def _delta_invariant(P):
@@ -368,7 +341,7 @@ def _delta_invariant(P):
     Px_all = [item for sublist in Px_all for item in sublist]
 
     # for each place compute its contribution to the delta invariant
-    delta = sympy.Rational(0,1)
+    delta = QQ(0)
     for i in range(len(Px)):
         # compute Int of each x-representation. note that it's sufficient to
         # only look at the Puiseux series with the given v0 since, for all
@@ -381,12 +354,12 @@ def _delta_invariant(P):
         # parametric form. By definition, this parametric series satisfies
         # Y(t=0) = v0
         ri = Pxi.ramification_index
-        delta += sympy.Rational(ri * IntPxi - ri + 1, 2)
-    return sympy.numer(delta)
+        delta += QQ(ri * IntPxi - ri + 1)/2
+    return delta.numerator()
 
 
 @cached_function
-def genus(f,x,y):
+def genus(f):
     """Returns the genus of the Riemann surface given by :math:`f=f(x,y)`.
 
     Uses the singularity structure of the curve to compute the genus. This
@@ -403,11 +376,10 @@ def genus(f,x,y):
     int
 
     """
-    z = sympy.Dummy('z')
-    F = f.as_poly(x,y).homogenize(z)
-    d = F.total_degree()
-    S = singularities(f,x,y)
+    d = f.total_degree()
+    S = singularities(f)
     g = (d-1)*(d-2) / 2
-    for pt,(m,delta,r) in S:
+    for point, (m,delta,r) in S:
         g -= delta
     return g
+

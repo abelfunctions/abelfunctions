@@ -30,8 +30,7 @@ Contents
 
 """
 
-import sympy
-
+from sage.all import infinity
 
 def ZeroDivisor(X):
     r"""Returns a zero Divisor on X."""
@@ -136,7 +135,7 @@ class Divisor(object):
         return False
 
     def __add__(self, other):
-        if other == 0 or other == sympy.S(0):
+        if other == 0:
             return self
 
         if not isinstance(other,Divisor):
@@ -316,20 +315,19 @@ class RegularPlace(Place):
         return False
 
     def valuation(self, omega):
-        x,y = self.RS.x, self.RS.y
+        f = self.RS.f
+        x,y = R.parent().gens()
         a,b = self.x, self.y
 
-        def mult(f,x,a):
-            r"""Returns the multiplicity of the zero `a` on `g`."""
-            xpa = map(sum,zip(x,a))
-            subs = dict(zip(x,xpa))
-            p = sympy.poly(f.subs(subs),*x)
-            degs = map(sum, p.monoms())
-            return min(degs)
+        def mult(p,a,b):
+            r"""Returns the multiplicity of the zero `(a,b)` on `p`."""
+            pab = p(x+a, y+b)
+            degrees = map(sum, pab.exponents())
+            return min(degrees)
 
-        numer,denom = omega.as_sympy_expr().cancel().as_numer_denom()
-        zero_mult = mult(numer,(x,y),(a,b))
-        pole_mult = mult(denom,(x,y),(a,b))
+        numer,denom = omega.as_numer_denom() # XXX
+        zero_mult = mult(numer,a,b)
+        pole_mult = mult(denom,a,b)
         return zero_mult - pole_mult
 
 
@@ -345,7 +343,6 @@ class DiscriminantPlace(Place):
         P : PuiseuxTSeries
         """
         self.puiseux_series = P
-        self.t = P.t
         self.x = P.x0
         self.y = P.eval_y(0)
         Place.__init__(self, RS, **kwds)
@@ -365,14 +362,13 @@ class DiscriminantPlace(Place):
         return True
 
     def is_infinite(self):
-        zero = sympy.S(0)
-        xval = self.puiseux_series.eval_x(zero)
-        if xval.has(sympy.oo) or xval.has(sympy.zoo):
+        xval = self.puiseux_series.eval_x(0)
+        if xval == infinity:
             return True
         return False
 
     def valuation(self, omega):
         omegat = omega.localize(self)
-        coeff,exponent = omegat.expand().leadterm(self.t)
-        return exponent
+        valuation = omegat.valuation()
+        return valuation
 
