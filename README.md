@@ -1,7 +1,7 @@
 Abelfunctions
 =============
 
-[![Build Status](https://travis-ci.org/cswiercz/abelfunctions.svg?branch=master)](https://travis-ci.org/cswiercz/abelfunctions)
+[![Gitter](https://badges.gitter.im/abelfunctions/abelfunctions.svg)](https://gitter.im/abelfunctions/abelfunctions?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 A library for computing with Abelian functions, Riemann surfaces, and algebraic
 curves. Abelfunctions is the Ph.D thesis work of Chris Swierczewski. Please see
@@ -20,8 +20,6 @@ complete reference to the code, please visit the
 [Abelfunctions Documentation](http://abelfunctions.cswiercz.info).
 
 You are also welcome to post questions in the community chat room:
-
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/cswiercz/abelfunctions?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Please report and bugs you find or suggest enhancements on the
 [Issues Page](https://github.com/cswiercz/abelfunctions/issues).
