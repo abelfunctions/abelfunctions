@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-cd src
-
 # build in-place for testing purposes (see spkg-check)
 sage setup.py build_ext --inplace
 
