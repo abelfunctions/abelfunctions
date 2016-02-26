@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+cd src
+
+# build in-place for testing purposes (see spkg-check)
+sage setup.py build_ext --inplace
+
+# install into sage
+sage setup.py install
+if [ $? -ne 0 ]; then
+    echo >&2 "Error installing Abelfunctions"
+    exit 1
+fi
