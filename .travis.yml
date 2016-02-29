@@ -1,13 +1,20 @@
-# download sage and run it once
+sudo: false
+
+# create an spkg from the repo and download the sage binary
 before_install:
-  - curl -O http://files.sagemath.org/linux/64bit/sage-6.10-Ubuntu_15.04-x86_64.tar.bz2
-  - tar xfj sage-6.10-Ubuntu_15.04-x86_64.tar.bz2
-  -  cd ./SageMath && ./sage -c && cd ..
+   - cd ${HOME}/build/abelfunctions
+   - tar cjf abelfunctions.spkg abelfunctions
+   - mv abelfunctions.spkg ${HOME}
+   - cd ${HOME}
+   - wget http://mirrors.mit.edu/sage/linux/64bit/sage-7.0-Ubuntu_12.04-x86_64.tar.bz2
+   - tar xjf ${HOME}/sage-7.0-Ubuntu_12.04-x86_64.tar.bz2
+   - ${HOME}/SageMath/sage -c "print 'Sage Runs!'"
+   
 
-# build the code in-place
 install:
-  - ./SageMath/sage setup.py build_ext --inplace
+  - pwd
+  - ${HOME}/SageMath/sage -p ${HOME}/abelfunctions.spkg
 
-# run the tests
 script:
-  - ./SageMath/sage runtests.py -v
+  - pwd
+  - ${HOME}/SageMath/sage -p -c ${HOME}/abelfunctions.spkg
