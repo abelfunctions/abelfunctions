@@ -214,7 +214,9 @@ def differentials_numerators(f):
 
     ideal = T.ideal(conditions)
     basis = ideal.groebner_basis()
-    P_reduced = P(T(x),T(y)).reduce(basis)
+    P_reduced = P(T(x), T(y))
+    if basis != [0]:
+        P_reduced = P_reduced.reduce(basis)
     U = R[S.base_ring().variable_names()]
     args =  [U(x),U(y)] + [U(ci) for ci in c]
     Pc = P_reduced(*args)
