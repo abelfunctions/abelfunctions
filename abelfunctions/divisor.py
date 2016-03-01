@@ -316,7 +316,7 @@ class RegularPlace(Place):
 
     def valuation(self, omega):
         f = self.RS.f
-        x,y = R.parent().gens()
+        x,y = f.parent().gens()
         a,b = self.x, self.y
 
         def mult(p,a,b):
