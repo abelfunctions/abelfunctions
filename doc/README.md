@@ -1,13 +1,13 @@
 ![Abelfunctions Logo](https://raw.githubusercontent.com/abelfunctions/abelfunctions/master/doc/img/logo.png)
 
-Abelfunctions is a [Sage](http://www.sagemath.org) library for computing with Abelian functions, Riemann surfaces, and algebraic curves. If you are new to Abelfunctions, begin with the [Getting Started](Getting Started) guide. More tutorials, application areas, and complete software reference is presented in the documentation below.
+Abelfunctions is a [Sage](http://www.sagemath.org) library for computing with Abelian functions, Riemann surfaces, and algebraic curves. If you are new to Abelfunctions, begin with the [Getting Started](https://github.com/abelfunctions/abelfunctions/blob/master/doc/GettingStarted.md) guide. More tutorials, application areas, and complete software reference is presented in the documentation below.
 
 # Contents
 
-* [Installation](Installation)
-* [Getting Started](Getting Started)
-* [Tutorials](Tutorials)
-* [Developer's Guide](Developer's Guide)
+* [Installation](https://github.com/abelfunctions/abelfunctions/blob/master/doc/Installation.md)
+* [Getting Started](https://github.com/abelfunctions/abelfunctions/blob/master/doc/GettingStarted.md)
+* [Tutorials](https://github.com/abelfunctions/abelfunctions/blob/master/doc/Tutorials.md)
+* [Developer's Guide](https://github.com/abelfunctions/abelfunctions/blob/master/doc/DevelopersGuide.md)
 
 # Authors
 

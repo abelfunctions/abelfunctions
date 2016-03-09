@@ -1,3 +1,5 @@
+# Getting Started
+
 This document presents a brief overview of the capabilities of Abelfunctions by working through a simple example.
 
 ## Riemann Surfaces

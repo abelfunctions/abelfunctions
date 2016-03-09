@@ -1,3 +1,5 @@
+# Installation
+
 Abelfunctions requires Sage ([www.sagemath.org](http//www.sagemath.org)). Sage makes it relatively easy to build and run the code.
 
 1. Download Abelfunctions using [Git](https://git-scm.com) or by clicking on the *"Download Zip"* button on the right-hand side of the [repository page](https://github.com/abelfunctions/abelfunctions).
