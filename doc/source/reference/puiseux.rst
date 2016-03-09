@@ -1,4 +1,0 @@
-.. automodule:: abelfunctions.puiseux
-    :members:
-    :show-inheritance:
-    :private-members:
