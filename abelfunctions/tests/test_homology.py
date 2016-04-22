@@ -5,6 +5,8 @@ from abelfunctions.homology import (
     involution_matrix,
     integer_kernel_basis,
     N1_matrix,
+    symmetric_block_diagonalize,
+    diagonal_locations,
 )
 
 class HomologyTestData(unittest.TestCase):
@@ -151,6 +153,16 @@ class HomologyTestData(unittest.TestCase):
             [0,0,0,0,1,1],
         ])
 
+        # an example where it is necessary to eliminate under a 2x2 block
+        N1problem = matrix(GF(2),[
+            [0,1,1,1,0,0],
+            [1,0,1,0,1,1],
+            [1,1,0,1,1,0],
+            [1,0,1,0,0,0],
+            [0,1,1,0,0,0],
+            [0,1,0,0,0,0],
+        ])
+
         # store
         self.Hklein = Hklein
         self.Qklein = Qklein
@@ -171,6 +183,8 @@ class HomologyTestData(unittest.TestCase):
         self.H6 = H6
         self.Q6 = Q6
         self.N16 = Q6*H6*Q6.T
+
+        self.N1problem = N1problem
 
 
 class TestInvolutionMatrix(HomologyTestData):
@@ -240,5 +254,146 @@ class TestN1Matrix(HomologyTestData):
         N1 = N1_matrix(self.a6, self.b6, S)
         self.assertEqual(N1, N1.T)
 
-class TestSymmetricFactorization(HomologyTestData):
-    pass
+class TestSymmetricBlockDiagonalization(HomologyTestData):
+    def setUp(self):
+        HomologyTestData.setUp(self)
+
+        # pre-compute the N1 matrices from the period matrices. note that
+        # Homology test data also contains N1 matrices "given" from the
+        # Kalla,Klein paper ("given" in quotes since only the H and Q matrices
+        # are actually produced)
+        R = involution_matrix(self.atrott, self.btrott)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.atrott, self.btrott, S, tol=1e-3)
+        self.N1trott_from_periods = N1
+
+        R = involution_matrix(self.aklein, self.bklein, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.aklein, self.bklein, S, tol=1e-3)
+        self.N1klein_from_periods = N1
+
+        R = involution_matrix(self.afermat, self.bfermat, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.afermat, self.bfermat, S, tol=1e-3)
+        self.N1fermat_from_periods = N1
+
+        R = involution_matrix(self.a6, self.b6)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.a6, self.b6, S)
+        self.N16_from_periods = N1
+
+    def test_diagonal_locations(self):
+        H = Matrix(GF(2),
+                   [[0,0,0],
+                    [0,0,0],
+                    [0,0,0]])
+        index_one, index_B = diagonal_locations(H)
+        self.assertEqual(index_one, 3)
+        self.assertEqual(index_B, -1)
+
+        H = Matrix(GF(2),
+                   [[1,0,0],
+                    [0,0,0],
+                    [0,0,0]])
+        index_one, index_B = diagonal_locations(H)
+        self.assertEqual(index_one, 0)
+        self.assertEqual(index_B, -1)
+
+        H = Matrix(GF(2),
+                   [[0,1,0],
+                    [1,0,0],
+                    [0,0,0]])
+        index_one, index_B = diagonal_locations(H)
+        self.assertEqual(index_one, 3)
+        self.assertEqual(index_B, 0)
+
+        H = Matrix(GF(2),
+                   [[0,1,0],
+                    [1,0,0],
+                    [0,0,1]])
+        index_one, index_B = diagonal_locations(H)
+        self.assertEqual(index_one, 2)
+        self.assertEqual(index_B, 0)
+
+        H = Matrix(GF(2),
+                   [[1,0,0],
+                    [0,0,1],
+                    [0,1,0]])
+        index_one, index_B = diagonal_locations(H)
+        self.assertEqual(index_one, 0)
+        self.assertEqual(index_B, 1)
+
+    def test_rank_equivalence(self):
+        N1 = self.N1klein
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1.rank(), H.rank())
+
+        N1 = self.N1fermat4
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1.rank(), H.rank())
+
+        N1 = self.N1fermat5
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1.rank(), H.rank())
+
+        N1 = self.N1f2a
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1.rank(), H.rank())
+
+        N1 = self.N16
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1.rank(), H.rank())
+
+        N1 = self.N1problem
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1.rank(), H.rank())
+
+    def test_symmetric_H(self):
+        N1 = self.N1klein
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(H, H.T)
+
+        N1 = self.N1fermat4
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(H, H.T)
+
+        N1 = self.N1fermat5
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(H, H.T)
+
+        N1 = self.N1f2a
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(H, H.T)
+
+        N1 = self.N16
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(H, H.T)
+
+        N1 = self.N1problem
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(H, H.T)
+
+    def test_equivalence(self):
+        N1 = self.N1klein
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1, Q*H*Q.T)
+
+        N1 = self.N1fermat4
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1, Q*H*Q.T)
+
+        N1 = self.N1fermat5
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1, Q*H*Q.T)
+
+        N1 = self.N1f2a
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1, Q*H*Q.T)
+
+        N1 = self.N16
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1, Q*H*Q.T)
+
+        N1 = self.N1problem
+        H,Q = symmetric_block_diagonalize(N1)
+        self.assertEqual(N1, Q*H*Q.T)

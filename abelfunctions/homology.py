@@ -151,3 +151,159 @@ def N1_matrix(Pa, Pb, S, tol=1e-4):
                          "precision of the input period matrices.")
     return N1
 
+
+def symmetric_block_diagonalize(N1):
+    r"""Returns matrices `H` and `Q` such that `N1 = Q*H*Q.T` and `H` is block
+    diagonal.
+
+    The algorithm used here is as follows. Whenever a row operation is
+    performed (via multiplication on the left by a transformation matrix `q`)
+    the corresponding symmetric column operation is also performed via
+    multiplication on the right by `q^T`.
+
+    For each column `j` of `N1`:
+
+    1. If column `j` consists only of zeros then swap with the last column with
+       non-zero entries.
+
+    2. If there is a `1` in position `j` of the column (i.e. a `1` lies on the
+       diagonal in this column) then eliminate further entries below as in
+       standard Gaussian elimination.
+
+    3. Otherwise, if there is a `1` in the column, but not in position `j` then
+       rows are swapped in a way that it appears in the position `j+1` of the
+       column. Eliminate further entries below as in standard Gaussian
+       elimination.
+
+    4. After elimination, if `1` lies on the diagonal in column `j` then
+       increment `j` by one. If instead the block matrix `[0 1 \\ 1 0]` lies
+       along the diagonal then eliminate under the `(j,j+1)` element (the upper
+       right element) of this `2 x 2` block and increment `j` by two.
+
+    5. Repeat until `j` passes the final column or until further columns
+       consists of all zeros.
+
+    6. Finally, perform the appropriate transformations such that all `2 x 2`
+       blocks in `H` appear first in the diagonalization. (Uses the
+       `diagonal_locations` helper function.)
+
+    Parameters
+    ----------
+    N1 : GF(2) matrix
+
+    Returns
+    -------
+    H : GF(2) matrix
+        Symmetric `g x g` matrix where the diagonal elements consist of either
+        a "1" or a `2 x 2` block matrix `[0 1 \\ 1 0]`.
+    Q : GF(2) matrix
+        The corresponding transformation matrix.
+    """
+    g = N1.nrows()
+    H = zero_matrix(GF(2), g)
+    Q = identity_matrix(GF(2), g)
+
+    # if N1 is the zero matrix the H is also the zero matrix (and Q is the
+    # identity transformation)
+    if (N1 % 2) == 0:
+        return H,Q
+
+    # perform the "modified gaussian elimination"
+    B = Matrix(GF(2),[[0,1],[1,0]])
+    H = N1.change_ring(GF(2))
+    j = 0
+    while (j < g) and (H[:,j:] != 0):
+        # if the current column is zero then swap with the last non-zero column
+        if H.column(j) == 0:
+            last_non_zero_col = max(k for k in range(j,g) if H.column(k) != 0)
+            Q.swap_columns(j,last_non_zero_col)
+            H = Q.T*N1*Q
+
+        # if the current diagonal element is 1 then gaussian eliminate as
+        # usual. otherwise, swap rows so that a "1" appears in H[j+1,j] and
+        # then eliminate from H[j+1,j]
+        if H[j,j] == 1:
+            rows_to_eliminate = (r for r in range(g) if H[r,j] == 1 and r != j)
+            for r in rows_to_eliminate:
+                Q.add_multiple_of_column(r,j,1)
+            H = Q.T*N1*Q
+        else:
+            # find the first non-zero element in the column after the diagonal
+            # element and swap rows with this element
+            first_non_zero = min(k for k in range(j,g) if H[k,j] != 0)
+            Q.swap_columns(j+1,first_non_zero)
+            H = Q.T*N1*Q
+
+            # eliminate *all* other ones in the column, including those above
+            # the element (j,j+1)
+            rows_to_eliminate = (r for r in range(g) if H[r,j] == 1 and r != j+1)
+            for r in rows_to_eliminate:
+                Q.add_multiple_of_column(r,j+1,1)
+            H = Q.T*N1*Q
+
+        # increment the column based on the diagonal element
+        if H[j,j] == 1:
+            j += 1
+        elif H[j:(j+2),j:(j+2)] == B:
+            # in the block diagonal case, need to eliminate below the j+1 term
+            rows_to_eliminate = (r for r in range(g) if H[r,j+1] == 1 and r != j)
+            for r in rows_to_eliminate:
+                Q.add_multiple_of_column(r,j,1)
+            H = Q.T*N1*Q
+            j += 2
+
+    # finally, check if there are blocks of "special" form. that is, shift all
+    # blocks such that they occur first along the diagonal of H
+    index_one, index_B = diagonal_locations(H)
+    while index_one < index_B:
+        j = index_B
+
+        Qtilde = zero_matrix(GF(2), g)
+        Qtilde[0,0] = 1
+        Qtilde[j,0] = 1; Qtilde[j+1,0] = 1
+        Qtilde[0,j] = 1; Qtilde[0,j+1] = 1
+        Qtilde[j:(j+2),j:(j+2)] = B
+
+        Q = Q*Qtilde
+        H = Q.T*N1*Q
+
+        # continue until none are left
+        index_one, index_B = diagonal_locations(H)
+
+    # above, we used Q to store column operations on N1. switch to rows
+    # operations on H so that N1 = Q*H*Q.T
+    Q = Q.T.inverse()
+    return H,Q
+
+def diagonal_locations(H):
+    r"""Returns the indices of the last `1` along the diagonal and the first block
+    along the diagonal of `H`.
+
+    Parameters
+    ----------
+    H : symmetric GF(2) matrix
+        Contains either 1's along the diagonal or anti-symmetric blocks.
+
+    Returns
+    -------
+    index_one : integer
+        The last occurrence of a `1` along the diagonal of `H`. Equal to `g`
+        if there are no ones along the diagonal.
+    index_B : integer
+        The first occurrence of a block along the diagonal of `H`. Equal to
+        `-1` if there are no blocks along the diagonal.
+
+    """
+    g = H.nrows()
+    B = Matrix(GF(2),[[0,1],[1,0]])
+    try:
+        index_one = min(j for j in range(g) if H[j,j] == 1)
+    except ValueError:
+        index_one = g
+
+    try:
+        index_B = max(j for j in range(g-1) if H[j:(j+2),j:(j+2)] == B)
+    except ValueError:
+        index_B = -1
+
+    return index_one, index_B
