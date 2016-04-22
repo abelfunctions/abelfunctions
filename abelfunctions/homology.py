@@ -56,7 +56,7 @@ def involution_matrix(Pa, Pb, tol=1e-4):
 
     # sanity check: make sure that R_RDF is close to integral. we perform this
     # test here since the matrix returned should be over ZZ
-    error = (R - R_RDF).norm()
+    error = (R_RDF.round() - R_RDF).norm()
     if error > tol:
         raise ValueError("The anti-holomorphic involution matrix is not "
                          "integral. Try increasing the precision of the input "
@@ -326,8 +326,8 @@ def symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4):
     D = DT_ZZ.T
 
     # sanity checks: make sure C and D are integral
-    C_error = (CT_ZZ - CT).norm()
-    D_error = (DT_ZZ - DT).norm()
+    C_error = (CT.round() - CT).norm()
+    D_error = (DT.round() - DT).norm()
     if (C_error > tol) or (D_error > tol):
         raise ValueError("The symmetric transformation matrix is not integral. "
                          "Try increasing the precision of the input period "

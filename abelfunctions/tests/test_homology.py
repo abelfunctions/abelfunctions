@@ -490,3 +490,72 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         # self.assertLess(symmetric_error, 1e-4)
         # for eig in eigenvalues:
         #     self.assertGreater(eig, 0)
+
+
+    def test_recover_action(self):
+        # see equation (28) of Kalla,Klein
+        def compute_R(Gamma, H):
+            H = H.change_ring(ZZ)
+            g,g = H.dimensions()
+            A = Gamma[:g,:g]
+            B = Gamma[:g,g:]
+            C = Gamma[g:,:g]
+            D = Gamma[g:,g:]
+            Ig = identity_matrix(ZZ,g)
+
+            R = zero_matrix(ZZ,2*g,2*g)
+            R[:g,:g] = (2*C.T*B - A.T*H*B + Ig).T
+            R[:g,g:] = 2*D.T*B - B.T*H*B
+            R[g:,:g] = -2*C.T*A + A.T*H*A
+            R[g:,g:] = -(2*C.T*B - A.T*H*B + Ig)
+            return R
+
+        # trott curve
+        Pa = self.atrott
+        Pb = self.btrott
+        R = involution_matrix(Pa, Pb)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-4)
+
+        Ralt = compute_R(Gamma, H)
+        self.assertEqual(R, Ralt)
+
+        # klein curve
+        Pa = self.aklein
+        Pb = self.bklein
+        R = involution_matrix(Pa, Pb, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S, tol=1e-3)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-3)
+
+        Ralt = compute_R(Gamma, H)
+        self.assertEqual(R, Ralt)
+
+        # fermat curve
+        Pa = self.afermat
+        Pb = self.bfermat
+        R = involution_matrix(Pa, Pb, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S, tol=1e-3)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-3)
+
+        Ralt = compute_R(Gamma, H)
+        self.assertEqual(R, Ralt)
+
+        # genus 6 curve
+        Pa = self.a6
+        Pb = self.b6
+        R = involution_matrix(Pa, Pb)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-4)
+
+        Ralt = compute_R(Gamma, H)
+        self.assertEqual(R, Ralt)
+
+
