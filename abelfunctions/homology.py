@@ -5,13 +5,11 @@ r"""Homology
 from sage.all import (
     real, imag, Matrix, ZZ, QQ, RDF, CDF, GF, identity_matrix, zero_matrix)
 
-
 def Re(M):
     return M.apply_map(real)
 
 def Im(M):
     return M.apply_map(imag)
-
 
 def involution_matrix(Pa, Pb, tol=1e-4):
     r"""Returns the transformation matrix `R` corresponding to the anti-holomorphic
@@ -307,3 +305,79 @@ def diagonal_locations(H):
         index_B = -1
 
     return index_one, index_B
+
+
+def symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4):
+    # compute A and B
+    g,g = Pa.dimensions()
+    rhs = S*Q.change_ring(ZZ)
+    A = rhs[:g,:g].T
+    B = rhs[g:,:g].T
+
+    # compute C and D
+    half = QQ(1)/QQ(2)
+    temp = (A*Re(Pa) + B*Re(Pb)).inverse()
+    CT = half*A.T*H.change_ring(ZZ) - Re(Pb)*temp
+    CT_ZZ = CT.round().change_ring(ZZ)
+    C = CT_ZZ.T
+
+    DT = half*B.T*H.change_ring(ZZ) + Re(Pa)*temp
+    DT_ZZ = DT.round().change_ring(ZZ)
+    D = DT_ZZ.T
+
+    # sanity checks: make sure C and D are integral
+    C_error = (CT_ZZ - CT).norm()
+    D_error = (DT_ZZ - DT).norm()
+    if (C_error > tol) or (D_error > tol):
+        raise ValueError("The symmetric transformation matrix is not integral. "
+                         "Try increasing the precision of the input period "
+                         "matrices.")
+
+    # construct Gamma
+    Gamma = zero_matrix(ZZ, 2*g, 2*g)
+    Gamma[:g,:g] = A
+    Gamma[:g,g:] = B
+    Gamma[g:,:g] = C
+    Gamma[g:,g:] = D
+    return Gamma
+
+
+def symmetrize_periods(Pa, Pb, tol=1e-4):
+    r"""Returns symmetric a- and b-periods `Pa_symm` and `Pb_symm`, as well as the
+    corresponding symplectic operator `Gamma` such that `Gamma [Pa \\ Pb] =
+    [Pa_symm \\ Pb_symm]`.
+
+    Parameters
+    ----------
+    Pa : complex matrix
+    Pb : complex matrix
+        The a- and b-periods, respectively, of a genus `g` Riemann surface.
+    tol : double
+        (Default: 1e-4) Tolerance used to verify integrality of intermediate
+        matrices. Dependent on precision of period matrices.
+
+    Returns
+    -------
+    Gamma : integer matrix
+        The symplectic transformation operator.
+    Pa : complex matrix
+    Pb : complex matrix
+        Symmetric a- and b-periods, respectively, of a genus `g` Riemann surface.
+
+    """
+    # use above functions to obtain topological type matrix
+    g,g = Pa.dimensions()
+    R = involution_matrix(Pa, Pb, tol=tol)
+    S = integer_kernel_basis(R)
+    N1 = N1_matrix(Pa, Pb, S, tol=tol)
+    H,Q = symmetric_block_diagonalize(N1)
+    Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=tol)
+
+    # compute the corresponding symmetric periods
+    stacked_periods = zero_matrix(CDF, 2*g, g)
+    stacked_periods[:g,:] = Pa
+    stacked_periods[g:,:] = Pb
+    stacked_symmetric_periods = Gamma*stacked_periods
+    Pa_symm = stacked_symmetric_periods[:g,:]
+    Pb_symm = stacked_symmetric_periods[g:,:]
+    return Gamma, Pa_symm, Pb_symm

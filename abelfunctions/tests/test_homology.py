@@ -1,12 +1,16 @@
 import unittest
 
-from sage.all import matrix, GF, QQ, Matrix, CDF, I, RDF
+from sage.all import (
+    GF, ZZ, QQ, CDF, RDF, I, Matrix, zero_matrix, identity_matrix, real, imag
+)
 from abelfunctions.homology import (
     involution_matrix,
     integer_kernel_basis,
     N1_matrix,
     symmetric_block_diagonalize,
     diagonal_locations,
+    symmetric_transformation_matrix,
+    symmetrize_periods,
 )
 
 class HomologyTestData(unittest.TestCase):
@@ -82,31 +86,31 @@ class HomologyTestData(unittest.TestCase):
         self.b6 = b6
 
         # klein curve
-        Hklein = matrix(GF(2),[
+        Hklein = Matrix(GF(2),[
             [1,0,0],
             [0,1,0],
             [0,0,1]
         ])
-        Qklein = matrix(GF(2),[
+        Qklein = Matrix(GF(2),[
             [1,1,1],
             [0,0,1],
             [0,1,0],
         ])
 
         # fermat curve n=4 (g=3)
-        Hfermat4 = matrix(GF(2),[
+        Hfermat4 = Matrix(GF(2),[
             [0,1,0],
             [1,0,0],
             [0,0,0]
         ])
-        Qfermat4 = matrix(GF(2),[
+        Qfermat4 = Matrix(GF(2),[
             [1,0,0],
             [0,0,1],
             [0,1,0],
         ])
 
         # fermat curve n=5 (g=6)
-        Hfermat5 = matrix(GF(2),[
+        Hfermat5 = Matrix(GF(2),[
             [1,0,0,0,0,0],
             [0,1,0,0,0,0],
             [0,0,1,0,0,0],
@@ -114,7 +118,7 @@ class HomologyTestData(unittest.TestCase):
             [0,0,0,0,1,0],
             [0,0,0,0,0,1],
         ])
-        Qfermat5 = matrix(GF(2),[
+        Qfermat5 = Matrix(GF(2),[
             [1,0,0,0,0,0],
             [1,0,0,1,0,0],
             [0,0,0,0,1,0],
@@ -124,19 +128,19 @@ class HomologyTestData(unittest.TestCase):
         ])
 
         # a genus 3 curve similar to f2
-        Hf2a = matrix(GF(2),[
+        Hf2a = Matrix(GF(2),[
             [1,0,0],
             [0,1,0],
             [0,0,1]
         ])
-        Qf2a = matrix(GF(2),[
+        Qf2a = Matrix(GF(2),[
             [1,1,1],
             [0,0,1],
             [0,1,0],
         ])
 
         # a genus 6 curve
-        H6 = matrix(GF(2),[
+        H6 = Matrix(GF(2),[
             [0,1,0,0,0,0],
             [1,0,0,0,0,0],
             [0,0,0,1,0,0],
@@ -144,7 +148,7 @@ class HomologyTestData(unittest.TestCase):
             [0,0,0,0,0,0],
             [0,0,0,0,0,0],
         ])
-        Q6 = matrix(GF(2),[
+        Q6 = Matrix(GF(2),[
             [1,0,0,0,0,0],
             [0,1,0,0,0,0],
             [1,1,1,0,0,0],
@@ -154,7 +158,7 @@ class HomologyTestData(unittest.TestCase):
         ])
 
         # an example where it is necessary to eliminate under a 2x2 block
-        N1problem = matrix(GF(2),[
+        N1problem = Matrix(GF(2),[
             [0,1,1,1,0,0],
             [1,0,1,0,1,1],
             [1,1,0,1,1,0],
@@ -397,3 +401,92 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         N1 = self.N1problem
         H,Q = symmetric_block_diagonalize(N1)
         self.assertEqual(N1, Q*H*Q.T)
+
+    def test_integral(self):
+        # symmetrize_periods already tests if Gamma is integral
+        Gamma, Pa, Pb = symmetrize_periods(self.atrott, self.btrott)
+        Gamma, Pa, Pb = symmetrize_periods(self.aklein, self.bklein, tol=1e-3)
+        Gamma, Pa, Pb = symmetrize_periods(self.afermat, self.bfermat, tol=1e-3)
+        Gamma, Pa, Pb = symmetrize_periods(self.a6, self.b6)
+
+    def test_symplectic(self):
+        Gamma, Pa, Pb = symmetrize_periods(self.atrott, self.btrott)
+        g,g = Pa.dimensions()
+        J = zero_matrix(ZZ,2*g,2*g)
+        Ig = identity_matrix(ZZ, g, g)
+        J[:g,g:] = Ig
+        J[g:,:g] = -Ig
+        self.assertEqual(Gamma.T*J*Gamma,J)
+
+        Gamma, Pa, Pb = symmetrize_periods(self.aklein, self.bklein, tol=1e-3)
+        g,g = Pa.dimensions()
+        J = zero_matrix(ZZ,2*g,2*g)
+        Ig = identity_matrix(ZZ, g, g)
+        J[:g,g:] = Ig
+        J[g:,:g] = -Ig
+        self.assertEqual(Gamma.T*J*Gamma,J)
+
+        Gamma, Pa, Pb = symmetrize_periods(self.afermat, self.bfermat, tol=1e-3)
+        g,g = Pa.dimensions()
+        J = zero_matrix(ZZ,2*g,2*g)
+        Ig = identity_matrix(ZZ, g, g)
+        J[:g,g:] = Ig
+        J[g:,:g] = -Ig
+        self.assertEqual(Gamma.T*J*Gamma,J)
+
+        Gamma, Pa, Pb = symmetrize_periods(self.a6, self.b6)
+        g,g = Pa.dimensions()
+        J = zero_matrix(ZZ,2*g,2*g)
+        Ig = identity_matrix(ZZ, g, g)
+        J[:g,g:] = Ig
+        J[g:,:g] = -Ig
+        self.assertEqual(Gamma.T*J*Gamma,J)
+
+    def test_riemann_matrix(self):
+        Gamma, Pa, Pb = symmetrize_periods(self.atrott, self.btrott)
+        Omega = Pa.inverse()*Pb
+        Y = Omega.apply_map(imag)
+        symmetric_error = (Omega - Omega.T).norm()
+        eigenvalues = Y.eigenvalues()
+        self.assertLess(symmetric_error, 1e-4)
+        for eig in eigenvalues:
+            self.assertGreater(eig, 0)
+
+        Gamma, Pa, Pb = symmetrize_periods(self.aklein, self.bklein, tol=1e-3)
+        Omega = Pa.inverse()*Pb
+        Y = Omega.apply_map(imag)
+        symmetric_error = (Omega - Omega.T).norm()
+        eigenvalues = Y.eigenvalues()
+        self.assertLess(symmetric_error, 1e-3)
+        for eig in eigenvalues:
+            self.assertGreater(eig, 0)
+
+        #
+        # the two examples below do not work because Kalla,Klein uses a
+        # different definition for Riemann theta / period matirx. The
+        # definition used in Abelfunctions has
+        #
+        # Omega = Pa^{-1} * Pb
+        #
+        # as a Riemann matrix whereas Kalla,Klein uses the normalization
+        #
+        # Omega = Pa * Pb.inverse()
+        #
+
+        # Gamma, Pa, Pb = symmetrize_periods(self.afermat, self.bfermat, tol=1e-3)
+        # Omega = Pa.inverse()*Pb
+        # Y = Omega.apply_map(imag)
+        # symmetric_error = (Omega - Omega.T).norm()
+        # eigenvalues = Y.eigenvalues()
+        # self.assertLess(symmetric_error, 1e-3)
+        # for eig in eigenvalues:
+        #     self.assertGreater(eig, 0)
+
+        # Gamma, Pa, Pb = symmetrize_periods(self.a6, self.b6)
+        # Omega = Pa.inverse()*Pb
+        # Y = Omega.apply_map(imag)
+        # symmetric_error = (Omega - Omega.T).norm()
+        # eigenvalues = Y.eigenvalues()
+        # self.assertLess(symmetric_error, 1e-4)
+        # for eig in eigenvalues:
+        #     self.assertGreater(eig, 0)
