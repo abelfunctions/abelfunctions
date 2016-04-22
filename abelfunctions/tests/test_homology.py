@@ -3,7 +3,8 @@ import unittest
 from sage.all import matrix, GF, QQ, Matrix, CDF, I, RDF
 from abelfunctions.homology import (
     involution_matrix,
-
+    integer_kernel_basis,
+    N1_matrix,
 )
 
 class HomologyTestData(unittest.TestCase):
@@ -216,13 +217,28 @@ class TestInvolutionMatrix(HomologyTestData):
         self.assertTrue(RQQ.is_diagonalizable())
 
 
-# class TestSymmetricFactorization(unittest.TestCase):
-#     def setUp(self):
+class TestN1Matrix(HomologyTestData):
 
-#     def test_rank(self):
-#         H,Q = None, None
-#         assert(H.rank() == N1.rank())
-#         assert(norm(H - H.T) == 0)
-#         assert(Q*H*Q.T == N1)
+    def test_symmetric(self):
+        R = involution_matrix(self.atrott, self.btrott)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.atrott, self.btrott, S)
+        self.assertEqual(N1, N1.T)
 
+        R = involution_matrix(self.aklein, self.bklein, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.aklein, self.bklein, S, tol=1e-3)
+        self.assertEqual(N1, N1.T)
 
+        R = involution_matrix(self.afermat, self.bfermat, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.afermat, self.bfermat, S, tol=1e-3)
+        self.assertEqual(N1, N1.T)
+
+        R = involution_matrix(self.a6, self.b6)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(self.a6, self.b6, S)
+        self.assertEqual(N1, N1.T)
+
+class TestSymmetricFactorization(HomologyTestData):
+    pass
