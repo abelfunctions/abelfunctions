@@ -42,10 +42,9 @@ import sympy
 
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import I, pi
+from sage.all import I, pi, gcd, xgcd
 from sage.functions.log import log, exp
 from sage.functions.other import ceil
-from sage.rings.arith import gcd, xgcd
 from sage.rings.big_oh import O
 from sage.rings.infinity import infinity
 from sage.rings.integer_ring import ZZ

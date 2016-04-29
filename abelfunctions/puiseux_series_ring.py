@@ -32,9 +32,7 @@ Contents
 import weakref
 
 from sage.all import parent
-import sage.rings.commutative_ring as commutative_ring
-import sage.rings.integral_domain as integral_domain
-import sage.rings.ring as ring
+from sage.rings.all import IntegralDomain, CommutativeRing, Field
 
 from abelfunctions.puiseux_series_ring_element import (
     is_PuiseuxSeries,
@@ -70,11 +68,11 @@ def PuiseuxSeriesRing(base_ring, name=None, names=None, default_prec=None, spars
         x = puiseux_series[key]()
         if x is not None: return x
 
-    if isinstance(base_ring, ring.Field):
+    if isinstance(base_ring, Field):
         R = PuiseuxSeriesRing_field(base_ring, name, default_prec, sparse)
-    elif isinstance(base_ring, integral_domain.IntegralDomain):
+    elif isinstance(base_ring, IntegralDomain):
         R = PuiseuxSeriesRing_domain(base_ring, name, default_prec, sparse)
-    elif isinstance(base_ring, commutative_ring.CommutativeRing):
+    elif isinstance(base_ring, CommutativeRing):
         R = PuiseuxSeriesRing_generic(base_ring, name, default_prec, sparse)
     else:
         raise TypeError("base_ring must be a commutative ring")
@@ -86,10 +84,10 @@ def is_PuiseuxSeriesRing(x):
     return isinstance(x, PuiseuxSeriesRing_generic)
 
 
-class PuiseuxSeriesRing_generic(commutative_ring.CommutativeRing):
+class PuiseuxSeriesRing_generic(CommutativeRing):
     def __init__(self, base_ring, name=None, default_prec=None, sparse=False,
                  category=None):
-        commutative_ring.CommutativeRing.__init__(
+        CommutativeRing.__init__(
             self, base_ring, names=name,
             category=getattr(self, '_default_category', Fields()))
 
@@ -225,11 +223,11 @@ class PuiseuxSeriesRing_generic(commutative_ring.CommutativeRing):
     def default_prec(self):
         return self.laurent_series_ring().default_prec()
 
-class PuiseuxSeriesRing_domain(PuiseuxSeriesRing_generic, integral_domain.IntegralDomain):
+class PuiseuxSeriesRing_domain(PuiseuxSeriesRing_generic, IntegralDomain):
     def __init__(self, base_ring, name=None, default_prec=None, sparse=False):
         PuiseuxSeriesRing_generic.__init__(self, base_ring, name, default_prec, sparse)
 
-class PuiseuxSeriesRing_field(PuiseuxSeriesRing_generic, ring.Field):
+class PuiseuxSeriesRing_field(PuiseuxSeriesRing_generic, Field):
     _default_category = CompleteDiscreteValuationFields()
 
     def __init__(self, base_ring, name=None, default_prec=None, sparse=False):
