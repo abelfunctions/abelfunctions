@@ -1,7 +1,40 @@
-r"""Homology
+r"""
+Homology :mod:`homology`
+========================
+
+Tools for "symmetrizing" a period matrix.
+
+There exists a symplectic transformation on the period matrix of a real curve
+such that the corresponding a- and b-cycles have certain transformation
+properties until the anti-holomorphic involution on said Riemann surface.
+
+.. note::
+
+   The algorithm described in Kalla, Klein actually operates on the transposes
+   of the a- and b-period matrices. All intermediate functions assume the input
+   period matrices are transposed. The primary function in this module,
+   :func:`symmetrize_periods`
+
+Functions
+---------
+
+.. autosummary::
+
+    symmetrize_periods
+    symmetric_transformation_matrix
+
+References
+----------
+
+.. [KallaKlein] C. Kalla, C. Klein "Computation of the Topological Type of a
+   Real Riemann Surface"
+
+Contents
+--------
 
 """
 
+import numpy
 from sage.all import (
     real, imag, Matrix, ZZ, QQ, RDF, CDF, GF, identity_matrix, zero_matrix)
 
@@ -308,20 +341,47 @@ def diagonal_locations(H):
 
 
 def symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4):
+    r"""Returns the symplectic matrix `\Gamma` mapping the period matrices `Pa,Pb`
+    to a symmetric period matrices.
+
+    A helper function to :func:`symmetrize_periods`.
+
+    Parameters
+    ----------
+    Pa : complex matrix
+        A `g x g` a-period matrix.
+    Pb : complex matrix
+        A `g x g` b-period matrix.
+    S : integer matrix
+        Integer kernel basis matrix.
+    H : integer matrix
+        Topological type classification matrix.
+    Q : integer matrix
+        The transformation matrix from `symmetric_block_diagonalize`.
+    tol : double
+        (Default: 1e-4) Tolerance used to verify integrality of intermediate
+        matrices. Dependent on precision of period matrices.
+
+    Returns
+    -------
+    Gamma : integer matrix
+        A `2g x 2g` symplectic matrix.
+    """
     # compute A and B
     g,g = Pa.dimensions()
     rhs = S*Q.change_ring(ZZ)
     A = rhs[:g,:g].T
     B = rhs[g:,:g].T
+    H = H.change_ring(ZZ)
 
     # compute C and D
     half = QQ(1)/QQ(2)
     temp = (A*Re(Pa) + B*Re(Pb)).inverse()
-    CT = half*A.T*H.change_ring(ZZ) - Re(Pb)*temp
+    CT = half*A.T*H - Re(Pb)*temp
     CT_ZZ = CT.round().change_ring(ZZ)
     C = CT_ZZ.T
 
-    DT = half*B.T*H.change_ring(ZZ) + Re(Pa)*temp
+    DT = half*B.T*H + Re(Pa)*temp
     DT_ZZ = DT.round().change_ring(ZZ)
     D = DT_ZZ.T
 
@@ -340,7 +400,6 @@ def symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4):
     Gamma[g:,:g] = C
     Gamma[g:,g:] = D
     return Gamma
-
 
 def symmetrize_periods(Pa, Pb, tol=1e-4):
     r"""Returns symmetric a- and b-periods `Pa_symm` and `Pb_symm`, as well as the
@@ -364,7 +423,21 @@ def symmetrize_periods(Pa, Pb, tol=1e-4):
     Pb : complex matrix
         Symmetric a- and b-periods, respectively, of a genus `g` Riemann surface.
 
+    Notes
+    -----
+    The algorithm described in Kalla, Klein actually operates on the transposes
+    of the a- and b-period matrices.
     """
+    # coerce from numpy, if necessary
+    if isinstance(Pa, numpy.ndarray):
+        Pa = Matrix(CDF, numpy.ascontiguousarray(Pa))
+    if isinstance(Pb, numpy.ndarray):
+        Pb = Matrix(CDF, numpy.ascontiguousarray(Pb))
+
+    # use the transposes of the period matrices and coerce to Sage matrices
+    Pa = Pa.T
+    Pb = Pb.T
+
     # use above functions to obtain topological type matrix
     g,g = Pa.dimensions()
     R = involution_matrix(Pa, Pb, tol=tol)
@@ -380,4 +453,8 @@ def symmetrize_periods(Pa, Pb, tol=1e-4):
     stacked_symmetric_periods = Gamma*stacked_periods
     Pa_symm = stacked_symmetric_periods[:g,:]
     Pb_symm = stacked_symmetric_periods[g:,:]
-    return Gamma, Pa_symm, Pb_symm
+
+    # transpose results back
+    Pa_symm = Pa_symm.T
+    Pb_symm = Pb_symm.T
+    return Pa_symm, Pb_symm

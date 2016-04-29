@@ -14,7 +14,7 @@ from abelfunctions.homology import (
 )
 
 class HomologyTestData(unittest.TestCase):
-    r"""Collection of tests cases from Kalla,Klein."""
+    # this class only defines the test data from Kalla and Klein
     def setUp(self):
         atrott = Matrix(
             CDF,
@@ -76,6 +76,10 @@ class HomologyTestData(unittest.TestCase):
         )
 
         # store matrices
+        #
+        # important note! These period matrices (the ones appearing in the
+        # paper) are actually transposed. all intermediate steps assume this
+        # transposition
         self.atrott = atrott
         self.btrott = btrott
         self.aklein = aklein
@@ -201,6 +205,7 @@ class TestInvolutionMatrix(HomologyTestData):
         R = involution_matrix(self.a6, self.b6)
 
     def test_eigenvalues(self):
+        # the eigenvalues of the involution matrix should be equal to -1 or 1
         R = involution_matrix(self.atrott, self.btrott)
         evals = R.eigenvalues()
         self.assertSetEqual(set(evals), {1.0, -1.0})
@@ -218,6 +223,7 @@ class TestInvolutionMatrix(HomologyTestData):
         self.assertSetEqual(set(evals), {1.0, -1.0})
 
     def test_diagonalizable(self):
+        # the involution matrix should be diagonalizable
         R = involution_matrix(self.atrott, self.btrott)
         RQQ = R.change_ring(QQ)
         self.assertTrue(RQQ.is_diagonalizable())
@@ -238,6 +244,7 @@ class TestInvolutionMatrix(HomologyTestData):
 class TestN1Matrix(HomologyTestData):
 
     def test_symmetric(self):
+        # the N1 matrix should be symmetric
         R = involution_matrix(self.atrott, self.btrott)
         S = integer_kernel_basis(R)
         N1 = N1_matrix(self.atrott, self.btrott, S)
@@ -287,6 +294,8 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         self.N16_from_periods = N1
 
     def test_diagonal_locations(self):
+        # tests the helper function `diagonal_locations` which identifies where
+        # the diagonal elements or blocks occur in the H matrix
         H = Matrix(GF(2),
                    [[0,0,0],
                     [0,0,0],
@@ -328,6 +337,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         self.assertEqual(index_B, 1)
 
     def test_rank_equivalence(self):
+        # the ranks of N1 and H should match
         N1 = self.N1klein
         H,Q = symmetric_block_diagonalize(N1)
         self.assertEqual(N1.rank(), H.rank())
@@ -353,6 +363,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         self.assertEqual(N1.rank(), H.rank())
 
     def test_symmetric_H(self):
+        # H should be symmetric
         N1 = self.N1klein
         H,Q = symmetric_block_diagonalize(N1)
         self.assertEqual(H, H.T)
@@ -378,6 +389,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         self.assertEqual(H, H.T)
 
     def test_equivalence(self):
+        # by definition: N1 = Q*H*Q.T (mod 2)
         N1 = self.N1klein
         H,Q = symmetric_block_diagonalize(N1)
         self.assertEqual(N1, Q*H*Q.T)
@@ -404,13 +416,20 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
 
     def test_integral(self):
         # symmetrize_periods already tests if Gamma is integral
-        Gamma, Pa, Pb = symmetrize_periods(self.atrott, self.btrott)
-        Gamma, Pa, Pb = symmetrize_periods(self.aklein, self.bklein, tol=1e-3)
-        Gamma, Pa, Pb = symmetrize_periods(self.afermat, self.bfermat, tol=1e-3)
-        Gamma, Pa, Pb = symmetrize_periods(self.a6, self.b6)
+        Pa, Pb = symmetrize_periods(self.atrott.T, self.btrott.T)
+        Pa, Pb = symmetrize_periods(self.aklein.T, self.bklein.T, tol=1e-3)
+        Pa, Pb = symmetrize_periods(self.afermat.T, self.bfermat.T, tol=1e-3)
+        Pa, Pb = symmetrize_periods(self.a6.T, self.b6.T)
 
     def test_symplectic(self):
-        Gamma, Pa, Pb = symmetrize_periods(self.atrott, self.btrott)
+        # the symmetric transformation matrix should be symplectic
+        Pa = self.atrott
+        Pb = self.btrott
+        R = involution_matrix(Pa, Pb)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4)
         g,g = Pa.dimensions()
         J = zero_matrix(ZZ,2*g,2*g)
         Ig = identity_matrix(ZZ, g, g)
@@ -418,7 +437,13 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         J[g:,:g] = -Ig
         self.assertEqual(Gamma.T*J*Gamma,J)
 
-        Gamma, Pa, Pb = symmetrize_periods(self.aklein, self.bklein, tol=1e-3)
+        Pa = self.aklein
+        Pb = self.bklein
+        R = involution_matrix(Pa, Pb, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-3)
         g,g = Pa.dimensions()
         J = zero_matrix(ZZ,2*g,2*g)
         Ig = identity_matrix(ZZ, g, g)
@@ -426,7 +451,13 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         J[g:,:g] = -Ig
         self.assertEqual(Gamma.T*J*Gamma,J)
 
-        Gamma, Pa, Pb = symmetrize_periods(self.afermat, self.bfermat, tol=1e-3)
+        Pa = self.afermat
+        Pb = self.bfermat
+        R = involution_matrix(Pa, Pb, tol=1e-3)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-3)
         g,g = Pa.dimensions()
         J = zero_matrix(ZZ,2*g,2*g)
         Ig = identity_matrix(ZZ, g, g)
@@ -434,7 +465,13 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         J[g:,:g] = -Ig
         self.assertEqual(Gamma.T*J*Gamma,J)
 
-        Gamma, Pa, Pb = symmetrize_periods(self.a6, self.b6)
+        Pa = self.a6
+        Pb = self.b6
+        R = involution_matrix(Pa, Pb)
+        S = integer_kernel_basis(R)
+        N1 = N1_matrix(Pa, Pb, S)
+        H,Q = symmetric_block_diagonalize(N1)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4)
         g,g = Pa.dimensions()
         J = zero_matrix(ZZ,2*g,2*g)
         Ig = identity_matrix(ZZ, g, g)
@@ -443,16 +480,18 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         self.assertEqual(Gamma.T*J*Gamma,J)
 
     def test_riemann_matrix(self):
-        Gamma, Pa, Pb = symmetrize_periods(self.atrott, self.btrott)
+        # the transformed period matrices should still result in a Riemann
+        # matrix after normalization
+        Pa, Pb = symmetrize_periods(self.atrott.T, self.btrott.T)
         Omega = Pa.inverse()*Pb
         Y = Omega.apply_map(imag)
         symmetric_error = (Omega - Omega.T).norm()
         eigenvalues = Y.eigenvalues()
-        self.assertLess(symmetric_error, 1e-4)
+        self.assertLess(symmetric_error, 3e-3)  # the example itself has low precision
         for eig in eigenvalues:
             self.assertGreater(eig, 0)
 
-        Gamma, Pa, Pb = symmetrize_periods(self.aklein, self.bklein, tol=1e-3)
+        Pa, Pb = symmetrize_periods(self.aklein.T, self.bklein.T, tol=1e-3)
         Omega = Pa.inverse()*Pb
         Y = Omega.apply_map(imag)
         symmetric_error = (Omega - Omega.T).norm()
@@ -461,35 +500,23 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         for eig in eigenvalues:
             self.assertGreater(eig, 0)
 
-        #
-        # the two examples below do not work because Kalla,Klein uses a
-        # different definition for Riemann theta / period matirx. The
-        # definition used in Abelfunctions has
-        #
-        # Omega = Pa^{-1} * Pb
-        #
-        # as a Riemann matrix whereas Kalla,Klein uses the normalization
-        #
-        # Omega = Pa * Pb.inverse()
-        #
+        Pa, Pb = symmetrize_periods(self.afermat.T, self.bfermat.T, tol=1e-3)
+        Omega = Pa.inverse()*Pb
+        Y = Omega.apply_map(imag)
+        symmetric_error = (Omega - Omega.T).norm()
+        eigenvalues = Y.eigenvalues()
+        self.assertLess(symmetric_error, 1e-3)
+        for eig in eigenvalues:
+            self.assertGreater(eig, 0)
 
-        # Gamma, Pa, Pb = symmetrize_periods(self.afermat, self.bfermat, tol=1e-3)
-        # Omega = Pa.inverse()*Pb
-        # Y = Omega.apply_map(imag)
-        # symmetric_error = (Omega - Omega.T).norm()
-        # eigenvalues = Y.eigenvalues()
-        # self.assertLess(symmetric_error, 1e-3)
-        # for eig in eigenvalues:
-        #     self.assertGreater(eig, 0)
-
-        # Gamma, Pa, Pb = symmetrize_periods(self.a6, self.b6)
-        # Omega = Pa.inverse()*Pb
-        # Y = Omega.apply_map(imag)
-        # symmetric_error = (Omega - Omega.T).norm()
-        # eigenvalues = Y.eigenvalues()
-        # self.assertLess(symmetric_error, 1e-4)
-        # for eig in eigenvalues:
-        #     self.assertGreater(eig, 0)
+        Pa, Pb = symmetrize_periods(self.a6.T, self.b6.T)
+        Omega = Pa.inverse()*Pb
+        Y = Omega.apply_map(imag)
+        symmetric_error = (Omega - Omega.T).norm()
+        eigenvalues = Y.eigenvalues()
+        self.assertLess(symmetric_error, 1e-3)
+        for eig in eigenvalues:
+            self.assertGreater(eig, 0)
 
 
     def test_recover_action(self):
@@ -517,7 +544,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         S = integer_kernel_basis(R)
         N1 = N1_matrix(Pa, Pb, S)
         H,Q = symmetric_block_diagonalize(N1)
-        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-4)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4)
 
         Ralt = compute_R(Gamma, H)
         self.assertEqual(R, Ralt)
@@ -529,7 +556,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         S = integer_kernel_basis(R)
         N1 = N1_matrix(Pa, Pb, S, tol=1e-3)
         H,Q = symmetric_block_diagonalize(N1)
-        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-3)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4)
 
         Ralt = compute_R(Gamma, H)
         self.assertEqual(R, Ralt)
@@ -541,7 +568,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         S = integer_kernel_basis(R)
         N1 = N1_matrix(Pa, Pb, S, tol=1e-3)
         H,Q = symmetric_block_diagonalize(N1)
-        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-3)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4)
 
         Ralt = compute_R(Gamma, H)
         self.assertEqual(R, Ralt)
@@ -553,7 +580,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         S = integer_kernel_basis(R)
         N1 = N1_matrix(Pa, Pb, S)
         H,Q = symmetric_block_diagonalize(N1)
-        Gamma, _, _ = symmetrize_periods(Pa, Pb, tol=1e-4)
+        Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4)
 
         Ralt = compute_R(Gamma, H)
         self.assertEqual(R, Ralt)
