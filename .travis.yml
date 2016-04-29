@@ -6,8 +6,8 @@ before_install:
    - tar cjf abelfunctions.spkg abelfunctions
    - mv abelfunctions.spkg ${HOME}
    - cd ${HOME}
-   - wget http://mirrors.mit.edu/sage/linux/64bit/sage-7.0-Ubuntu_12.04-x86_64.tar.bz2
-   - tar xjf ${HOME}/sage-7.0-Ubuntu_12.04-x86_64.tar.bz2
+   - wget http://mirrors.mit.edu/sage/linux/64bit/sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
+   - tar xjf ${HOME}/sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
    - ${HOME}/SageMath/sage -c "print 'Sage Runs!'"
    
 
