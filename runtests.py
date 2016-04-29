@@ -2,6 +2,7 @@ import abelfunctions
 import getopt
 import sys
 import unittest
+import warnings
 
 # get abelfunctions version number as '__version__'
 exec(open('abelfunctions/version.py')).read()
@@ -68,4 +69,7 @@ def runtests(argv):
     sys.exit(errno)
 
 if __name__ == '__main__':
-    runtests(sys.argv[1:])
+    # run tests and suppress warnings (particularly from PARI)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        runtests(sys.argv[1:])
