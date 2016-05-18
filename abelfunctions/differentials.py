@@ -331,7 +331,8 @@ class Differential:
         if P.is_discriminant():
             p = P.puiseux_series
         else:
-            p = puiseux(self.RS.f)[0]
+            p = puiseux(self.RS.f, P.x, P.y)[0]
+            p.extend(order)
 
         # substitute Puiseux series expansion into the differrential and expand
         # as a Laurent series

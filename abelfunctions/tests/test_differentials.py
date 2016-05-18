@@ -1,14 +1,15 @@
 import unittest
 
-from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 from abelfunctions.differentials import (
     mnuk_conditions,
     recenter_curve,
     differentials_numerators,
     differentials
 )
+from abelfunctions.riemann_surface import RiemannSurface
+from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
-from sage.rings.rational_field import QQ
+from sage.all import QQ, CC
 
 class DummyRS:
     def __init__(self, f):
@@ -70,3 +71,70 @@ class TestDifferentials(AbelfunctionsTestCase):
         b = [x*y/dfdy, x**3/dfdy]
         self.assertEqual(a,b)
 
+
+class TestCenteredAtRegularPlace(AbelfunctionsTestCase):
+    # tests if differentials are correctly evaluated at regular places on the
+    # Riemann surface. see Issue #123.
+    #
+    # test: check if evaluating the differential at the (x,y)-projection of the
+    # place is equal (or, nomerically close to) to evaluating the centered
+    # differential at t=0
+
+    def test_f1_regular_places(self):
+        X = RiemannSurface(self.f1)
+        omegas = differentials(X)
+
+        # the places above x=-1 are regular
+        places = X(-1)
+        for P in places:
+            a,b = P.x,P.y
+            for omega in omegas:
+                omega_P = omega.centered_at_place(P)
+                val1 = omega(a,b)
+                val2 = omega_P(CC(0))
+                self.assertLess(abs(val1-val2), 1e-8)
+
+    def test_f2_regular_places(self):
+        X = self.X2
+        omegas = differentials(X)
+
+        # the places above x=1 are regular
+        places = X(1)
+        for P in places:
+            a,b = P.x,P.y
+            for omega in omegas:
+                omega_P = omega.centered_at_place(P)
+                val1 = omega(a,b)
+                val2 = omega_P(CC(0))
+                self.assertLess(abs(val1-val2), 1e-8)
+
+    def test_hyperelliptic_regular_places(self):
+        R = QQ['x,y']
+        x,y = R.gens()
+        X = RiemannSurface(y**2 - (x+1)*(x-1)*(x-2)*(x+2))
+        omegas = differentials(X)
+
+        # the places above x=0 are regular
+        places = X(0)
+        for P in places:
+            a,b = P.x,P.y
+            for omega in omegas:
+                omega_P = omega.centered_at_place(P)
+                val1 = omega(a,b)
+                val2 = omega_P(CC(0))
+                self.assertLess(abs(val1-val2), 1e-8)
+
+        # the places above x=oo are regular: P = (1/t, \pm 1/t**2 + O(1))
+        # (however, all places at infinity are treated as discriminant)
+        #
+        # in this particular example, omega[0] = 1/(2*y). At the places at
+        # infinity, these are equal to \mp 0.5, respectively. (the switch in
+        # sign comes from the derivative dxdt = -1/t**2)
+        places = X('oo')
+        for P in places:
+            sign = P.puiseux_series.ypart[-2]
+            for omega in omegas:
+                omega_P = omega.centered_at_place(P)
+                val1 = -sign*0.5
+                val2 = omega_P(CC(0))
+                self.assertLess(abs(val1-val2), 1e-8)
