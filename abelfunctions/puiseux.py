@@ -788,7 +788,7 @@ class PuiseuxTSeries(object):
 
         if all_conjugates:
             zeta_e=QQbar.zeta(abse)
-            conjugates = [mu*zeta_e^k for k in range(abse)]
+            conjugates = [mu*zeta_e**k for k in range(abse)]
         else:
             conjugates = [mu]
         map(lambda x: x.exactify(), conjugates)
