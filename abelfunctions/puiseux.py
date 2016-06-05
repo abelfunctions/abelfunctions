@@ -787,7 +787,7 @@ class PuiseuxTSeries(object):
         mu = phi.roots(QQbar, multiplicities=False)[0]
 
         if all_conjugates:
-            zeta_e=QQbar.zeta(eabs)
+            zeta_e=QQbar.zeta(abse)
             conjugates = [mu*zeta_e^k for k in range(abse)]
         else:
             conjugates = [mu]
@@ -799,7 +799,7 @@ class PuiseuxTSeries(object):
             t = self.ypart.parent().gen()
             fconj = self.ypart(c*t)
             p = P(fconj(x**(QQ(1)/e)))
-            p = p.add_bigoh(QQ(order+1)/abs(e))
+            p = p.add_bigoh(QQ(order+1)/abse)
             xseries.append(p)
         return xseries
 
