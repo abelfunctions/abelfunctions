@@ -42,7 +42,7 @@ import sympy
 
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import I, pi, gcd, xgcd
+from sage.all import gcd, xgcd
 from sage.functions.log import log, exp
 from sage.functions.other import ceil
 from sage.rings.big_oh import O
@@ -775,17 +775,20 @@ class PuiseuxTSeries(object):
 
         # given x = alpha + lambda*t^e solve for t. this involves finding an
         # e-th root of either (1/lambda) or of lambda, depending on e's sign
+        ## (A sign on a ramification index ? hm)
         e = self.ramification_index
+        abse = abs(e)
         lamb = S(self.xcoefficient)
         order = self.order
         if e > 0:
             phi = lamb*z**e - 1
         else:
-            phi = z**abs(e) - lamb
+            phi = z**abse - lamb
         mu = phi.roots(QQbar, multiplicities=False)[0]
 
         if all_conjugates:
-            conjugates = [mu*exp(2*pi*I*k/abs(e)) for k in range(abs(e))]
+            zeta_e=QQbar.zeta(abse)
+            conjugates = [mu*zeta_e**k for k in range(abse)]
         else:
             conjugates = [mu]
         map(lambda x: x.exactify(), conjugates)
@@ -796,7 +799,7 @@ class PuiseuxTSeries(object):
             t = self.ypart.parent().gen()
             fconj = self.ypart(c*t)
             p = P(fconj(x**(QQ(1)/e)))
-            p = p.add_bigoh(QQ(order+1)/abs(e))
+            p = p.add_bigoh(QQ(order+1)/abse)
             xseries.append(p)
         return xseries
 
