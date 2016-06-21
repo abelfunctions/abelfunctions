@@ -30,7 +30,9 @@ a personal "fork" of Abelfunctions on GitHub. You only need to do this once.
    Create a new branch in which to commit your changes. This way, you always
    have a clean copy of the code in `master`.
    
-       $ git checkout -b my-branch-name
+   ```
+   $ git checkout -b my-branch-name
+   ```
    
 2. **Make changes:**
 
@@ -43,8 +45,10 @@ a personal "fork" of Abelfunctions on GitHub. You only need to do this once.
    Abelfunctions. This will run the entire test suite, checking for any
    propagating issues that may have cropped up.
 
-       $ sage setup.py build_ext --inplace
-       $ sage runtests.py
+   ```
+   $ sage setup.py build_ext --inplace
+   $ sage runtests.py
+   ```
 
 4. **Commit:**
 
@@ -56,8 +60,10 @@ a personal "fork" of Abelfunctions on GitHub. You only need to do this once.
 
    Push your changes to a remote branch.
    
-       $ git push origin my-branch-name
-       
+   ```
+   $ git push origin my-branch-name
+   ```
+
    Then, create a "Pull Request" of this remote branch against the main
    Ablefunctions repo. Read more about Pull Requests at
    [GitHub - Using pull requests](https://help.github.com/articles/using-pull-requests/).
