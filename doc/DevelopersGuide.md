@@ -13,6 +13,8 @@ the [Issues Page](https://github.com/abelfunctions/abelfunctions/issues).
 
 * [Workflow](#workflow)
 * [Abelfunctions Overview](#abelfunctions-overview)
+  * [Algebraic Half](#algebraic-half)
+  * [Geometric Half](#geometric-half)
 * [Writing Tests](#writing-tests)
 
 ## Workflow
@@ -81,7 +83,7 @@ corresponding module.
 Sage packages and libraries, such as Abelfunctions, how how best to host the
 output HTML documentation.)*
 
-**TODO:** provide high-level library description.
+Abelfunctions follows a more-or-less standard Python / Sage package layout:
 
 ```
 abelfunctions/
@@ -94,6 +96,58 @@ abelfunctions/
   setup.py          # Installation script
 ```
 
+The core functionality of Abelfunctions can be partitioned into two halves: the
+"algebraic half" and the "geometric half". These two halves are joined by the
+[`RiemannSurface`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/riemann_surface.py)
+class and used by other components of the Abelfunctions package.
+
+### Algebraic Half
+
+* **Primary Goal:** compute a basis for holomorphic differentials on a Riemann
+  surface.
+* **Secondary Goals:**
+  * compute Puiseux series,
+  * compute the singularity structure of a curve.
+  
+  
+#### Overview
+  
+The module
+[`abelfunctions/differentials.py`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/differentials.py)
+defines the function `differentials()` which returns a basis of holomorphic
+differentials on a Riemann surface as well as a class `Differential` which is
+the base class for any differential defined on a Riemann surface.
+
+The function `differentials()` calls `differentials_numerators()` which in turn
+uses `recenter_curve()` and `mnuk_conditions()` to determine the numerators of
+the holomorphic differentials. Note that the denominators are all equal to the
+derivative of the curve with respect to the dependent variable. These use
+functionality provided by
+[`integralbasis.py`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/integralbasis.py),
+[`singularities.py`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/singularities.py),
+and
+[`puiseux.py`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/puiseux.py)
+which compute integral bases of algebraic function fields, the singularity
+structure of algebraic curves, and Puiseux series expansions about points on a
+curve, respectively.
+
+*A note about Puiseux series:* at the time of the development of this code Sage
+did not have a built-in Pusieux series object which fit in to the Sage coercion
+model. I developed the concept of a ring of Pusieux series over a given base
+ring as well as the arithmetic of their elements. At the time of this writing
+some folks in the Sage community are merging my code into the Sage code base.
+See [Trac # 4618](http://trac.sagemath.org/ticket/4618) for information. This
+work is separate from the task of computing a Puiseux series expansion of a
+curve about some point.
+
+### Geometric Half
+
+* **Primary Goal:** compute a basis for the first homology group of a Riemann
+  surface.
+* **Secondary Goals:**
+  * compute the monodromy group of a curve,
+  * establish a framework for constructing paths on a Riemann surface.
+  
 ## Writing Tests
 
 Abelfunctions uses the built-in Python
