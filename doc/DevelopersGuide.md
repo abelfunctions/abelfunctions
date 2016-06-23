@@ -147,7 +147,54 @@ curve about some point.
 * **Secondary Goals:**
   * compute the monodromy group of a curve,
   * establish a framework for constructing paths on a Riemann surface.
-  
+
+Although the primary goal is the compute particular paths on a Riemann surface
+the code has been written to compute general paths on Riemann surfaces. This is
+particularly useful for computing the Abel map at an arbitrary place.
+
+The most fundamental objects `ComplexPathPrimitive` and `ComplexPath` are
+defined in
+[`complex_path.pyx`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/complex_path.pyx).
+These are used to define paths and segments of paths in the complex x-plane. The
+objects defined in this module follow the
+[composite pattern](https://en.wikipedia.org/wiki/Composite_pattern) from
+object-oriented programming design. In this situation, `ComplexPathPrimitive`
+plays the role of the base *component*, `ComplexPath` is the *composite*, and
+`ComplexPathLine`, `Arc`, and `Ray` are all *leaves*.
+
+From a `ComplexPath` we can create a `RiemannSurfacePath` as defined in
+[`riemann_surface_path.pyx`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/riemann_surface_path.pyx).
+The role of a `RiemannSurfacePath` is to define how to lift a path to the
+Riemann surface using (currently) either analytic continuation via
+`RiemannSurfacePathSmale` or Puiseux series via `RiemannSurfacePathPuiseux`.
+These also follow a composite design pattern with `RiemannSurfacePathPrimitive`
+as the base *component*, `RiemannSurfacePath` as the *composite*, and `Smale`
+and `Puiseux` as *leaves*. We use this pattern to hide the implementation
+details of which analytic continuation technique is being used in a path as well
+as making it easy to have one technique used on one part of a path and a
+different technique on another. (For example, we want to use fast numerical
+analytic continuation when away from the branch points of a curve.) Other types
+of analytic continuation techniques can be created by constructing a new leaf
+class and overloading the `analytically_continue()` method.
+
+Finally, management of the creation of these paths is performed by a
+`RiemannSurfacePathFactory` defined in
+[`riemann_surface_path_factory.py`](https://github.com/abelfunctions/abelfunctions/blob/master/abelfunctions/riemann_surface_path_factory.py).
+This is an attempt to abstract out the implementation of the requests of
+different kinds of paths, such as monodromy paths, a- and b-cycles, paths to
+particular places on a Riemann surface. Currently, only one implementation of
+`RiemannSurfacePathFactory` exists but more factories can be added. For example,
+Issue #126 proposes a path creation strategy which uses the Voronoi
+decomposition of the branch locus to efficiently compute the monodromy group of
+a curve. Some modifications need to be made to `RiemannSurface` to allow the
+user to choose different factories. (Or choose a default factory for the user
+since many of them will most likely not care.)
+
+It seems silly at first to allow the implementation of multiple strategies but,
+for the purposes of testing and performance comparisons it is a good idea to
+keep multiple strategies around. Besides, future updates may change the
+performance of different strategies.
+
 ## Writing Tests
 
 Abelfunctions uses the built-in Python
