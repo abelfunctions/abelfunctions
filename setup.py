@@ -26,6 +26,7 @@ import unittest
 from distutils.core import setup, Command
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
+from numpy.distutils.misc_util import get_numpy_include_dirs
 
 # include every conceivable directory that may contains sage headers
 try:
@@ -42,8 +43,7 @@ INCLUDES = [os.path.join(SAGE_ROOT),
             os.path.join(SAGE_ROOT,'src','sage','ext','interrupt'),
             os.path.join(SAGE_LOCAL,'include'),
             os.path.join(SAGE_LOCAL,'include','python')]
-INCLUDES_NUMPY = [os.path.join(SAGE_LOCAL,'lib','python','site-packages',
-                               'numpy','core','include')]
+INCLUDES_NUMPY = get_numpy_include_dirs()
 
 ext_modules = [
     Extension('abelfunctions.complex_path',
