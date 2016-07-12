@@ -1,23 +1,22 @@
 #!/usr/bin/env python
-"""Distutils based setup script for abelfunctions
+"""Setup script for abelfunctions
 
-This uses Distutils (http://python.org/sigs/distutils-sig/) the standard python
-mechanism for installing packages. For the easiest installation just type the
-command (you'll probably need root privileges for that):
+To install Abelfunctions for your user account run:
 
-    $ python setup.py install
+    $ sage setup.py install --user
 
-This will install the library in the default location. To install in a
-custom directory <dir>, use:
+To build Abelfunctions in-place (used in running the test suite) run:
 
-    $ python setup.py install --prefix=<dir>
+    $ sage setup.py build_ext --inplace
 
-To install for your user account (recommended) use:
+To install in a custom directory <dir> use:
 
-    $ python setup.py install --user
+    $ sage setup.py install --prefix=<dir>
 
-Finally, if you wish to build
+Developers: to clean the directory of any extraneous files, such as compiled
+Python .pyc and Cython .o/.so output and run:
 
+    $ sage setup.py clean
 """
 import os
 import sys
