@@ -16,6 +16,8 @@ Functions
 
     radius
     radius0
+    radius1
+    radius2
     radiusN
 
 References
@@ -34,6 +36,7 @@ Contents
 """
 import numpy
 import scipy
+import warnings
 
 from numpy import sqrt, prod
 from numpy.linalg import norm, inv
@@ -109,13 +112,99 @@ def radius(epsilon, T, derivs=[], accuracy_radius=5):
 
 
 def radius0(eps, r, g):
-    r"""Compute the radius with no deriviatives."""
+    r"""Compute the radius with no derivatives."""
     lhs = eps * (2./g) * (r/2.)**g * gamma(g/2.)
     ins = gammainccinv(g/2.,lhs)
     R = sqrt(ins) + r/2.
     S = (sqrt(2.*g)+r)/2.
     radius = max(R,S)
     return radius
+
+
+def radius1(eps, r, g, T, deriv, accuracy_radius=5):
+    r"""Compute the radius with one derivative.
+
+    Notes
+    -----
+    Depreciated. Use `radiusN` instead. `radius1` is only used for testing
+    purposes.
+    """
+
+    warnings.warn('radius1 is only for testing purposes. Use `radiusN` '
+                  'instead.', DeprecationWarning)
+
+    pi = numpy.pi
+    L = accuracy_radius
+    normderiv = norm(numpy.array(deriv))
+    normTinv = norm(inv(T))
+    lhs = (eps*(r/2.)**g) / (sqrt(pi)*g*normderiv*normTinv)
+
+    # define lower bound (guess) and attempt to solve for the radius
+    lbnd = sqrt(g+2+sqrt(g**2+8)) + r
+    def rhs(ins):
+        A = gamma((g+1)/2.) * gammaincc((g+1)/2., ins)
+        B = sqrt(pi) * normTinv * L * gamma(g/2.) * gammaincc(g/2., ins)
+        C = lhs
+        return A + B - C
+
+    try:
+        ins = fsolve(rhs, lbnd)[0]
+    except RuntimeWarning:
+        # try a larger initial guess. worse case scenario we have better Riemann
+        # theta precision
+        try:
+            ins = fsolve(rhs, 2*lbnd)[0]
+        except RuntimeWarning:
+            raise ValueError('Could not compute Riemann theta finite sum '
+                             'bounding ellipsoid. Try using better precision.')
+
+    R = sqrt(ins) + r/2.0
+    radius = max(R,lbnd)
+    return radius
+
+
+def radius2(eps, r, g, T, derivs, accuracy_radius):
+    r"""Compute the radius with two derivatives.
+
+    Notes
+    -----
+    Depreciated. Use `radiusN` instead. `radius2` is only used for testing
+    purposes.
+    """
+
+    warnings.warn('radius2 is only for testing purposes. Use `radiusN` '
+                  'instead.', DeprecationWarning)
+
+    pi = numpy.pi
+    L = accuracy_radius
+    prodnormderiv = prod([norm(d) for d in derivs])
+    normTinv = norm(inv(T))
+    lhs = (eps*(r/2.0)**g) / (2*pi*g*prodnormderiv*normTinv**2)
+
+    # define lower bound (guess) and attempt to solve for the radius
+    lbnd = sqrt(g+4+sqrt(g**2+16)) + r
+    def rhs(ins):
+        A = gamma((g+2)/2.) * gammaincc((g+2)/2.,ins)
+        B = 2*L*sqrt(pi) * normTinv * gamma((g+1)/2.) * gammaincc((g+1)/2.,ins)
+        C = pi * normTinv**2 * L**2 * gamma(g/2.) * gammaincc(g/2.,ins)
+        D = lhs
+        return A + B + C - D
+
+    try:
+        ins = fsolve(rhs, lbnd)[0]
+    except RuntimeWarning:
+        # try a larger initial guess. worse case scenario we have better Riemann
+        # theta precision
+        try:
+            ins = fsolve(rhs, 2*lbnd)[0]
+        except RuntimeWarning:
+            raise ValueError('Could not compute Riemann theta finite sum '
+                             'bounding ellipsoid. Try using better precision.')
+
+    R = sqrt(ins) + r/2.0
+    radius = max(R,lbnd)
+    return radius
+
 
 
 def radiusN(eps, r, g, T, derivs, accuracy_radius):
