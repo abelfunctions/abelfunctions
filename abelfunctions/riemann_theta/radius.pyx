@@ -103,7 +103,8 @@ def radius(epsilon, T, derivs=[], accuracy_radius=5):
     if len(derivs) == 0:
         radius = radius0(epsilon, r, g)
     elif len(derivs) > 0:
-        radius = radiusN(epsilon, r, g, T, derivs, accuracy_radius)
+        radius = radiusN(epsilon, r, g, T, derivs,
+                         accuracy_radius=accuracy_radius)
     else:
         raise TypeError('Expected list of lists representing '
                 'directional derivative.')
@@ -163,7 +164,7 @@ def radius1(eps, r, g, T, deriv, accuracy_radius=5):
     return radius
 
 
-def radius2(eps, r, g, T, derivs, accuracy_radius):
+def radius2(eps, r, g, T, derivs, accuracy_radius=5):
     r"""Compute the radius with two derivatives.
 
     Notes
@@ -207,7 +208,7 @@ def radius2(eps, r, g, T, derivs, accuracy_radius):
 
 
 
-def radiusN(eps, r, g, T, derivs, accuracy_radius):
+def radiusN(eps, r, g, T, derivs, accuracy_radius=5):
     r"""Compute the radius with N deriviatives."""
     N = len(derivs)
     pi = numpy.pi
