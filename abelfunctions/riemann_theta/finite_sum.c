@@ -127,18 +127,18 @@ normpart(double* n, double* T, double* fracshift, int g)
 
   Parameters
   ----------
-  * X, Yinv, T : double[:]
-        Row-major matrices such that the Riemann matrix, Omega is equal to (X +
-        iY). T is the Cholesky decomposition of Y.
-  * x, y : double[:]
-        The real and imaginary parts of the input vector, z.
-  * S : double[:]
-        The set of points in ZZ^g over which to compute the finite sum
-  * g : int
-        The dimension of the above matrices and vectors
-  * N : int
-       The number of points in ZZ^g over which to compute the sum
-       (= total number of elements in S / g)
+  X, Yinv, T : double[:]
+      Row-major matrices such that the Riemann matrix, Omega is equal to (X +
+      iY). T is the Cholesky decomposition of Y.
+  x, y : double[:]
+      The real and imaginary parts of the input vector, z.
+  S : double[:]
+      The set of points in ZZ^g over which to compute the finite sum
+  g : int
+      The dimension of the above matrices and vectors
+  N : int
+     The number of points in ZZ^g over which to compute the sum
+     (= total number of elements in S / g)
 
   Returns
   -------
@@ -205,8 +205,8 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
   ----------
 
   Compute the real and imaginary parts of the product
-                   ___
-                   | |    2*pi*I <d, n-intshift>
+             ___
+             | |    2*pi*I <d, n-intshift>
 	           | |
 	       d in derivs
 
@@ -214,16 +214,16 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
 
   Parameters
   ----------
-  * n : double[:]
-        An integer vector in the finite sum ellipsoid.
-  * intshift : double[:]
-        The integer part of Yinv*y.
-  * deriv_real, deriv_imag : double[:]
-        The real and imaginary parts of the derivative directional vectors.
-  * nderivs : int
-        Number / order of derivatives.
-  * g : int
-        Genus / dimension of the problem.
+  n : double[:]
+      An integer vector in the finite sum ellipsoid.
+  intshift : double[:]
+      The integer part of Yinv*y.
+  deriv_real, deriv_imag : double[:]
+      The real and imaginary parts of the derivative directional vectors.
+  nderivs : int
+      Number / order of derivatives.
+  g : int
+      Genus / dimension of the problem.
 
   Returns
   -------
@@ -305,27 +305,27 @@ deriv_prod(double* dpr, double* dpi,
 
   Parameters
   ----------
-  * X, Yinv, T : double[:]
-        Row-major matrices such that the Riemann matrix, Omega is equal to (X +
-        iY). T is the Cholesky decomposition of Y.
-  * x, y : double[:]
-        The real and imaginary parts of the input vector, z.
-  * S : double[:]
-        The set of points in ZZ^g over which to compute the finite sum
-  * deriv_real, deriv_imag : double[:]
-        The real and imaginary parts of the derivative directional vectors.
-  * nderivs : int
-        Number / order of derivatives.
-  * g : int
-        The dimension of the above matrices and vectors
-  * N : int
-       The number of points in ZZ^g over which to compute the sum
-       (= total number of elements in S / g)
+  X, Yinv, T : double[:]
+      Row-major matrices such that the Riemann matrix, Omega is equal to (X +
+      iY). T is the Cholesky decomposition of Y.
+  x, y : double[:]
+      The real and imaginary parts of the input vector, z.
+  S : double[:]
+      The set of points in ZZ^g over which to compute the finite sum
+  deriv_real, deriv_imag : double[:]
+      The real and imaginary parts of the derivative directional vectors.
+  nderivs : int
+      Number / order of derivatives.
+  g : int
+      The dimension of the above matrices and vectors
+  N : int
+     The number of points in ZZ^g over which to compute the sum
+     (= total number of elements in S / g)
 
   Returns
   -------
-  * fsum_real, fsum_imag : double*
-        The real and imaginary parts of the finite sum.
+  fsum_real, fsum_imag : double*
+      The real and imaginary parts of the finite sum.
 
 ******************************************************************************/
 void
