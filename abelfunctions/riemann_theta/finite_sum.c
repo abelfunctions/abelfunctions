@@ -4,11 +4,20 @@
 
   Efficiently computing the finite sum part of the Riemann theta function.
 
+  Functions
+  ---------
+  exppart
+  normpart
+  finite_sum_without_derivatives
+  deriv_prod
+  finite_sum_with_derivatives
+
   Authors
   -------
 
-  *Chris Swierczewski (cswiercz@uw.edu) - September 2012
-  *Grady Williams (gradyrw@uw.edu) - October 2012
+  * Chris Swierczewski (@cswiercz) - September 2012, July 2016
+  * Grady Williams (@gradyrw) - October 2012
+  * Jeremy Upsal (@jupsal) - July 2016
 
 =============================================================================*/
 
@@ -40,40 +49,34 @@ extern "C" {
 double
 exppart(double* n, double* X, double* x, double* intshift, int g)
 {
-  double* tmp1 = (double*)malloc(g*sizeof(double));
-  double* tmp2 = (double*)malloc(g*sizeof(double));
+  double tmp1[g];
+  double tmp2[g];
   int i,j;
 
   // tmp1 = n - intshift
-  for (i = 0; i < g; i++) {
+  for (i = 0; i < g; i++)
     tmp1[i] = n[i] - intshift[i];
-  }
 
   // tmp2 = (1/2)X*(n-intshift)
   double sum;
   for (i = 0; i < g; i++) {
     sum = 0;
-    for (j = 0; j < g; j++) {
+    for (j = 0; j < g; j++)
       sum += X[i*g + j] * tmp1[j];
-    }
+
     tmp2[i] = sum/2.0;
   }
 
   // tmp2 = (1/2)*X(n-intshift) + x
-  for (i = 0; i < g; i++){
+  for (i = 0; i < g; i++)
     tmp2[i] = tmp2[i] + x[i];
-  }
 
   // ept = <tmp1,tmp2>
   double dot = 0;
-  for (i = 0; i < g; i++){
+  for (i = 0; i < g; i++)
     dot += tmp1[i]*tmp2[i];
-  }
-  double ept = 2* M_PI * dot;
 
-  free(tmp1);
-  free(tmp2);
-  return ept;
+  return 2* M_PI * dot;
 }
 
 
@@ -89,33 +92,29 @@ exppart(double* n, double* X, double* x, double* intshift, int g)
 double
 normpart(double* n, double* T, double* fracshift, int g)
 {
-  double* tmp1 = (double*)malloc(g*sizeof(double));
-  double* tmp2 = (double*)malloc(g*sizeof(double));
+  double tmp1[g];
+  double tmp2[g];
   int i,j;
 
   // tmp1 = n + fracshift
-  for (i = 0; i < g; i++) {
+  for (i = 0; i < g; i++)
     tmp1[i] = n[i] + fracshift[i];
-  }
 
   // tmp2 = T*(n+fracshift)
   double sum;
   for (i = 0; i < g; i++) {
     sum = 0;
-    for (j = 0; j < g; j++) {
+    for (j = 0; j < g; j++)
       sum += T[i*g + j] * tmp1[j];
-    }
+
     tmp2[i] = sum;
   }
 
   // norm = || T*(n + fracshift) || ^ 2
   double norm = 0;
-  for (i = 0; i < g; i++) {
+  for (i = 0; i < g; i++)
     norm += tmp2[i] * tmp2[i];
-  }
 
-  free(tmp1);
-  free(tmp2);
   return -M_PI * norm;
 }
 
@@ -128,18 +127,18 @@ normpart(double* n, double* T, double* fracshift, int g)
 
   Parameters
   ----------
-  * X, Yinv, T : double[:]
-        Row-major matrices such that the Riemann matrix, Omega is equal to (X +
-        iY). T is the Cholesky decomposition of Y.
-  * x, y : double[:]
-        The real and imaginary parts of the input vector, z.
-  * S : double[:]
-        The set of points in ZZ^g over which to compute the finite sum
-  * g : int
-        The dimension of the above matrices and vectors
-  * N : int
-       The number of points in ZZ^g over which to compute the sum
-       (= total number of elements in S / g)
+  X, Yinv, T : double[:]
+      Row-major matrices such that the Riemann matrix, Omega is equal to (X +
+      iY). T is the Cholesky decomposition of Y.
+  x, y : double[:]
+      The real and imaginary parts of the input vector, z.
+  S : double[:]
+      The set of points in ZZ^g over which to compute the finite sum
+  g : int
+      The dimension of the above matrices and vectors
+  N : int
+     The number of points in ZZ^g over which to compute the sum
+     (= total number of elements in S / g)
 
   Returns
   -------
@@ -150,19 +149,16 @@ normpart(double* n, double* T, double* fracshift, int g)
 
 void
 finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
-			       double* X, double* Yinv, double* T,
-		               double* x, double* y, double* S,
-	                       int g, int N)
+                               double* X, double* Yinv, double* T,
+                               double* x, double* y, double* S,
+                               int g, int N)
 {
   // compute the shifted vectors: shift = Yinv*y as well as its integer and
   // fractional parts
   int k,j;
-  double *shift;
-  double *intshift;
-  double *fracshift;
-  shift = (double*)malloc(g*sizeof(double));
-  intshift = (double*)malloc(g*sizeof(double));
-  fracshift = (double*)malloc(g*sizeof(double));
+  double shift[g];
+  double intshift[g];
+  double fracshift[g];
 
   // compute the following:
   //   * shift = Yinv*y;
@@ -171,9 +167,9 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
   double sum;
   for (k = 0; k < g; k++) {
     sum = 0;
-    for (j = 0; j < g; j++) {
+    for (j = 0; j < g; j++)
       sum += Yinv[k*g + j] * y[j];
-    }
+
     shift[k] = sum;
   }
 
@@ -202,11 +198,6 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
   //store values to poiners
   fsum_real[0] = real_total;
   fsum_imag[0] = imag_total;
-
-  //free any allocated vectors
-  free(shift);
-  free(intshift);
-  free(fracshift);
 }
 
 /******************************************************************************
@@ -214,8 +205,8 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
   ----------
 
   Compute the real and imaginary parts of the product
-                   ___
-                   | |    2*pi*I <d, n-intshift>
+             ___
+             | |    2*pi*I <d, n-intshift>
 	           | |
 	       d in derivs
 
@@ -223,16 +214,16 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
 
   Parameters
   ----------
-  * n : double[:]
-        An integer vector in the finite sum ellipsoid.
-  * intshift : double[:]
-        The integer part of Yinv*y.
-  * deriv_real, deriv_imag : double[:]
-        The real and imaginary parts of the derivative directional vectors.
-  * nderivs : int
-        Number / order of derivatives.
-  * g : int
-        Genus / dimension of the problem.
+  n : double[:]
+      An integer vector in the finite sum ellipsoid.
+  intshift : double[:]
+      The integer part of Yinv*y.
+  deriv_real, deriv_imag : double[:]
+      The real and imaginary parts of the derivative directional vectors.
+  nderivs : int
+      Number / order of derivatives.
+  g : int
+      Genus / dimension of the problem.
 
   Returns
   -------
@@ -245,17 +236,15 @@ deriv_prod(double* dpr, double* dpi,
            double* deriv_real, double* deriv_imag, int nderivs,
            int g)
 {
-  double* nmintshift = (double*)malloc(g*sizeof(double));
-
+  double nmintshift[g];
   double term_real, term_imag;
   double total_real, total_real_tmp;
   double total_imag, total_imag_tmp;
   int i,j;
 
   // compute n-intshift
-  for (i = 0; i < g; i++) {
+  for (i = 0; i < g; i++)
     nmintshift[i] = n[i] - intshift[i];
-  }
 
   /*
      Computes the dot product of each directional derivative and nmintshift.
@@ -270,6 +259,7 @@ deriv_prod(double* dpr, double* dpi,
       term_real += deriv_real[j + g*i] * nmintshift[j];
       term_imag += deriv_imag[j + g*i] * nmintshift[j];
     }
+
     /*
       Multiplies the dot product that was just computed with the product of all
       the previous terms. Total_real is the resulting real part of the sum, and
@@ -304,8 +294,6 @@ deriv_prod(double* dpr, double* dpi,
     dpr[0] = pi_mult * total_imag;
     dpi[0] = -pi_mult * total_real;
   }
-
-  free(nmintshift);
 }
 
 
@@ -317,34 +305,34 @@ deriv_prod(double* dpr, double* dpi,
 
   Parameters
   ----------
-  * X, Yinv, T : double[:]
-        Row-major matrices such that the Riemann matrix, Omega is equal to (X +
-        iY). T is the Cholesky decomposition of Y.
-  * x, y : double[:]
-        The real and imaginary parts of the input vector, z.
-  * S : double[:]
-        The set of points in ZZ^g over which to compute the finite sum
-  * deriv_real, deriv_imag : double[:]
-        The real and imaginary parts of the derivative directional vectors.
-  * nderivs : int
-        Number / order of derivatives.
-  * g : int
-        The dimension of the above matrices and vectors
-  * N : int
-       The number of points in ZZ^g over which to compute the sum
-       (= total number of elements in S / g)
+  X, Yinv, T : double[:]
+      Row-major matrices such that the Riemann matrix, Omega is equal to (X +
+      iY). T is the Cholesky decomposition of Y.
+  x, y : double[:]
+      The real and imaginary parts of the input vector, z.
+  S : double[:]
+      The set of points in ZZ^g over which to compute the finite sum
+  deriv_real, deriv_imag : double[:]
+      The real and imaginary parts of the derivative directional vectors.
+  nderivs : int
+      Number / order of derivatives.
+  g : int
+      The dimension of the above matrices and vectors
+  N : int
+     The number of points in ZZ^g over which to compute the sum
+     (= total number of elements in S / g)
 
   Returns
   -------
-  * fsum_real, fsum_imag : double*
-        The real and imaginary parts of the finite sum.
+  fsum_real, fsum_imag : double*
+      The real and imaginary parts of the finite sum.
 
 ******************************************************************************/
 void
 finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
-			    double* X, double* Yinv, double* T,
-			    double* x, double* y, double* S,
-		            double* deriv_real, double* deriv_imag,
+                            double* X, double* Yinv, double* T,
+                            double* x, double* y, double* S,
+                            double* deriv_real, double* deriv_imag,
                             int nderivs, int g, int N)
 {
   /*
@@ -352,19 +340,15 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     fractional parts
   */
   int k,j;
-  double *shift;
-  double *intshift;
-  double *fracshift;
-  shift = (double*)malloc(g*sizeof(double));
-  intshift = (double*)malloc(g*sizeof(double));
-  fracshift = (double*)malloc(g*sizeof(double));
-
+  double shift[g];
+  double intshift[g];
+  double fracshift[g];
   double sum;
   for (k = 0; k < g; k++) {
     sum = 0;
-    for (j = 0; j < g; j++) {
+    for (j = 0; j < g; j++)
       sum += Yinv[k*g + j] * y[j];
-    }
+
     shift[k] = sum;
   }
 
@@ -376,8 +360,8 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
   // compute the finite sum
   double real_total = 0, imag_total = 0;
   double ept, npt, cpt, spt;
-  double* dpr = (double*)malloc(sizeof(double));
-  double* dpi = (double*)malloc(sizeof(double));
+  double dpr[1];
+  double dpi[1];
   double* n;
   dpr[0] = 0;
   dpi[0] = 0;
@@ -398,13 +382,6 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
   // store values to poiners
   fsum_real[0] = real_total;
   fsum_imag[0] = imag_total;
-
-  // free any allocated vectors
-  free(shift);
-  free(intshift);
-  free(fracshift);
-  free(dpr);
-  free(dpi);
 }
 
 #ifdef __cplusplus

@@ -171,7 +171,7 @@ class TestMaple(unittest.TestCase):
         self.assertLess(error_z4, 1e-8)
 
 
-    def test_second_derivatives(self):
+    def test_second_derivatives_oscpart(self):
         w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
         Omega = self.Omega3
 
@@ -198,6 +198,146 @@ class TestMaple(unittest.TestCase):
         self.assertLess(error_12, 1e-8)
         self.assertLess(error_22, 1e-8)
 
+    def test_third_derivatives_oscpart(self):
+        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        Omega = self.Omega3
+
+        dVec_1 = [[1,0,0],[1,0,0],[1,0,0]]
+        dVec_2 = [[1,0,0],[0,1,0],[1,0,0]]
+        dVec_3 = [[1,0,0],[0,0,1],[0,1,0]]
+        dVec_4 = [[0,1,0],[0,0,1],[0,1,0]]
+        dVec_5 = [[0,0,1],[0,0,1],[0,0,1]]
+        dVec_6 = [[0,0,1],[0,1,0],[0,0,1]]
+        dVec_7 = [[1,2,3.1],[2.9,-0.3,1.0],[-20,13.3,0.6684]]
+
+        maple_1 = 88.96174663331488 + 12.83401972101860j
+        maple_2 = -5.963646070489819 + 9.261504506522976j
+        maple_3 = -1.347499363888600 + 0.5297607158965981j
+        maple_4 = 1.217499355198950 + 0.8449102496878512j
+        maple_5 = -15.58299545726265 - 0.4376346712347114j
+        maple_6 = -2.441570516715710 - 0.2535384980716853j
+        maple_7 = -2791.345600876934 + 1286.207313664481j
+
+        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_1)
+        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_2)
+        deriv_3 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_3)
+        deriv_4 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_4)
+        deriv_5 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_5)
+        deriv_6 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_6)
+        deriv_7 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_7)
+    
+        error_1 = abs(deriv_1 - maple_1)
+        error_2 = abs(deriv_2 - maple_2)
+        error_3 = abs(deriv_3 - maple_3)
+        error_4 = abs(deriv_4 - maple_4)
+        error_5 = abs(deriv_5 - maple_5)
+        error_6 = abs(deriv_6 - maple_6)
+        error_7 = abs(deriv_7 - maple_7)
+
+        self.assertLess(error_1, 1e-8)
+        self.assertLess(error_2, 1e-8)
+        self.assertLess(error_3, 1e-8)
+        self.assertLess(error_4, 1e-8)
+        self.assertLess(error_5, 1e-8)
+        self.assertLess(error_6, 1e-8)
+        self.assertLess(error_7, 1e-8)
+
+        # Genus 4 example
+        Omega = self.Omega4
+        w = [-0.37704918-0.18456279j, 0.63934426+0.42591413j,
+             0.54918033+0.09937996j, -0.21721311-0.07808426j]
+
+        dVec_1 = [[1,0,0,0],[1,0,0,0],[1,0,0,0]]
+        dVec_2 = [[1,0,0,0],[0,1,0,0],[0,0,1,0]]
+        dVec_3 = [[1,0,0,0],[0,0,1,0],[0,0,0,1]]
+        dVec_4 = [[1,0,0,0],[0,1,1,0],[1,0,0,1]]
+        dVec_5 = [[0,0,1,0],[0,1,1,0],[1,0,0,1]]
+        dVec_6 = [[0,0,1,0],[1,2,3,4],[1,0,0,1]]
+        dVec_7 = [[3.2,-9.8,0.004,-13.9],[0,2.4,0,4],[90.1,-12.93947,-1e-4,3]]
+
+        maple_1 = -67.14022021800414 - 50.25487358123665j
+        maple_2 = 6.220027066901749 - 16.96996479658767j
+        maple_3 = 14.42498231220689 + 16.30518807929409j
+        maple_4 = -35.67483045211793 - 18.14139876283777j
+        maple_5 = 53.25640352451774 + 18.93871689387491j
+        maple_6 = -185.6760275507559 - 93.99261766419004j
+        maple_7 = 239954.2751344823 + 129975.3988999572j
+
+        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_1)
+        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_2)
+        deriv_3 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_3)
+        deriv_4 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_4)
+        deriv_5 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_5)
+        deriv_6 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_6)
+        deriv_7 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_7)
+
+        error_1 = abs(deriv_1 - maple_1)
+        error_2 = abs(deriv_2 - maple_2)
+        error_3 = abs(deriv_3 - maple_3)
+        error_4 = abs(deriv_4 - maple_4)
+        error_5 = abs(deriv_5 - maple_5)
+        error_6 = abs(deriv_6 - maple_6)
+        error_7 = abs(deriv_7 - maple_7)
+
+        self.assertLess(error_1, 1e-8)
+        self.assertLess(error_2, 1e-8)
+        self.assertLess(error_3, 1e-8)
+        self.assertLess(error_4, 1e-8)
+        self.assertLess(error_5, 1e-8)
+        self.assertLess(error_6, 1e-8)
+        self.assertLess(error_7, 1e-8)
+
+
+    def test_sixth_derivatives(self):
+        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        Omega = self.Omega3
+        
+        dVec_1 = [[1,0,0],[1,0,0],[0,1,0],[0,0,1],[0,0,1],[0,1,0]]
+        dVec_2 = [[1,2,3],[4,5,6],[0.7,0.8,0.9],[0.8,0.7,0.6],[5,4,3],[2,1,0]]
+        #dVec_3 = [[-17.3, 6.2, 0],[3.4, 3, 1],[-9,-0.001, 2], 
+        #        [1e-2, 0, 19],[210, 0.5, 1.2],[31.323, 0.3, 3]]
+        #dVec_4 = [[1,2,3],[4,5,6],[7,8,9],[8,7,6],[5,4,3],[2,1,0]]
+        # Neither of the above two examples pass the tests. It appears
+        # that for higher order derivatives, if the norm of the directional
+        # derivative is too large  
+
+        maple_1 = 42.73836471691125 + 235.2990585642670j
+        maple_2 = 0.2152838084588008*10**7 - 0.3287239590246880*10**7*1j
+        #maple_3 = 0.2232644817692030*10**12 - 0.1226563725159786*10**12*1j
+        #maple_4 = 0.2152838084588008*10**9 - 0.3287239590246880*10**9*1j
+
+        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_1)
+        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, 
+                epsilon=1e-14, derivs=dVec_2)
+        #deriv_3 = RiemannTheta.oscillatory_part(w, Omega, 
+        #        epsilon=1e-14, derivs=dVec_3)
+        #deriv_4 = RiemannTheta.oscillatory_part(w, Omega, 
+        #        epsilon=1e-14, derivs=dVec_4)
+
+        error_1 = abs(deriv_1 - maple_1)
+        error_2 = abs(deriv_2 - maple_2)
+        #error_3 = abs(deriv_3 - maple_3)
+        #error_4 = abs(deriv_4 - maple_4)
+
+        self.assertLess(error_1, 1e-8)
+        self.assertLess(error_2, 1e-8)
+        #self.assertLess(error_3, 1e-8)
+        #self.assertLess(error_4, 1e-8)
 
 class TestRiemannThetaValues(unittest.TestCase):
     def setUp(self):

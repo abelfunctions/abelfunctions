@@ -4,12 +4,10 @@ r"""Riemann Theta Precision Radius :mod:`abelfunctions.riemanntheta.radius`
 Functions for computing the primary radius of the bounding ellipsoid of the
 oscillatory part of the Riemann theta function.
 
-Each subroutine solves for the radius using:
+The two subroutines solve for the radius using,
 
 * Theorem 3 of [CRTF] (no derivatives)
-* Theorem 5 of [CRTF] (first order derivative)
-* Theorem 7 of [CRTF] (second order derivative)
-* extrapolation of theorems (higher order derivatives, not implemented)
+* A generalization of Theorems 5 and 7 of [CRTF] for N derivatives
 
 Functions
 ---------
@@ -17,9 +15,10 @@ Functions
 .. autosummary::
 
     radius
-    raidus0
-    raidus1
+    radius0
+    radius1
     radius2
+    radiusN
 
 References
 ----------
@@ -37,10 +36,11 @@ Contents
 """
 import numpy
 import scipy
+import warnings
 
 from numpy import sqrt, prod
 from numpy.linalg import norm, inv
-from scipy.special import gamma, gammaincc, gammainccinv
+from scipy.special import gamma, gammaincc, gammainccinv, binom
 from scipy.optimize import fsolve
 
 cdef extern from *:
@@ -68,6 +68,7 @@ def lll(M, lc=.5, uc=.75):
     lll_reduce(&A[0,0], g, dlc, duc)
     return numpy.array(A, dtype=numpy.double)
 
+
 def radius(epsilon, T, derivs=[], accuracy_radius=5):
     r"""Returns the primary radius of the bounding ellipsoid for computing the
     Riemann theta function up to accuracy `epsilon`.
@@ -81,17 +82,26 @@ def radius(epsilon, T, derivs=[], accuracy_radius=5):
 
         ||z|| < \text{accuracy_radius}.
 
-    Parameters
+        Parameters
     ----------
     epsilon : double
         Requested accuracy.
-    T : double[:,:]
-        Cholesky decomposition of imaginary part of the Riemann matrix.
-    derivs : double[:,:]
-        A list of lists representing directional derivatives of the
-        Riemann theta function.
+    T : matrix
+        A gxg matrix representing the Cholesky decomposition of the imaginary
+        part of a Riemann matrix.
+    derivs : list of lists
+        (Default: []) A list of directional derivatives. The number of
+        directional derivatives is the order, N, of the derivative we wish to
+        compute.
     accuracy_radius : double
-        Radius for guaranteed region of accuracy. See above.
+        (Default: 5) Radius for guaranteed region of accuracy. See above.
+
+    Returns
+    -------
+    radius : double
+        The initial radius of the bounding ellipsoid used to truncate the
+        Riemann theta function to desired accuracy.
+
     """
     # compute the LLL-reduction of T
     T = numpy.array(T, dtype=numpy.double)
@@ -101,18 +111,36 @@ def radius(epsilon, T, derivs=[], accuracy_radius=5):
 
     if len(derivs) == 0:
         radius = radius0(epsilon, r, g)
-    elif len(derivs) == 1:
-        radius = radius1(epsilon, r, g, T, derivs[0], accuracy_radius)
-    elif len(derivs) == 2:
-        radius = radius2(epsilon, r, g, T, derivs, accuracy_radius)
+    elif len(derivs) > 0:
+        radius = radiusN(epsilon, r, g, T, derivs,
+                         accuracy_radius=accuracy_radius)
     else:
-        raise NotImplementedError('Cannot yet compute higher derivatives of '
-                                  'the Riemann theta function.')
+        raise TypeError('Expected list of lists representing '
+                'directional derivative.')
+
     return radius
 
 
 def radius0(eps, r, g):
-    r"""Compute the radius with no deriviatives."""
+    r"""Compute the radius with no derivatives.
+
+    Parameters
+    ----------
+    eps : double
+        Requested accuracy.
+    r : double
+        The length of the shortest lattice vector in the LLL reduction of the
+        Cholesky decomposition of the imaginary part of the Riemann matrix.
+    g : int
+        The genus / problem size.
+
+    Returns
+    -------
+    radius : double
+        The initial radius of the bounding ellipsoid used to truncate the
+        Riemann theta function to desired accuracy.
+
+    """
     lhs = eps * (2./g) * (r/2.)**g * gamma(g/2.)
     ins = gammainccinv(g/2.,lhs)
     R = sqrt(ins) + r/2.
@@ -121,8 +149,78 @@ def radius0(eps, r, g):
     return radius
 
 
+def radiusN(eps, r, g, T, derivs, accuracy_radius=5):
+    r"""Compute the radius with N derivatives.
+
+    Parameters
+    ----------
+    eps : double
+        Requested accuracy.
+    r : double
+        The length of the shortest lattice vector in the LLL reduction of the
+        Cholesky decomposition of the imaginary part of the Riemann matrix.
+    g : int
+        The genus / problem size.
+    T : matrix
+        A gxg matrix representing the Cholesky decomposition of the imaginary
+        part of a Riemann matrix.
+    derivs : list of lists
+        A list of directional derivatives. The number of directional
+        derivatives is the order, N, of the derivative we wish to compute.
+    accuracy_radius : double
+        Radius for guaranteed region of accuracy. See :func:`radius`.
+
+    Returns
+    -------
+    radius : double
+        The initial radius of the bounding ellipsoid used to truncate the
+        Riemann theta function to desired accuracy.
+
+    """
+    N = len(derivs)
+    pi = numpy.pi
+    L = accuracy_radius
+    prodnormderiv = prod([norm(d) for d in derivs])
+    normTinv = norm(inv(T))
+    lhs = (eps*r**g*2**(1-g-N)) / (pi**(N/2.)*g*normTinv**N*prodnormderiv)
+
+    # define lower bound (guess) and attempt to solve for the radius
+    lbnd = (sqrt(g + 2*N + sqrt(g**2 + 8*N)) + r)/2.
+    def rhs(ins):
+        A = [binom(N,k) * pi**(k/2.) * (L*normTinv)**k * gamma((g+N-k)/2.) * \
+             gammaincc((g+N-k)/2.,ins) for k in range(N+1)]
+        A = sum(A)
+        B = lhs
+        return A - B
+
+    try:
+        ins = fsolve(rhs, lbnd)[0]
+    except RuntimeWarning:
+        # try a larger initial guess. worse case scenario we have better
+        # Riemann theta precision
+        try:
+            ins = fsolve(rhs, 2*lbnd)[0]
+        except RuntimeWarning:
+            raise ValueError('Could not compute Riemann theta finite sum '
+                             'bounding ellipsoid. Try using better precision.')
+
+    R = sqrt(ins) + r/2.0
+    radius = max(R,lbnd)
+    return radius
+
+
 def radius1(eps, r, g, T, deriv, accuracy_radius=5):
-    r"""Compute the radius with one deriviative."""
+    r"""Compute the radius with one derivative.
+
+    Notes
+    -----
+    Depreciated. Use `radiusN` instead. `radius1` is only used for testing
+    purposes.
+    """
+
+    warnings.warn('radius1 is only for testing purposes. Use `radiusN` '
+                  'instead.', DeprecationWarning)
+
     pi = numpy.pi
     L = accuracy_radius
     normderiv = norm(numpy.array(deriv))
@@ -153,8 +251,18 @@ def radius1(eps, r, g, T, deriv, accuracy_radius=5):
     return radius
 
 
-def radius2(eps, r, g, T, derivs, accuracy_radius):
-    r"""Compute the radius with two deriviatives."""
+def radius2(eps, r, g, T, derivs, accuracy_radius=5):
+    r"""Compute the radius with two derivatives.
+
+    Notes
+    -----
+    Depreciated. Use `radiusN` instead. `radius2` is only used for testing
+    purposes.
+    """
+
+    warnings.warn('radius2 is only for testing purposes. Use `radiusN` '
+                  'instead.', DeprecationWarning)
+
     pi = numpy.pi
     L = accuracy_radius
     prodnormderiv = prod([norm(d) for d in derivs])
