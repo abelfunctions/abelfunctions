@@ -36,7 +36,8 @@ Unless stated otherwise, all files in the Abelfunctions project, all images, and
 all documentation including this documentation are licensed using the MIT
 license.
 
-```MIT License
+```
+MIT License
 
 Copyright (c) 2016 Chris Swierczewski
 

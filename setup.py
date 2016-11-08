@@ -31,7 +31,7 @@ from numpy.distutils.misc_util import get_numpy_include_dirs
 try:
     from sage.env import sage_include_directories
     SAGE_ROOT = os.environ['SAGE_ROOT']
-except KeyError:
+except (ImportError, KeyError):
     raise EnvironmentError('abelfunctions must be built using Sage:\n\n'
                            '\t$ sage setup.py <args> <kwds>\n')
 
