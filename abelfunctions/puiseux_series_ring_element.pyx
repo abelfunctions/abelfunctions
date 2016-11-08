@@ -337,7 +337,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         n = g/n
         return g, m, n
 
-    cpdef ModuleElement _add_(self, ModuleElement right_m):
+    cpdef _add_(self, right_m):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_m
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -348,7 +348,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         l = l1 + l2
         return PuiseuxSeries(self._parent, l, g)
 
-    cpdef ModuleElement _sub_(self, ModuleElement right_m):
+    cpdef _sub_(self, right_m):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_m
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -359,7 +359,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         l = l1 - l2
         return PuiseuxSeries(self._parent, l, g)
 
-    cpdef RingElement _mul_(self, RingElement right_r):
+    cpdef _mul_(self, right_r):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_r
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -370,13 +370,13 @@ cdef class PuiseuxSeries(AlgebraElement):
         l = l1 * l2
         return PuiseuxSeries(self._parent, l, g)
 
-    cpdef ModuleElement _rmul_(self, RingElement c):
+    cpdef _rmul_(self, RingElement c):
         return PuiseuxSeries(self._parent, self.__l._rmul_(c), self.__e)
 
-    cpdef ModuleElement _lmul_(self, RingElement c):
+    cpdef _lmul_(self, RingElement c):
         return PuiseuxSeries(self._parent, self.__l._lmul_(c), self.__e)
 
-    cpdef RingElement _div_(self, RingElement right_r):
+    cpdef _div_(self, right_r):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_r
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -411,7 +411,7 @@ cdef class PuiseuxSeries(AlgebraElement):
             e = self.__e * int(denom)
         return PuiseuxSeries(self._parent, l, e)
 
-    cpdef int _cmp_(self, Element right_r) except -2:
+    cpdef int _cmp_(self, right_r) except -2:
         r"""Comparison of self and right.
 
         As with Laurent series, two Puiseux series are equal if they agree for
