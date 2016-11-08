@@ -1,20 +1,65 @@
-sudo: false
+# build matrix consists of different versions of Sage on different platforms.
+# the versions are obtained via tarball download since Sage is not a supported
+# "language" in TravisCI
+#
+# choice of Sage version is determined via environment variables
+#
+# note: for unknown reasons testing times out in Sage v.7.2
+#
+env:
+  global:
+    - SAGE=${HOME}/SageMath/sage
+    - ABELFUNCTIONS_DIR=${HOME}/build/abelfunctions
+    - ABELFUNCTIONS_SPKG=${HOME}/abelfunctions.spkg
 
-# create an spkg from the repo and download the sage binary
+matrix:
+  include:
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+#    - os: linux
+#      env:
+#        - SAGE_TARBALL=sage-7.2-Ubuntu_12.04-x86_64.tar.bz2
+#        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-7.3-Ubuntu_12.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-7.4-Ubuntu_12.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+#    - os: osx
+#      env:
+#        - SAGE_TARBALL=sage-7.2-OSX_10.11.4-x86_64.tar.bz2
+#        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+    - os: osx
+      env:
+        - SAGE_TARBALL=sage-7.3-OSX_10.11.6-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+    - os: osx
+      env:
+        - SAGE_TARBALL=sage-7.4-OSX_10.11.6-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+
+# create a Sage spkg from the Abelfunctions repo and then download and extract
+# the Sage tarball for the target environment
+#
 before_install:
-   - cd ${HOME}/build/abelfunctions
-   - tar cjf abelfunctions.spkg abelfunctions
-   - mv abelfunctions.spkg ${HOME}
-   - cd ${HOME}
-   - wget http://mirrors.mit.edu/sage/linux/64bit/sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
-   - tar xjf ${HOME}/sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
-   - ${HOME}/SageMath/sage -c "print 'Sage Runs!'"
-   
+  - cd ${ABELFUNCTIONS_DIR}
+  - tar cjf abelfunctions.spkg abelfunctions
+  - mv abelfunctions.spkg ${HOME}
+  - cd ${HOME}
+  - wget ${SAGE_SERVER}/${SAGE_TARBALL}
+  - tar xjf ${HOME}/${SAGE_TARBALL}
+  - ${SAGE} -c "print 'Sage runs...'"
 
 install:
-  - pwd
-  - ${HOME}/SageMath/sage -p ${HOME}/abelfunctions.spkg
+  - ${SAGE} -p ${ABELFUNCTIONS_SPKG}
 
 script:
-  - pwd
-  - ${HOME}/SageMath/sage -p -c ${HOME}/abelfunctions.spkg
+  - ${SAGE} -p -c ${ABELFUNCTIONS_SPKG}
+
+notifications:
+  email: false
