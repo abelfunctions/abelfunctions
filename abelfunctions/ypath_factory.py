@@ -11,8 +11,6 @@ import numpy
 import scipy
 import sympy
 import networkx as nx
-import matplotlib
-import matplotlib.pyplot as plt
 
 from operator import itemgetter
 from .utilities import Permutation
@@ -847,6 +845,8 @@ class YPathFactory(object):
     def plot(self):
         """Plots the y-skeleton of the Riemann surface.
         """
+        import matplotlib.pyplot as plt  # XXX switch to Sage plotting
+
         # get the edges and final edges of the graph.
         C = self.C
         final_nodes = [n for n,d in C.nodes(data=True) if d['final']]
