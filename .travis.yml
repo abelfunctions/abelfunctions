@@ -4,24 +4,12 @@
 #
 # choice of Sage version is determined via environment variables
 #
-# note: for unknown reasons testing times out in Sage v.7.2
-#
 env:
   global:
     - SAGE=${HOME}/SageMath/sage
-    - ABELFUNCTIONS_DIR=${HOME}/build/abelfunctions
-    - ABELFUNCTIONS_SPKG=${HOME}/abelfunctions.spkg
 
 matrix:
   include:
-    - os: linux
-      env:
-        - SAGE_TARBALL=sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
-#    - os: linux
-#      env:
-#        - SAGE_TARBALL=sage-7.2-Ubuntu_12.04-x86_64.tar.bz2
-#        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
     - os: linux
       env:
         - SAGE_TARBALL=sage-7.3-Ubuntu_12.04-x86_64.tar.bz2
@@ -30,10 +18,6 @@ matrix:
       env:
         - SAGE_TARBALL=sage-7.4-Ubuntu_12.04-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
-#    - os: osx
-#      env:
-#        - SAGE_TARBALL=sage-7.2-OSX_10.11.4-x86_64.tar.bz2
-#        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
     - os: osx
       env:
         - SAGE_TARBALL=sage-7.3-OSX_10.11.6-x86_64.tar.bz2
@@ -43,23 +27,17 @@ matrix:
         - SAGE_TARBALL=sage-7.4-OSX_10.11.6-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
 
-# create a Sage spkg from the Abelfunctions repo and then download and extract
-# the Sage tarball for the target environment
+# download and extract Sage
 #
 before_install:
-  - cd ${ABELFUNCTIONS_DIR}
-  - tar cjf abelfunctions.spkg abelfunctions
-  - mv abelfunctions.spkg ${HOME}
   - cd ${HOME}
   - wget ${SAGE_SERVER}/${SAGE_TARBALL}
   - tar xjf ${HOME}/${SAGE_TARBALL}
-  - ${SAGE} -c "print 'Sage runs...'"
+  - cd ${TRAVIS_BUILD_DIR}
 
-install:
-  - ${SAGE} -p ${ABELFUNCTIONS_SPKG}
+install: ${SAGE} setup.py build_ext --inplace
 
-script:
-  - ${SAGE} -p -c ${ABELFUNCTIONS_SPKG}
+script: ${SAGE} runtests.py
 
 notifications:
   email: false
