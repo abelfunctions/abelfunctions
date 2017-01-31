@@ -31,7 +31,7 @@ Please report any bugs you find or suggest enhancements on the [Issues Page](htt
 
 > C. Swierczewski et. al., *Abelfunctions: A library for computing with Abelian
   functions, Riemann surfaces, and algebraic curves*,
-  `http://github.com/abelfunctions/abelfunctions`, 2016.
+  `http://github.com/abelfunctions/abelfunctions`, 2017.
 
 BibTeX:
 
@@ -39,5 +39,5 @@ BibTeX:
       author = {C. Swierczewski and others},
       title = {Abelfunctions: A library for computing with Abelian functions, Riemann surfaces, and algebraic curves},
       note= {\tt http://github.com/abelfunctions/abelfunctions},
-      year = 2016,
+      year = 2017,
     }
