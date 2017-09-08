@@ -370,10 +370,10 @@ cdef class PuiseuxSeries(AlgebraElement):
         l = l1 * l2
         return PuiseuxSeries(self._parent, l, g)
 
-    cpdef _rmul_(self, RingElement c):
+    cpdef _rmul_(self, Element c):
         return PuiseuxSeries(self._parent, self.__l._rmul_(c), self.__e)
 
-    cpdef _lmul_(self, RingElement c):
+    cpdef _lmul_(self, Element c):
         return PuiseuxSeries(self._parent, self.__l._lmul_(c), self.__e)
 
     cpdef _div_(self, right_r):
