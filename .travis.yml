@@ -1,20 +1,43 @@
-sudo: false
+# build matrix consists of different versions of Sage on different platforms.
+# the versions are obtained via tarball download since Sage is not a supported
+# "language" in TravisCI
+#
+# choice of Sage version is determined via environment variables
+#
+env:
+  global:
+    - SAGE=${HOME}/SageMath/sage
 
-# create an spkg from the repo and download the sage binary
+matrix:
+  include:
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-7.3-Ubuntu_12.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-7.4-Ubuntu_12.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+    - os: osx
+      env:
+        - SAGE_TARBALL=sage-7.3-OSX_10.11.6-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+    - os: osx
+      env:
+        - SAGE_TARBALL=sage-7.4-OSX_10.11.6-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+
+# download and extract Sage
+#
 before_install:
-   - cd ${HOME}/build/abelfunctions
-   - tar cjf abelfunctions.spkg abelfunctions
-   - mv abelfunctions.spkg ${HOME}
-   - cd ${HOME}
-   - wget http://mirrors.mit.edu/sage/linux/64bit/sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
-   - tar xjf ${HOME}/sage-7.1-Ubuntu_12.04-x86_64.tar.bz2
-   - ${HOME}/SageMath/sage -c "print 'Sage Runs!'"
-   
+  - cd ${HOME}
+  - wget ${SAGE_SERVER}/${SAGE_TARBALL}
+  - tar xjf ${HOME}/${SAGE_TARBALL}
+  - cd ${TRAVIS_BUILD_DIR}
 
-install:
-  - pwd
-  - ${HOME}/SageMath/sage -p ${HOME}/abelfunctions.spkg
+install: ${SAGE} setup.py build_ext --inplace
 
-script:
-  - pwd
-  - ${HOME}/SageMath/sage -p -c ${HOME}/abelfunctions.spkg
+script: ${SAGE} runtests.py
+
+notifications:
+  email: false
