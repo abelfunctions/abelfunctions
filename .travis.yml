@@ -39,5 +39,10 @@ install: ${SAGE} setup.py build_ext --inplace
 
 script: ${SAGE} runtests.py
 
+addons:
+  apt:
+    packages:
+     - gfortran
+
 notifications:
   email: false
