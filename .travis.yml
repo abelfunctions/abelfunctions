@@ -4,7 +4,6 @@
 #
 # choice of Sage version is determined via environment variables
 #
-language: python
 env:
   global:
     - SAGE=${HOME}/SageMath/sage
