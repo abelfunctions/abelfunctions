@@ -69,6 +69,8 @@ def runtests(argv):
     sys.exit(errno)
 
 if __name__ == '__main__':
+    print 'Running Abelfunctions test suite'
+    
     # run tests and suppress warnings (particularly from PARI)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
