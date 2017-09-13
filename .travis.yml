@@ -14,17 +14,9 @@ matrix:
       env:
         - SAGE_TARBALL=sage-8.0-Ubuntu_16.04-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
-    - os: linux
-      env:
-        - SAGE_TARBALL=sage-7.6-Ubuntu_16.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-7.6-OSX_10.11.6-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
 
 # download and extract Sage
