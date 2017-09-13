@@ -19,6 +19,7 @@ matrix:
       env:
         - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+      osx_image: xcode9  # OS X 10.12
 
 # download and extract Sage
 #
