@@ -51,6 +51,8 @@ from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
 
 import numpy
+# import matplotlib
+# import matplotlib.pyplot as plt
 
 def mnuk_conditions(g, b, generic_adjoint):
     """Determine the Mnuk conditions on the coefficients of :math:`P`.
@@ -85,6 +87,11 @@ def mnuk_conditions(g, b, generic_adjoint):
     c = B.gens()
     T = QQbar[R.variable_names() + B.variable_names()]
 
+    print '-----'
+    print 'R', R
+    print 'S', S
+    print 'T', T
+
     # compute b_num(x,y) * P(x,y) and reduce modulo the defining polynomial g.
     # we do this by casting the polynomial into the ring QQbar(x,*c)[y]. (the
     # coefficients of y in g need to be units)
@@ -97,6 +104,8 @@ def mnuk_conditions(g, b, generic_adjoint):
     modulus = g(u,v)
     r_reduced_mod_g = expr % modulus
 
+    print 'r_reduced_mod_g', r_reduced_mod_g
+
     # now mod out by the denominator to get the remaining component, R(x,y). we
     # need to cast into the ring QQbar[y,*c][x] in order to do so. (note that
     # we don't need a base fraction field since the denominator is univariate
@@ -104,6 +113,10 @@ def mnuk_conditions(g, b, generic_adjoint):
     u,v = map(T, R.gens())
     r = r_reduced_mod_g(v).numerator()
     r_reduced_mod_denom = r.polynomial(u) % T(denom).polynomial(u)
+    print 'r', r
+    print 'r.poly', r.polynomial(u)
+    print 'T(denom).polynomial(u)', T(denom).polynomial(u)
+    print 'r_reduced_mod_denom', r_reduced_mod_denom
 
     # finally, coerce the result to QQbar[*c][x,y] in order to obtain the
     # coefficients as linear combinations of the c_ij's.
@@ -111,6 +124,9 @@ def mnuk_conditions(g, b, generic_adjoint):
     u,v = map(S, R.gens())
     c = map(S, c)
     args = [u,v] + c
+    print 'args', args
+    print 'r', r
+    print 'type(r)', type(r)
     r = r(*args)
     conditions = r.coefficients()
     return conditions
@@ -486,8 +502,6 @@ class Differential:
         matplotlib.Figure
 
         """
-        import matplotlib.pyplot as plt  # XXX switch to Sage plotting
-
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         ax.hold(True)
