@@ -112,7 +112,7 @@ def mnuk_conditions(g, b, generic_adjoint):
     r = r_reduced_mod_denom(u)  # first need to coerce to "largest" ring, T
     u,v = map(S, R.gens())
     c = map(S, c)
-    args = [v] + c  # r is a polynomial over y and c_ij
+    args = [u, v] + c
     r = r(*args)
     conditions = r.coefficients()
     return conditions
