@@ -127,7 +127,10 @@ def mnuk_conditions(g, b, generic_adjoint):
     print 'args', args
     print 'r', r
     print 'type(r)', type(r)
-    r = r(*args)
+    print 'r==0', r==0
+    # only pass arguments to r if it takes any (r may be a constant "polynomial")
+    if r.ngens() != 0:
+        r = r(*args)
     conditions = r.coefficients()
     return conditions
 
