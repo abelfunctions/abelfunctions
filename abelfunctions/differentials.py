@@ -128,7 +128,6 @@ def mnuk_conditions(g, b, generic_adjoint):
     print 'r', r
     print 'type(r)', type(r)
     print 'r==0', r==0
-    # only pass arguments to r if it is a non-constant polynomial
     if r.ngens() != 0:
         r = r(*args)
     conditions = r.coefficients()
