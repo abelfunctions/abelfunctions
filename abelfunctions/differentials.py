@@ -87,11 +87,6 @@ def mnuk_conditions(g, b, generic_adjoint):
     c = B.gens()
     T = QQbar[R.variable_names() + B.variable_names()]
 
-    print '-----'
-    print 'R', R
-    print 'S', S
-    print 'T', T
-
     # compute b_num(x,y) * P(x,y) and reduce modulo the defining polynomial g.
     # we do this by casting the polynomial into the ring QQbar(x,*c)[y]. (the
     # coefficients of y in g need to be units)
@@ -104,8 +99,6 @@ def mnuk_conditions(g, b, generic_adjoint):
     modulus = g(u,v)
     r_reduced_mod_g = expr % modulus
 
-    print 'r_reduced_mod_g', r_reduced_mod_g
-
     # now mod out by the denominator to get the remaining component, R(x,y). we
     # need to cast into the ring QQbar[y,*c][x] in order to do so. (note that
     # we don't need a base fraction field since the denominator is univariate
@@ -113,23 +106,14 @@ def mnuk_conditions(g, b, generic_adjoint):
     u,v = map(T, R.gens())
     r = r_reduced_mod_g(v).numerator()
     r_reduced_mod_denom = r.polynomial(u) % T(denom).polynomial(u)
-    print 'r', r
-    print 'r.poly', r.polynomial(u)
-    print 'T(denom).polynomial(u)', T(denom).polynomial(u)
-    print 'r_reduced_mod_denom', r_reduced_mod_denom
 
     # finally, coerce the result to QQbar[*c][x,y] in order to obtain the
     # coefficients as linear combinations of the c_ij's.
     r = r_reduced_mod_denom(u)  # first need to coerce to "largest" ring, T
     u,v = map(S, R.gens())
     c = map(S, c)
-    args = [u,v] + c
-    print 'args', args
-    print 'r', r
-    print 'type(r)', type(r)
-    print 'r==0', r==0
-    if r.ngens() != 0:
-        r = r(*args)
+    args = [u, v] + c
+    r = r(*args)
     conditions = r.coefficients()
     return conditions
 
