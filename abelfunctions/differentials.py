@@ -486,6 +486,8 @@ class Differential:
         matplotlib.Figure
 
         """
+        import matplotlib.pyplot as plt  # XXX switch to Sage plotting
+        
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         ax.hold(True)
