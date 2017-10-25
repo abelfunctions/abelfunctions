@@ -51,8 +51,6 @@ from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
 
 import numpy
-# import matplotlib
-# import matplotlib.pyplot as plt
 
 def mnuk_conditions(g, b, generic_adjoint):
     """Determine the Mnuk conditions on the coefficients of :math:`P`.
