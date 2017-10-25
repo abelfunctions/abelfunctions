@@ -109,19 +109,10 @@ def mnuk_conditions(g, b, generic_adjoint):
 
     # finally, coerce the result to QQbar[*c][x,y] in order to obtain the
     # coefficients as linear combinations of the c_ij's.
-    r = r_reduced_mod_denom(u)  # first need to coerce to "largest" ring, T
+    r = T(r_reduced_mod_denom(u))  # first need to coerce to "largest" ring, T
     u,v = map(S, R.gens())
     c = map(S, c)
-
-    # r may or may not have x and y as variables
-    args = []
-    if str(u) in r.parent().variable_names():
-        args.append(u)
-    if str(v) in r.parent().variable_names():
-        args.append(v)
-
-    # r will always have the c_ij coefficients as variables
-    args += c
+    args = [u, v] + c
     r = r(*args)
     conditions = r.coefficients()
     return conditions
