@@ -445,7 +445,7 @@ class ComplexPathFactory(object):
         # positive/negative orientation with a given bj means we need to go
         # above/below bj, respectively.
         orientations = []
-        i = numpy.argwhere(numpy.array(self.discriminant_points, dtype=complex) == bi).item(0)
+        i = numpy.argwhere(self.discriminant_points_complex == complex(bi)).item(0)
         for bj in points_to_avoid:
             j = numpy.argwhere(self.discriminant_points_complex == bj).item(0)
             if i < j:
