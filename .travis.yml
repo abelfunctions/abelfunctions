@@ -15,11 +15,11 @@ matrix:
         - SAGE_TARBALL=sage-8.0-Ubuntu_14.04-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
       dist: trusty
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
-      osx_image: xcode8.3  # OSX 10.12
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
+    #     - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+    #   osx_image: xcode8.3  # OSX 10.12
 
 # download and extract Sage
 #
