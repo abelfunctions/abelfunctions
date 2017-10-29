@@ -21,13 +21,22 @@ matrix:
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
       osx_image: xcode8.3  # OSX 10.12
 
-# download and extract Sage
-#
+
 before_install:
+  # download and extract Sage
   - cd ${HOME}
   - wget ${SAGE_SERVER}/${SAGE_TARBALL}
   - tar xjf ${HOME}/${SAGE_TARBALL}
+
+  # OpenSSL is missing for Sage on OSX but is required to use pip
+  - |
+    if [ "${OS}" == "osx" ]; then
+      ${SAGE} -i openssl
+      ${SAGE} -i pyopenssl
+    fi
+
   - ${SAGE} -pip install concurrencytest
+
   - cd ${TRAVIS_BUILD_DIR}
 
 install: ${SAGE} setup.py build_ext --inplace
