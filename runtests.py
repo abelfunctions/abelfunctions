@@ -3,6 +3,7 @@ import getopt
 import sys
 import unittest
 import warnings
+from concurrencytest import ConcurrentTestSuite, fork_for_tests
 
 # get abelfunctions version number as '__version__'
 exec(open('abelfunctions/version.py')).read()
@@ -31,19 +32,22 @@ Optional arguments:
 def runtests(argv):
     # obtain command line arguments
     try:
-        opts, args = getopt.getopt(argv, 'hvm')
+        opts, args = getopt.getopt(argv, 'hvp:m')
     except getopt.GetoptError:
         usage()
         sys.exit(2)
 
     # parse command line arguments. set default values
     verbosity = 1
+    processes = 1
     for opt, arg in opts:
         if opt == '-h':
             usage()
             sys.exit()
         if opt == '-v':
             verbosity = 2
+        if opt == '-p':
+            processes = int(arg)
 
     # determine list of search patterns for tests
     patterns = []
@@ -64,8 +68,14 @@ def runtests(argv):
     for pattern in patterns:
         loader = unittest.TestLoader()
         suite = loader.discover(start_dir, pattern=pattern)
-        result = unittest.TextTestRunner(verbosity=verbosity).run(suite)
+        runner = unittest.TextTestRunner(verbosity=verbosity)
+
+        if processes > 1:
+            suite = ConcurrentTestSuite(suite, fork_for_tests(processes))
+
+        result = runner.run(suite)
         errno = not result.wasSuccessful()
+
     sys.exit(errno)
 
 if __name__ == '__main__':

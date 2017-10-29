@@ -179,5 +179,6 @@ setup(
     packages = packages,
     ext_modules = ext_modules,
     platforms = ['all'],
+    tests_require = ['concurrencytest'],
     cmdclass = {'clean':clean, 'build_ext':build_ext},
 )
