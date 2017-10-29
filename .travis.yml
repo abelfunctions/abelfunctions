@@ -33,8 +33,8 @@ before_install:
   - |
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       wget https://pypi.python.org/packages/5e/21/7f9bcd20ef93e0f7ef2149e9976f2c6027cab87187f8fedf3c63fd59e2e2/python-subunit-1.2.0.tar.gz#md5=3305455dfe22e2b8666531909c026a2f
-      tar xjf subunit-1.2.0.tar.gz
-      cd subunit-1.2.0
+      tar xjf python-subunit-1.2.0.tar.gz
+      cd python-subunit-1.2.0.tar.gz
       ${SAGE} -python setup.py install
       cd ..
       wget https://pypi.python.org/packages/ba/8a/8286de6d3aa9a3c4765cb3dd73515d91129f012a61e0ec8578c733ea2d27/concurrencytest-0.1.2.tar.gz
