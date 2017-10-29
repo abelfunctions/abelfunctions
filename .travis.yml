@@ -27,8 +27,8 @@ before_install:
   - cd ${HOME}
   - wget ${SAGE_SERVER}/${SAGE_TARBALL}
   - tar xjf ${HOME}/${SAGE_TARBALL}
+  - ${SAGE} -pip install concurrencytest
   - cd ${TRAVIS_BUILD_DIR}
-  - sage -pip install concurrencytest
 
 install: ${SAGE} setup.py build_ext --inplace
 
