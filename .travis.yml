@@ -43,6 +43,11 @@ before_install:
       ${SAGE} -python setup.py install
     fi
 
+  - |
+    if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      ${SAGE} -pip install concurrencytest
+    fi
+
   - cd ${TRAVIS_BUILD_DIR}
 
 install: ${SAGE} setup.py build_ext --inplace
