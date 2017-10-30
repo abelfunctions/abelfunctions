@@ -28,12 +28,10 @@ before_install:
   - wget ${SAGE_SERVER}/${SAGE_TARBALL}
   - travis_wait tar xjf ${HOME}/${SAGE_TARBALL}
 
-  # OpenSSL is missing for Sage on OSX but is required to use pip
-  # So install concurrencytest and it's dependencies testtools and python-subunit manually
+  # OpenSSL is missing for Sage on OSX but is required to use pip securely
   - |
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      ${SAGE} -pip download concurrencytest
-      ${SAGE} -pip install concurrencytest
+      ${SAGE} -pip install --trusted-host pypi.python.org concurrencytest
     fi
 
   - |
