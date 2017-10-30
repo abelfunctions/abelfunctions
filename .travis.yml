@@ -57,7 +57,7 @@ before_install:
 
 install: ${SAGE} setup.py build_ext --inplace
 
-script: travis_wait ${SAGE} runtests.py -v -p 2
+script: ${SAGE} runtests.py -v -p 2
 
 addons:
   apt:
