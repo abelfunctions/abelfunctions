@@ -3,7 +3,6 @@ import getopt
 import sys
 import unittest
 import warnings
-from concurrencytest import ConcurrentTestSuite, fork_for_tests
 
 # get abelfunctions version number as '__version__'
 exec(open('abelfunctions/version.py')).read()
@@ -71,6 +70,12 @@ def runtests(argv):
         runner = unittest.TextTestRunner(verbosity=verbosity)
 
         if processes > 1:
+            try:
+                from concurrencytest import ConcurrentTestSuite, fork_for_tests
+            except ImportError:
+                raise ImportError("To run tests in parallel the `concurrencytest` module is needed:\n\n"
+                           "\t$ sage -pip install concurrencytest\n")
+
             suite = ConcurrentTestSuite(suite, fork_for_tests(processes))
 
         result = runner.run(suite)
