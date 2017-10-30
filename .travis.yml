@@ -32,8 +32,7 @@ before_install:
   # So install concurrencytest and it's dependencies testtools and python-subunit manually
   - |
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      ${SAGE} -i openssl
-      ${SAGE} -i pyopenssl
+      ${SAGE} -pip download concurrencytest
       ${SAGE} -pip install concurrencytest
     fi
 
