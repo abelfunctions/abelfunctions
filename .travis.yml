@@ -58,10 +58,7 @@ before_install:
       ${SAGE} -pip install concurrencytest --no-index --find-links=.
     fi
 
-  - |
-    if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      ${SAGE} -pip install concurrencytest
-    fi
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then ${SAGE} -pip install concurrencytest; fi
 
   - cd ${TRAVIS_BUILD_DIR}
 
