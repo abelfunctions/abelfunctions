@@ -36,7 +36,8 @@ before_install:
       wget https://pypi.python.org/packages/75/00/f5829197ddfb9b8ff68b2995b5bb33519ec889282d45c27a7b98d2f40752/python_subunit-1.2.0-py2.py3-none-any.whl#md5=bb666fe045f8d3989e78c7cd90d6d394
       wget https://pypi.python.org/packages/0c/5d/b077dbf309993d52c1d71e6bf6fe443a8029ea215135ebbe0b1b10e7aefc/pbr-3.1.1-py2.py3-none-any.whl#md5=75a0f55856bfc9220af0d01244afec43
       wget https://pypi.python.org/packages/03/e9/e915af1f97914cd0bc021e125fd1bfd4106de614a275e4b6866dd9a209ac/extras-1.0.0-py2.py3-none-any.whl#md5=9a2a42996d242746bdad945d8b2617e5
-      ${SAGE} -pip install concurrencytest
+      tar xjf concurrencytest-0.1.2.tar.gz
+      ${SAGE} -pip install -e concurrencytest-0.1.2
     fi
 
   - |
