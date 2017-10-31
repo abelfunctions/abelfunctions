@@ -23,14 +23,21 @@ matrix:
 
 
 before_install:
-  # install torrent downloader aria2
-  - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then brew install aria2; fi
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then apt-get install aria2; fi
+  - cd ${HOME}
 
   # download Sage as a torrent 
-  - cd ${HOME}
-  - wget http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/${SAGE_TARBALL}.torrent
-  - aria2c ${SAGE_TARBALL}.torrent --file-allocation=falloc --seed-time=0
+  - |
+    if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      brew install aria2
+      wget http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/${SAGE_TARBALL}.torrent
+      aria2c ${SAGE_TARBALL}.torrent --file-allocation=falloc --seed-time=0
+    fi
+
+  # download sage directly
+  - |
+    if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      wget ${SAGE_SERVER}/${SAGE_TARBALL}
+    fi
 
   # extract Sage
   - travis_wait tar xjf ${HOME}/${SAGE_TARBALL}
