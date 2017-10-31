@@ -23,7 +23,8 @@ Optional arguments:
     [module_name] -- if provided, only run tests matching name
     -h            -- print this help message
     -v            -- run tests with higher verbosity level
-
+    -p <arg>      -- run tests in parallel using <arg> number of processes
+    
 """%__version__
     print s
 
