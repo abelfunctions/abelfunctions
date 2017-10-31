@@ -28,7 +28,7 @@ before_install:
   # download Sage as a torrent 
   - |
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      brew install aria2
+      HOMEBREW_NO_AUTO_UPDATE=1 brew install aria2
       wget http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/${SAGE_TARBALL}.torrent
       aria2c ${SAGE_TARBALL}.torrent --file-allocation=falloc --seed-time=0
     fi
