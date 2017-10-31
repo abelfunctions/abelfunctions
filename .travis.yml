@@ -34,10 +34,7 @@ before_install:
     fi
 
   # download sage directly
-  - |
-    if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      wget ${SAGE_SERVER}/${SAGE_TARBALL}
-    fi
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then wget ${SAGE_SERVER}/${SAGE_TARBALL}; fi
 
   # extract Sage
   - travis_wait tar xjf ${HOME}/${SAGE_TARBALL}
