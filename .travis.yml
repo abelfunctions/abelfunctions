@@ -64,7 +64,7 @@ before_install:
 
 install: ${SAGE} setup.py build_ext --inplace
 
-script: ${SAGE} runtests.py -v -p 10
+script: ${SAGE} runtests.py -v -p 2
 
 addons:
   apt:
