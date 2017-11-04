@@ -23,7 +23,7 @@ Optional arguments:
     [module_name] -- if provided, only run tests matching name
     -h            -- print this help message
     -v            -- run tests with higher verbosity level
-    -p <arg>      -- run tests in parallel using <arg> number of processes
+    -p <arg>      -- run tests in parallel using <arg> number of processes (requires pytest-xdist)
     
 """%__version__
     print s
@@ -49,44 +49,57 @@ def runtests(argv):
         if opt == '-p':
             processes = int(arg)
 
-    # determine list of search patterns for tests
-    patterns = []
-    for arg in args:
-        # if the string 'test' doesn't appear in the pattern argument then
-        # prepend to string
-        pattern = arg
-        if not 'test' in pattern:
-            pattern = 'test*' + pattern + '*'
-        if not '.py' in pattern:
-            pattern = pattern + '.py'
-        patterns.append(pattern)
-    if not patterns:
-        patterns = ['test*.py']
+    if processes > 1:
+        try:
+            import pytest
+        except ImportError:
+            raise ImportError("Runinng tests in parallel requires pytest-xdist.  Install with:\n\n"
+                       "\t$ sage -pip install pytest-xdist \n")
 
-    # run tests for each requested pattern
-    start_dir = 'abelfunctions'
-    for pattern in patterns:
-        loader = unittest.TestLoader()
-        suite = loader.discover(start_dir, pattern=pattern)
-        runner = unittest.TextTestRunner(verbosity=verbosity)
+        # determine list of search patterns for tests
+        patterns = ''
+        for arg in args:
+            patterns += str(arg) + ' '
+        patterns = patterns[:-1]
 
-        if processes > 1:
-            try:
-                from concurrencytest import ConcurrentTestSuite, fork_for_tests
-            except ImportError:
-                raise ImportError("To run tests in parallel the `concurrencytest` module is needed:\n\n"
-                           "\t$ sage -pip install concurrencytest\n")
+        print('patterns', patterns)
 
-            suite = ConcurrentTestSuite(suite, fork_for_tests(processes))
+        pytest_args = ['-k', patterns, '--ignore=examples', '-n', processes]
 
-        result = runner.run(suite)
-        errno = not result.wasSuccessful()
+        # highlight the runtimes for the 5 slowest tests
+        pytest_args.append('--durations=5')
 
-    sys.exit(errno)
+        if verbosity == 2:
+            pytest_args.append('-v')
+        errno = pytest.main(pytest_args)
 
-if __name__ == '__main__':
-    print 'Running Abelfunctions test suite'
-    
+    else:
+        # determine list of search patterns for tests
+        patterns = []
+        for arg in args:
+            # if the string 'test' doesn't appear in the pattern argument then
+            # prepend to string
+            pattern = arg
+            if not 'test' in pattern:
+                pattern = 'test*' + pattern + '*'
+            if not '.py' in pattern:
+                pattern = pattern + '.py'
+            patterns.append(pattern)
+        if not patterns:
+            patterns = ['test*.py']
+
+        # run tests for each requested pattern
+        start_dir = 'abelfunctions'
+        for pattern in patterns:
+            loader = unittest.TestLoader()
+            suite = loader.discover(start_dir, pattern=pattern)
+            runner = unittest.TextTestRunner(verbosity=verbosity)
+            result = runner.run(suite)
+            errno = not result.wasSuccessful()
+
+        sys.exit(errno)
+
+if __name__ == '__main__':    
     # run tests and suppress warnings (particularly from PARI)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

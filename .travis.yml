@@ -40,25 +40,20 @@ before_install:
   - travis_wait tar xjf ${HOME}/${SAGE_TARBALL}
 
   # OpenSSL is missing for Sage on OSX but is required to use pip securely
-  # So download 'by hand' concurrencytest (used to run tests in parallel) and its dependencies
+  # So download 'by hand' pytest-xdist (used to run tests in parallel) and its dependencies
   - |
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      wget https://pypi.python.org/packages/ba/8a/8286de6d3aa9a3c4765cb3dd73515d91129f012a61e0ec8578c733ea2d27/concurrencytest-0.1.2.tar.gz#md5=773d9a8be83fc043a32a25b6665bf59b
-      wget https://pypi.python.org/packages/f2/94/3af39d34be01a24a6e65433d19e107099374224905f1e0cc6bbe1fd22a2f/argparse-1.4.0-py2.py3-none-any.whl#md5=c37216a954c8669054e2b2c54853dd49
-      wget https://pypi.python.org/packages/03/e9/e915af1f97914cd0bc021e125fd1bfd4106de614a275e4b6866dd9a209ac/extras-1.0.0-py2.py3-none-any.whl#md5=9a2a42996d242746bdad945d8b2617e5
-      wget https://pypi.python.org/packages/a8/28/7eed6bf76792f418029a18d5b2ace87ce7562927cdd00f1cefe481cd148f/fixtures-3.0.0-py2.py3-none-any.whl#md5=f6e3afc70aba24d85d7f04e28771f760
-      wget https://files.pythonhosted.org/packages/c7/a3/c5da2a44c85bfbb6eebcfc1dde24933f8704441b98fdde6528f4831757a6/linecache2-1.0.0-py2.py3-none-any.whl
-      wget https://pypi.python.org/packages/0c/5d/b077dbf309993d52c1d71e6bf6fe443a8029ea215135ebbe0b1b10e7aefc/pbr-3.1.1-py2.py3-none-any.whl#md5=75a0f55856bfc9220af0d01244afec43
-      wget https://pypi.python.org/packages/26/2e/03bce213a9bf02a2750dcb04e761785e9c763fc11071edc4b447eacbb842/python_mimeparse-1.6.0-py2.py3-none-any.whl#md5=e2780ceb12929f2f8557c467fa8c2567
-      wget https://pypi.python.org/packages/75/00/f5829197ddfb9b8ff68b2995b5bb33519ec889282d45c27a7b98d2f40752/python_subunit-1.2.0-py2.py3-none-any.whl#md5=bb666fe045f8d3989e78c7cd90d6d394
-      wget https://pypi.python.org/packages/67/4b/141a581104b1f6397bfa78ac9d43d8ad29a7ca43ea90a2d863fe3056e86a/six-1.11.0-py2.py3-none-any.whl#md5=866ab722be6bdfed6830f3179af65468
-      wget https://pypi.python.org/packages/87/74/a4d55da28d7bba6d6f49430f22a62afd8472cb24a63fa61daef80d3e821b/testtools-2.3.0-py2.py3-none-any.whl#md5=eb9ce65ad08afbc7a2bf1b1da9114086
-      wget https://pypi.python.org/packages/17/0a/6ac05a3723017a967193456a2efa0aa9ac4b51456891af1e2353bb9de21e/traceback2-1.4.0-py2.py3-none-any.whl#md5=a9b6ac7b5ee15cc7c44b7473135a56d5
-      wget https://pypi.python.org/packages/72/20/7f0f433060a962200b7272b8c12ba90ef5b903e218174301d0abfd523813/unittest2-1.1.0-py2.py3-none-any.whl#md5=4fb80726cfd1d8887a75e4a69b9da71a
+      wget https://pypi.python.org/packages/94/72/fd4f2e46ce7b0d388191c819ef691c8195fab09602bbf1a2f92aa5351444/apipkg-1.4-py2.py3-none-any.whl#md5=5644eb6aff3f19e13430251a820e987f
+      wget https://pypi.python.org/packages/f9/76/3343e69a2a1602052f587898934e5fea395d22310d39c07955596597227c/execnet-1.5.0-py2.py3-none-any.whl#md5=b6ea27c6b64e09c5220dc6d23da99485
+      wget https://pypi.python.org/packages/53/67/9620edf7803ab867b175e4fd23c7b8bd8eba11cb761514dcd2e726ef07da/py-1.4.34-py2.py3-none-any.whl#md5=0cb02dbd9cf647f97b8963d4def97a7f
+      wget https://pypi.python.org/packages/dd/9d/fb75af584b850a902c9ce5ec96ea5c623978113b8a240ab414e1a435df93/pytest_forked-0.2-py2.py3-none-any.whl#md5=b7c663a158ed861f7c4faa4edc45225d
+      wget https://pypi.python.org/packages/bc/b3/0edafff9da9057a52e9f84e7e8491a44c02d92ff101b537162a1afc2a666/pytest_xdist-1.20.1-py2.py3-none-any.whl#md5=d948ec49fcf4d855c1d5bcefddc0810c
+      wget https://pypi.python.org/packages/8c/7d/f5d71f0e28af32388e07bd4ce0dbd2b3539693aadcae4403266173ec87fa/pytest-3.2.3-py2.py3-none-any.whl#md5=92952bc212c5eff0b6f840dcef4f828b
+      wget https://pypi.python.org/packages/bd/4c/b06ab3abfc8bc93b87b70f4cab22352c3c72deba7b71390d14bfffa97c85/setuptools-36.6.0-py2.py3-none-any.whl#md5=df531523e300bc3e6b9ce4451681912c
       ${SAGE} -pip install concurrencytest --no-index --find-links=.
     fi
 
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then ${SAGE} -pip install concurrencytest; fi
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then ${SAGE} -pip install pytest-xdist; fi
 
   - cd ${TRAVIS_BUILD_DIR}
 
