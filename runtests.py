@@ -62,8 +62,6 @@ def runtests(argv):
             patterns += str(arg) + ' '
         patterns = patterns[:-1]
 
-        print('patterns', patterns)
-
         pytest_args = ['-k', patterns, '--ignore=examples', '-n', processes]
 
         # highlight the runtimes for the 5 slowest tests
