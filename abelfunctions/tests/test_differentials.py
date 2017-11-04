@@ -47,6 +47,7 @@ class TestDifferentialsNumerators(AbelfunctionsTestCase):
         b = [1, y, x, x**2]
         self.assertEqual(a,b)
 
+    @unittest.skip("Takes too much time")
     def test_f8(self):
         x,y = self.f8.parent().gens()
         a = differentials_numerators(self.f8)
