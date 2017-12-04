@@ -179,7 +179,7 @@ class RiemannSurface(object):
             curve_eval = self.f(alpha, beta)
             if abs(curve_eval) > 1e-8:
                 raise ValueError('The place (%s, %s) does not lie on the curve '
-                                 '/ surface.')
+                                 '/ surface.' % (alpha, beta))
             place = RegularPlace(self, alpha, beta)
             return place
 
