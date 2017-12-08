@@ -933,7 +933,7 @@ def newton(df, xip1, yij):
         # if df is not invertible then we are at a critical point.
         df1y = df1(xip1,yij)
         if numpy.abs(df1y) < 1e-14:
-            return yij
+            break
         step = df0(xip1,yij) / df1y
         yij = yij - step
 
