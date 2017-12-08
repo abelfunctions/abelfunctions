@@ -35,6 +35,8 @@ Contents
 --------
 """
 
+import warnings
+
 import numpy
 import scipy
 from abelfunctions.divisor import DiscriminantPlace
