@@ -590,8 +590,8 @@ class PuiseuxTSeries(object):
         if self.is_numerical:
             return self.xdata
         else:
-            return (numpy.complex256(self.center),
-                    numpy.complex256(self.xcoefficient),
+            return ((self.center),
+                    (self.xcoefficient),
                     numpy.int(self.ramification_index))
     @property
     def order(self):

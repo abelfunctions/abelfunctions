@@ -44,7 +44,7 @@ from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
 from abelfunctions import ComplexField as CC
 
-from numpy import double, complex
+from numpy import double
 
 from sage.all import (
     QQ, QQbar, infinity, fast_callable, factorial, cached_method, cached_function)
@@ -111,14 +111,14 @@ class RiemannSurfacePathPrimitive(object):
         self.riemann_surface = riemann_surface
         self.complex_path = complex_path
         self.x0 = complex_path(0)
-        self.y0 = numpy.array(y0, dtype=complex)
+        self.y0 = numpy.array(y0, dtype=object)
 
         # cached s, x, and y checkpoints
         self._ncheckpoints = ncheckpoints
         self._scheckpoints = numpy.zeros(ncheckpoints, dtype=double)
-        self._xcheckpoints = numpy.zeros(ncheckpoints, dtype=complex)
+        self._xcheckpoints = numpy.zeros(ncheckpoints, dtype=object)
         self._ycheckpoints = numpy.zeros(
-            (ncheckpoints, riemann_surface.deg), dtype=complex)
+            (ncheckpoints, riemann_surface.deg), dtype=object)
 
         # initialize the checkpoints on the path. see
         # RiemannSurfacePath.__init__ for additional information on how the
@@ -255,8 +255,8 @@ class RiemannSurfacePathPrimitive(object):
         # initialize containers
         n = self._ncheckpoints
         s = numpy.linspace(0, 1, n, dtype=double)
-        x = numpy.array([self.get_x(si) for si in s], dtype=complex)
-        y = numpy.zeros((n, self.riemann_surface.degree), dtype=complex)
+        x = numpy.array([self.get_x(si) for si in s], dtype=object)
+        y = numpy.zeros((n, self.riemann_surface.degree), dtype=object)
 
         # for each t-checkpoint compute the corresponding x- and y-checkpoint
         # by analytically continuing. note that the analytic continuation is
@@ -420,7 +420,7 @@ class RiemannSurfacePathPrimitive(object):
 
         """
         s = numpy.linspace(0, 1, plot_points, dtype=double)
-        vals = numpy.array([self.get_y(si)[0] for si in s], dtype=complex)
+        vals = numpy.array([self.get_y(si)[0] for si in s], dtype=object)
         pts = [(real_part(y), imag_part(y)) for y in vals]
         plt = line(pts, **kwds)
         return plt
@@ -626,8 +626,8 @@ class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         N = len(s)
         nsegs = len(self._segments)
         ppseg = int(N/nsegs)
-        values = numpy.zeros(nsegs*ppseg, dtype=complex)
-        values_seg = numpy.zeros(ppseg, dtype=complex)
+        values = numpy.zeros(nsegs*ppseg, dtype=object)
+        values_seg = numpy.zeros(ppseg, dtype=object)
         tseg = numpy.linspace(0, 1, ppseg)
 
         # evaluate along each segment
@@ -651,7 +651,7 @@ class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         integral : complex
             The integral of omega along self.
         """
-        integral = complex(0.0)
+        integral = CC(0)
         for gamma in self._segments:
             integral += gamma.integrate(omega)
         return integral
@@ -721,7 +721,7 @@ def ordered_puiseux_series(riemann_surface, complex_path, y0, target_point):
 
     # reorder them according to the ordering of the y-fibre above x=x0
     p_evals_above_x0 = [pj(x0-alpha) for pj in p]
-    p_evals_above_x0 = numpy.array(p_evals_above_x0, dtype=complex)
+    p_evals_above_x0 = numpy.array(p_evals_above_x0, dtype=object)
     sigma = matching_permutation(p_evals_above_x0, y0)
     p = sigma.action(p)
 
@@ -837,7 +837,7 @@ class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         # simply evaluate the ordered puiseux series at xip1
         alpha = CC(0) if self.target_point == infinity else CC(self.target_point)
         yip1 = [pj(xip1-alpha) for pj in self.puiseux_series]
-        yip1 = numpy.array(yip1, dtype=complex)
+        yip1 = numpy.array(yip1, dtype=object)
         return yip1
 
     @cached_method
@@ -872,19 +872,19 @@ class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
 
         # extract relevant information about the Puiseux series
         p = P.puiseux_series
-        x0 = complex(self.gamma.x0)
-        y0 = complex(self.gamma.y0[0])
+        x0 = (self.gamma.x0)
+        y0 = (self.gamma.y0[0])
         alpha = 0 if self.target_point == infinity else self.target_point
-        xcoefficient = complex(p.xcoefficient)
+        xcoefficient = (p.xcoefficient)
         e = numpy.int(p.ramification_index)
 
         # the parameter of the path s \in [0,1] does not necessarily match with
         # the local coordinate t of the place. perform the appropriate scaling
         # on the integral.
-        tprim = complex((x0-alpha)/xcoefficient)**(1./e)
+        tprim = ((x0-alpha)/xcoefficient)**(1./e)
         unity = [numpy.exp(2.j*numpy.pi*k/abs(e)) for k in range(abs(e))]
         tall = [unity[k]*tprim for k in range(abs(e))]
-        ytprim = numpy.array([p.eval_y(tk) for tk in tall], dtype=numpy.complex)
+        ytprim = numpy.array([p.eval_y(tk) for tk in tall], dtype=object)
         k = numpy.argmin(numpy.abs(ytprim - y0))
         tcoefficient = tall[k]
 
@@ -894,8 +894,8 @@ class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
             s = CC(s)
             dtds = -tcoefficient
             val = omega_local(tcoefficient*(1-s)) * dtds
-            return complex(val)
-        return numpy.vectorize(omega_gamma, otypes=[complex])
+            return (val)
+        return numpy.vectorize(omega_gamma, otypes=[object])
 
 
 ####################################################
@@ -928,7 +928,7 @@ def newton(df, xip1, yij):
     """
     df0 = df[0]
     df1 = df[1]
-    step = numpy.complex(1.0)
+    step = CC(1.0)
     maxIter = 1000
     numIter = 0
     while numpy.abs(step) > 1e-14:
@@ -1102,7 +1102,7 @@ class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
 
         # finally, since we know that we have approximate solutions that will
         # converge to difference associated solutions we will Netwon iterate
-        yip1 = numpy.zeros(self.degree, dtype=complex)
+        yip1 = numpy.zeros(self.degree, dtype=object)
         for j in range(self.degree):
             yip1[j] = newton(self.df, xip1, yi[j])
         return yip1
@@ -1137,4 +1137,4 @@ class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
             ys = self.get_y(s)[0]
             dxds = self.get_dxds(s)
             return omega(xs,ys) * dxds
-        return numpy.vectorize(omega_gamma, otypes=[complex])
+        return numpy.vectorize(omega_gamma, otypes=[object])

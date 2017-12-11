@@ -389,7 +389,7 @@ class RiemannSurface(object):
         # tau[i,j] = \int_{a_j} \omega_i,  j < g
         # tau[i,j] = \int_{b_j} \omega_i,  j >= g
         #
-        tau = numpy.zeros((g,2*g), dtype=numpy.complex256)
+        tau = numpy.zeros((g,2*g), dtype=object)
         for i in range(g):
             for j in range(2*g):
                 tau[i,j] = sum(linear_combinations[j,k] * c_periods[i][k]

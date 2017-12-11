@@ -32,7 +32,6 @@ cdef extern from 'math.h':
     int floor(double)
 
 cdef extern from 'complex.h':
-    complex cexp(complex)
     double cabs(complex)
 
 cdef class ComplexPathPrimitive:

@@ -63,7 +63,6 @@ cdef extern from 'math.h':
     int floor(double)
 
 cdef extern from 'complex.h':
-    complex cexp(complex)
     double cabs(complex)
 
 cdef class RiemannSurfacePathPrimitive:
@@ -703,7 +702,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         integral : complex
             The integral of omega along self.
         """
-        integral = (0.0)
+        integral = CDF(0.0)
         for gamma in self._segments:
             integral += gamma.integrate(omega)
         return integral
