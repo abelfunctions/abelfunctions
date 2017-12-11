@@ -55,12 +55,10 @@ cdef class ComplexPathPrimitive:
         s = 'Complex path from %s to %s'%(start_point, end_point)
         return s
 
-    def eval(self, s):
+    cpdef object eval(self, double s):
         raise NotImplementedError('Implement in subclass.')
-    '''cpdef complex eval(self, double s):
-        raise NotImplementedError('Implement in subclass.')'''
 
-    cpdef complex derivative(self, double s):
+    cpdef object derivative(self, double s):
         raise NotImplementedError('Implement in subclass.')
 
     def reverse(self):
@@ -84,22 +82,21 @@ cdef class ComplexPathPrimitive:
         return gamma
 
     def __call__(self, s):
-        #cdef int j, N
-        #cdef double[:] inputs
-        #cdef complex[:] values
+        cdef int j, N
+        cdef double[:] inputs
+        cdef object[:] values
 
         # if the input is an array then amortize the calculation
         if isinstance(s, numpy.ndarray):
             N = len(s)
-            inputs = s#.astype(numpy.double)
-            values = [0] * N #numpy.zeros(len(s), dtype=complex)
+            inputs = s.astype(numpy.double)
+            values = numpy.zeros(len(s), dtype=object)
             for j in range(N):
                 values[j] = self.eval(inputs[j])
-            return values#numpy.array(values, dtype=complex)
+            return numpy.array(values, dtype=object)
 
         # otherwise, just evaluate at the point
-        #cdef complex 
-        value = self.eval(s)
+        cdef object value = self.eval(s)
         return value
 
     def plot(self, plot_points=128, **kwds):
@@ -201,30 +198,7 @@ cdef class ComplexPath(ComplexPathPrimitive):
         cdef int index = k + (diff & dsgn)
         return index
 
-    def eval(self, s):
-        r"""Return the complex point along the path at the parameter `s`.
-
-        .. note::
-
-            Directly called by :meth:`__call__`.
-
-        Parameters
-        ----------
-        s : float
-            Path parameter in the interval [0,1].
-
-        Returns
-        -------
-        val : complex
-            The point
-        """
-        cdef int k = self.segment_index_at_parameter(s)
-        s_seg = s*self._nsegments - k
-        seg = self._segments[k]
-        val = seg.eval(s_seg)
-        return val
-    
-    '''cpdef complex eval(self, double s):
+    cpdef object eval(self, double s):
         r"""Return the complex point along the path at the parameter `s`.
 
         .. note::
@@ -244,10 +218,10 @@ cdef class ComplexPath(ComplexPathPrimitive):
         cdef int k = self.segment_index_at_parameter(s)
         cdef double s_seg = s*self._nsegments - k
         cdef ComplexPathPrimitive seg = self._segments[k]
-        cdef complex val = seg.eval(s_seg)
-        return val'''
+        cdef object val = seg.eval(s_seg)
+        return val
 
-    cpdef complex derivative(self, double s):
+    cpdef object derivative(self, double s):
         r"""Return the derivative of the complex path with respect to the
         parameter.
 
@@ -264,7 +238,7 @@ cdef class ComplexPath(ComplexPathPrimitive):
         cdef int k = self.segment_index_at_parameter(s)
         cdef double s_seg = s*self._nsegments - k
         cdef ComplexPathPrimitive seg = self._segments[k]
-        cdef complex val = seg.derivative(s_seg)
+        cdef object val = seg.derivative(s_seg)
         return val
 
     def reverse(self):
@@ -327,7 +301,7 @@ cdef class ComplexLine(ComplexPathPrimitive):
     def x1(self):
         return self._x1
 
-    def __init__(self, complex x0, complex x1):
+    def __init__(self, object x0, object x1):
         ComplexPathPrimitive.__init__(self)
         self._x0 = x0
         self._x1 = x1
@@ -343,15 +317,12 @@ cdef class ComplexLine(ComplexPathPrimitive):
             return 2
         return 3
 
-    def eval(self, s):
-        val = self._x0 + (self._x1-self._x0)*s
+    cpdef object eval(self, double s):
+        cdef object val = self._x0 + (self._x1-self._x0)*s
         return val
-    '''cpdef complex eval(self, double s):
-        cdef complex val = self._x0 + (self._x1-self._x0)*s
-        return val'''
 
-    cpdef complex derivative(self, double s):
-        cdef complex val = self._x1 - self._x0
+    cpdef object derivative(self, double s):
+        cdef object val = self._x1 - self._x0
         return val
 
     def reverse(self):
@@ -390,7 +361,7 @@ cdef class ComplexArc(ComplexPathPrimitive):
     def dtheta(self):
         return self._dtheta
 
-    def __init__(self, double R, complex w, double theta, double dtheta):
+    def __init__(self, double R, object w, double theta, double dtheta):
         ComplexPathPrimitive.__init__(self)
         self._R = R
         self._w = w
@@ -409,18 +380,14 @@ cdef class ComplexArc(ComplexPathPrimitive):
             return 2
         return 3
 
-    def eval(self, s):
-        val = \
+    cpdef object eval(self, double s):
+        cdef object val = \
             self._R*numpy.exp(1.0j*(self._theta + s*self._dtheta)) + self._w
         return val
-    '''cpdef complex eval(self, double s):
-        cdef complex val = \
-            self._R*cexp(1.0j*(self._theta + s*self._dtheta)) + self._w
-        return val'''
 
-    cpdef complex derivative(self, double s):
-        cdef complex val = (self._R*1.0j*self._dtheta) * \
-            cexp(1.0j*(self._theta + s*self._dtheta))
+    cpdef object derivative(self, double s):
+        cdef object val = (self._R*1.0j*self._dtheta) * \
+            numpy.exp(1.0j*(self._theta + s*self._dtheta))
         return val
 
     def reverse(self):
@@ -440,7 +407,7 @@ cdef class ComplexRay(ComplexPathPrimitive):
     def x0(self):
         return self._x0
 
-    def __init__(self, complex x0):
+    def __init__(self, object x0):
         ComplexPathPrimitive.__init__(self)
         if cabs(x0) < 1e-8:
             raise ValueError('Complex rays must start away from the origin.')
@@ -456,18 +423,15 @@ cdef class ComplexRay(ComplexPathPrimitive):
         if self.x0 != other.x0:
             return 3
         return 2
-    def eval(self, s):
-        if s == 1.0: return float('inf')
-        val = self._x0/(1-s)
-        return val
-    '''cpdef complex eval(self, double s):
-        if s == 1.0: return float('inf')
-        cdef complex val = self._x0/(1-s)
-        return val'''
 
-    cpdef complex derivative(self, double s):
+    cpdef object eval(self, double s):
         if s == 1.0: return float('inf')
-        cdef complex val = -self._x0/(1.-s)**2
+        cdef object val = self._x0/(1-s)
+        return val
+
+    cpdef object derivative(self, double s):
+        if s == 1.0: return float('inf')
+        cdef object val = -self._x0/(1.-s)**2
         return val
 
     def reverse(self):

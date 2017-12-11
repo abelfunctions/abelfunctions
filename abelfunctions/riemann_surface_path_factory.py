@@ -48,8 +48,8 @@ from abelfunctions.ypath_factory import YPathFactory as Skeleton
 from . import ComplexField as CC
 
 from numpy import  double, array
-from numpy import complex256 as complex
-from sage.all import infinity, CDF, cached_method
+#from numpy import complex256 as complex
+from sage.all import infinity, cached_method
 
 class RiemannSurfacePathFactory(object):
     r"""Factory class for constructing paths on the Riemann surface.
@@ -164,8 +164,8 @@ class RiemannSurfacePathFactory(object):
         if not base_sheets:
             x,y = self.riemann_surface.f.parent().gens()
             p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
-            roots = p.roots(CDF, multiplicities=False)
-            base_sheets = numpy.array(roots, dtype=complex)
+            roots = p.roots(CC(), multiplicities=False)
+            base_sheets = numpy.array(roots, dtype=object)
         else:
             f = self.riemann_surface.f
             for sheet in base_sheets:
@@ -570,7 +570,7 @@ class RiemannSurfacePathFactory(object):
 
         # coerce and assert that x0,y0 lies on the path and curve
         x0 = complex(x0)
-        y0 = array(y0, dtype=complex)
+        y0 = array(y0, dtype=object)
         if abs(x0 - complex_path(0)) > 1e-7:
             raise ValueError('The point %s is not at the start of the '
                              'ComplexPath %s'%(x0, complex_path))

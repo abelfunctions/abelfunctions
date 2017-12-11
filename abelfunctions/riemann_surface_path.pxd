@@ -7,18 +7,18 @@ cdef class RiemannSurfacePathPrimitive:
     cdef int _nsegments
     cdef ComplexPathPrimitive _complex_path
     cdef complex _x0
-    cdef complex[:] _y0
+    cdef object[:] _y0
     cdef int _ncheckpoints
     cdef double[:] _scheckpoints
-    cdef complex[:] _xcheckpoints
-    cdef complex[:,:] _ycheckpoints
+    cdef object[:] _xcheckpoints
+    cdef object[:,:] _ycheckpoints
     cdef object _repr
 
     cpdef int _nearest_checkpoint_index(self, double s)
-    cpdef complex get_x(self, double s)
-    cpdef complex get_dxds(self, double s)
-    cpdef complex[:] get_y(self, double s)
-    cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1)
+    cpdef object get_x(self, double s)
+    cpdef object get_dxds(self, double s)
+    cpdef object[:] get_y(self, double s)
+    cpdef object[:] analytically_continue(self, object xi, object[:] yi, object xip1)
 
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     cdef int segment_index_at_parameter(self, double s)
