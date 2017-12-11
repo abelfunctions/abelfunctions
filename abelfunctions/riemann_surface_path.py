@@ -35,6 +35,8 @@ Contents
 --------
 """
 
+import warnings
+
 import numpy
 import scipy
 from abelfunctions.divisor import DiscriminantPlace
@@ -925,13 +927,20 @@ def newton(df, xip1, yij):
     df0 = df[0]
     df1 = df[1]
     step = numpy.complex(1.0)
+    maxIter = 1000
+    numIter = 0
     while numpy.abs(step) > 1e-14:
         # if df is not invertible then we are at a critical point.
         df1y = df1(xip1,yij)
         if numpy.abs(df1y) < 1e-14:
-            return yij
+            break
         step = df0(xip1,yij) / df1y
         yij = yij - step
+
+        numIter += 1
+        if numIter >= maxIter:
+            warnings.warn('Newton failed to converge after %d iterations. Final step size: %g' % (maxIter, numpy.abs(step)))
+            break
     return yij
 
 
