@@ -1,7 +1,7 @@
 cdef class ComplexPathPrimitive:
     cdef ComplexPathPrimitive[:] _segments
     cdef int _nsegments
-    cpdef complex eval(self, double s)
+    #cpdef complex eval(self, double s)
     cpdef complex derivative(self, double s)
 
 cdef class ComplexPath(ComplexPathPrimitive):

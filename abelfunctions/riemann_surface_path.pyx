@@ -50,9 +50,10 @@ import scipy
 from abelfunctions.divisor import DiscriminantPlace
 from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
+from abelfunctions import ComplexField as CDF
 
 from sage.all import (
-    QQ, QQbar, CDF, infinity, fast_callable, cached_method, cached_function)
+    QQ, QQbar, infinity, fast_callable, cached_method, cached_function)
 from sage.functions.other import real_part, imag_part
 from sage.plot.line import line
 
@@ -921,7 +922,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         # localize the differential at the discriminant place
         P = self.target_place
         omega_local = omega.localize(P)
-        omega_local = omega_local.laurent_polynomial().change_ring(CDF)
+        omega_local = omega_local.laurent_polynomial().change_ring(CDF())
 
         # extract relevant information about the Puiseux series
         p = P.puiseux_series
@@ -1140,7 +1141,7 @@ cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
         # it is very important that the domain of the fast_callable versions of
         # f and its derivatives is CDF.
         degree = riemann_surface.degree
-        f = riemann_surface.f.change_ring(CDF)
+        f = riemann_surface.f.change_ring(CDF())
         x,y = f.parent().gens()
         df = [
             fast_callable(f.derivative(y,k), vars=(x,y), domain=numpy.complex)

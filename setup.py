@@ -46,12 +46,12 @@ ext_modules = [
                                'complex_path.pyx')],
               extra_compile_args = ['-std=c99'],
           ),
-    Extension('abelfunctions.riemann_surface_path',
-              sources=[
-                  os.path.join('abelfunctions',
-                               'riemann_surface_path.pyx')],
-              extra_compile_args = ['-std=c99'],
-          ),
+    #Extension('abelfunctions.riemann_surface_path',
+    #          sources=[
+    #              os.path.join('abelfunctions',
+    #                           'riemann_surface_path.pyx')],
+    #          extra_compile_args = ['-std=c99'],
+    #      ),
     Extension('abelfunctions.puiseux_series_ring_element',
               sources=[
                   os.path.join('abelfunctions',

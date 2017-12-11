@@ -45,9 +45,11 @@ from abelfunctions.utilities import (
 from abelfunctions.complex_path_factory import ComplexPathFactory
 #from abelfunctions.skeleton import Skeleton
 from abelfunctions.ypath_factory import YPathFactory as Skeleton
+from . import ComplexField as CC
 
-from numpy import complex, double, array
-from sage.all import infinity, CC, CDF, cached_method
+from numpy import  double, array
+from numpy import complex256 as complex
+from sage.all import infinity, CDF, cached_method
 
 class RiemannSurfacePathFactory(object):
     r"""Factory class for constructing paths on the Riemann surface.
@@ -163,7 +165,7 @@ class RiemannSurfacePathFactory(object):
             x,y = self.riemann_surface.f.parent().gens()
             p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
             roots = p.roots(CDF, multiplicities=False)
-            base_sheets = numpy.array(roots, dtype=numpy.complex)
+            base_sheets = numpy.array(roots, dtype=complex)
         else:
             f = self.riemann_surface.f
             for sheet in base_sheets:
@@ -263,7 +265,7 @@ class RiemannSurfacePathFactory(object):
         ta = CC(xa/coefficient).nth_root(abs(ramification_index))
         ta = ta if ramification_index > 0 else 1/ta
         p.extend_to_t(ta)
-        ya = complex(p.eval_y(ta))
+        ya = p.eval_y(ta)
 
         # construct the place Q and compute the path going from P0 to Q
         Q = self.riemann_surface(xa,ya)
@@ -378,7 +380,7 @@ class RiemannSurfacePathFactory(object):
 
         # sanity check
         yend = gamma.get_y(1.0)[0]
-        if numpy.abs(yend - numpy.complex(P.y)) > 1.0e-8:
+        if numpy.abs(yend - complex(P.y)) > 1.0e-8:
             raise ValueError('Error in constructing Abel path.')
         return gamma
 

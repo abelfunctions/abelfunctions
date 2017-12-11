@@ -42,10 +42,12 @@ import scipy
 from abelfunctions.divisor import DiscriminantPlace
 from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
+from abelfunctions import ComplexField as CC
+
 from numpy import double, complex
 
 from sage.all import (
-    QQ, QQbar, CC, infinity, fast_callable, factorial, cached_method, cached_function)
+    QQ, QQbar, infinity, fast_callable, factorial, cached_method, cached_function)
 from sage.functions.other import real_part, imag_part, floor
 from sage.plot.line import line
 

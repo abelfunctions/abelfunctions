@@ -163,7 +163,7 @@ class RiemannSurface(object):
             alpha = QQbar(alpha)
             exact = True
         except TypeError:
-            alpha = numpy.complex(alpha)
+            alpha = numpy.complex256(alpha)
             exact = False
         b = self.path_factory.closest_discriminant_point(alpha,exact=exact)
 
@@ -387,7 +387,7 @@ class RiemannSurface(object):
         # tau[i,j] = \int_{a_j} \omega_i,  j < g
         # tau[i,j] = \int_{b_j} \omega_i,  j >= g
         #
-        tau = numpy.zeros((g,2*g), dtype=numpy.complex)
+        tau = numpy.zeros((g,2*g), dtype=numpy.complex256)
         for i in range(g):
             for j in range(2*g):
                 tau[i,j] = sum(linear_combinations[j,k] * c_periods[i][k]
