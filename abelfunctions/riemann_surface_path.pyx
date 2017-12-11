@@ -40,6 +40,8 @@ Contents
 --------
 """
 
+import warnings
+
 import numpy
 cimport numpy
 cimport cython
@@ -988,14 +990,21 @@ cdef complex newton(Wrapper_el[:] df, complex xip1, complex yij):
     cdef Wrapper_el df1 = df[1]
     cdef complex step = 1.0
     cdef complex df1y
+    cdef int maxIter = 1000
+    cdef int numIter = 0
     while cabs(step) > 1e-14:
         # if df is not invertible then we are at a critical point
         df1y = df1(xip1, yij)
         if cabs(df1y) < 1e-14:
-            return yij
+            break
         step = df0(xip1, yij)
         step = step / df1y
         yij = yij - step
+
+        numIter += 1
+        if numIter >= maxIter:
+            warnings.warn('Newton failed to converge after %d iterations. Final step size: %g' % (maxIter, cabs(step)))
+            break
     return yij
 
 

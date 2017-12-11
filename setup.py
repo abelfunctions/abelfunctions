@@ -179,5 +179,5 @@ setup(
     packages = packages,
     ext_modules = ext_modules,
     platforms = ['all'],
-    cmdclass = {'clean':clean, 'build_ext':build_ext},
+    cmdclass = {'clean':clean, 'build_ext':build_ext}
 )

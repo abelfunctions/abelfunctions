@@ -528,7 +528,7 @@ def compress_cycle(cycle, tretkoff_graph):
 
 	# if two successive branch points are the same then delete one
 	# of them and sum the number of rotations.
-	if curr_place[0] == next_place[0]:
+	if complex(curr_place[0]) == complex(next_place[0]):
 	    cycle[n] = (curr_place[0], curr_place[1] + next_place[1])
 	    cycle.pop(n+1)
 	    cycle.pop(n+1)

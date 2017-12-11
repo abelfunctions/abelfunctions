@@ -107,10 +107,10 @@ def mnuk_conditions(g, b, generic_adjoint):
 
     # finally, coerce the result to QQbar[*c][x,y] in order to obtain the
     # coefficients as linear combinations of the c_ij's.
-    r = r_reduced_mod_denom(u)  # first need to coerce to "largest" ring, T
+    r = T(r_reduced_mod_denom(u))  # first need to coerce to "largest" ring, T
     u,v = map(S, R.gens())
     c = map(S, c)
-    args = [u,v] + c
+    args = [u, v] + c
     r = r(*args)
     conditions = r.coefficients()
     return conditions
@@ -487,7 +487,7 @@ class Differential:
 
         """
         import matplotlib.pyplot as plt  # XXX switch to Sage plotting
-
+        
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         ax.hold(True)
