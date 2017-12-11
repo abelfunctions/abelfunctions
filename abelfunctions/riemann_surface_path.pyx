@@ -757,7 +757,7 @@ def ordered_puiseux_series(riemann_surface, complex_path, y0, target_point):
     # obtain all puiseux series above the target place
     f = riemann_surface.f
     x0 = CDF(complex_path.eval(0)) # XXX - need to coerce input to CC
-    y0 = numpy.array(y0, dtype=complex)
+    y0 = numpy.array(y0, dtype=object)
     P = puiseux(f, target_point)
 
     # extend the Puiseux series to enough terms to accurately captue the
@@ -773,7 +773,7 @@ def ordered_puiseux_series(riemann_surface, complex_path, y0, target_point):
 
     # reorder them according to the ordering of the y-fibre above x=x0
     p_evals_above_x0 = [pj(x0-alpha) for pj in p]
-    p_evals_above_x0 = numpy.array(p_evals_above_x0, dtype=complex)
+    p_evals_above_x0 = numpy.array(p_evals_above_x0, dtype=object)
     sigma = matching_permutation(p_evals_above_x0, y0)
     p = sigma.action(p)
 

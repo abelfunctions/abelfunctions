@@ -100,7 +100,9 @@ Contents
 
 """
 
-from sage.all import gcd, fast_callable, O, ZZ, QQ, CC
+from . import ComplexField as CC
+
+from sage.all import gcd, fast_callable, O, ZZ, QQ
 from sage.rings.infinity import infinity
 from sage.rings.laurent_series_ring_element import is_LaurentSeries
 from sage.rings.laurent_series_ring_element cimport LaurentSeries
@@ -300,7 +302,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         # use x.nth_root since x**(1/self.__e) returns oo when x = 0
         if isinstance(x, int):
             x = ZZ(x)
-        elif isinstance(x, float):
+        elif isinstance(x, float) or isinstance(x, complex):
             x = CC(x)
         t = x.nth_root(self.__e)
         return self.__l.laurent_polynomial()(t)

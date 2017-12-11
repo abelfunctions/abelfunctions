@@ -19,6 +19,8 @@ from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_surface_path_factory import RiemannSurfacePathFactory
 from abelfunctions.singularities import genus
 
+from . import ComplexField as CC
+
 from sage.all import QQbar, infinity
 from sage.misc.cachefunc import cached_function, cached_method
 
@@ -163,7 +165,7 @@ class RiemannSurface(object):
             alpha = QQbar(alpha)
             exact = True
         except TypeError:
-            alpha = numpy.complex256(alpha)
+            alpha = CC(alpha)
             exact = False
         b = self.path_factory.closest_discriminant_point(alpha,exact=exact)
 
