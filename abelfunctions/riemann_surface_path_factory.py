@@ -47,7 +47,7 @@ from abelfunctions.complex_path_factory import ComplexPathFactory
 from abelfunctions.ypath_factory import YPathFactory as Skeleton
 from . import ComplexField as CC
 
-from numpy import  double, array
+from numpy import array
 #from numpy import complex256 as complex
 from sage.all import infinity, cached_method
 
@@ -308,7 +308,7 @@ class RiemannSurfacePathFactory(object):
         center, coefficient, ramification_index = p.xdata
         R = self.complex_path_factory.radius(center)
         a = center - R
-        t = (-R/coefficient)**(1.0/ramification_index)
+        t = CC(-R/coefficient)**(CC(1)/ramification_index)
         # p.coerce_to_numerical()
         p.extend_to_t(t)
         y = p.eval_y(t)

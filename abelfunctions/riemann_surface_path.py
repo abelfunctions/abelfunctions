@@ -38,11 +38,12 @@ Contents
 import warnings
 
 import numpy
-import scipy
 from abelfunctions.divisor import DiscriminantPlace
 from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
 from abelfunctions import ComplexField as CC
+
+import mpmath
 
 from numpy import double
 
@@ -354,8 +355,9 @@ class RiemannSurfacePathPrimitive(object):
            The integral of omega along self.
         """
         omega_gamma = self.parameterize(omega)
-        integral = scipy.integrate.romberg(omega_gamma, 0.0, 1.0)
-        return integral
+        mpmath.mp.prec = CC().prec()  # Update the precision before integrating
+        integral = mpmath.quad(omega_gamma, [0, 1])
+        return CC(integral.real) + CC(1j) * CC(integral.imag)
 
     def evaluate(self, omega, s):
         r"""Evaluates `omega` along the path at :math:`s \in [0,1]`.
@@ -705,7 +707,7 @@ def ordered_puiseux_series(riemann_surface, complex_path, y0, target_point):
     # obtain all puiseux series above the target place
     f = riemann_surface.f
     x0 = CC(complex_path(0)) # XXX - need to coerce input to CC
-    y0 = numpy.array(y0, dtype=complex)
+    y0 = numpy.array(y0, dtype=object)
     P = puiseux(f, target_point)
 
     # extend the Puiseux series to enough terms to accurately captue the
@@ -1054,10 +1056,10 @@ class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
     def __init__(self, riemann_surface, complex_path, y0, ncheckpoints=16):
         # store a list of all y-derivatives of f (including the zeroth deriv)
         degree = riemann_surface.degree
-        f = riemann_surface.f.change_ring(CC)
+        f = riemann_surface.f.change_ring(CC())
         x,y = f.parent().gens()
         df = [
-            fast_callable(f.derivative(y,k), vars=(x,y), domain=complex)
+            fast_callable(f.derivative(y,k), vars=(x,y), domain=CDF())
             for k in range(degree+1)
         ]
 

@@ -46,24 +46,20 @@ import numpy
 cimport numpy
 cimport cython
 
-import scipy
 from abelfunctions.divisor import DiscriminantPlace
 from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
 from abelfunctions import ComplexField as CDF
 
+import mpmath
+
 from sage.all import (
     QQ, QQbar, infinity, fast_callable, cached_method, cached_function)
+from sage.symbolic.constants import pi as PI
 from sage.functions.other import real_part, imag_part
 from sage.plot.line import line
 
 from sage.ext.interpreters.wrapper_el cimport Wrapper_el
-
-cdef extern from 'math.h':
-    int floor(double)
-
-cdef extern from 'complex.h':
-    double cabs(complex)
 
 cdef class RiemannSurfacePathPrimitive:
     r"""Primitive Riemann surface path object.
@@ -147,7 +143,7 @@ cdef class RiemannSurfacePathPrimitive:
 
         # cached s, x, and y checkpoints
         self._ncheckpoints = ncheckpoints
-        self._scheckpoints = numpy.zeros(ncheckpoints, dtype=numpy.double)
+        self._scheckpoints = numpy.zeros(ncheckpoints, dtype=object)
         self._xcheckpoints = numpy.zeros(ncheckpoints, dtype=object)
         self._ycheckpoints = numpy.zeros(
             (ncheckpoints, riemann_surface.deg), dtype=object)
@@ -241,12 +237,12 @@ cdef class RiemannSurfacePathPrimitive:
                                    self.y0, segments)
         return gamma
 
-    cpdef int _nearest_checkpoint_index(self, double s):
+    cpdef int _nearest_checkpoint_index(self, object s):
         r"""Returns the index of the checkpoint closest to and preceding `s`.
 
         Parameters
         ----------
-        s : double
+        s : object
             Path parameter in the interval [0,1].
 
         Returns
@@ -255,7 +251,7 @@ cdef class RiemannSurfacePathPrimitive:
             The index `k` such that `self._scheckpoints[k] <= t` but
             `self._scheckpoints[k+1] > t`.
         """
-        cdef double si
+        cdef object si
         cdef int index, k
         cdef int n = self._ncheckpoints
         if s == 1.0:
@@ -288,17 +284,17 @@ cdef class RiemannSurfacePathPrimitive:
 
         """
         cdef int n
-        cdef double[:] s
+        cdef object[:] s
         cdef object[:] x
         cdef object[:,:] y
 
-        cdef double sim1, si
+        cdef object sim1, si
         cdef object xim1, xi
         cdef object[:] yim1, yi
 
         # initialize containers
         n = self._ncheckpoints
-        s = numpy.linspace(0, 1, n, dtype=numpy.double)
+        s = numpy.linspace(0, 1, n, dtype=object)
         x = numpy.array([self.get_x(si) for si in s], dtype=object)
         y = numpy.zeros((n, self.riemann_surface.degree), dtype=object)
 
@@ -322,12 +318,12 @@ cdef class RiemannSurfacePathPrimitive:
         self._xcheckpoints = x
         self._ycheckpoints = y
 
-    cpdef object get_x(self, double s):
+    cpdef object get_x(self, object s):
         r"""Return the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
         ----------
-        s : double
+        s : object
             Path parameter in the interval [0,1].
 
         Returns
@@ -339,12 +335,12 @@ cdef class RiemannSurfacePathPrimitive:
         cdef object value = self._complex_path.eval(s)
         return value
 
-    cpdef object get_dxds(self, double s):
+    cpdef object get_dxds(self, object s):
         r"""Return the derivative of the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
         ----------
-        s : double
+        s : object
             Path parameter in the interval [0,1].
 
         Returns
@@ -356,14 +352,14 @@ cdef class RiemannSurfacePathPrimitive:
         cdef value = self._complex_path.derivative(s)
         return value
 
-    cpdef object[:] get_y(self, double s):
+    cpdef object[:] get_y(self, object s):
         r"""Return the y-fibre of the path at :math:`s \in [0,1]`.
 
         Delegates to :meth:`analytically_continue`.
 
         Parameters
         ----------
-        s : double
+        s : object
             Path parameter in the interval [0,1].
 
         Returns
@@ -403,8 +399,9 @@ cdef class RiemannSurfacePathPrimitive:
            The integral of omega along self.
         """
         omega_gamma = self.parameterize(omega)
-        integral = scipy.integrate.romberg(omega_gamma, 0.0, 1.0)
-        return integral
+        mpmath.mp.prec = CDF().prec()  # Update the precision before integrating
+        integral = mpmath.quad(omega_gamma, [0, 1])
+        return CDF(integral.real) + CDF(1j) * CDF(integral.imag)
 
     def evaluate(self, omega, s):
         r"""Evaluates `omega` along the path at :math:`s \in [0,1]`.
@@ -413,7 +410,7 @@ cdef class RiemannSurfacePathPrimitive:
         ----------
         omega : Differential
             A differential (one-form) on the Riemann surface.
-        s : double or double[:]
+        s : object or object[:]
             Path parameter(s) in the interval [0,1].
 
         Returns
@@ -457,9 +454,9 @@ cdef class RiemannSurfacePathPrimitive:
         ----------
         N : int
             The number of interpolating points used to plot.
-        t0 : double
+        t0 : object
             Starting t-value in [0,1].
-        t1 : double
+        t1 : object
             Ending t-value in [0,1].
 
         Returns
@@ -468,7 +465,7 @@ cdef class RiemannSurfacePathPrimitive:
             A plot of the complex y-projection of the path.
 
         """
-        s = numpy.linspace(0, 1, plot_points, dtype=numpy.double)
+        s = numpy.linspace(0, 1, plot_points, dtype=object)
         vals = numpy.array([self.get_y(si)[0] for si in s], dtype=object)
         pts = [(real_part(y), imag_part(y)) for y in vals]
         plt = line(pts, **kwds)
@@ -532,7 +529,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     def __getitem__(self, int index):
         return self._segments[index]
 
-    cdef int segment_index_at_parameter(self, double s):
+    cdef int segment_index_at_parameter(self, object s):
         r"""Returns the index of the complex path segment located at the given
         parameter :math:`s \in [0,1]`.
 
@@ -549,18 +546,18 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         # the following is a fast way to divide the interval [0,1] into n
         # partitions and determine which partition s lies in. since this is
         # done often it needs to be fast
-        cdef int k = floor(s*self._nsegments)
+        cdef int k = numpy.floor(s*self._nsegments)
         cdef int diff = (self._nsegments - 1) - k
         cdef int dsgn = diff >> 31
         cdef int index = k + (diff & dsgn)
         return index
 
-    cpdef object get_x(self, double s):
+    cpdef object get_x(self, object s):
         r"""Return the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
         ----------
-        s : double
+        s : object
             Path parameter in the interval [0,1].
 
         Returns
@@ -570,17 +567,17 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
 
         """
         cdef int k = self.segment_index_at_parameter(s)
-        cdef double s_segment = s*self._nsegments - k
+        cdef object s_segment = s*self._nsegments - k
         cdef RiemannSurfacePathPrimitive segment = self._segments[k]
         cdef object value = segment.get_x(s_segment)
         return value
 
-    cpdef object get_dxds(self, double s):
+    cpdef object get_dxds(self, object s):
         r"""Return the derivative of the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
         ----------
-        s : double
+        s : object
             Path parameter in the interval [0,1].
 
         Returns
@@ -590,19 +587,19 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
 
         """
         cdef int k = self.segment_index_at_parameter(s)
-        cdef double s_segment = s*self._nsegments - k
+        cdef object s_segment = s*self._nsegments - k
         cdef RiemannSurfacePathPrimitive segment = self._segments[k]
         cdef object value = segment.get_dxds(s_segment)
         return value
 
-    cpdef object[:] get_y(self, double s):
+    cpdef object[:] get_y(self, object s):
         r"""Return the y-fibre of the path at :math:`s \in [0,1]`.
 
         Delegates to :meth:`analytically_continue`.
 
         Parameters
         ----------
-        s : double
+        s : object
             Path parameter in the interval [0,1].
 
         Returns
@@ -611,7 +608,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
             The y-fibre above the path at s.
         """
         cdef int k = self.segment_index_at_parameter(s)
-        cdef double s_segment = s*self._nsegments - k
+        cdef object s_segment = s*self._nsegments - k
         cdef RiemannSurfacePathPrimitive segment = self._segments[k]
         cdef object[:] value = segment.get_y(s_segment)
         return value
@@ -663,7 +660,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         ----------
         omega : Differential
             A differential (one-form) on the Riemann surface.
-        s : double[:]
+        s : object[:]
             Path parameter(s) in the interval [0,1].
 
         Returns
@@ -934,8 +931,8 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         # the parameter of the path s \in [0,1] does not necessarily match with
         # the local coordinate t of the place. perform the appropriate scaling
         # on the integral.
-        tprim = ((x0-alpha)/xcoefficient)**(1./e)
-        unity = [numpy.exp(2.j*numpy.pi*k/abs(e)) for k in range(abs(e))]
+        tprim = ((x0-alpha)/xcoefficient)**(CDF(1.).real()/e)
+        unity = [numpy.exp(CDF(2.j)*PI*k/abs(e)) for k in range(abs(e))]
         tall = [unity[k]*tprim for k in range(abs(e))]
         ytprim = numpy.array([p.eval_y(tk) for tk in tall], dtype=numpy.object)
         k = numpy.argmin(numpy.abs(ytprim - y0))
@@ -946,7 +943,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         def omega_gamma(s):
             s = CDF(s)
             dtds = -tcoefficient
-            val = omega_local(tcoefficient*(1-s)) * dtds
+            val = omega_local(tcoefficient*(CDF(1-s))) * dtds
             return (val)
         return numpy.vectorize(omega_gamma, otypes=[object])
 
@@ -954,7 +951,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
 ####################################################
 # Smale's Alpha Theory-based Riemann Surface Paths #
 ####################################################
-cdef double ABELFUNCTIONS_SMALE_ALPHA0 = 1.1884471871911697 # = (13-2*sqrt(17))/4
+###cpdef double ABELFUNCTIONS_SMALE_ALPHA0 = 1.1884471871911697 # = (13-2*sqrt(17))/4
 
 cdef int factorial(int n):
     cdef int result = 1
@@ -988,7 +985,7 @@ def newton(df, xip1, yij):
     """
     df0 = df[0]
     df1 = df[1]
-    step = (1.0)
+    step = CDF(1.0)
     maxIter = 1000
     numIter = 0
     while numpy.abs(step) > 1e-14:
@@ -1006,7 +1003,7 @@ def newton(df, xip1, yij):
     return yij
 
 
-cdef double smale_beta(Wrapper_el[:] df, object xip1, object yij):
+cdef object smale_beta(Wrapper_el[:] df, object xip1, object yij):
     """Smale beta function.
 
     The Smale beta function is simply the size of a Newton iteration
@@ -1022,21 +1019,21 @@ cdef double smale_beta(Wrapper_el[:] df, object xip1, object yij):
 
     Returns
     -------
-    val : double
+    val : object
         :math:`\beta(f,x_{i+1},y_{i,j})`.
     """
     cdef Wrapper_el df0 = df[0]
     cdef Wrapper_el df1 = df[1]
-    cdef double val
+    cdef object val
     cdef object numer, denom
 
     numer = df0(xip1, yij)
     denom = df1(xip1, yij)
-    val = cabs(numer / denom)
+    val = numpy.abs(numer / denom)
     return val
 
 
-cdef double smale_gamma(Wrapper_el[:] df, object xip1, object yij, int degree):
+cdef object smale_gamma(Wrapper_el[:] df, object xip1, object yij, int degree):
     """Smale gamma function.
 
     Parameters
@@ -1052,7 +1049,7 @@ cdef double smale_gamma(Wrapper_el[:] df, object xip1, object yij, int degree):
 
     Returns
     -------
-    double
+    object
         The Smale gamma function.
     """
     cdef Wrapper_el df0 = df[0]
@@ -1060,22 +1057,22 @@ cdef double smale_gamma(Wrapper_el[:] df, object xip1, object yij, int degree):
     cdef Wrapper_el dfn
 #    cdef int deg = len(df) - 1
     cdef object df1y
-    cdef double gamma, gamman, numer
+    cdef object gamma, gamman, numer
     cdef int n
 
     gamma = 0
     df1y = df1(xip1, yij)
     for n in range(2,degree+1):
         dfn = df[n]
-        numer = cabs(dfn(xip1, yij))
-        gamman = numer / (factorial(n)*cabs(df1y))
-        gamman = gamman**(1.0/(n-1.0))
+        numer = numpy.abs(dfn(xip1, yij))
+        gamman = numer / (factorial(n)*numpy.abs(df1y))
+        gamman = gamman**(CDF(1.0).real()/(n-CDF(1.0).real()))
         if gamman > gamma:
             gamma = gamman
     return gamma
 
 
-cdef double smale_alpha(Wrapper_el[:] df, object xip1, object yij, int degree):
+cdef object smale_alpha(Wrapper_el[:] df, object xip1, object yij, int degree):
     """Smale alpha function.
 
     Parameters
@@ -1089,10 +1086,10 @@ cdef double smale_alpha(Wrapper_el[:] df, object xip1, object yij, int degree):
 
     Returns
     -------
-    double
+    object
         The Smale alpha function.
     """
-    cdef double val = smale_beta(df,xip1,yij) * smale_gamma(df,xip1,yij,degree)
+    cdef object val = smale_beta(df,xip1,yij) * smale_gamma(df,xip1,yij,degree)
     return val
 
 
@@ -1141,7 +1138,7 @@ cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
         f = riemann_surface.f.change_ring(CDF())
         x,y = f.parent().gens()
         df = [
-            fast_callable(f.derivative(y,k), vars=(x,y), domain=complex)
+            fast_callable(f.derivative(y,k), vars=(x,y), domain=CDF())
             for k in range(degree+1)
         ]
         df = numpy.array(df, dtype=object)
@@ -1154,12 +1151,12 @@ cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
     @cython.boundscheck(False)
     cpdef object[:] analytically_continue(self, object xi, object[:] yi, object xip1):
         cdef int j,k
-        cdef double betaij, betaik, distancejk, alpha
+        cdef object betaij, betaik, distancejk, alpha
         cdef object xiphalf, yij, yik
         cdef object[:] yiphalf, yip1
 
         # return the current fibre if the step size is too small
-        if cabs(xip1-xi) < 1e-14:
+        if numpy.abs(xip1-xi) < 1e-14:
             return yi
 
         # first determine if the y-fibre guesses are 'approximate solutions'.
@@ -1168,8 +1165,8 @@ cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
         for j in range(self._degree):
             yij = yi[j]
             alpha = smale_alpha(self._df, xip1, yij, self._degree)
-            if alpha > ABELFUNCTIONS_SMALE_ALPHA0:
-                xiphalf = (xi + xip1)/2.0
+            if alpha > (13-2*(CDF(17)**CDF(0.5)))/4:
+                xiphalf = (xi + xip1)/CDF(2.0).real()
                 yiphalf = self.analytically_continue(xi, yi, xiphalf)
                 yip1 = self.analytically_continue(xiphalf, yiphalf, xip1)
                 return yip1
@@ -1182,12 +1179,12 @@ cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
             for k in range(j+1, self._degree):
                 yik = yi[k]
                 betaik = smale_beta(self._df, xip1, yik)
-                distancejk = cabs(yij-yik)
+                distancejk = numpy.abs(yij-yik)
                 if distancejk < 2.5*(betaij + betaik):  # 2*beta
                     # approximate solutions don't lead to distinct roots.
                     # refine the step by analytically continuing to an
                     # intermedite time
-                    xiphalf = (xi + xip1)/2.0
+                    xiphalf = (xi + xip1)/CDF(2.0).real()
                     yiphalf = self.analytically_continue(xi, yi, xiphalf)
                     yip1 = self.analytically_continue(xiphalf, yiphalf, xip1)
                     return yip1

@@ -44,8 +44,9 @@ from abelfunctions.divisor import Divisor, Place
 from abelfunctions.integralbasis import integral_basis
 from abelfunctions.puiseux import puiseux
 from abelfunctions.singularities import singularities, _transform, genus
+from . import ComplexField as CC
 
-from sage.all import solve, infinity, CC, fast_callable
+from sage.all import solve, infinity, fast_callable
 from sage.rings.polynomial.all import PolynomialRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
@@ -286,10 +287,10 @@ class Differential:
         x,y = RS.f.parent().gens()
         self.RS = RS
         self.differential = self.numer / self.denom
-        self.numer_n = fast_callable(self.numer.change_ring(CC), vars=[x,y],
-                                     domain=numpy.complex)
-        self.denom_n = fast_callable(self.denom.change_ring(CC), vars=[x,y],
-                                     domain=numpy.complex)
+        self.numer_n = fast_callable(self.numer.change_ring(CC()), vars=[x,y],
+                                     domain=CC())
+        self.denom_n = fast_callable(self.denom.change_ring(CC()), vars=[x,y],
+                                     domain=CC())
 
     def __repr__(self):
         return str(self.differential)
@@ -301,7 +302,7 @@ class Differential:
         r"""Evaluate the differential at the complex point :math:`(x,y)`.
         """
         val = self.numer_n(*args, **kwds) / self.denom_n(*args, **kwds)
-        return numpy.complex(val)
+        return CC(val)
 
     def centered_at_place(self, P, order=None):
         r"""Rewrite the differential in terms of the local coordinates at `P`.
