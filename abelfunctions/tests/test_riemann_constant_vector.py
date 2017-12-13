@@ -75,7 +75,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         g = self.X11.genus()
         assert g == 4
 
-        oneforms = self.X11.holomorphic_oneforms()
+        oneforms = self.X11.holomorphic_differentials()
         degree = oneforms[0].valuation_divisor().degree
         self.assertEqual(degree,2*g-2)
 
@@ -93,7 +93,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         J = Jacobian(X)
         g = X.genus()
         P0 = X.base_place
-        oneforms = X.holomorphic_oneforms()
+        oneforms = X.holomorphic_differentials()
         C = oneforms[0].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
         self.assertLess(norm(J(W)),1e-7)
@@ -103,7 +103,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         J = Jacobian(X)
         g = X.genus()
         P0 = X.base_place
-        oneforms = X.holomorphic_oneforms()
+        oneforms = X.holomorphic_differentials()
         C = oneforms[1].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
         self.assertLess(norm(J(W)),1e-7)
@@ -113,7 +113,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         J = Jacobian(X)
         g = X.genus()
         P0 = X.base_place
-        oneforms = X.holomorphic_oneforms()
+        oneforms = X.holomorphic_differentials()
         C = oneforms[2].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
         self.assertLess(norm(J(W)),1e-7)
@@ -123,7 +123,7 @@ class TestRCVCanonical(AbelfunctionsTestCase):
         J = Jacobian(X)
         g = X.genus()
         P0 = X.base_place
-        oneforms = X.holomorphic_oneforms()
+        oneforms = X.holomorphic_differentials()
         C = oneforms[3].valuation_divisor()
         W = 2*RiemannConstantVector(P0) + AbelMap(C)
         self.assertLess(norm(J(W)),1e-7)

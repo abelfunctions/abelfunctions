@@ -302,7 +302,7 @@ def canonical_divisor(X):
     rewrite this algorithm so that it picks a "local best" canonical divisor.
 
     """
-    holomorphic_oneforms = X.holomorphic_oneforms()
+    holomorphic_oneforms = X.differentials
     canonical_divisors = [omega.valuation_divisor()
                           for omega in holomorphic_oneforms]
 

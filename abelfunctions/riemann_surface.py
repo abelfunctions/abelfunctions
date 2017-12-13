@@ -13,7 +13,8 @@ import scipy
 import scipy.linalg
 
 import abelfunctions
-from abelfunctions.differentials import differentials
+from abelfunctions.differentials import differentials as generate_differentials
+from abelfunctions.differentials import validate_differentials
 from abelfunctions.divisor import Place, DiscriminantPlace, RegularPlace, Divisor
 from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_surface_path_factory import RiemannSurfacePathFactory
@@ -74,6 +75,26 @@ class RiemannSurface(object):
             self._base_sheets = self._path_factory.base_sheets
         return self._path_factory
 
+    @property
+    def differentials(self):
+        """Provides the differentials defined for this surface.
+
+        Returns user-defined differentials if set, otherwise defaults to
+        :meth:`holomorphic_differentials`."""
+
+        if self._user_differentials is None:
+            return self.holomorphic_differentials()
+        else:
+            return self._user_differentials
+
+    @differentials.setter
+    def differentials(self, value):
+        """Specify a list of Differentials to use or None to clear."""
+
+        if value is not None and not validate_differentials(value, self.genus()):
+                raise ValueError('Invalid list of differentials')
+        self._user_differentials = value
+
     def __init__(self, f, base_point=None, base_sheets=None, kappa=3./5):
         """Construct a Riemann surface.
 
@@ -100,6 +121,8 @@ class RiemannSurface(object):
 
         # still need to fix base_point / base_sheet interaction
         self._path_factory = None
+
+        self._user_differentials = None
 
     def __repr__(self):
         s = 'Riemann surface defined by f = %s'%(self.f)
@@ -247,16 +270,8 @@ class RiemannSurface(object):
             A list of holomorphic differentials forming a basis.
 
         """
-        value = differentials(self)
+        value = generate_differentials(self)
         return value
-
-    def holomorphic_oneforms(self):
-        r"""Alias for :meth:`holomorphic_differentials`."""
-        return self.holomorphic_differentials()
-
-    def differentials(self):
-        r"""Alias for :meth:`holomorphic_differentials`."""
-        return self.holomorphic_differentials()
 
     @cached_method
     def genus(self):
@@ -370,7 +385,7 @@ class RiemannSurface(object):
         """
         # compute the c-cycle periods
         c_cycles, linear_combinations = self.c_cycles()
-        oneforms = self.holomorphic_oneforms()
+        oneforms = self.differentials
         c_periods = []
         g = self.genus()
         m = len(c_cycles)
