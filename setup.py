@@ -25,11 +25,9 @@ import unittest
 from distutils.core import setup, Command
 from distutils.extension import Extension
 from Cython.Build import cythonize
-from numpy.distutils.misc_util import get_numpy_include_dirs
 
 # raise error if the user is not using Sage to compile
 try:
-    from sage.env import sage_include_directories
     SAGE_ROOT = os.environ['SAGE_ROOT']
 except (ImportError, KeyError):
     raise EnvironmentError('abelfunctions must be built using Sage:\n\n'
@@ -74,14 +72,8 @@ ext_modules = [
     ]
 
 # parameters for all extension modules:
-#
-# * most modules depend on Sage and Numpy. Provide include directories.
 # * disable warnings in gcc step
-INCLUDES = sage_include_directories()
-INCLUDES_NUMPY = get_numpy_include_dirs()
 for mod in ext_modules:
-    mod.include_dirs.extend(INCLUDES)
-    mod.include_dirs.extend(INCLUDES_NUMPY)
     mod.extra_compile_args.append('-w')
     mod.extra_compile_args.append('-std=c99')
 
