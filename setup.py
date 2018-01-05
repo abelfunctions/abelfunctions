@@ -24,7 +24,6 @@ import shutil
 import unittest
 from distutils.core import setup, Command
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 from numpy.distutils.misc_util import get_numpy_include_dirs
 
@@ -180,5 +179,5 @@ setup(
     packages = packages,
     ext_modules = cythonize(ext_modules),
     platforms = ['all'],
-    cmdclass = {'clean':clean, 'build_ext':build_ext}
+    cmdclass = {'clean':clean}
 )
