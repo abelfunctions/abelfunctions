@@ -24,7 +24,7 @@ import shutil
 import unittest
 from distutils.core import setup, Command
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
+from Cython.Build import cythonize
 from numpy.distutils.misc_util import get_numpy_include_dirs
 
 # raise error if the user is not using Sage to compile
@@ -43,39 +43,33 @@ ext_modules = [
     Extension('abelfunctions.complex_path',
               sources=[
                   os.path.join('abelfunctions',
-                               'complex_path.pyx')],
-              extra_compile_args = ['-std=c99'],
+                               'complex_path.pyx')]
           ),
     Extension('abelfunctions.riemann_surface_path',
               sources=[
                   os.path.join('abelfunctions',
-                               'riemann_surface_path.pyx')],
-              extra_compile_args = ['-std=c99'],
+                               'riemann_surface_path.pyx')]
           ),
     Extension('abelfunctions.puiseux_series_ring_element',
               sources=[
                   os.path.join('abelfunctions',
-                               'puiseux_series_ring_element.pyx')],
-              extra_compile_args = ['-std=c99'],
+                               'puiseux_series_ring_element.pyx')]
           ),
     Extension('abelfunctions.riemann_theta.radius',
               sources=[os.path.join('abelfunctions','riemann_theta',
                                     'lll_reduce.c'),
                        os.path.join('abelfunctions','riemann_theta',
-                                    'radius.pyx')],
-              extra_compile_args = ['-std=c99'],
+                                    'radius.pyx')]
           ),
     Extension('abelfunctions.riemann_theta.integer_points',
               sources=[os.path.join('abelfunctions','riemann_theta',
-                                    'integer_points.pyx')],
-              extra_compile_args = ['-std=c99'],
+                                    'integer_points.pyx')]
           ),
     Extension('abelfunctions.riemann_theta.riemann_theta',
               sources=[os.path.join('abelfunctions','riemann_theta',
                                     'finite_sum.c'),
                        os.path.join('abelfunctions','riemann_theta',
-                                    'riemann_theta.pyx')],
-              extra_compile_args = ['-std=c99'],
+                                    'riemann_theta.pyx')]
           ),
     ]
 
@@ -89,6 +83,7 @@ for mod in ext_modules:
     mod.include_dirs.extend(INCLUDES)
     mod.include_dirs.extend(INCLUDES_NUMPY)
     mod.extra_compile_args.append('-w')
+    mod.extra_compile_args.append('-std=c99')
 
 packages = [
     'abelfunctions',
@@ -177,7 +172,7 @@ setup(
     url = 'https://github.com/cswiercz/abelfunctions',
     license = 'GPL v2+',
     packages = packages,
-    ext_modules = ext_modules,
+    ext_modules = cythonize(ext_modules),
     platforms = ['all'],
-    cmdclass = {'clean':clean, 'build_ext':build_ext}
+    cmdclass = {'clean':clean}
 )
