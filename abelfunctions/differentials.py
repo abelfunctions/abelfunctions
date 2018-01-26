@@ -245,6 +245,46 @@ def differentials(RS):
     return diffs
 
 
+def validate_differentials(differential_list, genus):
+    """Confirm that the proposed differentials have correct properties.
+
+    Parameters
+    ----------
+    diff_list: list
+        A list of Differentials whose properties are to be validated
+    genus: int
+        Genus of the Riemann surface
+
+    Returns
+    -------
+    is_valid: bool
+        A bool indicating whether the differentials are valid
+
+    Notes
+    -----
+    The present conditions are very general. More detailed tests will likely
+    be added in the future.
+    """
+
+    is_valid = True
+    try:
+        # Check types
+        assert(all(isinstance(diff, Differential) for diff in differential_list))
+
+        # Check that the number of differentials matches the genus
+        assert(len(differential_list) == genus)
+
+        # Check that they are all defined on the same surface
+        if len(differential_list) > 0:
+            riemann_surface = differential_list[0].RS
+            assert(all(diff.RS is riemann_surface for diff in differential_list))
+
+    except AssertionError:
+        is_valid = False
+
+    return is_valid
+
+
 class Differential:
     """A differential one-form which can be defined on a Riemann surface.
 

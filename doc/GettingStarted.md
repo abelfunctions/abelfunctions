@@ -27,7 +27,7 @@ sage: X.genus()
 We can compute a basis for the space of holomorphic differentials on a Riemann surface. The affine part of the differentials are displayed when computed.
 
 ```python
-sage: differentials = X.holomorphic_differentials()
+sage: differentials = X.differentials
 sage: for omega in differentials:
   ...     print omega
 x*y/(2*x^3 + 3*y^2)
