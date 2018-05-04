@@ -141,7 +141,7 @@ def radius0(eps, r, g):
         Riemann theta function to desired accuracy.
 
     """
-    lhs = eps * (2./g) * (r/2.)**g * gamma(g/2.)
+    lhs = eps * (2./g) * (r/2.)**g / gamma(g/2.)
     ins = gammainccinv(g/2.,lhs)
     R = sqrt(ins) + r/2.
     S = (sqrt(2.*g)+r)/2.
