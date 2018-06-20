@@ -377,7 +377,8 @@ class TestRiemannThetaValues(unittest.TestCase):
         Y = Omega.imag
         T = cholesky(Y).T
 
-        R_actual = 5.01708695504
+        # Check that the radius is consistent when repeatedly computed
+        R_actual = radius(1e-8,T)
         for _ in range(1000):
             R = radius(1e-8,T)
             error = abs(R - R_actual)
