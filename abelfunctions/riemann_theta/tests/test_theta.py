@@ -384,6 +384,15 @@ class TestRiemannThetaValues(unittest.TestCase):
             error = abs(R - R_actual)
             self.assertLess(error, 1e-8)
 
+    def test_issue159(self):
+        Omega = [[10j]]
+        z = [5j]
+
+        theta_actual = 2
+        theta = RiemannTheta(z,Omega)
+        error = abs(theta - theta_actual)
+        self.assertLess(error, 1e-8)
+
     def test_gradient(self):
         Omega = self.Omega3
 
