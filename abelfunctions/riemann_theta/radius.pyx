@@ -272,7 +272,7 @@ def radius2(eps, r, g, T, derivs, accuracy_radius=5):
     lhs = (eps*(r/2.0)**g) / (2*pi*g*prodnormderiv*normTinv**2)
 
     # define lower bound (guess) and attempt to solve for the radius
-    lbnd = sqrt(g+4+sqrt(g**2+16)) + r
+    lbnd = (sqrt(g+4+sqrt(g**2+16)) + r)/2.
     def rhs(ins):
         A = gamma((g+2)/2.) * gammaincc((g+2)/2.,ins)
         B = 2*L*sqrt(pi) * normTinv * gamma((g+1)/2.) * gammaincc((g+1)/2.,ins)
