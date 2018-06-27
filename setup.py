@@ -170,7 +170,7 @@ setup(
     author = 'Chris Swierczewski',
     author_email = 'cswiercz@gmail.com',
     url = 'https://github.com/cswiercz/abelfunctions',
-    license = 'GPL v2+',
+    license = 'MIT',
     packages = packages,
     ext_modules = cythonize(ext_modules),
     platforms = ['all'],
