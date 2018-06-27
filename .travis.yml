@@ -20,6 +20,11 @@ matrix:
         - SAGE_TARBALL=sage-8.1-Ubuntu_14.04-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
       dist: trusty
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-8.2-Ubuntu_14.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+      dist: trusty
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
@@ -28,6 +33,11 @@ matrix:
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.1-OSX_10.12.6-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+      osx_image: xcode9.2  # OSX 10.12
+    - os: osx
+      env:
+        - SAGE_TARBALL=sage-8.2-OSX_10.12.6-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
       osx_image: xcode9.2  # OSX 10.12
 
