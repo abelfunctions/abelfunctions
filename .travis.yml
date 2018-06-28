@@ -20,20 +20,39 @@ matrix:
         - SAGE_TARBALL=sage-8.1-Ubuntu_14.04-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
       dist: trusty
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-8.2-Ubuntu_14.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+      dist: trusty
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
-      osx_image: xcode9.2  # OSX 10.12
+      osx_image: xcode9.2  # macOS 10.12
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.1-OSX_10.12.6-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
-      osx_image: xcode9.2  # OSX 10.12
-
+      osx_image: xcode9.2  # macOS 10.12
+    #############################################################################
+    ### In this case sage is unable to find headers (_stdio.h) to install abelfunctions.
+    ### This seems like an issue with travis-CI and/or sage.
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-8.2-OSX_10.13.4-x86_64.tar.bz2
+    #     - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+    #   osx_image: xcode9.4  # macOS 10.13.4
+    #############################################################################
+    - os: osx
+      env:
+        - SAGE_TARBALL=sage-8.2-OSX_10.11.6-x86_64.tar.bz2
+        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
+      osx_image: xcode8  # macOS 10.11.6
 
 before_install:
   - cd ${HOME}
+  - gcc --version
 
   # download Sage as a torrent 
   - |

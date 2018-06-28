@@ -266,7 +266,7 @@ def newton_data(H, exceptional=False):
         q = slope.denom()
         m = -slope.numer()
         l = min(q*j0 + m*i0, q*j1 + m*i1)
-        phi = sum(H.coefficient({y:i,x:j})*x**((i-i0)/q) for i,j in side)
+        phi = sum(H.coefficient({y:i,x:j})*x**((i-i0)/int(q)) for i,j in side)
         phi = phi.univariate_polynomial()
         result.append((q,m,l,phi))
     return result
