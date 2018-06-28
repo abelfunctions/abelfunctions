@@ -39,7 +39,7 @@ matrix:
       env:
         - SAGE_TARBALL=sage-8.2-OSX_10.13.4-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
-      osx_image: xcode9.4  # OSX 10.13
+      osx_image: xcode9.3  # OSX 10.13
 
 
 before_install:
