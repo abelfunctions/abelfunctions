@@ -50,15 +50,10 @@ matrix:
         - SAGE_TARBALL=sage-8.2-OSX_10.11.6-x86_64.tar.bz2
         - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
       osx_image: xcode8  # macOS 10.11.6
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-8.2-OSX_10.11.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
-      osx_image: xcode8  # macOS 10.11.6
-
 
 before_install:
   - cd ${HOME}
+  - gcc --version
 
   # download Sage as a torrent 
   - |
@@ -94,9 +89,7 @@ before_install:
 
 install: ${SAGE} setup.py build_ext --inplace
 
-script:
-  - gcc --version
-  - ${SAGE} runtests.py -v -p 2
+script: ${SAGE} runtests.py -v -p 2
 
 addons:
   apt:
