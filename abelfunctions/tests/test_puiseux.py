@@ -13,10 +13,9 @@ from abelfunctions.puiseux import (
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
-from sage.all import SR
+from sage.all import SR, xgcd
 from sage.calculus.functional import taylor
 from sage.calculus.var import var
-from sage.rings.arith import xgcd
 from sage.rings.laurent_series_ring import LaurentSeriesRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar

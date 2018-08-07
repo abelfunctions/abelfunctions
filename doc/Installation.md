@@ -1,6 +1,6 @@
 # Installation
 
-Abelfunctions requires Sage 8.0 or later ([www.sagemath.org](http//www.sagemath.org)). Sage makes it relatively easy to build and run the code.
+Abelfunctions requires Sage 8.0 or later ([www.sagemath.org](http://www.sagemath.org)). Sage makes it relatively easy to build and run the code.
 
 > **Note:** Depending on your system one of the below installation methods may not work. I"m not sure what is causing this. Any contributions to the installation method (via `setup.py`) is greatly appreciated.
 

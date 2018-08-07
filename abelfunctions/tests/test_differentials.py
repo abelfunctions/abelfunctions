@@ -4,7 +4,9 @@ from abelfunctions.differentials import (
     mnuk_conditions,
     recenter_curve,
     differentials_numerators,
-    differentials
+    differentials,
+    validate_differentials,
+    Differential
 )
 from abelfunctions.riemann_surface import RiemannSurface
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
@@ -71,6 +73,34 @@ class TestDifferentials(AbelfunctionsTestCase):
         a = map(lambda omega: omega.as_expression(), differentials(X))
         b = [x*y/dfdy, x**3/dfdy]
         self.assertEqual(a,b)
+
+    def test_validation_success(self):
+        x,y = self.f2.parent().gens()
+        dfdy = self.f2.derivative(y)
+        X = DummyRS(self.f2)
+        
+        diffs = [Differential(X, x*y, dfdy), Differential(X, x**3, dfdy)]
+        self.assertTrue(validate_differentials(diffs, 2))
+
+    def test_validation_failures(self):
+        x,y = self.f2.parent().gens()
+        dfdy = self.f2.derivative(y)
+        X = DummyRS(self.f2)
+        Y = DummyRS(self.f2)
+        
+        Xdiffs = [Differential(X, x*y, dfdy), Differential(X, x**3, dfdy)]
+        Ydiffs = [Differential(Y, x*y, dfdy), Differential(Y, x**3, dfdy)]
+        g = len(Xdiffs)
+
+        # Type failure: add a non-Differential value
+        self.assertFalse(validate_differentials(Xdiffs[:-1] + [0], g))
+
+        # Surface failure: defined on different Riemann surfaces
+        self.assertFalse(validate_differentials(Xdiffs[:-1] + Ydiffs[-1:], g))
+
+        # Genus failure: too few or too many differentials
+        self.assertFalse(validate_differentials(Xdiffs, g + 1))
+        self.assertFalse(validate_differentials(Xdiffs, g - 1))
 
 
 class TestCenteredAtRegularPlace(AbelfunctionsTestCase):

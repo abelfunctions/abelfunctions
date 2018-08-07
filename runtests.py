@@ -95,7 +95,7 @@ def runtests(argv):
             result = runner.run(suite)
             errno = not result.wasSuccessful()
 
-        sys.exit(errno)
+    sys.exit(errno)
 
 if __name__ == '__main__':    
     # run tests and suppress warnings (particularly from PARI)

@@ -385,7 +385,7 @@ class AbelMap_Function(object):
             value = numpy.zeros(genus, dtype=numpy.complex)
         else:
             gamma = X.path(P)
-            omega = X.holomorphic_differentials()
+            omega = X.differentials
             value = numpy.array([X.integrate(omegai,gamma)
                                  for omegai in omega], dtype=numpy.complex)
         return value
