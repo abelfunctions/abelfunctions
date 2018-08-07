@@ -8,9 +8,11 @@ of a complex plane algebraic curve.
 
 import numpy
 import scipy
+import mpmath
 
-from numpy import double, complex, floor, angle
+from numpy import double, floor, angle
 from sage.all import infinity, QQbar, Graphics, scatter_plot
+from sage.symbolic.constants import pi as PI
 from sage.functions.other import real_part, imag_part
 
 from abelfunctions.complex_path import (
@@ -18,6 +20,16 @@ from abelfunctions.complex_path import (
     ComplexArc,
     ComplexPath,
 )
+
+from . import ComplexField as CC
+
+ZERO = 1e-14
+
+def angle(sage_points):
+    if isinstance(sage_points, numpy.ndarray):
+        return numpy.asarray(map(lambda x: CC(x).arg(), sage_points))
+    else:
+        return CC(sage_points).arg()
 
 class ComplexPathFactory(object):
     r"""Factory for computing complex paths on the x-projection of a Riemann surface
@@ -111,7 +123,7 @@ class ComplexPathFactory(object):
         self._discriminant_points_complex = dc
 
         # compute the bounding circle radii from the discriminant points
-        r = self._compute_radii(kappa)
+        r = self._compute_radii(CC(kappa).real())
         self._radii = r
 
     def _compute_discriminant_points(self, base_point):
@@ -145,18 +157,18 @@ class ComplexPathFactory(object):
         res = f.resultant(f.derivative(y), y).univariate_polynomial()
         rts = res.roots(ring=QQbar, multiplicities=False)
         discriminant_points = numpy.array(rts)
-        discriminant_points_complex = numpy.array(rts, dtype=complex)
+        discriminant_points_complex = numpy.array(rts, dtype=numpy.complex)
 
         # determine a base_point, if not specified
         if not base_point:
-            a = min(complex(bi).real for bi in discriminant_points)
+            a = min(CC(bi).real() for bi in discriminant_points)
             a = a - 1
-            aint = complex(floor(a))
+            aint = CC(floor(a))
             base_point = aint
 
         # sort the discriminant points first by argument with the base point
         # and then by distance from the base point. the points need to be exact
-        centered_points = discriminant_points_complex - base_point
+        centered_points = discriminant_points - base_point
         distances = abs(centered_points)
         arguments = angle(centered_points)
         sort_index = numpy.lexsort((distances, arguments))
@@ -187,7 +199,7 @@ class ComplexPathFactory(object):
         """
         # use floating points approximations for performance
         b = self.discriminant_points_complex
-        x = complex(x)
+        x = numpy.complex(x)
         idx = numpy.argmin(abs(b - x))
         if exact:
             return self.discriminant_points[idx]
@@ -213,29 +225,29 @@ class ComplexPathFactory(object):
         # special case when there is only one finite discriminant point: take
         # the distance from the base point to the discriminant point (scaled by
         # kappa, of course)
-        if len(self.discriminant_points_complex) == 1:
-            b = self.discriminant_points_complex[0]
+        if len(self.discriminant_points) == 1:
+            b = self.discriminant_points[0]
             radius = numpy.abs(self.base_point - b)
-            radius *= kappa/2.0
-            radii = numpy.array([radius], dtype=double)
+            radius *= kappa/CC(2.0).real()
+            radii = numpy.array([radius], dtype=object)
             return radii
 
         # when there is more than one discriminant point we scale disctances
         # accordingly. coerce to numerical.
         radii = []
-        b = self.discriminant_points_complex
+        b = self.discriminant_points
         for bi in b:
-            dists = [abs(bi - bj) for bj in self.discriminant_points_complex
-                     if bi != bj]
+            dists = [abs(bi - bj) for bj in self.discriminant_points
+                     if abs(bi - bj) > ZERO]
             rho = min(dists)
-            radius = rho*kappa/2.0
+            radius = rho*kappa/CC(2.0).real()
             radii.append(radius)
-        radii = numpy.array(radii, dtype=double)
+        radii = numpy.array(radii, dtype=object)
 
         # final check: assert that the base point is sufficiently far away from
         # the discriminant points
         dists = [abs(bi - self.base_point) for bi in b]
-        dists = numpy.array(dists, dtype=double) - radii
+        dists = numpy.array(dists, dtype=object) - radii
         if any(dists < 0):
             raise ValueError('Base point lies in the bounding circles of the '
                              'discriminant points. Use different base point or '
@@ -257,15 +269,15 @@ class ComplexPathFactory(object):
         """
         # find the index where bi appears in the list of discriminant points.
         # it's done numerically in case a numerical approximation bi is given
-        bi = complex(bi)
+        bi = CC(bi)
         index = 0
-        for z in self.discriminant_points_complex:
-            if abs(z-bi) < 1e-14:
+        for z in self.discriminant_points:
+            if abs(z-bi) < ZERO:
                 break
             index += 1
 
         # raise an error if not found
-        if index == len(self.discriminant_points_complex):
+        if index == len(self.discriminant_points):
             raise ValueError('%s is not a discriminant point of %s'%(bi,f))
 
         radius = self.radii[index]
@@ -313,12 +325,12 @@ class ComplexPathFactory(object):
         """
         # first check the perpendicular distance from bi to the line
         # passing through z0 and z1
-        z0 = complex(z0)
-        z1 = complex(z1)
-        bi = complex(bi)
+        z0 = CC(z0)
+        z1 = CC(z1)
+        bi = CC(bi)
         direction = numpy.sign(angle(z1-z0) - angle(bi-z0))
         normv = abs(z1-z0)
-        v = 1.0j*direction*(z1 - z0)
+        v = CC(1.0j*direction)*(z1 - z0)
         r = z0 - bi
 
         # degenerate case: the line through z0 and z1 crosses bi. in this case
@@ -331,7 +343,7 @@ class ComplexPathFactory(object):
         # return False if the distance from the _line_ passing through
         # z0 and z1 to bi is greater than the radius fo teh bounding
         # circle.
-        distance = (v.real*r.real + v.imag*r.imag)
+        distance = (v.real()*r.real() + v.imag()*r.imag())
         distance = distance / normv
         if distance > self.radius(bi):
             return False
@@ -367,30 +379,34 @@ class ComplexPathFactory(object):
             intersects.
 
         """
-        # special case when z1 = b: 
-        if abs(z1 - b) < 1e-14:
+        # Make sure all types are high enough precision
+        z0 = CC(z0)
+        z1 = CC(z1)
+        b = CC(b)
+        R = CC(R)
+
+        # special case when z1 = b:
+        if abs(z1 - b) < ZERO:
             R = self.radius(b)
-            b = complex(b)
+            b = CC(b)
             l = lambda s: z0 + (b - z0)*s
-            s = 1.0 - R/abs(z0 - b)
+            s = CC(1.0).real() - R/abs(z0 - b)
             z = l(s)
             return z,z
 
         # construct the polynomial giving the distance from the line l(t),
         # parameterized by t in [0,1], to bi.
-        z0 = complex(z0)
-        z1 = complex(z1)
-        b = complex(b)
-        R = double(R)
         v = z1 - z0
         w = z0 - b
-        p2 = v.real**2 + v.imag**2
-        p1 = 2*(v.real*w.real + v.imag*w.imag)
-        p0 = w.real**2 + w.imag**2 - R**2   # solving |l(t) - bi| = Ri
+        p2 = v.real()**2 + v.imag()**2
+        p1 = 2*(v.real()*w.real() + v.imag()*w.imag())
+        p0 = w.real()**2 + w.imag()**2 - R**2   # solving |l(t) - bi| = Ri
 
         # find the roots of this polynomial and sort by increasing t
-        p = numpy.poly1d([p2, p1, p0])
-        t = numpy.roots(p)
+        #p = numpy.poly1d([p2, p1, p0])
+        #t = numpy.roots(p)
+        mpmath.mp.prec = v.prec()  # Match the current precision
+        t = map(lambda r: CC(r.real) + CC(1j) * CC(r.imag), mpmath.polyroots([p2, p1, p0]))
         t.sort()
 
         # compute ordered intersection points
@@ -424,17 +440,17 @@ class ComplexPathFactory(object):
         path_to_point
         """
         # make sure we have the discriminant point exactly
-        point = self.closest_discriminant_point(bi, exact=True)
-        if abs(complex(point) - complex(bi)) > 1e-4:
+        point = self.closest_discriminant_point(CC(bi), exact=True)
+        if abs(point - CC(bi)) > 1e-4:
             raise ValueError('%s is not a discriminant point of %s'%(bi,self.f))
-        bi = point
+        bi = CC(point)
         Ri = self.radius(bi)
 
         # compute the list points we need to stay sufficiently away from and
         # sort them in increasing distance from the base point
         z0 = self.base_point
-        _,z1 = self.intersection_points(z0, complex(bi), bi, Ri)
-        points_to_avoid = self.intersecting_discriminant_points(z0, z1, exact=False)
+        _,z1 = self.intersection_points(z0, bi, bi, Ri)
+        points_to_avoid = self.intersecting_discriminant_points(z0, z1, exact=True)
         points_to_avoid.sort(key=lambda bj: abs(bj-z0))
 
         # determine the relative orientations of the avoiding discriminant
@@ -445,9 +461,9 @@ class ComplexPathFactory(object):
         # positive/negative orientation with a given bj means we need to go
         # above/below bj, respectively.
         orientations = []
-        i = numpy.argwhere(self.discriminant_points_complex == complex(bi)).item(0)
+        i = numpy.argwhere(abs(self.discriminant_points - bi) < ZERO).item(0)
         for bj in points_to_avoid:
-            j = numpy.argwhere(self.discriminant_points_complex == bj).item(0)
+            j = numpy.argwhere(abs(self.discriminant_points - bj) < ZERO).item(0)
             if i < j:
                 orientations.append(-1)
             else:
@@ -467,7 +483,7 @@ class ComplexPathFactory(object):
             w0,w1 = self.intersection_points(z0,z1,bj,Rj)
             arc = self.avoiding_arc(w0,w1,bj,Rj,orientation=oj)
 
-            if abs(z0-w0) > 1e-14:
+            if abs(z0-w0) > ZERO:
                 segments.append(ComplexLine(z0,w0))
             segments.append(arc)
 
@@ -524,7 +540,7 @@ class ComplexPathFactory(object):
             w0,w1 = self.intersection_points(z0,z1,bj,Rj)
             arc = self.avoiding_arc(w0,w1,bj,Rj)
 
-            if abs(z0-w0) > 1e-14:
+            if abs(z0-w0) > ZERO:
                 segments.append(ComplexLine(z0,w0))
             segments.append(arc)
 
@@ -564,14 +580,14 @@ class ComplexPathFactory(object):
         if bi in [infinity, numpy.Infinity, 'oo']:
             return self.monodromy_path_infinity(nrots=nrots)
 
+        bi = CC(bi)
         path_to_bi = self.path_to_discriminant_point(bi)
 
         # determine the rotational path around the discriminant point
         z = path_to_bi(1.0)
-        bi = complex(bi)
         Ri = self.radius(bi)
         theta = angle(z - bi)
-        dtheta = numpy.pi if nrots > 0 else -numpy.pi
+        dtheta = PI if nrots > 0 else -PI
         circle = ComplexArc(Ri, bi, theta, dtheta) + \
                  ComplexArc(Ri, bi, theta + dtheta, dtheta)
         path_around_bi = circle
@@ -619,9 +635,9 @@ class ComplexPathFactory(object):
 
         # the positive direction around infinity is equal to the
         # negative direction around the origin
-        dtheta = -numpy.pi if nrots > 0 else numpy.pi
+        dtheta = -PI if nrots > 0 else PI
         for _ in range(abs(nrots)):
-            path += ComplexArc(R, 0, numpy.pi, dtheta)
+            path += ComplexArc(R, 0, PI, dtheta)
             path += ComplexArc(R, 0, 0, dtheta)
 
         # return to the base point
@@ -644,13 +660,13 @@ class ComplexPathFactory(object):
         None
         """
         # fill the bounding circles around each discriminant point
-        a = complex(self.base_point)
-        b = numpy.array(self.discriminant_points, dtype=complex)
+        a = CC(self.base_point)
+        b = numpy.array(self.discriminant_points, dtype=CC)
 
         # plot the base point and the discriminant points
-        pts = [(a.real, a.imag)]
+        pts = [(a.real(), a.imag())]
         plt = scatter_plot(pts, facecolor='red', **kwds)
-        pts = zip(b.real, b.imag)
+        pts = zip(b.real(), b.imag())
         plt += scatter_plot(pts, facecolor='black', **kwds)
 
         # plot the monodromy paths
@@ -683,13 +699,13 @@ class ComplexPathFactory(object):
             An arc from `w0` to `w1` around `bi`.
 
         """
-        w0 = complex(w0)
-        w1 = complex(w1)
-        b = complex(b)
-        R = double(R)
+        w0 = CC(w0)
+        w1 = CC(w1)
+        b = CC(b)
+        R = CC(R)
 
         # ASSUMPTION: Re(w0) < Re(w1)
-        if w0.real >= w1.real:
+        if w0.real() >= w1.real():
             raise ValueError('Cannot construct avoiding arc: all paths must '
                              'travel from left to right unless "reversed".')
 
@@ -705,11 +721,11 @@ class ComplexPathFactory(object):
         #
         # if no orientation is provided then go above. otherwise, adhere to the
         # orientation: orientation = +1/-1 means the path goes above/below
-        phi_w0_w1 = numpy.angle(w1-w0)
-        phi_w0_b = numpy.angle(b-w0)
-        if abs(phi_w0_w1 - phi_w0_b) < 1e-13:
-            theta0 = numpy.angle(w0-b)
-            dtheta = -numpy.pi  # default above
+        phi_w0_w1 = angle(w1-w0)
+        phi_w0_b = angle(b-w0)
+        if abs(phi_w0_w1 - phi_w0_b) < ZERO:
+            theta0 = angle(w0-b)
+            dtheta = -PI  # default above
             if not orientation is None:
                 dtheta *= orientation
             return ComplexArc(R, b, theta0, dtheta)
@@ -727,16 +743,16 @@ class ComplexPathFactory(object):
         # now determine the angle between w0 and w1 on the circle. since w0,
         # bi, and w1 are not colinear this angle must be normalized to be in
         # the interval (-pi,pi)
-        theta0 = numpy.angle(w0 - b)
-        theta1 = numpy.angle(w1 - b)
+        theta0 = angle(w0 - b)
+        theta1 = angle(w1 - b)
         dtheta = theta1 - theta0
-        if dtheta > numpy.pi:
-            dtheta = 2*numpy.pi - dtheta
-        elif dtheta < -numpy.pi:
-            dtheta = 2*numpy.pi + dtheta
+        if dtheta > PI:
+            dtheta = 2*PI - dtheta
+        elif dtheta < -PI:
+            dtheta = 2*PI + dtheta
 
         # sanity check: |dtheta| should be less than pi
-        if abs(dtheta) >= numpy.pi:
+        if abs(dtheta) >= PI:
             raise ValueError('Cannot construct avoiding arc: '
                              '|dtheta| must be less than pi.')
 
@@ -752,9 +768,9 @@ class ComplexPathFactory(object):
         # when the signs are same then make adjustments:
         if not orientation is None:
             if orientation == 1 and dtheta > 0:
-                dtheta = dtheta - 2*numpy.pi
+                dtheta = dtheta - 2*PI
             elif orientation == -1 and dtheta < 0:
-                dtheta = 2*numpy.pi + dtheta
+                dtheta = 2*PI + dtheta
 
         # add the path from z0 to w1 going around bi
         arc = ComplexArc(R, b, theta0, dtheta)

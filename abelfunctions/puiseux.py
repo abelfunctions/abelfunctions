@@ -42,6 +42,8 @@ import sympy
 
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
+from . import ComplexField as CC
+
 from sage.all import gcd, xgcd
 from sage.functions.log import log, exp
 from sage.functions.other import ceil
@@ -588,8 +590,8 @@ class PuiseuxTSeries(object):
         if self.is_numerical:
             return self.xdata
         else:
-            return (numpy.complex(self.center),
-                    numpy.complex(self.xcoefficient),
+            return ((self.center),
+                    (self.xcoefficient),
                     numpy.int(self.ramification_index))
     @property
     def order(self):
@@ -917,7 +919,7 @@ class PuiseuxTSeries(object):
         # simply convert to t and pass to extend. choose any conjugate since
         # the convergence rates between each conjugate is equal
         center, xcoefficient, ramification_index = self.xdata
-        t = numpy.power((x-center)/xcoefficient, 1.0/ramification_index)
+        t = numpy.power((x-center)/xcoefficient, CC(1.0)/ramification_index)
         self.extend_to_t(t, curve_tol=curve_tol)
 
     def eval_x(self, t):

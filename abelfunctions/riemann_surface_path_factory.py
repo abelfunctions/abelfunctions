@@ -45,9 +45,11 @@ from abelfunctions.utilities import (
 from abelfunctions.complex_path_factory import ComplexPathFactory
 #from abelfunctions.skeleton import Skeleton
 from abelfunctions.ypath_factory import YPathFactory as Skeleton
+from . import ComplexField as CC
 
-from numpy import complex, double, array
-from sage.all import infinity, CC, CDF, cached_method
+from numpy import array
+#from numpy import complex256 as complex
+from sage.all import infinity, cached_method
 
 class RiemannSurfacePathFactory(object):
     r"""Factory class for constructing paths on the Riemann surface.
@@ -162,8 +164,8 @@ class RiemannSurfacePathFactory(object):
         if not base_sheets:
             x,y = self.riemann_surface.f.parent().gens()
             p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
-            roots = p.roots(CDF, multiplicities=False)
-            base_sheets = numpy.array(roots, dtype=numpy.complex)
+            roots = p.roots(CC(), multiplicities=False)
+            base_sheets = numpy.array(roots, dtype=object)
         else:
             f = self.riemann_surface.f
             for sheet in base_sheets:
@@ -263,15 +265,15 @@ class RiemannSurfacePathFactory(object):
         ta = CC(xa/coefficient).nth_root(abs(ramification_index))
         ta = ta if ramification_index > 0 else 1/ta
         p.extend_to_t(ta)
-        ya = complex(p.eval_y(ta))
+        ya = p.eval_y(ta)
 
         # construct the place Q and compute the path going from P0 to Q
         Q = self.riemann_surface(xa,ya)
         gamma_P0_to_Q = self.path_to_place(Q)
 
         # construct the path going from Q to P
-        xend = complex(gamma_P0_to_Q.get_x(1.0))
-        yend = array(gamma_P0_to_Q.get_y(1.0), dtype=complex)
+        xend = CC(gamma_P0_to_Q.get_x(1.0))
+        yend = array(gamma_P0_to_Q.get_y(1.0), dtype=object)
         gamma_x = ComplexRay(xend)
         gamma_Q_to_P = RiemannSurfacePathPuiseux(
             self.riemann_surface, gamma_x, yend)
@@ -306,7 +308,7 @@ class RiemannSurfacePathFactory(object):
         center, coefficient, ramification_index = p.xdata
         R = self.complex_path_factory.radius(center)
         a = center - R
-        t = (-R/coefficient)**(1.0/ramification_index)
+        t = CC(-R/coefficient)**(CC(1)/ramification_index)
         # p.coerce_to_numerical()
         p.extend_to_t(t)
         y = p.eval_y(t)
@@ -318,9 +320,9 @@ class RiemannSurfacePathFactory(object):
 
         # construct the RiemannSurfacePath going from this regular place to the
         # discriminant point.
-        xend = complex(gamma1.get_x(1.0))
-        yend = array(gamma1.get_y(1.0), dtype=complex)
-        gamma_x = ComplexLine(complex(a), complex(center))
+        xend = CC(gamma1.get_x(1.0))
+        yend = array(gamma1.get_y(1.0), dtype=object)
+        gamma_x = ComplexLine(CC(a), CC(center))
         segment = RiemannSurfacePathPuiseux(
             self.riemann_surface, gamma_x, yend)
         gamma = gamma1 + segment
@@ -354,8 +356,8 @@ class RiemannSurfacePathFactory(object):
         # determine the index of the sheet (sheet_index) of the base place
         # continues to the y-component of the target
         base_sheets = self.base_sheets
-        end_sheets = array(gamma.get_y(1.0), dtype=complex)
-        end_diffs = abs(end_sheets - complex(P.y))
+        end_sheets = array(gamma.get_y(1.0), dtype=object)
+        end_diffs = abs(end_sheets - CC(P.y))
         if min(end_diffs) > 1.0e-8:
             raise ValueError('Error in constructing Abel path: end of regular '
                              'path does not match with target place.')
@@ -367,7 +369,7 @@ class RiemannSurfacePathFactory(object):
         if sheet_index != 0:
             ypath = self.skeleton.ypath_from_base_to_sheet(sheet_index)
             gamma_swap = self.RiemannSurfacePath_from_cycle(ypath)
-            ordered_base_sheets = numpy.array(gamma_swap.get_y(1.0), dtype=complex)
+            ordered_base_sheets = numpy.array(gamma_swap.get_y(1.0), dtype=object)
 
             # take the new ordering of branch points and construct the
             # path to the target place. there is an inherent check that
@@ -378,7 +380,7 @@ class RiemannSurfacePathFactory(object):
 
         # sanity check
         yend = gamma.get_y(1.0)[0]
-        if numpy.abs(yend - numpy.complex(P.y)) > 1.0e-8:
+        if numpy.abs(yend - CC(P.y)) > 1.0e-8:
             raise ValueError('Error in constructing Abel path.')
         return gamma
 
@@ -411,7 +413,7 @@ class RiemannSurfacePathFactory(object):
             gamma = self.monodromy_path(bi)
 
             # compute the end fibre and the corresponding permutation
-            yend = array(gamma.get_y(1.0), dtype=complex)
+            yend = array(gamma.get_y(1.0), dtype=object)
             phi = matching_permutation(y0, yend)
 
             # add the point to the monodromy group if the permutation is
@@ -423,7 +425,7 @@ class RiemannSurfacePathFactory(object):
         # compute the monodromy element of the point at infinity
         gamma_x = self.complex_path_factory.monodromy_path_infinity()
         gamma = self.RiemannSurfacePath_from_complex_path(gamma_x, x0, y0)
-        yend = array(gamma.get_y(1.0), dtype=complex)
+        yend = array(gamma.get_y(1.0), dtype=object)
         phi_oo = matching_permutation(y0, yend)
 
         # sanity check: the product of the finite branch point permutations
@@ -567,13 +569,13 @@ class RiemannSurfacePathFactory(object):
             y0 = self.base_sheets
 
         # coerce and assert that x0,y0 lies on the path and curve
-        x0 = complex(x0)
-        y0 = array(y0, dtype=complex)
+        x0 = CC(x0)
+        y0 = array(y0, dtype=object)
         if abs(x0 - complex_path(0)) > 1e-7:
             raise ValueError('The point %s is not at the start of the '
                              'ComplexPath %s'%(x0, complex_path))
         f = self.riemann_surface.f
-        curve_error = [abs(complex(f(x0,y0k))) for y0k in y0]
+        curve_error = [abs(CC(f(x0,y0k))) for y0k in y0]
         if max(curve_error) > 1e-7:
             raise ValueError('The fibre %s above %s does not lie on the '
                              'curve %s'%(y0.tolist(), x0, f))
