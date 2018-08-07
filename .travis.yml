@@ -13,17 +13,17 @@ matrix:
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.0-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+        - SAGE_SERVER=ftp://ftp.fu-berlin.de/unix/misc/sage/linux/64bit/
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.1-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+        - SAGE_SERVER=ftp://ftp.fu-berlin.de/unix/misc/sage/linux/64bit/
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.2-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/linux/64bit
+        - SAGE_SERVER=ftp://ftp.fu-berlin.de/unix/misc/sage/linux/64bit/
       dist: trusty
     - os: osx
       env:
