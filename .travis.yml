@@ -33,12 +33,10 @@ matrix:
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
       osx_image: xcode9.2  # macOS 10.12
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.1-OSX_10.12.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
       osx_image: xcode9.2  # macOS 10.12
     #############################################################################
     ### In this case sage is unable to find headers (_stdio.h) to install abelfunctions.
@@ -46,18 +44,15 @@ matrix:
     # - os: osx
     #   env:
     #     - SAGE_TARBALL=sage-8.2-OSX_10.13.4-x86_64.tar.bz2
-    #     - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
     #   osx_image: xcode9.4  # macOS 10.13.4
     #############################################################################
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.2-OSX_10.11.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
       osx_image: xcode8  # macOS 10.11.6
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.3-OSX_10.11.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://mirrors.mit.edu/sage/osx/intel
       osx_image: xcode8  # macOS 10.11.6
 
 before_install:
