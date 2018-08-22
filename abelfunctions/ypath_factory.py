@@ -215,7 +215,7 @@ def tretkoff_graph(monodromy_group):
     while len(endpoints) > 0:
 	# obtain the endpoints on the previous level that are not
 	# final and sort by their "succession" order".
-	endpoints = sorted([n for n,d in C.nodes_iter(data=True)
+	endpoints = sorted([n for n,d in C.nodes(data=True)
                             if d['level'] == level and not d['final']])
 
 	for node in endpoints:
