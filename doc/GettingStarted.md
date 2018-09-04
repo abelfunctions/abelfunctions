@@ -128,3 +128,26 @@ sage: fig.show()
 ```
 
 [IMAGE]
+
+## Derivatives of Riemann Theta Functions
+
+Abelfunctions is also able to compute directional derivatives of Riemann theta functions.
+To we provide the directional derivatives as a list of lists to the `derivs` argument of the `RiemannTheta` function.
+For example, suppose the Riemann matrix, `Omega`, is given by
+```python
+sage: import numpy as np
+sage: r3 = sqrt(-3)/3
+sage: Omega = np.array([[1+2*r3, -1-r3],
+....:                   [-1-r3, 1+2*r3]])
+```
+To evaluate the directional derivative [1.2,2].grad of the Riemann theta function at the place z=[0,1] we would use
+```python
+sage: RiemannTheta([0, 1], Omega, derivs=[[1.2,2]])
+(9.7394378275290653e-17-1.1491767560254569e-17j)
+```
+To evaluate the second order directional derivative ([1,0].grad)([0,1].grad) at z=[0,1] we would use
+```python
+sage: RiemannTheta([0, 1], Omega, derivs=[[1,0],[0,1]])
+(-2.0914115976630612-1.4526163881071635e-18j)
+```
+
