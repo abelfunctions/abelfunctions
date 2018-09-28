@@ -798,6 +798,12 @@ class PuiseuxTSeries(object):
         for c in conjugates:
             t = self.ypart.parent().gen()
             fconj = self.ypart(c*t)
+            print('fconj', fconj, type(fconj))
+            print('e', e, type(e))
+            print('x', x, type(x))
+            print('QQ(1)/e', QQ(1)/e)
+            print('x**(QQ(1)/e))', x**(QQ(1)/e))
+            print('fconj(x**(QQ(1)/e))', fconj(x**(QQ(1)/e)))
             p = P(fconj(x**(QQ(1)/e)))
             p = p.add_bigoh(QQ(order+1)/abse)
             xseries.append(p)
