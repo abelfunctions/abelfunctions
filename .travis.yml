@@ -69,7 +69,7 @@ before_install:
       wget http://mirror.aarnet.edu.au/pub/sage/linux/64bit/meta/${SAGE_TARBALL}.torrent
     fi
 
-  aria2c ${SAGE_TARBALL}.torrent --file-allocation=falloc --seed-time=0
+  - aria2c ${SAGE_TARBALL}.torrent --file-allocation=falloc --seed-time=0
 
   # extract Sage
   - travis_wait tar xjf ${HOME}/${SAGE_TARBALL}
