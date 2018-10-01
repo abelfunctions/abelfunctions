@@ -12,23 +12,19 @@ matrix:
   include:
     - os: linux
       env:
-        - SAGE_TARBALL=sage-8.0-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=ftp://ftp.fu-berlin.de/unix/misc/sage/linux/64bit/old
+        - SAGE_TARBALL=old/sage-8.0-Ubuntu_14.04-x86_64.tar.bz2
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.1-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=ftp://ftp.fu-berlin.de/unix/misc/sage/linux/64bit
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.2-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=ftp://ftp.fu-berlin.de/unix/misc/sage/linux/64bit
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.3-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=ftp://ftp.fu-berlin.de/unix/misc/sage/linux/64bit
       dist: trusty
     - os: osx
       env:
@@ -64,11 +60,16 @@ before_install:
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       HOMEBREW_NO_AUTO_UPDATE=1 brew install aria2
       wget http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/${SAGE_TARBALL}.torrent
-      aria2c ${SAGE_TARBALL}.torrent --file-allocation=falloc --seed-time=0
     fi
 
   # download sage directly
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then wget ${SAGE_SERVER}/${SAGE_TARBALL}; fi
+  - |
+    if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      sudo apt-get install aria2
+      wget http://mirror.aarnet.edu.au/pub/sage/linux/64bit/meta/${SAGE_TARBALL}.torrent
+    fi
+
+  aria2c ${SAGE_TARBALL}.torrent --file-allocation=falloc --seed-time=0
 
   # extract Sage
   - travis_wait tar xjf ${HOME}/${SAGE_TARBALL}
