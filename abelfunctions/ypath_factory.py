@@ -215,7 +215,7 @@ def tretkoff_graph(monodromy_group):
     while len(endpoints) > 0:
 	# obtain the endpoints on the previous level that are not
 	# final and sort by their "succession" order".
-	endpoints = sorted([n for n,d in C.nodes_iter(data=True)
+	endpoints = sorted([n for n,d in C.nodes(data=True)
                             if d['level'] == level and not d['final']])
 
 	for node in endpoints:
@@ -240,7 +240,7 @@ def tretkoff_graph(monodromy_group):
 		if current_sheet == 0:
 		    branch_point_indices = range(t)
 		else:
-                    pred = C.neighbors(node)[0]
+                    pred = list(C.neighbors(node))[0]
 		    bpt,pi = C.node[pred]['value']
 		    ind = branch_points.index(bpt)
 		    branch_point_indices = range(ind+1,t) + range(ind)
@@ -281,7 +281,7 @@ def tretkoff_graph(monodromy_group):
 		# we also try to minimize the number of rotations performed
 		# by allowing reverse rotations.
 		n = len(pi)
-                pred = C.neighbors(node)[0]
+                pred = list(C.neighbors(node))[0]
 		previous_sheet = C.node[pred]['value']
 		pi = reorder_cycle(pi,previous_sheet)
                 ctr = 0
@@ -335,10 +335,10 @@ def final_edges(C):
     edges = []
     while len(final_nodes) > 0:
         node = final_nodes.pop()
-        pred = C.neighbors(node)[0]
+        pred = list(C.neighbors(node))[0]
         pred_val = C.node[pred]['value']
         other = [n for n in final_nodes if C.node[n]['value'] == pred_val and
-                 C.node[C.neighbors(n)[0]]['value'] == C.node[node]['value']]
+                 C.node[list(C.neighbors(n))[0]]['value'] == C.node[node]['value']]
         other = other[0]
 
         final_nodes.remove(other)
@@ -460,7 +460,7 @@ def compute_c_cycles(tretkoff_graph, final_edges):
         #
         # see the comment in homology:final_edges() for an explanation
         # on the ordering / direction of the cycle.
-        edge = map(lambda n: C.neighbors(n)[0], final_edge)
+        edge = map(lambda n: list(C.neighbors(n))[0], final_edge)
 	path_to_edge = nx.shortest_path(C,root,edge[0])
 	path_from_edge = nx.shortest_path(C,edge[1],root)
         path = path_to_edge + path_from_edge
