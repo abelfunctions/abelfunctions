@@ -47,6 +47,7 @@ cimport numpy
 cimport cython
 
 import scipy
+import scipy.integrate
 from abelfunctions.divisor import DiscriminantPlace
 from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
