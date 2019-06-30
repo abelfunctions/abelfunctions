@@ -27,6 +27,9 @@ For installation instructions, tutorials on how to use this software, and a comp
 
 Please report any bugs you find or suggest enhancements on the [Issues Page](https://github.com/cswiercz/abelfunctions/issues).
 
+## Extensions to Abelfunctions
+- [CyclePainter](https://github.com/markopuza/abelfunctions-cyclepainter) - A tool for building custom paths on Riemann surfaces
+
 ## Citing this Software
 
 > C. Swierczewski et. al., *Abelfunctions: A library for computing with Abelian
