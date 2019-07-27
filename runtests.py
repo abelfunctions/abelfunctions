@@ -52,14 +52,15 @@ def runtests(argv):
     if processes > 1:
         try:
             import pytest
-        except ImportError:
-            raise ImportError("Runinng tests in parallel requires pytest-xdist.  Install with:\n\n"
-                       "\t$ sage -pip install pytest-xdist\n\n"
-                       "Note: If pip does not work because 'the ssl module in Python is not available' "
-                       "then you may need to install openssl into sage and rebuild python using\n\n"
-                       "\t$ sage -i openssl\n"
-                       "\t$ sage -f python2"
-                       )
+        except ImportError as e:
+            raise ImportError(str(e)+"\n\n"
+                "Note: Running tests in parallel requires pytest-xdist.  Install with:\n\n"
+                "\t$ sage -pip install pytest-xdist\n\n"
+                "Note: If pip does not work because 'the ssl module in Python is not available' "
+                "then you may need to install openssl into sage and rebuild python using\n\n"
+                "\t$ sage -i openssl\n"
+                "\t$ sage -f python2"
+            )
 
         # determine list of search patterns for tests
         patterns = ''
