@@ -96,14 +96,15 @@ before_install:
   # So download 'by hand' pytest-xdist (used to run tests in parallel) and its dependencies
   - |
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      wget https://pypi.python.org/packages/94/72/fd4f2e46ce7b0d388191c819ef691c8195fab09602bbf1a2f92aa5351444/apipkg-1.4-py2.py3-none-any.whl#md5=5644eb6aff3f19e13430251a820e987f
-      wget https://pypi.python.org/packages/f9/76/3343e69a2a1602052f587898934e5fea395d22310d39c07955596597227c/execnet-1.5.0-py2.py3-none-any.whl#md5=b6ea27c6b64e09c5220dc6d23da99485
-      wget https://pypi.python.org/packages/53/67/9620edf7803ab867b175e4fd23c7b8bd8eba11cb761514dcd2e726ef07da/py-1.4.34-py2.py3-none-any.whl#md5=0cb02dbd9cf647f97b8963d4def97a7f
-      wget https://pypi.python.org/packages/dd/9d/fb75af584b850a902c9ce5ec96ea5c623978113b8a240ab414e1a435df93/pytest_forked-0.2-py2.py3-none-any.whl#md5=b7c663a158ed861f7c4faa4edc45225d
-      wget https://pypi.python.org/packages/bc/b3/0edafff9da9057a52e9f84e7e8491a44c02d92ff101b537162a1afc2a666/pytest_xdist-1.20.1-py2.py3-none-any.whl#md5=d948ec49fcf4d855c1d5bcefddc0810c
-      wget https://pypi.python.org/packages/8c/7d/f5d71f0e28af32388e07bd4ce0dbd2b3539693aadcae4403266173ec87fa/pytest-3.2.3-py2.py3-none-any.whl#md5=92952bc212c5eff0b6f840dcef4f828b
-      wget https://pypi.python.org/packages/bd/4c/b06ab3abfc8bc93b87b70f4cab22352c3c72deba7b71390d14bfffa97c85/setuptools-36.6.0-py2.py3-none-any.whl#md5=df531523e300bc3e6b9ce4451681912c
-      ${SAGE} -pip install pytest-xdist --no-index --find-links=.
+      # wget https://pypi.python.org/packages/94/72/fd4f2e46ce7b0d388191c819ef691c8195fab09602bbf1a2f92aa5351444/apipkg-1.4-py2.py3-none-any.whl#md5=5644eb6aff3f19e13430251a820e987f
+      # wget https://pypi.python.org/packages/f9/76/3343e69a2a1602052f587898934e5fea395d22310d39c07955596597227c/execnet-1.5.0-py2.py3-none-any.whl#md5=b6ea27c6b64e09c5220dc6d23da99485
+      # wget https://pypi.python.org/packages/53/67/9620edf7803ab867b175e4fd23c7b8bd8eba11cb761514dcd2e726ef07da/py-1.4.34-py2.py3-none-any.whl#md5=0cb02dbd9cf647f97b8963d4def97a7f
+      # wget https://pypi.python.org/packages/dd/9d/fb75af584b850a902c9ce5ec96ea5c623978113b8a240ab414e1a435df93/pytest_forked-0.2-py2.py3-none-any.whl#md5=b7c663a158ed861f7c4faa4edc45225d
+      # wget https://pypi.python.org/packages/bc/b3/0edafff9da9057a52e9f84e7e8491a44c02d92ff101b537162a1afc2a666/pytest_xdist-1.20.1-py2.py3-none-any.whl#md5=d948ec49fcf4d855c1d5bcefddc0810c
+      # wget https://pypi.python.org/packages/8c/7d/f5d71f0e28af32388e07bd4ce0dbd2b3539693aadcae4403266173ec87fa/pytest-3.2.3-py2.py3-none-any.whl#md5=92952bc212c5eff0b6f840dcef4f828b
+      # wget https://pypi.python.org/packages/bd/4c/b06ab3abfc8bc93b87b70f4cab22352c3c72deba7b71390d14bfffa97c85/setuptools-36.6.0-py2.py3-none-any.whl#md5=df531523e300bc3e6b9ce4451681912c
+      # ${SAGE} -pip install pytest-xdist --no-index --find-links=.
+      ${SAGE} -pip install pytest-xdist pytest==4.6.4
     fi
 
   - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then ${SAGE} -pip install pytest-xdist pytest==4.6.4; fi
