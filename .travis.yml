@@ -18,32 +18,32 @@ matrix:
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.1-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/meta/
+        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/old/meta/
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.2-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/meta/
+        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/old/meta/
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.3-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/meta/
+        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/old/meta/
       dist: trusty
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.4-Ubuntu_14.04-x86_64.tar.bz2
-        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/meta/
+        - SAGE_SERVER=http://sage.mirror.garr.it/mirrors/sage/linux/64bit/old/meta/
       dist: trusty
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/
+        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/old/meta/
       osx_image: xcode9.2  # macOS 10.12
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.1-OSX_10.12.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/
+        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/old/meta/
       osx_image: xcode9.2  # macOS 10.12
     #############################################################################
     ### In this case sage is unable to find headers (_stdio.h) to install abelfunctions.
@@ -57,17 +57,17 @@ matrix:
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.2-OSX_10.11.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/
+        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/old/meta/
       osx_image: xcode8  # macOS 10.11.6
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.3-OSX_10.13.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/
+        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/old/meta/
       osx_image: xcode10  # macOS 10.13
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.4-OSX_10.13.6-x86_64.tar.bz2
-        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/meta/
+        - SAGE_SERVER=http://www.mirrorservice.org/sites/www.sagemath.org/osx/intel/old/meta/
       osx_image: xcode10  # macOS 10.13
 
 before_install:
