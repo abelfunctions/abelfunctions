@@ -218,7 +218,7 @@ def explosion(SIZE, gpu):
     V = np.exp(U)*V
     V = V.reshape(SIZE, SIZE)
     s = surf(X,Y,np.absolute(V), warp_scale = 'auto')
-    savefig("test.eps"
+    savefig("test.eps")
     
 def get_r1_vals(SIZE, gpu):
     theta = RiemannTheta
