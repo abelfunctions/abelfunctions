@@ -106,7 +106,7 @@ before_install:
       ${SAGE} -pip install pytest-xdist --no-index --find-links=.
     fi
 
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then ${SAGE} -pip install pytest-xdist; fi
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then ${SAGE} -pip install pytest-xdist pytest==4.6.4; fi
 
   - cd ${TRAVIS_BUILD_DIR}
 
