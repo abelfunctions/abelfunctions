@@ -111,10 +111,10 @@ class clean(Command):
             for file in files:
                 file = os.path.join(root, file)
                 if file.endswith('.pyc') and os.path.isfile(file):
-                    print 'deleting %s...'%file
+                    print('deleting %s...' % file)
                     os.remove(file)
                 if file.endswith('~') and os.path.isfile(file):
-                    print 'deleting %s...'%file
+                    print('deleting %s...' % file)
                     os.remove(file)
 
         os.chdir(dir_setup)
@@ -123,10 +123,10 @@ class clean(Command):
         blacklist = ['build', 'dist', 'doc/_build']
         for file in blacklist:
             if os.path.isfile(file):
-                print 'deleting %s...'%file
+                print('deleting %s...' % file)
                 os.remove(file)
             elif os.path.isdir(file):
-                print 'deleting %s...'%file
+                print('deleting %s...' % file)
                 shutil.rmtree(file)
 
         os.chdir(dir_setup)
@@ -140,11 +140,11 @@ class clean(Command):
                 (root, ext) = os.path.splitext(file)
                 file_c = root + '.c'
                 if os.path.isfile(file_c):
-                    print 'deleting %s...'%file
+                    print('deleting %s...' % file)
                     os.remove(file_c)
                 file_cpp = root + '.cpp'
                 if os.path.isfile(file_cpp):
-                    print 'deleting %s...'%file
+                    print('deleting %s...' % file)
                     os.remove(file_cpp)
 
         os.chdir(dir_setup)
@@ -155,7 +155,7 @@ class clean(Command):
             file = mod.replace('.', os.path.sep) + '.so'
             file = os.path.join(dir_setup, file)
             if os.path.isfile(file):
-                print 'deleting %s...'%file
+                print('deleting %s...' % file)
                 os.remove(file)
 
         os.chdir(curr_dir)
