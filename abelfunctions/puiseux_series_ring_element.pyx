@@ -107,6 +107,7 @@ from sage.rings.laurent_series_ring_element cimport LaurentSeries
 from sage.rings.power_series_ring_element cimport PowerSeries
 from sage.structure.element cimport (
     Element, ModuleElement, RingElement, AlgebraElement)
+from sage.structure.richcmp cimport richcmp_not_equal, rich_to_bool
 
 
 def is_PuiseuxSeries(x):
@@ -411,8 +412,9 @@ cdef class PuiseuxSeries(AlgebraElement):
             e = self.__e * int(denom)
         return PuiseuxSeries(self._parent, l, e)
 
-    cpdef int _cmp_(self, right_r) except -2:
-        r"""Comparison of self and right.
+    cpdef _richcmp_(self, right_r, int op):
+        r"""
+        Comparison of self and right.
 
         As with Laurent series, two Puiseux series are equal if they agree for
         all coefficients up to the minimum of the precisions of each.
@@ -428,13 +430,15 @@ cdef class PuiseuxSeries(AlgebraElement):
 
         # first compare each exponent and then each coefficient
         for i in range(d):
-            c = cmp(exponents_l[i], exponents_r[i])
-            if c:
-                return c
-            c = cmp(coefficients_l[i], coefficients_r[i])
-            if c:
-                return c
-        return 0
+            li = exponents_l[i]
+            ri = exponents_r[i]
+            if li != ri:
+                return richcmp_not_equal(li, ri, op)
+            li = coefficients_l[i]
+            ri = coefficients_r[i]
+            if li != ri:
+                return richcmp_not_equal(li, ri, op)
+        return rich_to_bool(op, 0)
 
     def __lshift__(self, r):
         return self.shift(r)
