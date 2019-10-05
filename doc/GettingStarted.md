@@ -29,7 +29,7 @@ We can compute a basis for the space of holomorphic differentials on a Riemann s
 ```python
 sage: differentials = X.differentials
 sage: for omega in differentials:
-  ...     print omega
+....:     print(omega)
 x*y/(2*x^3 + 3*y^2)
 x^3/(2*x^3 + 3*y^2)
 ```
