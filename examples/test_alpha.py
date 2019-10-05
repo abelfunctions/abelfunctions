@@ -15,8 +15,7 @@ from abelfunctions.riemannsurface_path import path_around_branch_point
 
 
 def coeff_functions(p,x):
-    a = map(lambda ak: sympy.lambdify(x,ak,'numpy'), p.all_coeffs())
-    return a
+    return map(lambda ak: sympy.lambdify(x,ak,'numpy'), p.all_coeffs())
     
     
 def mu(f,a,n,x,y):
@@ -48,8 +47,8 @@ def analytically_continue(df,a,n,fibre,t,path):
 
     while ti < t:
         # iterate and approximate
-        print "=== Iterate ==="
-        print "\t fibre  =", fibre
+        print("=== Iterate ===")
+        print("\t fibre  =", fibre)
         tip1 = ti + dt
         xip1 = path(tip1)
         yapp = yi
@@ -60,7 +59,7 @@ def analytically_continue(df,a,n,fibre,t,path):
         beta_yapp = [beta(df,xip1,yappj) for yappj in yapp]
         gamma_yapp = [gamma(df,n,xip1,yappj) for yappj in yapp]
         alpha_yapp = [beta_yapp[j] * gamma_yapp[j] for j in xrange(n)]
-        print "\t alphas = %s (alpha0 = %f)"%(alpha_yapp,alpha0)
+        print("\t alphas = %s (alpha0 = %f)" % (alpha_yapp, alpha0))
         for j in xrange(n):
             # check if our guess is in the quadratic convergence basin
             alphaj = beta_yapp[j] * gamma_yapp[j]
@@ -68,7 +67,7 @@ def analytically_continue(df,a,n,fibre,t,path):
                 are_approximate_solutions = False
                 break
 
-        print "\t approximate solns? %s"%(are_approximate_solutions)
+        print("\t approximate solns? %s" % (are_approximate_solutions))
 
         # only perform separated basins detection if the roots are
         # close enough
@@ -88,17 +87,17 @@ def analytically_continue(df,a,n,fibre,t,path):
                         # use triangle inequality to guarantee separation
                         # since we don't know what the actual roots are
                         if dist <= 2*(betaj + betak):
-                            print "\t === TEST: dist <= 2(betak + betak) ==="
-                            print "\t betaj =", betaj
-                            print "\t betak =", betak
-                            print "\t bound =", 2*(betaj+betak)
-                            print "\t dist  =", dist
+                            print("\t === TEST: dist <= 2(betak + betak) ===")
+                            print("\t betaj =", betaj)
+                            print("\t betak =", betak)
+                            print("\t bound =", 2*(betaj+betak))
+                            print("\t dist  =", dist)
                             separated_basins = False
                             break
 
-        print "\t separated_basins?  %s"%(separated_basins)
-        print "\t t  = %s"%(ti)
-        print "\t dt = %s"%(dt)
+        print("\t separated_basins?  %s" % (separated_basins))
+        print("\t t  = %s" % (ti))
+        print("\t dt = %s" % (dt))
         if dt < 1e-6: break
 
         if are_approximate_solutions and separated_basins:
@@ -148,15 +147,15 @@ if __name__=='__main__':
     # analytically continue
     ypath = []
     for k in xrange(nseg):
-#        print "=== segment %k ==="
-#        print "fibre (start) ="
-#        for yj in fibre: print yj
+#        print("=== segment %k ===")
+#        print("fibre (start) =")
+#        for yj in fibre: print(yj)
 
         ypath += analytically_continue(df,coeffs,n,fibre,1,path_segments[k][0])
         fibre = [yij for yij in ypath[-1]]
 
-#        print "fibre (end)   ="
-#        for yj in fibre: print yj
+#        print("fibre (end)   =")
+#        for yj in fibre: print(yj)
 
     # parse out yroots data: right now it's of the form
     # 
