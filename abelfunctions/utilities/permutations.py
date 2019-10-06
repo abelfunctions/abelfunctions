@@ -157,15 +157,13 @@ class Permutation(object):
         if isinstance(i,int) and 0 <= i < len(self):
             return self[i]
         else:
-            raise TypeError, "i (= %s) must be an integer between " \
-                             "%s and %s" %(i,0,len(self)-1)
+            raise TypeError("i (= %s) must be an integer between "
+                            "%s and %s" % (i, 0, len(self) - 1))
 
     def is_identity(self):
         """Returns `True` if permutation is the identity."""
         n = len(self._list)
-        if self._list == range(n):
-            return True
-        return False
+        return self._list == list(range(n))
 
     def index(self, j):
         """If `p(i) = j`, returns `i`."""
@@ -181,8 +179,8 @@ class Permutation(object):
         ['a', 'd', 'b', 'c']
         """
         if len(a) != len(self):
-            raise ValueError, "len(a) must equal len(self)"
-        return map(lambda i: a[self[i]], range(len(a)))
+            raise ValueError("len(a) must equal len(self)")
+        return list(map(lambda i: a[self[i]], range(len(a))))
 
     def inverse(self):
         """
@@ -239,7 +237,7 @@ def matching_permutation(a, b):
     """
     N = len(a)
     if N != len(b):
-        raise ValueError, "Lists must be of same length."
+        raise ValueError("Lists must be of same length.")
 
     perm = [-1]*N
     eps  = 0.5*min([abs(a[i]-a[j]) for i in range(N) for j in range(i)])
@@ -252,8 +250,8 @@ def matching_permutation(a, b):
                 break
 
     if -1 in perm:
-        raise ValueError, "Could not compute matching permutation " \
-                          "between %s and %s." %(a,b)
+        raise ValueError("Could not compute matching permutation "
+                         "between %s and %s." % (a, b))
 
     return Permutation(perm)
 
