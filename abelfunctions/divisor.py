@@ -32,10 +32,6 @@ Contents
 
 from sage.all import infinity
 
-def ZeroDivisor(X):
-    r"""Returns a zero Divisor on X."""
-    return Divisor(X,{})
-
 
 class Divisor(object):
     r"""A divisor on a Riemann surface.
@@ -192,7 +188,7 @@ class ZeroDivisor(Divisor):
 class Place(Divisor):
     r"""A Place on a Riemann surface.
 
-    Is `abelfunctions` a Riemann surface is obtained by desingularizing
+    In `abelfunctions` a Riemann surface is obtained by desingularizing
     and compactifying a complex algebraic curve. Every place :math:`P`
     on the resulting Riemann surface can be described in terms of a
     Puiseux series in a local parameter :math:`t`.
