@@ -99,13 +99,13 @@ def newton_polygon(H, additional_points=[]):
     # need to remove all points of the form (0,j) and (i,0) where j > j0
     # and i > i0, the points on the axes closest to the origin
     R = H.parent()
-    x,y = R.gens()
+    x, y = R.gens()
     monomials = H.monomials()
-    points = map(lambda monom: (monom.degree(y), monom.degree(x)), monomials)
-    support = map(Point, points) + additional_points
+    points = ((monom.degree(y), monom.degree(x)) for monom in monomials)
+    support = [Point(p) for p in points] + additional_points
     i0 = min(P.x for P in support if P.y == 0)
     j0 = min(P.y for P in support if P.x == 0)
-    support = filter(lambda P: (P.x <= i0) and (P.y <= j0), support)
+    support = [P for P in support if (P.x <= i0) and (P.y <= j0)]
     convex_hull = sympy.convex_hull(*support)
 
     # special treatment when the hull is just a point or a segment
@@ -131,7 +131,7 @@ def newton_polygon(H, additional_points=[]):
     polygon = []
     for side in sides:
         polygon_side = [P for P in support if P in side]
-        polygon_side = sorted(map(lambda P: (int(P.x),int(P.y)), polygon_side))
+        polygon_side = sorted((int(P.x), int(P.y)) for P in polygon_side)
         polygon.append(polygon_side)
 
         # stop the moment we hit the i-axis. despite the filtration at
@@ -395,11 +395,11 @@ def puiseux_rational(H, recurse=False):
         u,v = bezout(q,m)
         for psi,k in phi.squarefree_decomposition():
             roots = psi.roots(ring=QQbar, multiplicities=False)
-            map(lambda x: x.exactify(), roots)
             for xi in roots:
+                xi.exactify()
                 Hprime = transform_newton_polynomial(H, q, m, l, xi)
                 next_terms = puiseux_rational(Hprime, recurse=True)
-                for (G,P,Q) in next_terms:
+                for (G, P, Q) in next_terms:
                     singular_term = (G, xi**v*P**q, P**m*(xi**u + Q))
                     singular_terms.append(singular_term)
 
@@ -787,11 +787,12 @@ class PuiseuxTSeries(object):
         mu = phi.roots(QQbar, multiplicities=False)[0]
 
         if all_conjugates:
-            zeta_e=QQbar.zeta(abse)
+            zeta_e = QQbar.zeta(abse)
             conjugates = [mu*zeta_e**k for k in range(abse)]
         else:
             conjugates = [mu]
-        map(lambda x: x.exactify(), conjugates)
+        for x in conjugates:
+            x.exactify()
 
         # determine the resulting x-series
         xseries = []
@@ -799,7 +800,7 @@ class PuiseuxTSeries(object):
             t = self.ypart.parent().gen()
             fconj = self.ypart(c*t)
             p = P(fconj(x**(QQ(1)/e)))
-            p = p.add_bigoh(QQ(order+1)/abse)
+            p = p.add_bigoh(QQ(order + 1)/abse)
             xseries.append(p)
         return xseries
 
