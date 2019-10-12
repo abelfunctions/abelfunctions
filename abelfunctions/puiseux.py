@@ -256,19 +256,19 @@ def newton_data(H, exceptional=False):
     if len(newton[0]) == 1:
         return []
 
-    # for each side dtermine the corresponding newton data: side slope
+    # for each side determine the corresponding newton data: side slope
     # information and corresponding side characteristic polynomial, phi
     result = []
     for side in newton:
-        i0,j0 = side[0]
-        i1,j1 = side[1]
-        slope = QQ(j1-j0)/QQ(i1-i0)
+        i0, j0 = side[0]
+        i1, j1 = side[1]
+        slope = QQ(j1 - j0) / QQ(i1 - i0)
         q = slope.denom()
         m = -slope.numer()
         l = min(q*j0 + m*i0, q*j1 + m*i1)
-        phi = sum(H.coefficient({y:i,x:j})*x**((i-i0)/int(q)) for i,j in side)
+        phi = sum(H.coefficient({y:i, x:j})*x**((i - i0)//int(q)) for i, j in side)
         phi = phi.univariate_polynomial()
-        result.append((q,m,l,phi))
+        result.append((q, m, l, phi))
     return result
 
 
