@@ -91,7 +91,17 @@ before_install:
   - cd ${HOME}
   - gcc --version
 
-  - wget ${SAGE_SERVER}/${SAGE_TARBALL}
+  - |
+    if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      HOMEBREW_NO_AUTO_UPDATE=1 brew install aria2
+    fi
+  - |
+    if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      sudo apt-get install aria2
+    fi
+
+  # - wget ${SAGE_SERVER}/${SAGE_TARBALL}
+  - aria2c ${SAGE_SERVER}/${SAGE_TARBALL}
   - tar xjf ${HOME}/${SAGE_TARBALL}
 
   # OpenSSL is missing for Sage on OSX but is required to use pip securely
