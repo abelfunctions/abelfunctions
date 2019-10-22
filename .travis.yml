@@ -12,75 +12,80 @@ matrix:
   include:
     - os: linux
       env:
-        - SAGE_TARBALL=sage-8.4-Ubuntu_14.04-x86_64.tar.bz2
+        - SAGE_TARBALL=sage-8.4-Ubuntu_18.04-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/linux/64bit/old
-      dist: trusty
+      dist: bionic
     - os: linux
       env:
-        - SAGE_TARBALL=sage-8.6-Ubuntu_14.04-x86_64.tar.bz2
+        - SAGE_TARBALL=sage-8.6-Ubuntu_18.04-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/linux/64bit/old
-      dist: trusty
+      dist: bionic
     - os: linux
       env:
-        - SAGE_TARBALL=sage-8.7-Ubuntu_14.04-x86_64.tar.bz2
+        - SAGE_TARBALL=sage-8.7-Ubuntu_18.04-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/linux/64bit/old
-      dist: trusty
+      dist: bionic
     - os: linux
       env:
-        - SAGE_TARBALL=sage-8.8-Ubuntu_14.04-x86_64.tar.bz2
+        - SAGE_TARBALL=sage-8.8-Ubuntu_18.04-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/linux/64bit
-      dist: trusty
+      dist: bionic
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-8.9-Ubuntu_18.04-x86_64.tar.bz2
+        - SAGE_SERVER=http://files.sagemath.org/linux/64bit
+      dist: bionic
 
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.0-OSX_10.12.6-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel/old
-      osx_image: xcode9.2  # macOS 10.12
+      osx_image: xcode9.2
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.1-OSX_10.12.6-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel/old
-      osx_image: xcode9.2  # macOS 10.12
+      osx_image: xcode9.2
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.2-OSX_10.11.6-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel/old
-      osx_image: xcode8  # macOS 10.11.6
+      osx_image: xcode8
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.3-OSX_10.13.6-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel/old
-      osx_image: xcode10  # macOS 10.13
+      osx_image: xcode10.1
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.4-OSX_10.13.6-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel/old
-      osx_image: xcode10  # macOS 10.13
+      osx_image: xcode10.1
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.5-OSX_10.14.2-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel
-      osx_image: xcode11  # macOS 10.14
+      osx_image: xcode11.2
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.6-OSX_10.14.2-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel
-      osx_image: xcode11  # macOS 10.14
+      osx_image: xcode11.2
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.7-OSX_10.13.6-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel
-      osx_image: xcode10  # macOS 10.13
+      osx_image: xcode10.1
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.8-OSX_10.14.5-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel
-      osx_image: xcode11  # macOS 10.14
+      osx_image: xcode11.2
     - os: osx
       env:
         - SAGE_TARBALL=sage-8.9-OSX_10.14.6-x86_64.tar.bz2
         - SAGE_SERVER=http://files.sagemath.org/osx/intel
-      osx_image: xcode11  # macOS 10.14
+      osx_image: xcode11.2
 
 before_install:
   - cd ${HOME}
