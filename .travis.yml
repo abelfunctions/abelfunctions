@@ -101,7 +101,7 @@ before_install:
     fi
 
   # - wget ${SAGE_SERVER}/${SAGE_TARBALL}
-  - aria2c ${SAGE_SERVER}/${SAGE_TARBALL}
+  - aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
   - tar xjf ${HOME}/${SAGE_TARBALL}
 
   # OpenSSL is missing for Sage on OSX but is required to use pip securely
