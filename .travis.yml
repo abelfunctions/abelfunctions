@@ -104,7 +104,7 @@ before_install:
   # - wget ${SAGE_SERVER}/${SAGE_TARBALL}
   - aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
   # - tar xjf ${HOME}/${SAGE_TARBALL}
-  - pbzip2 -dc ${HOME}/${SAGE_TARBALL} | tar xvf -
+  - pbzip2 -dc ${HOME}/${SAGE_TARBALL} | tar xf -
 
   # OpenSSL is missing for Sage on OSX but is required to use pip securely
   # So download 'by hand' pytest-xdist (used to run tests in parallel) and its dependencies
