@@ -94,16 +94,17 @@ before_install:
 
   - |
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      HOMEBREW_NO_AUTO_UPDATE=1 brew install aria2
+      HOMEBREW_NO_AUTO_UPDATE=1 brew install aria2 pv pigz
     fi
   - |
     if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      sudo apt-get install aria2
+      sudo apt-get install aria2 pv pigz
     fi
 
   # - wget ${SAGE_SERVER}/${SAGE_TARBALL}
   - aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
-  - tar xjf ${HOME}/${SAGE_TARBALL}
+  # - tar xjf ${HOME}/${SAGE_TARBALL}
+  - pigz -dc ${HOME}/${SAGE_TARBALL} | pv | tar xf -
 
   # OpenSSL is missing for Sage on OSX but is required to use pip securely
   # So download 'by hand' pytest-xdist (used to run tests in parallel) and its dependencies
