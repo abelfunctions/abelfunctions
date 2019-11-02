@@ -11,11 +11,11 @@ env:
 
 matrix:
   include:
-    - os: linux
-      env:
-        - SAGE_TARBALL=sage-8.4-Ubuntu_18.04-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit/old
-      dist: bionic
+    # - os: linux
+    #   env:
+    #     - SAGE_TARBALL=sage-8.4-Ubuntu_18.04-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit/old
+    #   dist: bionic
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.6-Ubuntu_18.04-x86_64.tar.bz2
