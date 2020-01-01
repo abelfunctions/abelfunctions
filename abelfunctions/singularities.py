@@ -172,7 +172,7 @@ def singularities(f):
             # if there are still no terms then they are positive exponent
             if not n:
                 return True
-            return min(n) >= 0:
+            return min(n) >= 0
 
         P = [has_finite_v(elt) for elt in P]
 
