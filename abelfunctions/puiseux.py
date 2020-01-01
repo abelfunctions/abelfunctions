@@ -102,15 +102,15 @@ def newton_polygon(H, additional_points=[]):
     x,y = R.gens()
     monomials = H.monomials()
     points = map(lambda monom: (monom.degree(y), monom.degree(x)), monomials)
-    support = map(Point, points) + additional_points
+    support = [Point(pt) for pt in points] + additional_points
     i0 = min(P.x for P in support if P.y == 0)
     j0 = min(P.y for P in support if P.x == 0)
-    support = filter(lambda P: (P.x <= i0) and (P.y <= j0), support)
+    support = [P for P in support if P.x <= i0 and P.y <= j0]
     convex_hull = sympy.convex_hull(*support)
 
     # special treatment when the hull is just a point or a segment
     if isinstance(convex_hull, Point):
-        P = (convex_hull.x,convex_hull.y)
+        P = (convex_hull.x, convex_hull.y)
         return [[P]]
     elif isinstance(convex_hull, Segment):
         P = convex_hull.p1
@@ -125,7 +125,7 @@ def newton_polygon(H, additional_points=[]):
         first_side = generalized_polygon_side(sides[0])
         if first_side != sides[0]:
             P = first_side.p1
-            return newton_polygon(H,additional_points=[P])
+            return newton_polygon(H, additional_points=[P])
 
     # convert the sides to lists of points
     polygon = []
