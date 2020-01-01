@@ -96,7 +96,7 @@ def reorder_cycle(c, j=None):
     except ValueError:
         raise ValueError("%d does not appear in the cycle %s"%(j,c))
 
-    reordered_cycle = [c[k%n] for k in xrange(i,i+n)]
+    reordered_cycle = [c[k%n] for k in range(i,i+n)]
     return reordered_cycle
 
 def frobenius_transform(A, g):
@@ -125,7 +125,7 @@ def frobenius_transform(A, g):
 
     # create the block below the diagonal. make zeros everywhere else in the
     # first g columns
-    for i in xrange(g):
+    for i in range(g):
         counter = dim - 1
 
         # make sure column i has a suitable pivot by swapping rows
@@ -185,8 +185,8 @@ def frobenius_transform(A, g):
     # top right block and -I in the lower left block (the Jacobian
     # matrix)
     J = numpy.dot(numpy.dot(T, numpy.matrix(A)), T.T)
-    for i in xrange(g):
-        for j in xrange(g):
+    for i in range(g):
+        for j in range(g):
             if j==i+g and i<g:   val = 1
             elif i==j+g and j<g: val = -1
             else:                val = 0

@@ -170,13 +170,11 @@ def singularities(f):
             n,alpha = zip(*Pi.terms)
 
             # if there are still no terms then they are positive exponent
-            if n == []:
+            if not n:
                 return True
-            elif min(n) >= 0:
-                return True
-            return False
+            return min(n) >= 0:
 
-        P = filter(has_finite_v, P)
+        P = [has_finite_v(elt) for elt in P]
 
         # P now consists of the places that project to (u0,v0) on the curve
         m = _multiplicity(P)

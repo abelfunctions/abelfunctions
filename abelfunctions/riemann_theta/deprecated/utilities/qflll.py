@@ -21,7 +21,7 @@ def qflll(mat):
     M = mat.shape[0]
     p = [',',';']
     elts = ''.join([str(mat.item(i))+p[0 if (i+1)%M else 1] 
-                    for i in xrange(M**2)])[:-1] 
+                    for i in range(M**2)])[:-1] 
     
     # compute lll reduction and read in PARI/GP's resulting string
     gen = pari.gp_read_str('[' + elts + ']')

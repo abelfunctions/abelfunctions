@@ -49,7 +49,7 @@ def smallest(l):
         a = a[1:] + [a[0]]
 
     # Return the smallest sheet number appearing in the cycle
-    return min([a[2*i] for i in xrange(len(a)/2)])
+    return min([a[2*i] for i in range(len(a)/2)])
 
 
 def reorder_cycle(c, j=None):
@@ -69,7 +69,7 @@ def reorder_cycle(c, j=None):
     except ValueError:
         raise ValueError("%d does not appear in the cycle %s"%(j,c))
 
-    return [c[k%n] for k in xrange(i,i+n)]
+    return [c[k%n] for k in range(i,i+n)]
 
 
 
@@ -97,7 +97,7 @@ def frobenius_transform(A,g):
 
     # create the block below the diagonal. make zeros everywhere else
     # in the first g columns
-    for i in xrange(g):
+    for i in range(g):
         # make sure column i has a suitable pivot by swapping rows
         # and columns
         counter = dim-1
@@ -140,7 +140,7 @@ def frobenius_transform(A,g):
             K[j,:] += pivot * K[i+g,:]
             K[:,j] += pivot * K[:,i+g]
 
-    for i in xrange(g):
+    for i in range(g):
         # the block above the diagonal is already there. use it to
         # create zeros everywhere else in the second block of g
         # columns. automatically all other coluns are then zero,
@@ -157,8 +157,8 @@ def frobenius_transform(A,g):
     # top right block and -I in the lower left block (the Jacobian
     # matrix)
     J = numpy.dot(numpy.dot(T, numpy.matrix(A)), T.T)
-    for i in xrange(g):
-        for j in xrange(g):
+    for i in range(g):
+        for j in range(g):
             if j==i+g and i<g:   val = 1
             elif i==j+g and j<g: val = -1
             else:                val = 0
@@ -204,8 +204,8 @@ def tretkoff_graph(monodromy_group):
     visited_sheets = [0]
     visited_branch_places = [
         (branch_points[i],find_cycle(monodromy[i],j))
-        for j in xrange(covering_number)
-        for i in xrange(t)
+        for j in range(covering_number)
+        for i in range(t)
         if len(find_cycle(monodromy[i],j)) == 1
         ]
 
