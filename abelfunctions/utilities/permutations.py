@@ -90,7 +90,7 @@ class Permutation(object):
         [2, 3, 0, 1]
         """
         degree = max([0] + [max(cycle + [0]) for cycle in cycles]) + 1
-        l = range(degree)
+        l = list(range(degree))
         for cycle in cycles:
             if not cycle:
                 continue
@@ -105,7 +105,7 @@ class Permutation(object):
         """Create a list of cycles from a permutation list."""
         n = len(l)
         cycles = []
-        not_visited = range(n)[::-1]
+        not_visited = list(range(n))[::-1]
 
         while len(not_visited) > 0:
             i = not_visited.pop()
@@ -180,18 +180,17 @@ class Permutation(object):
         """
         if len(a) != len(self):
             raise ValueError("len(a) must equal len(self)")
-        return list(map(lambda i: a[self[i]], range(len(a))))
+        return [a[self[i]] for i in range(len(a))]
 
     def inverse(self):
         """
         Returns the inverse permutation.
         """
-        l = range(len(self))
+        l = list(range(len(self)))
         for i in range(len(self)):
             l[self(i)] = i
 
         return Permutation(l)
-
 
 
 def matching_permutation(a, b):

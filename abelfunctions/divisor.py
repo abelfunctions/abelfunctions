@@ -169,15 +169,16 @@ class Divisor(object):
         return False
 
     def as_place(self):
-        items = self.dict.items()
+        items = list(self.dict.items())
         if len(items) != 1:
             raise ValueError('Divisor contains more than one place. '
                              'Cannot coerce to place.')
-        P,m = items[0]
+        P, m = items[0]
         if m != 1:
             raise ValueError('Divisor contains place of multiplicity. '
                              'Cannot coerce to single place.')
         return P
+
 
 class ZeroDivisor(Divisor):
     r"""A class representing the zero divisor on a Riemann surface."""
@@ -315,10 +316,10 @@ class RegularPlace(Place):
         x,y = f.parent().gens()
         a,b = self.x, self.y
 
-        def mult(p,a,b):
+        def mult(p, a, b):
             r"""Returns the multiplicity of the zero `(a,b)` on `p`."""
-            pab = p(x+a, y+b)
-            degrees = map(sum, pab.exponents())
+            pab = p(x + a, y + b)
+            degrees = [sum(exp) for exp in pab.exponents()]
             return min(degrees)
 
         numer,denom = omega.as_numer_denom() # XXX

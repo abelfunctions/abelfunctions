@@ -108,12 +108,13 @@ def mnuk_conditions(g, b, generic_adjoint):
     # finally, coerce the result to QQbar[*c][x,y] in order to obtain the
     # coefficients as linear combinations of the c_ij's.
     r = T(r_reduced_mod_denom(u))  # first need to coerce to "largest" ring, T
-    u,v = map(S, R.gens())
-    c = map(S, c)
+    u, v = map(S, R.gens())
+    c = [S(z) for z in c]
     args = [u, v] + c
     r = r(*args)
     conditions = r.coefficients()
     return conditions
+
 
 def recenter_curve(g, singular_point):
     r"""Returns a curve centered at a given singular point.
