@@ -174,7 +174,7 @@ def singularities(f):
                 return True
             return min(n) >= 0
 
-        P = [has_finite_v(elt) for elt in P]
+        P = [elt for elt in P if has_finite_v(elt)]
 
         # P now consists of the places that project to (u0,v0) on the curve
         m = _multiplicity(P)
@@ -380,4 +380,3 @@ def genus(f):
     for point, (m,delta,r) in S:
         g -= delta
     return g
-
