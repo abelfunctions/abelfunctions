@@ -163,7 +163,7 @@ def frobenius_transform(A, g):
             K[:,i+g] *= pivot
 
         # use the pivot to create zeros in the rows above it and below it
-        for j in range(i,i+g) + range(i+g+1,dim):
+        for j in list(range(i, i + g)) + list(range(i + g + 1, dim)):
             pivot = -K[j,i]/K[i+g,i]
             T[j,:] += pivot * T[i+g,:]
             K[j,:] += pivot * K[i+g,:]
@@ -279,12 +279,12 @@ def tretkoff_graph(base_point, base_sheets, monodromy_group):
                 # branch points other than the one that brought us to this
                 # sheet
                 if current_sheet == 0:
-                    branch_point_indices = range(t)
+                    branch_point_indices = list(range(t))
                 else:
                     pred = C.neighbors(node)[0]
                     bpt, pi = C.node[pred]['value']
                     ind = branch_points.index(bpt)
-                    branch_point_indices = range(ind+1, t) + range(ind)
+                    branch_point_indices = list(range(ind+1, t)) + list(range(ind))
 
                 # for each branch place connecting the curent sheet to other
                 # sheets, add a final edge if we've already visited the place
@@ -501,11 +501,11 @@ def compute_c_cycles(tretkoff_graph, final_edges):
         #
         # see the comment in homology:final_edges() for an explanation on the
         # ordering / direction of the cycle.
-        edge = map(lambda n: C.neighbors(n)[0], final_edge)
+        edge = [C.neighbors(n)[0] for n in final_edge]
         path_to_edge = nx.shortest_path(C,root,edge[0])
         path_from_edge = nx.shortest_path(C,edge[1],root)
         path = path_to_edge + path_from_edge
-        path_values = map(lambda n: C.node[n]['value'], path)
+        path_values = [C.node[n]['value'] for n in path]
 
         # convert branch places (branch point, permutation) to
         # point-rotations pairs (branch point, number and direction of

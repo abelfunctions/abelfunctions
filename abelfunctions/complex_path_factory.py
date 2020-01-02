@@ -650,7 +650,7 @@ class ComplexPathFactory(object):
         # plot the base point and the discriminant points
         pts = [(a.real, a.imag)]
         plt = scatter_plot(pts, facecolor='red', **kwds)
-        pts = zip(b.real, b.imag)
+        pts = list(zip(b.real, b.imag))
         plt += scatter_plot(pts, facecolor='black', **kwds)
 
         # plot the monodromy paths

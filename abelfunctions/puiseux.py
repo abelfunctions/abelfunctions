@@ -99,9 +99,9 @@ def newton_polygon(H, additional_points=[]):
     # need to remove all points of the form (0,j) and (i,0) where j > j0
     # and i > i0, the points on the axes closest to the origin
     R = H.parent()
-    x,y = R.gens()
+    x, y = R.gens()
     monomials = H.monomials()
-    points = map(lambda monom: (monom.degree(y), monom.degree(x)), monomials)
+    points = [(monom.degree(y), monom.degree(x)) for monom in monomials]
     support = [Point(pt) for pt in points] + additional_points
     i0 = min(P.x for P in support if P.y == 0)
     j0 = min(P.y for P in support if P.x == 0)
@@ -215,9 +215,10 @@ def transform_newton_polynomial(H, q, m, l, xi):
     R = newH.parent()
     x,y = R.gens()
     exponents, coefficients = zip(*(newH.dict().items()))
-    exponents = map(lambda e: (e[0]-l, e[1]), exponents)
+    exponents = [(e[0] - l, e[1]) for e in exponents]
     newH = R(dict(zip(exponents, coefficients)))
     return newH
+
 
 def newton_data(H, exceptional=False):
     r"""Determines the "newton data" associated with each side of the polygon.

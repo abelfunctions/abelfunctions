@@ -182,7 +182,7 @@ def singularities(f):
         r = _branching_number(P)
         info.append((m,delta,r))
 
-    return zip(S,info)
+    return list(zip(S, info))
 
 
 def _transform(f, singular_pt):

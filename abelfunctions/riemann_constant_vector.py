@@ -142,7 +142,7 @@ def half_lattice_filter(half_lattice_vectors, J, C, D, epsilon=1e-8):
     # construct the set of "shifted" half-lattice vectors: the vectors J(h +
     # A(D) - 0.5*A(C)) where h is a half-lattice vector
     Z = AbelMap(D) - 0.5*AbelMap(C)
-    shifted_half_lattice_vectors = map(J, half_lattice_vectors + Z)
+    shifted_half_lattice_vectors = [J(elt) for elt in half_lattice_vectors + Z]
 
     # evaluate Riemann theta at each of these half-lattice vectors.
     theta_values = RiemannTheta.oscillatory_part(
