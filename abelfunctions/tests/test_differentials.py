@@ -62,17 +62,17 @@ class TestDifferentials(AbelfunctionsTestCase):
         x,y = self.f1.parent().gens()
         dfdy = self.f1.derivative(y)
         X = DummyRS(self.f1)
-        a = map(lambda omega: omega.as_expression(), differentials(X))
+        a = [omega.as_expression() for omega in differentials(X)]
         b = []
-        self.assertEqual(a,b)
+        self.assertEqual(a, b)
 
     def test_f2(self):
         x,y = self.f2.parent().gens()
         dfdy = self.f2.derivative(y)
         X = DummyRS(self.f2)
-        a = map(lambda omega: omega.as_expression(), differentials(X))
+        a = [omega.as_expression() for omega in differentials(X)]
         b = [x*y/dfdy, x**3/dfdy]
-        self.assertEqual(a,b)
+        self.assertEqual(a, b)
 
     def test_validation_success(self):
         x,y = self.f2.parent().gens()
