@@ -81,7 +81,7 @@ def Int(i, px):
     n = len(px)
     pxi = px[i]
     val = QQ(0)
-    for k in xrange(n):
+    for k in range(n):
         if k != i:
             val += (pxi-px[k]).valuation()
     return val
@@ -121,7 +121,7 @@ def compute_expansion_bounds(px):
     n = len(px)
     N = []
     max_Int = max([Int(k,px) for k in range(n)])
-    for i in xrange(n):
+    for i in range(n):
         pairwise_diffs = [(px[k]-px[i]).valuation()
                           for i in range(n) if k != i]
         Ni = max(pairwise_diffs) + max_Int - Int(i,px) + 1
@@ -225,7 +225,7 @@ def integral_basis(f):
         b = _integral_basis_monic_singular(fmonic)
 
     # reverse leading coefficient scaling
-    for i in xrange(1,len(b)):
+    for i in range(1,len(b)):
         b[i] = b[i](x,lc*y)
     return b
 

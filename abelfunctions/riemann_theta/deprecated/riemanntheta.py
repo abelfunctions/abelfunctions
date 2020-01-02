@@ -662,8 +662,8 @@ Tinv, z, g, R)
                 partial = np.zeros(g)
                 partial[i] = 1.0
                 theta_grad[i] = self.value_at_point(z_tilde, Omega, prec = prec, deriv = partial)
-            for n in xrange(g):
-                for k in xrange(g):
+            for n in range(g):
+                for k in range(g):
                     non_theta_hess[n,k] =  2*np.pi*1.j*alpha[k,0] * (2*np.pi*1.j*theta_eval*alpha[n,0] + theta_grad[n]) + (2*np.pi*1.j*theta_grad[k]*alpha[n,0])
                     
             term1 = np.dot(d1.T, np.dot(non_theta_hess, d2))[0,0]

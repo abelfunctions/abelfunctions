@@ -31,7 +31,7 @@ print("lincomb:")
 print(hom['linearcombination'])
 
 print("\n\tRS: computing cycles")
-gamma = [X.c_cycle(i) for i in xrange(len(hom['cycles']))]
+gamma = [X.c_cycle(i) for i in range(len(hom['cycles']))]
 
 # print "\n\tRS: period matrix"
 # A,B = X.period_matrix()

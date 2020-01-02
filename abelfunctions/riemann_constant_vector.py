@@ -308,12 +308,12 @@ def canonical_divisor(X):
 
     # only take the divisors with the fewest number of distinct places
     N = min(len(C.places) for C in canonical_divisors)
-    canonical_divisors = filter(lambda C: len(C.places)==N, canonical_divisors)
+    canonical_divisors = [C for C in canonical_divisors if len(C.places) == N]
 
     # if there is a divisor with no infinite places, return that
     # one. otherwise, return any (the first) divisor computed
     for C in canonical_divisors:
-        has_infinite_place = any(P.is_infinite() for P,n in C)
+        has_infinite_place = any(P.is_infinite() for P, n in C)
         if not has_infinite_place:
             return C
     return canonical_divisors[0]

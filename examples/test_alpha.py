@@ -22,7 +22,7 @@ def mu(f,a,n,x,y):
     binom = sympy.binomial_coefficients_list(n)
     binom = map(numpy.double, binom)
     normf = numpy.sqrt(sum(numpy.abs(a[k](x))**2 * 1/binom[k] 
-                           for k in xrange(n+1)
+                           for k in range(n+1)
                            )
                        )
     Delta = numpy.sqrt(numpy.double(n)) * (1 + numpy.abs(y))
@@ -58,9 +58,9 @@ def analytically_continue(df,a,n,fibre,t,path):
         are_approximate_solutions = True                
         beta_yapp = [beta(df,xip1,yappj) for yappj in yapp]
         gamma_yapp = [gamma(df,n,xip1,yappj) for yappj in yapp]
-        alpha_yapp = [beta_yapp[j] * gamma_yapp[j] for j in xrange(n)]
+        alpha_yapp = [beta_yapp[j] * gamma_yapp[j] for j in range(n)]
         print("\t alphas = %s (alpha0 = %f)" % (alpha_yapp, alpha0))
-        for j in xrange(n):
+        for j in range(n):
             # check if our guess is in the quadratic convergence basin
             alphaj = beta_yapp[j] * gamma_yapp[j]
             if alphaj >= alpha0:
@@ -77,9 +77,9 @@ def analytically_continue(df,a,n,fibre,t,path):
             # use the basin radius formula to ensure that each approximate
             # root is within only one quadradic convergence basin.
             beta_yapp = [beta(df, xip1, yappj) for yappj in yapp]
-            for j in xrange(n):
+            for j in range(n):
                 betaj = beta_yapp[j]
-                for k in xrange(n):
+                for k in range(n):
                     if j != k:
                         dist = numpy.abs(yapp[j] - yapp[k])
                         betak = beta_yapp[k]
@@ -146,7 +146,7 @@ if __name__=='__main__':
 
     # analytically continue
     ypath = []
-    for k in xrange(nseg):
+    for k in range(nseg):
 #        print("=== segment %k ===")
 #        print("fibre (start) =")
 #        for yj in fibre: print(yj)
@@ -172,7 +172,7 @@ if __name__=='__main__':
 
     # plot
     fig = plt.figure()
-    for j in xrange(n):
+    for j in range(n):
         ypath = numpy.array(ys[j], dtype=numpy.complex)
 
         ax = fig.add_subplot(1,n,j+1)

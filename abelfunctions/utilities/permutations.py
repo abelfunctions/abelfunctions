@@ -242,8 +242,8 @@ def matching_permutation(a, b):
     perm = [-1]*N
     eps  = 0.5*min([abs(a[i]-a[j]) for i in range(N) for j in range(i)])
 
-    for i in xrange(N):
-        for j in xrange(N):
+    for i in range(N):
+        for j in range(N):
             dist = abs(a[i] - b[j])
             if dist < eps:
                 perm[j] = i
