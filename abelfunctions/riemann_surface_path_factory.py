@@ -428,8 +428,9 @@ class RiemannSurfacePathFactory(object):
 
         # sanity check: the product of the finite branch point permutations
         # should be equal to the inverse of the permutation at infinity
-        phi_prod = reduce(lambda phi1,phi2: phi2*phi1, permutations)
-        phi_prod_all = phi_prod * phi_oo
+        phi_prod_all = phi_oo
+        for sigma in permutations:
+            phi_prod_all = sigma * phi_prod_all
         if not phi_prod_all.is_identity():
             raise ValueError('Contradictory permutation at infinity.')
 
