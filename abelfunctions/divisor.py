@@ -55,15 +55,15 @@ class Divisor(object):
     """
     @property
     def places(self):
-        return self._d.keys()
+        return tuple(self._d.keys())
 
     @property
     def multiplicities(self):
-        return self._d.values()
+        return tuple(self._d.values())
 
     @property
     def items(self):
-        return self._d.items()
+        return tuple(self._d.items())
 
     @property
     def degree(self):
@@ -72,9 +72,10 @@ class Divisor(object):
     @property
     def dict(self):
         return self._d
+
     @dict.setter
     def dict(self, value):
-        d = dict((P,m) for P,m in value.items() if m != 0)
+        d = {P: m for P, m in value.items() if m}
         self._d = d
 
     def __init__(self, RS, d):
@@ -122,7 +123,7 @@ class Divisor(object):
             return 0
 
     def __iter__(self):
-        return self.dict.iteritems()
+        return iter(self.dict.items())
 
     def __eq__(self, other):
         if isinstance(other, Divisor):
