@@ -120,11 +120,11 @@ def compute_expansion_bounds(px):
     """
     n = len(px)
     N = []
-    max_Int = max([Int(k,px) for k in range(n)])
+    max_Int = max([Int(k, px) for k in range(n)])
     for i in range(n):
-        pairwise_diffs = [(px[k]-px[i]).valuation()
-                          for i in range(n) if k != i]
-        Ni = max(pairwise_diffs) + max_Int - Int(i,px) + 1
+        pairwise_diffs = [(px[k] - px[i]).valuation()
+                          for k in range(n) if k != i]
+        Ni = max(pairwise_diffs) + max_Int - Int(i, px) + 1
         N.append(Ni)
     return N
 

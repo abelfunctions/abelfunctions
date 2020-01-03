@@ -37,13 +37,13 @@ class TestConstruction(unittest.TestCase):
         f = self.f2
         CPF = ComplexPathFactory(f, -2)
         discriminant_points = CPF.discriminant_points
-        self.assertItemsEqual(discriminant_points, map(QQbar, [-I, I]))
+        self.assertItemsEqual(discriminant_points, [QQbar(z) for z in [-I, I]])
 
         f = self.f3
         CPF = ComplexPathFactory(f, -2)
         discriminant_points = CPF.discriminant_points
         self.assertItemsEqual(discriminant_points,
-                              map(QQbar,[-I, -1, 1, I]))
+                              [QQbar(z) for z in [-I, -1, 1, I]])
 
     def test_base_point(self):
         f = self.f1

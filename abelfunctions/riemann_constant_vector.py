@@ -264,8 +264,8 @@ def half_lattice_vector(X, C, epsilon1, epsilon2):
 
     # filter pass #3: iterate over every degree g-1 divisor using the places
     # computed above
-    for m in sum_partitions(g-1):
-        D = reduce(lambda a,b: a[0]*a[1] + b[0]*b[1], zip(m,places))
+    for m in sum_partitions(g - 1):
+        D = sum(a * b for a, b in zip(m, places))
         h = half_lattice_filter(h, J, C, D, epsilon=epsilon2)
         if len(h) == 1:
             return h[0].T

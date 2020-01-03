@@ -470,8 +470,7 @@ class RiemannSurfacePathFactory(object):
             :class:`RiemannSurfacePath` objects.
         """
         cycles = self.skeleton.a_cycles()
-        paths = map(self.RiemannSurfacePath_from_cycle, cycles)
-        return paths
+        return [self.RiemannSurfacePath_from_cycle(c) for c in cycles]
 
     def b_cycles(self):
         """Returns the b-cycles on the Riemann surface.
@@ -483,8 +482,7 @@ class RiemannSurfacePathFactory(object):
             :class:`RiemannSurfacePath` objects.
         """
         cycles = self.skeleton.b_cycles()
-        paths = map(self.RiemannSurfacePath_from_cycle, cycles)
-        return paths
+        return [self.RiemannSurfacePath_from_cycle(c) for c in cycles]
 
     def c_cycles(self):
         """Returns the c-cycles of the Riemann surface and the linear
@@ -521,7 +519,7 @@ class RiemannSurfacePathFactory(object):
         c_cycles = [cycles[i] for i in indices]
         linear_combinations = linear_combinations[:,indices]
 
-        paths = map(self.RiemannSurfacePath_from_cycle, c_cycles)
+        paths = [self.RiemannSurfacePath_from_cycle(c) for c in c_cycles]
         return paths, linear_combinations
 
     def RiemannSurfacePath_from_cycle(self, cycle):
