@@ -23,9 +23,7 @@ Contents
 from abelfunctions.puiseux import puiseux
 from abelfunctions.integralbasis import Int
 
-from sage.all import I, pi
-from sage.misc.cachefunc import cached_function, cached_method
-from sage.rings.infinity import infinity
+from sage.misc.cachefunc import cached_function
 from sage.rings.integer_ring import ZZ
 from sage.rings.qqbar import QQbar
 from sage.rings.rational_field import QQ
@@ -52,7 +50,6 @@ def singular_points_finite(f):
     # singularities may occur. todo: reuse RiemannSurface.discriminant_points()
     R = f.parent()
     x,y = R.gens()
-    n  = f.degree(y)
     res = f.resultant(f.derivative(y),y).univariate_polynomial()
     xroots = res.roots(ring=QQbar, multiplicities=True)
     for xk,deg in xroots:
@@ -93,8 +90,7 @@ def singular_points_infinite(f):
     # homogenize
     F = f.homogenize('z')
     R = F.parent()
-    x,y,z = R.gens()
-    d = F.total_degree()
+    x, y, z = R.gens()
 
     # find the possible singular points at infinity. these consist of the roots
     # of F(1,y,0) = 0 and F(x,1,0) = 0

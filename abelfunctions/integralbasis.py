@@ -50,9 +50,9 @@ Contents
 from abelfunctions.puiseux import puiseux
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import infinity, SR, cached_function
+from sage.all import cached_function
 from sage.functions.other import ceil
-from sage.matrix.constructor import Matrix, zero_matrix
+from sage.matrix.constructor import Matrix
 from sage.rings.polynomial.all import PolynomialRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
@@ -333,7 +333,7 @@ def compute_bd(f, b, df, r, alpha):
     # of the singular points of df
     for l in range(len(df)):
         k = df[l]  # factor
-        alphak = alpha[l]  # point at which the truncated series are centered
+        # alphak = alpha[l]  # point at which the truncated series are centered
         rk = r[l]  # truncated puiseux series
 
         # singularize the current guess at the current point using each

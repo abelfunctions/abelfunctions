@@ -8,12 +8,10 @@ the Riemann surface.
 
 """
 import numpy
-import scipy
 import networkx as nx
 
-from operator import itemgetter
 from abelfunctions.utilities import Permutation
-from abelfunctions.singularities import genus
+
 
 def find_cycle(pi, j):
     """Returns the cycle (as a list) of the permutation pi containing j.
@@ -252,8 +250,7 @@ def tretkoff_graph(base_point, base_sheets, monodromy_group):
 
     level = 0
     endpoints = [node]
-    final_edges = []
-    while len(endpoints) > 0:
+    while endpoints:
         # obtain the endpoints on the previous level that are not
         # final and sort by their "succession" order".
         endpoints = sorted([n for n,d in C.nodes_iter(data=True)
@@ -329,7 +326,6 @@ def tretkoff_graph(base_point, base_sheets, monodromy_group):
                 for idx in range(1,n):
                     succ = tuple(list(node) + [ctr])
                     value = pi[idx]
-                    edge = (succ,node)
 
                     if value in visited_sheets:
                         final = True
@@ -523,8 +519,7 @@ def compute_c_cycles(tretkoff_graph, final_edges):
 
         # go the the sheet number in the final edge, recording number of
         # rotations normally
-        len_path_to_edge = len(path_to_edge)
-        for n in range(1,len(path),2):
+        for n in range(1, len(path), 2):
             bi,pi = path_values[n]
             prev_sheet = C.node[path[n-1]]['value']
             next_sheet = C.node[path[n+1]]['value']
@@ -581,9 +576,7 @@ def compress_cycle(cycle, tretkoff_graph):
     N = len(cycle)
     n = 1
     while n < (N-2):
-        curr_sheet = cycle[n-1]
         curr_place = cycle[n]
-        next_sheet = cycle[n+1]
         next_place = cycle[n+2]
 
         # if two successive branch points are the same then delete one of them
@@ -600,7 +593,6 @@ def compress_cycle(cycle, tretkoff_graph):
     N = len(cycle)
     n = 0
     while n < (N-1):
-        sheet = cycle[n]
         branch = cycle[n+1]
 
         if branch[1] == 0:
@@ -945,4 +937,3 @@ class Skeleton(object):
         plt.xticks([])
         plt.yticks([])
         return plt.gcf()
-
