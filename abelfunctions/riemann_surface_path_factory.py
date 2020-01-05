@@ -23,12 +23,9 @@ Authors
 """
 
 import numpy
-import scipy
-import scipy.linalg as linalg
 
 from abelfunctions.complex_path import (
     ComplexLine,
-    ComplexArc,
     ComplexRay,
     ComplexPath,
 )
@@ -38,15 +35,12 @@ from abelfunctions.riemann_surface_path import (
     RiemannSurfacePathPuiseux,
     RiemannSurfacePathSmale,
     )
-from abelfunctions.utilities import (
-    Permutation,
-    matching_permutation,
-    )
+from abelfunctions.utilities import matching_permutation
 from abelfunctions.complex_path_factory import ComplexPathFactory
 #from abelfunctions.skeleton import Skeleton
 from abelfunctions.ypath_factory import YPathFactory as Skeleton
 
-from numpy import complex, double, array
+from numpy import complex, array
 from sage.all import infinity, CC, CDF, cached_method
 
 class RiemannSurfacePathFactory(object):
@@ -318,7 +312,6 @@ class RiemannSurfacePathFactory(object):
 
         # construct the RiemannSurfacePath going from this regular place to the
         # discriminant point.
-        xend = complex(gamma1.get_x(1.0))
         yend = array(gamma1.get_y(1.0), dtype=complex)
         gamma_x = ComplexLine(complex(a), complex(center))
         segment = RiemannSurfacePathPuiseux(
@@ -353,7 +346,6 @@ class RiemannSurfacePathFactory(object):
 
         # determine the index of the sheet (sheet_index) of the base place
         # continues to the y-component of the target
-        base_sheets = self.base_sheets
         end_sheets = array(gamma.get_y(1.0), dtype=complex)
         end_diffs = abs(end_sheets - complex(P.y))
         if min(end_diffs) > 1.0e-8:
@@ -579,7 +571,6 @@ class RiemannSurfacePathFactory(object):
 
         # build a list of path segments from each tuple of xdata. build a line
         # segment or arc depending on xdata input
-        x0_segment = x0
         y0_segment = y0
         segments = []
         for segment_x in complex_path.segments:
@@ -597,11 +588,9 @@ class RiemannSurfacePathFactory(object):
                     self.riemann_surface, segment_x, y0_segment)
 
             # determine the starting place of the next segment
-            x0_segment = segment.get_x(1.0)
             y0_segment = segment.get_y(1.0)
             segments.append(segment)
 
         # build the entire path from the path segments
-        gamma = RiemannSurfacePath(self.riemann_surface, complex_path, y0,
-                                   segments)
-        return gamma
+        return RiemannSurfacePath(self.riemann_surface, complex_path, y0,
+                                  segments)
