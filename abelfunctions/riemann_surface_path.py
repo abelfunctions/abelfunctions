@@ -335,7 +335,7 @@ class RiemannSurfacePathPrimitive(object):
         yi = self.analytically_continue(xim1, yim1, xi)
         return yi
 
-    def analytically_continue(self, yi, xip1):
+    def analytically_continue(self, xi, yi, xip1):
         raise NotImplementedError('Implement in subclass.')
 
     def integrate(self, omega):
