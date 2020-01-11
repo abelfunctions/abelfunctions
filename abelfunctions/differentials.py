@@ -40,12 +40,12 @@ Contents
 --------
 
 """
-from abelfunctions.divisor import Divisor, Place
+from abelfunctions.divisor import Divisor
 from abelfunctions.integralbasis import integral_basis
 from abelfunctions.puiseux import puiseux
-from abelfunctions.singularities import singularities, _transform, genus
+from abelfunctions.singularities import singularities, _transform
 
-from sage.all import solve, infinity, CC, fast_callable
+from sage.all import infinity, CC, fast_callable
 from sage.rings.polynomial.all import PolynomialRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar

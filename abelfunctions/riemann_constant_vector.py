@@ -191,9 +191,11 @@ def find_regular_places(X, n):
         if abs(a-b) > R:
             places.extend(X(a))
 
-        # pick a new x
-        if x > 0: x = -x
-        else:     x += 1
+        # pick a new a
+        if a > 0:
+            a = -a
+        else:
+            a += 1
 
     # we obtain deg_y(f) places at a time. truncate to desired number of places
     places = places[:n]
