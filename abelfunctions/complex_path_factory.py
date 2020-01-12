@@ -5,19 +5,17 @@ Module for computing the monodromy group of the set of discriminant points
 of a complex plane algebraic curve.
 
 """
-
 import numpy
-import scipy
 
 from numpy import double, complex, floor, angle
-from sage.all import infinity, QQbar, Graphics, scatter_plot
-from sage.functions.other import real_part, imag_part
+from sage.all import infinity, QQbar, scatter_plot
 
 from abelfunctions.complex_path import (
     ComplexLine,
     ComplexArc,
     ComplexPath,
 )
+
 
 class ComplexPathFactory(object):
     r"""Factory for computing complex paths on the x-projection of a Riemann surface
@@ -243,7 +241,7 @@ class ComplexPathFactory(object):
         return radii
 
     def radius(self, bi):
-        """Returns the raidus of the bounding circle around `bi`.
+        """Returns the radius of the bounding circle around `bi`.
 
         Parameters
         ----------
@@ -266,7 +264,7 @@ class ComplexPathFactory(object):
 
         # raise an error if not found
         if index == len(self.discriminant_points_complex):
-            raise ValueError('%s is not a discriminant point of %s'%(bi,f))
+            raise ValueError('%s is not a discriminant point of %s' % (bi, self.f))
 
         radius = self.radii[index]
         return radius

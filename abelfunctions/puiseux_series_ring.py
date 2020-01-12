@@ -34,10 +34,7 @@ import weakref
 from sage.all import parent
 from sage.rings.all import IntegralDomain, CommutativeRing, Field
 
-from abelfunctions.puiseux_series_ring_element import (
-    is_PuiseuxSeries,
-    PuiseuxSeries,
-)
+from abelfunctions.puiseux_series_ring_element import PuiseuxSeries
 from sage.categories.complete_discrete_valuation import CompleteDiscreteValuationFields
 from sage.categories.fields import Fields
 from sage.rings.laurent_series_ring import (
@@ -45,16 +42,14 @@ from sage.rings.laurent_series_ring import (
     LaurentSeriesRing,
 )
 from sage.rings.laurent_series_ring_element import is_LaurentSeries
-from sage.rings.power_series_ring import (
-    is_PowerSeriesRing,
-    PowerSeriesRing,
-)
+from sage.rings.power_series_ring import is_PowerSeriesRing
 from sage.rings.power_series_ring_element import is_PowerSeries
 
 
 puiseux_series = {}
 def PuiseuxSeriesRing(base_ring, name=None, names=None, default_prec=None, sparse=False):
-    if not names is None: name = names
+    if names is not None:
+        name = names
     if name is None:
         raise TypeError('You must specify the name of the indeterminate of the Puiseux series ring.')
 

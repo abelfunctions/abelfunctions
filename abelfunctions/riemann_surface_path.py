@@ -44,8 +44,8 @@ from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
 from numpy import double, complex
 
-from sage.all import (
-    QQ, QQbar, CC, infinity, fast_callable, factorial, cached_method, cached_function)
+from sage.all import (QQ, QQbar, CC, infinity, fast_callable,
+                      factorial, cached_method)
 from sage.functions.other import real_part, imag_part, floor
 from sage.plot.line import line
 

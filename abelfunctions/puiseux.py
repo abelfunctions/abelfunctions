@@ -42,18 +42,14 @@ import sympy
 
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import gcd, xgcd
-from sage.functions.log import log, exp
+from sage.all import xgcd
+from sage.functions.log import log
 from sage.functions.other import ceil
 from sage.rings.big_oh import O
 from sage.rings.infinity import infinity
-from sage.rings.integer_ring import ZZ
 from sage.rings.laurent_series_ring import LaurentSeriesRing
-from sage.rings.laurent_series_ring_element import LaurentSeries
-from sage.rings.polynomial.laurent_polynomial_ring import LaurentPolynomialRing
 from sage.rings.qqbar import QQbar
 from sage.rings.rational_field import QQ
-from sage.structure.element import AlgebraElement
 from sympy import Point, Segment
 
 
@@ -738,7 +734,7 @@ class PuiseuxTSeries(object):
         boolean
 
         """
-        if is_instance(other, PuiseuxTSeries):
+        if isinstance(other, PuiseuxTSeries):
             if self._hash == other._hash:
                 return True
         return False
