@@ -1,11 +1,8 @@
-import abelfunctions
 import getopt
 import sys
-import unittest
 import warnings
 
-# get abelfunctions version number as '__version__'
-exec(open('abelfunctions/version.py')).read()
+from abelfunctions import __version__
 
 
 def usage():
@@ -26,7 +23,7 @@ Optional arguments:
     -p <arg>      -- run tests in parallel using <arg> number of processes (requires pytest-xdist)
     
 """%__version__
-    print s
+    print(s)
 
 
 def runtests(argv):
@@ -75,7 +72,7 @@ def runtests(argv):
     errno = pytest.main(pytest_args)
     sys.exit(errno)
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     # run tests and suppress warnings (particularly from PARI)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
