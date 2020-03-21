@@ -369,6 +369,6 @@ def integer_points_python(g, R, T):
     c = numpy.zeros((g,1))
     points = _find_int_points_python(g-1, R, T, c, [])
     points = numpy.array(points, dtype=numpy.double)
-    N = len(points)/g
+    N = len(points)//g
     points.resize((N,g))
     return points
