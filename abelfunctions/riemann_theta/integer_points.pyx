@@ -313,8 +313,8 @@ def _find_int_points_python(g, R, T, c, start):
     # reached a boundary
     a_ = c[g] - R/(numpy.sqrt(numpy.pi)*T[g,g])
     b_ = c[g] + R/(numpy.sqrt(numpy.pi)*T[g,g])
-    a = numpy.ceil(a_)
-    b = numpy.floor(b_)
+    a = int(numpy.ceil(a_))
+    b = int(numpy.floor(b_))
     if not a <= b:
         return numpy.array([], dtype=numpy.double)
 
