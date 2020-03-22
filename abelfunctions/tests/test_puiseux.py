@@ -332,7 +332,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f1.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(x**2, x**4*(x*(y + 1) + 1))])
 
@@ -341,7 +341,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f2.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(x, x**2*y),
              (-x**2/2, -x**3*(y + 1)/2)])
@@ -351,7 +351,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f2.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(1/x**3, (x**2*y + x**2)/x**9)])
 
@@ -364,7 +364,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f4.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(x, x*(y + 1)),
              (x, x*(y - 1))])
@@ -374,7 +374,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f4.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(1/(-x**2), (x*y + x)/x**4)])
 
@@ -387,7 +387,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f7.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(x, y + r0),
              (x, y + r1),
@@ -398,7 +398,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f22.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(x**3, x**5*(y + 1))])
 
@@ -407,7 +407,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f2.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(1/x**3, (x*y + x)/x**6)])
 
@@ -416,7 +416,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f23.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(x, x*(x*y + 2) + 1),
              (x, x*(x*(y + 1) + 2) + 1)])
@@ -426,7 +426,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f23.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(1/x,y/x**7), (1/x,(1+y)/x**7)])
 
@@ -439,7 +439,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         x,y = self.f27.parent().gens()
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(x, x*(y + sqrt2)),
              (x, x*(y - sqrt2)),
@@ -453,7 +453,7 @@ class TestPuiseux(AbelfunctionsTestCase):
         series = self.get_PQ(f,a=infinity)
         x = QQbar['x,y'](x)
         y = QQbar['x,y'](y)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             series,
             [(1/x, (y+1)/x**3),
              (1/x, (y-1)/x**3)])
