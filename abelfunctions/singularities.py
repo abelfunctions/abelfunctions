@@ -349,7 +349,7 @@ def _delta_invariant(P):
         # Y(t=0) = v0
         ri = Pxi.ramification_index
         delta += QQ(ri * IntPxi - ri + 1)/2
-    return delta.numerator()
+    return int(delta.numerator())
 
 
 @cached_function
