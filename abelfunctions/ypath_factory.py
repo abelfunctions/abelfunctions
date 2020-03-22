@@ -112,12 +112,12 @@ def frobenius_transform(A,g):
                 if K[k,i] != 0:
                     pivot = -1/K[k,i];
 
-                    T[k,:]      *= pivot                         # scale row
+                    numpy.multiply(T[k,:], pivot, T[k,:], casting='unsafe') # scale row
                     T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
 
-                    K[k,:]      *= pivot                         # scale row
+                    numpy.multiply(K[k,:], pivot, K[k,:], casting='unsafe') # scale row
                     K[[k,i+g],:] = K[[i+g,k],:]                  # swap rows
-                    K[:,k]      *= pivot                         # scale column
+                    numpy.multiply(K[:,k], pivot, K[:,k], casting='unsafe') # scale column
                     K[:,[k,i+g]] = K[:,[i+g,k]]                  # swap columns
 
                 k += 1
@@ -125,16 +125,16 @@ def frobenius_transform(A,g):
             # otherwise, if the pivot element is non-zero then scale
             # it so it's equal to -1
             pivot = -1/K[i+g,i]
-            T[i+g,:] *= pivot
-            K[i+g,:] *= pivot
-            K[:,i+g] *= pivot
+            numpy.multiply(T[i+g,:], pivot, T[i+g,:], casting='unsafe')
+            numpy.multiply(K[i+g,:], pivot, K[i+g,:], casting='unsafe')
+            numpy.multiply(K[:,i+g], pivot, K[:,i+g], casting='unsafe')
 
         for j in list(range(i, i + g)) + list(range(i + g + 1, dim)):
             # use the pivot to create zeros in the rows above it and below it
             pivot = -K[j,i]/K[i+g,i]
-            T[j,:] += pivot * T[i+g,:]
-            K[j,:] += pivot * K[i+g,:]
-            K[:,j] += pivot * K[:,i+g]
+            numpy.add(T[j,:], pivot*T[i+g,:], T[j,:], casting='unsafe')
+            numpy.add(K[j,:], pivot*K[i+g,:], K[j,:], casting='unsafe')
+            numpy.add(K[:,j], pivot*K[:,i+g], K[:,j], casting='unsafe')
 
     for i in range(g):
         # the block above the diagonal is already there. use it to
