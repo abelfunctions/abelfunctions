@@ -124,7 +124,7 @@ def integer_kernel_basis(R):
 
     """
     twog, twog = R.dimensions()
-    g = twog/2
+    g = twog//2
     K = R.T - identity_matrix(ZZ, twog)
     r = K.rank()
 
