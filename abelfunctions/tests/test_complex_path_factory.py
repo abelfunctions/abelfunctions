@@ -1,4 +1,5 @@
 import unittest
+import six
 
 import numpy
 from numpy import pi, Infinity, exp, sqrt, complex
@@ -32,17 +33,17 @@ class TestConstruction(unittest.TestCase):
         f = self.f1
         CPF = ComplexPathFactory(f, -1)
         discriminant_points = CPF.discriminant_points
-        self.assertCountEqual(discriminant_points, [QQbar(0)])
+        six.assertCountEqual(discriminant_points, [QQbar(0)])
 
         f = self.f2
         CPF = ComplexPathFactory(f, -2)
         discriminant_points = CPF.discriminant_points
-        self.assertCountEqual(discriminant_points, [QQbar(z) for z in [-I, I]])
+        six.assertCountEqual(discriminant_points, [QQbar(z) for z in [-I, I]])
 
         f = self.f3
         CPF = ComplexPathFactory(f, -2)
         discriminant_points = CPF.discriminant_points
-        self.assertCountEqual(discriminant_points,
+        six.assertCountEqual(discriminant_points,
                               [QQbar(z) for z in [-I, -1, 1, I]])
 
     def test_base_point(self):

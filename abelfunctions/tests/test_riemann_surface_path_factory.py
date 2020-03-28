@@ -1,4 +1,6 @@
 import unittest
+import six
+
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
 from abelfunctions.complex_path import (
@@ -289,19 +291,19 @@ class TestMonodromyPath(unittest.TestCase):
 
         PF = RiemannSurfacePathFactory(self.X1)
         branch_points, permutations = PF.monodromy_group()
-        self.assertCountEqual(branch_points, [QQbar(0), oo])
+        six.assertCountEqual(branch_points, [QQbar(0), oo])
         self.assertEqual(permutations[0], Permutation([1,0]))
 
         PF = RiemannSurfacePathFactory(self.X2)
         branch_points, permutations = PF.monodromy_group()
-        self.assertCountEqual(branch_points,
+        six.assertCountEqual(branch_points,
                               [QQbar(z) for z in [-I, I]])
         self.assertEqual(permutations[0], Permutation([1,0]))
         self.assertEqual(permutations[1], Permutation([1,0]))
 
         PF = RiemannSurfacePathFactory(self.X3)
         branch_points, permutations = PF.monodromy_group()
-        self.assertCountEqual(branch_points,
+        six.assertCountEqual(branch_points,
                               [QQbar(z) for z in [-I, -1, 1, I]])
         self.assertEqual(permutations[0], Permutation([1,0]))
         self.assertEqual(permutations[1], Permutation([1,0]))
@@ -310,7 +312,7 @@ class TestMonodromyPath(unittest.TestCase):
 
         PF = RiemannSurfacePathFactory(self.X4)
         branch_points, permutations = PF.monodromy_group()
-        self.assertCountEqual(branch_points,
+        six.assertCountEqual(branch_points,
                               [QQbar(z) for z in [-I, I]] + [oo])
         self.assertEqual(permutations[0], Permutation([2,0,1]))
         self.assertEqual(permutations[1], Permutation([2,0,1]))
