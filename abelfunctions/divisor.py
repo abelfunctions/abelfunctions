@@ -244,7 +244,7 @@ class Place(Divisor):
         raise NotImplementedError('Override in Place subtype.')
 
     def __hash__(self):
-        raise NotImplementedError('Override in Place subtype.')
+        return hash(id(self))
 
     def as_place(self):
         return self
@@ -309,9 +309,6 @@ class RegularPlace(Place):
                 return True
         return False
 
-    def __hash__(self):
-        return hash((self.RS, self.x, self.y))
-
     def is_discriminant(self):
         return False
 
@@ -361,9 +358,6 @@ class DiscriminantPlace(Place):
                 (self.puiseux_series == other.puiseux_series)):
                 return True
         return False
-
-    def __hash__(self):
-        return hash((self.RS, self.puiseux_series))
 
     def is_discriminant(self):
         return True
