@@ -131,6 +131,9 @@ class Divisor(object):
                 return True
         return False
 
+    def __hash__(self):
+        return hash(id(self))
+
     def __add__(self, other):
         if other == 0:
             return self
