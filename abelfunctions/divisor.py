@@ -125,14 +125,16 @@ class Divisor(object):
     def __iter__(self):
         return iter(self.dict.items())
 
+    def __key(self):
+        return (self.RS, self.dict)
+
     def __eq__(self, other):
         if isinstance(other, Divisor):
-            if (self.RS == other.RS) and (self.dict == other.dict):
-                return True
+            return self.__key() == other.__key()
         return False
 
     def __hash__(self):
-        return hash(id(self))
+        return hash(self.__key())
 
     def __add__(self, other):
         if other == 0:
@@ -304,16 +306,16 @@ class RegularPlace(Place):
         self.y = y
         Place.__init__(self, RS, **kwds)
 
+    def __key(self):
+        return (self.RS, self.x, self.y)
+
     def __eq__(self, other):
         if isinstance(other, RegularPlace):
-            if ((self.RS == other.RS) and
-                (self.x == other.x) and
-                (self.y == other.y)):
-                return True
+            return self.__key() == other.__key()
         return False
 
     def __hash__(self):
-        return hash((self.RS, self.x, self.y))
+        return hash(self.__key())
 
     def is_discriminant(self):
         return False
@@ -358,15 +360,16 @@ class DiscriminantPlace(Place):
     def __repr__(self):
         return str(self.puiseux_series)
 
+    def __key(self):
+        return (self.RS, self.puiseux_series)
+
     def __eq__(self, other):
         if isinstance(other, DiscriminantPlace):
-            if ((self.RS == other.RS) and
-                (self.puiseux_series == other.puiseux_series)):
-                return True
+            return self.__key() == other.__key()
         return False
 
     def __hash__(self):
-        return hash((self.RS, self.puiseux_series))
+        return hash(self.__key())
 
     def is_discriminant(self):
         return True
