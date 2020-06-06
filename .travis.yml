@@ -131,8 +131,10 @@ before_install:
     fi
 
   - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then ${SAGE} -pip install pytest-xdist pytest==4.6.4; fi
-
   - cd ${TRAVIS_BUILD_DIR}
+
+  # List the packages sage has installed
+  - sage --pip freeze
 
 install: ${SAGE} setup.py build_ext --inplace
 
