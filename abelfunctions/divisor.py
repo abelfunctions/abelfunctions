@@ -134,7 +134,8 @@ class Divisor(object):
         return False
 
     def __hash__(self):
-        return hash(self.__key())
+        # Unable to use dict in hash since dict is mutable
+        return hash(self.RS)
 
     def __add__(self, other):
         if other == 0:
