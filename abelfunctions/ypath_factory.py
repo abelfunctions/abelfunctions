@@ -717,6 +717,12 @@ class YPathFactory(object):
             sheet = self._node(sheet)
 
         base = self.base_node()
+        print(self.C)
+        print(repr(self.C))
+        print(base)
+        print(repr(base))
+        print(sheet)
+        print(repr(sheet))
         path_to_sheet = nx.shortest_path(self.C, base, sheet)
         values = self._values(path_to_sheet, rotations=True)
         return self._trim_ypath(values)
