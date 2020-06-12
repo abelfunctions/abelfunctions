@@ -727,6 +727,7 @@ class YPathFactory(object):
         print(sheet)
         print(repr(sheet))
         path_to_sheet = nx.shortest_path(self.C, base, sheet)
+        assert False
         values = self._values(path_to_sheet, rotations=True)
         return self._trim_ypath(values)
 
