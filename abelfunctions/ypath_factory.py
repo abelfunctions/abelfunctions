@@ -712,9 +712,11 @@ class YPathFactory(object):
         sheet : int
             The index of the target sheet.
         """
+        print(sheet, isinstance(sheet, int))
         # convert sheet into a node
         if isinstance(sheet, int):
             sheet = self._node(sheet)
+        print(sheet)
 
         base = self.base_node()
         print(self.C)
