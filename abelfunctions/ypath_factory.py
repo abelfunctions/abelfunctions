@@ -712,8 +712,8 @@ class YPathFactory(object):
         sheet : int
             The index of the target sheet.
         """
-        # convert sheet into a node
-        if isinstance(sheet, int):
+        # convert sheet index into a node
+        if numpy.issubdtype(sheet, numpy.integer):
             sheet = self._node(sheet)
 
         base = self.base_node()

@@ -777,7 +777,7 @@ class Skeleton(object):
             The index of the target sheet.
         """
         # convert sheet into a node
-        if isinstance(sheet, int):
+        if numpy.issubdtype(sheet, numpy.integer):
             sheet = self._node(sheet)
 
         base = self.base_node()
