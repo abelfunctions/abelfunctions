@@ -38,9 +38,6 @@ class TestRCVTheta(AbelfunctionsTestCase):
         J = Jacobian(X)
         W = J(W)
         u = RiemannTheta.oscillatory_part(W,Omega)
-        print(abs(u))
-        print(prec)
-        assert False
         self.assertLess(abs(u),prec)
 
     def test_theta_X11(self):
