@@ -712,24 +712,12 @@ class YPathFactory(object):
         sheet : int
             The index of the target sheet.
         """
-        print(sheet, type(sheet), isinstance(sheet, int))
         # convert sheet into a node
         if isinstance(sheet, int):
             sheet = self._node(sheet)
-        print(sheet, type(sheet))
 
         base = self.base_node()
-        print(self.C)
-        print(repr(self.C))
-        print(self.C.nodes)
-        print(self.C._node)
-        print(repr(self.C._node))
-        print(base)
-        print(repr(base))
-        print(sheet)
-        print(repr(sheet))
         path_to_sheet = nx.shortest_path(self.C, base, sheet)
-        assert False
         values = self._values(path_to_sheet, rotations=True)
         return self._trim_ypath(values)
 
