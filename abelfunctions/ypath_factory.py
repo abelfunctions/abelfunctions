@@ -110,7 +110,7 @@ def frobenius_transform(A,g):
             k = i+g+1
             while K[i+g,i] == 0:
                 if K[k,i] != 0:
-                    pivot = -1/K[k,i];
+                    pivot = -1/K[k,i]
 
                     numpy.multiply(T[k,:], pivot, T[k,:], casting='unsafe') # scale row
                     T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
