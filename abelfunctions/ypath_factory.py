@@ -114,7 +114,8 @@ def frobenius_transform(A,g):
                     pivot = -1/K[k,i]
 
                     numpy.testing.assert_equal(numpy.multiply(T[k,:], pivot,casting='unsafe'),T[k,:]*pivot)
-                    numpy.multiply(T[k,:], pivot, T[k,:], casting='unsafe') # scale row
+                    T[k,:]      *= pivot                         # scale row 
+                    # numpy.multiply(T[k,:], pivot, T[k,:], casting='unsafe') # scale row
                     T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
 
                     numpy.testing.assert_equal(numpy.multiply(K[k,:], pivot, casting='unsafe'),K[k,:]*pivot)
