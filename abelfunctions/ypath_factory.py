@@ -8,6 +8,7 @@ the Riemann surface.
 
 """
 import numpy
+import numpy.testing
 import networkx as nx
 
 from .utilities import Permutation
