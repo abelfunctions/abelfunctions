@@ -132,7 +132,7 @@ def frobenius_transform(A,g):
 
         for j in list(range(i, i + g)) + list(range(i + g + 1, dim)):
             # use the pivot to create zeros in the rows above it and below it
-            pivot = -K[j,i]/K[i+g,i]
+            pivot = -K[j,i]//K[i+g,i]
             T[j,:] += pivot * T[i+g,:]
             K[j,:] += pivot * K[i+g,:]
             K[:,j] += pivot * K[:,i+g]
