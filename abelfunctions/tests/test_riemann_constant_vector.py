@@ -38,9 +38,6 @@ class TestRCVTheta(AbelfunctionsTestCase):
         J = Jacobian(X)
         W = J(W)
         u = RiemannTheta.oscillatory_part(W,Omega)
-        print('omega', Omega)
-        print(J)
-        print(W)
         print(abs(u))
         print(prec)
         self.assertLess(abs(u),prec)
@@ -56,17 +53,13 @@ class TestRCVTheta(AbelfunctionsTestCase):
 
         D = sum(self.X11(2))
         W_D = AbelMap(D) + RiemannConstantVector(P0)
-        print('D', D)
-        print(AbelMap(D))
-        print(RiemannConstantVector(P0))
-        print(W_D)
         self.is_theta_zero(self.X11,W_D)
 
         # until AbelMap(P_oo,D) is implemented properly
         W_D_oo = AbelMap(P0,D) - D.degree*AbelMap(P_oo) + \
                  RiemannConstantVector(P_oo)
         self.is_theta_zero(self.X11,W_D_oo)
-        assert False
+        raise False
 
 class TestRCVCanonical(AbelfunctionsTestCase):
     r"""Tests if the following theorem is satisfied:
