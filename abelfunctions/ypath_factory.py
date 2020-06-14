@@ -112,11 +112,14 @@ def frobenius_transform(A,g):
                 if K[k,i] != 0:
                     pivot = -1/K[k,i]
 
+                    numpy.testing.assert_equal(numpy.multiply(T[k,:], pivot,casting='unsafe'),T[k,:]*pivot)
                     numpy.multiply(T[k,:], pivot, T[k,:], casting='unsafe') # scale row
                     T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
 
+                    numpy.testing.assert_equal(numpy.multiply(K[k,:], pivot, casting='unsafe'),K[k,:]*pivot)
                     numpy.multiply(K[k,:], pivot, K[k,:], casting='unsafe') # scale row
                     K[[k,i+g],:] = K[[i+g,k],:]                  # swap rows
+                    numpy.testing.assert_equal(numpy.multiply(K[:,k], pivot, casting='unsafe'),K[:,k]*pivot)
                     numpy.multiply(K[:,k], pivot, K[:,k], casting='unsafe') # scale column
                     K[:,[k,i+g]] = K[:,[i+g,k]]                  # swap columns
 
@@ -125,8 +128,12 @@ def frobenius_transform(A,g):
             # otherwise, if the pivot element is non-zero then scale
             # it so it's equal to -1
             pivot = -1/K[i+g,i]
+
+            numpy.testing.assert_equal(numpy.multiply(T[i+g,:], pivot,casting='unsafe'),T[i+g,:]*pivot)
             numpy.multiply(T[i+g,:], pivot, T[i+g,:], casting='unsafe')
+            numpy.testing.assert_equal(numpy.multiply(K[i+g,:], pivot,casting='unsafe'),K[i+g,:]*pivot)
             numpy.multiply(K[i+g,:], pivot, K[i+g,:], casting='unsafe')
+            numpy.testing.assert_equal(numpy.multiply(K[:,i+g], pivot, casting='unsafe'),K[:,i+g]*pivot)
             numpy.multiply(K[:,i+g], pivot, K[:,i+g], casting='unsafe')
 
         for j in list(range(i, i + g)) + list(range(i + g + 1, dim)):
