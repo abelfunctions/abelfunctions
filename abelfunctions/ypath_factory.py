@@ -111,39 +111,31 @@ def frobenius_transform(A,g):
             k = i+g+1
             while K[i+g,i] == 0:
                 if K[k,i] != 0:
-                    pivot = -1/K[k,i]
+                    pivot = -1//K[k,i]
 
-                    numpy.testing.assert_equal(numpy.multiply(T[k,:], pivot,casting='unsafe'),T[k,:]*pivot)
-                    T[k,:]      *= pivot                         # scale row 
-                    # numpy.multiply(T[k,:], pivot, T[k,:], casting='unsafe') # scale row
+                    T[k,:]      *= pivot                         # scale row
                     T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
 
-                    numpy.testing.assert_equal(numpy.multiply(K[k,:], pivot, casting='unsafe'),K[k,:]*pivot)
-                    numpy.multiply(K[k,:], pivot, K[k,:], casting='unsafe') # scale row
+                    K[k,:]      *= pivot                         # scale row
                     K[[k,i+g],:] = K[[i+g,k],:]                  # swap rows
-                    numpy.testing.assert_equal(numpy.multiply(K[:,k], pivot, casting='unsafe'),K[:,k]*pivot)
-                    numpy.multiply(K[:,k], pivot, K[:,k], casting='unsafe') # scale column
+                    K[:,k]      *= pivot                         # scale column
                     K[:,[k,i+g]] = K[:,[i+g,k]]                  # swap columns
 
                 k += 1
         else:
             # otherwise, if the pivot element is non-zero then scale
             # it so it's equal to -1
-            pivot = -1/K[i+g,i]
-
-            numpy.testing.assert_equal(numpy.multiply(T[i+g,:], pivot,casting='unsafe'),T[i+g,:]*pivot)
-            numpy.multiply(T[i+g,:], pivot, T[i+g,:], casting='unsafe')
-            numpy.testing.assert_equal(numpy.multiply(K[i+g,:], pivot,casting='unsafe'),K[i+g,:]*pivot)
-            numpy.multiply(K[i+g,:], pivot, K[i+g,:], casting='unsafe')
-            numpy.testing.assert_equal(numpy.multiply(K[:,i+g], pivot, casting='unsafe'),K[:,i+g]*pivot)
-            numpy.multiply(K[:,i+g], pivot, K[:,i+g], casting='unsafe')
+            pivot = -1//K[i+g,i]
+            T[i+g,:] *= pivot
+            K[i+g,:] *= pivot
+            K[:,i+g] *= pivot
 
         for j in list(range(i, i + g)) + list(range(i + g + 1, dim)):
             # use the pivot to create zeros in the rows above it and below it
             pivot = -K[j,i]/K[i+g,i]
-            numpy.add(T[j,:], pivot*T[i+g,:], T[j,:], casting='unsafe')
-            numpy.add(K[j,:], pivot*K[i+g,:], K[j,:], casting='unsafe')
-            numpy.add(K[:,j], pivot*K[:,i+g], K[:,j], casting='unsafe')
+            T[j,:] += pivot * T[i+g,:]
+            K[j,:] += pivot * K[i+g,:]
+            K[:,j] += pivot * K[:,i+g]
 
     for i in range(g):
         # the block above the diagonal is already there. use it to
