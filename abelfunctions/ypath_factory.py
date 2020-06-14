@@ -84,7 +84,7 @@ def frobenius_transform(A,g):
     if not isinstance(A,numpy.matrix):
         K = numpy.matrix(A, dtype=numpy.int)
     else:
-        K = A
+        K = numpy.copy(A)
     dim = K.shape[0]
 
     # the rand of an antisymmetric matrix is always even and is equal
