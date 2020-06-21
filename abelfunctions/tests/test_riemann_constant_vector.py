@@ -51,7 +51,7 @@ class TestRCVTheta(AbelfunctionsTestCase):
 
         D = sum(self.X11(2))
         W_D = AbelMap(D) + RiemannConstantVector(P0)
-        self.is_theta_zero(self.X11,W_D)
+        self.is_theta_zero(self.X11,W_D,prec=1e-6)
 
         # until AbelMap(P_oo,D) is implemented properly
         W_D_oo = AbelMap(P0,D) - D.degree*AbelMap(P_oo) + \
