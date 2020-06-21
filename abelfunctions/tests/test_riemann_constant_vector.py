@@ -56,7 +56,7 @@ class TestRCVTheta(AbelfunctionsTestCase):
         # until AbelMap(P_oo,D) is implemented properly
         W_D_oo = AbelMap(P0,D) - D.degree*AbelMap(P_oo) + \
                  RiemannConstantVector(P_oo)
-        self.is_theta_zero(self.X11,W_D_oo)
+        self.is_theta_zero(self.X11,W_D_oo,prec=1e-6)
 
 class TestRCVCanonical(AbelfunctionsTestCase):
     r"""Tests if the following theorem is satisfied:
