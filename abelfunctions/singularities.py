@@ -372,7 +372,7 @@ def genus(f):
     """
     d = f.total_degree()
     S = singularities(f)
-    g = (d-1)*(d-2) / 2
+    g = (d-1)*(d-2) // 2
     for point, (m,delta,r) in S:
         g -= delta
     return g

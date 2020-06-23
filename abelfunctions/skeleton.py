@@ -707,7 +707,6 @@ class Skeleton(object):
         """Converts `value` to its associated node on the y-skeleton `self.C`.
 
         """
-        nodes = []
         nodes = [n for n,d in self.C.nodes(data=True)
                  if numpy.all(d['value'] == value) and not d['final']]
         return nodes[0]
@@ -777,7 +776,7 @@ class Skeleton(object):
             The index of the target sheet.
         """
         # convert sheet into a node
-        if isinstance(sheet, int):
+        if numpy.issubdtype(sheet, numpy.integer):
             sheet = self._node(sheet)
 
         base = self.base_node()

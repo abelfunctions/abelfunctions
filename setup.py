@@ -172,6 +172,7 @@ setup(
     url = 'https://github.com/cswiercz/abelfunctions',
     license = 'MIT',
     packages = packages,
+    install_requires=['six'],
     ext_modules = cythonize(ext_modules),
     platforms = ['all'],
     cmdclass = {'clean':clean}

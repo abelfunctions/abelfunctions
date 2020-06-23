@@ -986,7 +986,7 @@ class PuiseuxTSeries(object):
             self.extend(order=order)
 
         # set which terms will be used for evaluation
-        if order >= 0:
+        if order is not None and order >= 0:
             terms = [(n,alpha) for n,alpha in self.terms if n < order]
         else:
             terms = self.terms

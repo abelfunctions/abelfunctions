@@ -8,6 +8,7 @@ the Riemann surface.
 
 """
 import numpy
+import numpy.testing
 import networkx as nx
 
 from .utilities import Permutation
@@ -84,7 +85,7 @@ def frobenius_transform(A,g):
     if not isinstance(A,numpy.matrix):
         K = numpy.matrix(A, dtype=numpy.int)
     else:
-        K = A
+        K = numpy.copy(A)
     dim = K.shape[0]
 
     # the rand of an antisymmetric matrix is always even and is equal
@@ -110,7 +111,7 @@ def frobenius_transform(A,g):
             k = i+g+1
             while K[i+g,i] == 0:
                 if K[k,i] != 0:
-                    pivot = -1/K[k,i];
+                    pivot = -1//K[k,i]
 
                     T[k,:]      *= pivot                         # scale row
                     T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
@@ -124,14 +125,14 @@ def frobenius_transform(A,g):
         else:
             # otherwise, if the pivot element is non-zero then scale
             # it so it's equal to -1
-            pivot = -1/K[i+g,i]
+            pivot = -1//K[i+g,i]
             T[i+g,:] *= pivot
             K[i+g,:] *= pivot
             K[:,i+g] *= pivot
 
         for j in list(range(i, i + g)) + list(range(i + g + 1, dim)):
             # use the pivot to create zeros in the rows above it and below it
-            pivot = -K[j,i]/K[i+g,i]
+            pivot = -K[j,i]//K[i+g,i]
             T[j,:] += pivot * T[i+g,:]
             K[j,:] += pivot * K[i+g,:]
             K[:,j] += pivot * K[:,i+g]
@@ -152,7 +153,7 @@ def frobenius_transform(A,g):
     # result?  T * K * T.T = J where J has the gxg identity I in the
     # top right block and -I in the lower left block (the Jacobian
     # matrix)
-    J = numpy.dot(numpy.dot(T, numpy.matrix(A)), T.T)
+    J = numpy.dot(numpy.dot(T, A), T.T)
     for i in range(g):
         for j in range(g):
             if j==i+g and i<g:   val = 1
@@ -643,7 +644,6 @@ class YPathFactory(object):
         """Converts `value` to its associated node on the y-skeleton `self.C`.
 
         """
-        nodes = []
         nodes = [n for n,d in self.C.nodes(data=True)
                  if numpy.all(d['value'] == value) and not d['final']]
         return nodes[0]
@@ -712,8 +712,8 @@ class YPathFactory(object):
         sheet : int
             The index of the target sheet.
         """
-        # convert sheet into a node
-        if isinstance(sheet, int):
+        # convert sheet index into a node
+        if numpy.issubdtype(sheet, numpy.integer):
             sheet = self._node(sheet)
 
         base = self.base_node()
