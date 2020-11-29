@@ -46,6 +46,11 @@ matrix:
         - SAGE_TARBALL=sage-9.1-Ubuntu_18.04-x86_64.tar.bz2
         - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit
       dist: bionic
+    - os: linux
+      env:
+        - SAGE_TARBALL=sage-9.2-Ubuntu_18.04-x86_64.tar.bz2
+        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit
+      dist: bionic
 
     # - os: osx
     #   env:
@@ -105,6 +110,11 @@ matrix:
     - os: osx
       env:
         - SAGE_TARBALL=sage-9.1-OSX_10.11.6-x86_64.tar.bz2
+        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+      osx_image: xcode8
+    - os: osx
+      env:
+        - SAGE_TARBALL=sage-9.2-OSX_10.15.7-x86_64.tar.bz2
         - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
       osx_image: xcode8
 
