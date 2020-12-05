@@ -29,8 +29,8 @@ G = monodromy_graph(f,x,y)
 show_paths(G)
 path_segments = path_around_branch_point(G,2,1)
 
-base_point = G.node[0]['basepoint']
-base_sheets = G.node[0]['baselift']
+base_point = G.nodes[0]['basepoint']
+base_sheets = G.nodes[0]['baselift']
 
 x0,y0 = base_point, base_sheets
 gamma = RiemannSurfacePath((f,x,y),(x0,y0),path_segments=path_segments)

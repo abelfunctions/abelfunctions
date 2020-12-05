@@ -141,7 +141,7 @@ if __name__=='__main__':
 
 
     # select a root at the base_point
-    a = G.node[0]['basepoint']
+    a = G.nodes[0]['basepoint']
     fibre = map(numpy.complex,sympy.nroots(f.subs(x,a),n=15))
 
     # analytically continue
