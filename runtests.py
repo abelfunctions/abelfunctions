@@ -55,7 +55,7 @@ def runtests(argv):
             "Note: If pip does not work because 'the ssl module in Python is not available' "
             "then you may need to install openssl into sage and rebuild python using\n\n"
             "\t$ sage -i openssl\n"
-            "\t$ sage -f python2"
+            "\t$ sage -f python3"
         )
 
     # determine list of search patterns for tests

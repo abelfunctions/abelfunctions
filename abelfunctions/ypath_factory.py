@@ -187,11 +187,11 @@ def tretkoff_graph(monodromy_group):
     C = nx.Graph()
     node = (0,)
     C.add_node(node)
-    C.node[node]['value'] = 0
-    C.node[node]['label'] = "$0$"
-    C.node[node]['final'] = False
-    C.node[node]['level'] = 0
-    C.node[node]['nrots'] = 0
+    C.nodes[node]['value'] = 0
+    C.nodes[node]['label'] = "$0$"
+    C.nodes[node]['final'] = False
+    C.nodes[node]['level'] = 0
+    C.nodes[node]['nrots'] = 0
 
     # keep track of sheets and branch places that we've already
     # visited. initialize with the zero sheet and all branch places
@@ -227,7 +227,7 @@ def tretkoff_graph(monodromy_group):
             # place whose order is determined by the predecessor sheet.
             ###################################################################
             if level % 2 == 0:
-                current_sheet = C.node[node]['value']
+                current_sheet = C.nodes[node]['value']
 
                 # determine which branch points to add. in the initial
                 # case, add all branch points. for all subsequent
@@ -237,7 +237,7 @@ def tretkoff_graph(monodromy_group):
                     branch_point_indices = list(range(t))
                 else:
                     pred = list(C.neighbors(node))[0]
-                    bpt,pi = C.node[pred]['value']
+                    bpt,pi = C.nodes[pred]['value']
                     ind = branch_points.index(bpt)
                     branch_point_indices = list(range(ind+1,t)) + list(range(ind))
 
@@ -259,15 +259,15 @@ def tretkoff_graph(monodromy_group):
 
                     if len(pi) > 1:
                         C.add_edge(node,succ)
-                        C.node[succ]['value'] = value
-                        C.node[succ]['label'] = "$b_{%d},%s$"%(idx,pi)
-                        C.node[succ]['final'] = final
-                        C.node[succ]['level'] = level+1
+                        C.nodes[succ]['value'] = value
+                        C.nodes[succ]['label'] = "$b_{%d},%s$"%(idx,pi)
+                        C.nodes[succ]['final'] = final
+                        C.nodes[succ]['level'] = level+1
                         ctr += 1
 
             ###################################################################
             else:
-                current_place = C.node[node]['value']
+                current_place = C.nodes[node]['value']
                 bpt,pi = current_place
 
                 # C is always a tree. obtain the previous node (which
@@ -278,7 +278,7 @@ def tretkoff_graph(monodromy_group):
                 # by allowing reverse rotations.
                 n = len(pi)
                 pred = list(C.neighbors(node))[0]
-                previous_sheet = C.node[pred]['value']
+                previous_sheet = C.nodes[pred]['value']
                 pi = reorder_cycle(pi,previous_sheet)
                 ctr = 0
                 for idx in range(1,n):
@@ -292,11 +292,11 @@ def tretkoff_graph(monodromy_group):
                         visited_sheets.append(value)
 
                     C.add_edge(node,succ)
-                    C.node[succ]['value'] = value
-                    C.node[succ]['label'] = "$%d$"%(value)
-                    C.node[succ]['final'] = final
-                    C.node[succ]['level'] = level+1
-                    C.node[succ]['nrots'] = idx if idx <= n/2 else idx-n
+                    C.nodes[succ]['value'] = value
+                    C.nodes[succ]['label'] = "$%d$"%(value)
+                    C.nodes[succ]['final'] = final
+                    C.nodes[succ]['level'] = level+1
+                    C.nodes[succ]['nrots'] = idx if idx <= n/2 else idx-n
                     ctr += 1
 
         # we are done adding succesors to all endpoints at this
@@ -326,14 +326,14 @@ def final_edges(C):
     - list of (ordered) tuples representing the final edges
 
     """
-    final_nodes = [n for n in C.nodes() if C.node[n]['final']]
+    final_nodes = [n for n in C.nodes() if C.nodes[n]['final']]
     edges = []
     while len(final_nodes) > 0:
         node = final_nodes.pop()
         pred = list(C.neighbors(node))[0]
-        pred_val = C.node[pred]['value']
-        other = [n for n in final_nodes if C.node[n]['value'] == pred_val and
-                 C.node[list(C.neighbors(n))[0]]['value'] == C.node[node]['value']]
+        pred_val = C.nodes[pred]['value']
+        other = [n for n in final_nodes if C.nodes[n]['value'] == pred_val and
+                 C.nodes[list(C.neighbors(n))[0]]['value'] == C.nodes[node]['value']]
         other = other[0]
 
         final_nodes.remove(other)
@@ -343,7 +343,7 @@ def final_edges(C):
         # help determine replative ordering of cycles. We choose final
         # edges such that the predecessors of the nodes give the correct
         # ordering
-        if isinstance(C.node[node]['value'],tuple):
+        if isinstance(C.nodes[node]['value'],tuple):
             edges.append((other,node))
         else:
             edges.append((node,other))
@@ -459,7 +459,7 @@ def compute_c_cycles(tretkoff_graph, final_edges):
         path_to_edge = nx.shortest_path(C,root,edge[0])
         path_from_edge = nx.shortest_path(C,edge[1],root)
         path = path_to_edge + path_from_edge
-        path_values = [C.node[n]['value'] for n in path]
+        path_values = [C.nodes[n]['value'] for n in path]
 
         # convert branch places (branch point, permutation) to
         # point-rotations pairs (branch point, number and direction of
@@ -469,18 +469,18 @@ def compute_c_cycles(tretkoff_graph, final_edges):
 
 #             if n <= len(path_to_edge):
 #                 next_sheet = path[n+1]
-#                 nrots = C.node[next_sheet]['nrots']
+#                 nrots = C.nodes[next_sheet]['nrots']
 #             else:
 #                 next_sheet = path[n-1]
-#                 nrots = - C.node[next_sheet]['nrots']
+#                 nrots = - C.nodes[next_sheet]['nrots']
 #             path_values[n] = (branch_place[0], nrots)
 
         # go the the sheet number in the final edge, recording number of
         # rotations normally
         for n in range(1, len(path), 2):
             bi,pi = path_values[n]
-            prev_sheet = C.node[path[n-1]]['value']
-            next_sheet = C.node[path[n+1]]['value']
+            prev_sheet = C.nodes[path[n-1]]['value']
+            next_sheet = C.nodes[path[n+1]]['value']
 
             nrots = pi.index(next_sheet) - pi.index(prev_sheet)
             if nrots > len(pi)/2: nrots -= len(pi)
@@ -638,7 +638,7 @@ class YPathFactory(object):
         """Gets the value associated with `node` on the y-skeleton `self.C`.
 
         """
-        return self.C.node[node]['value']
+        return self.C.nodes[node]['value']
 
     def _node(self, value):
         """Converts `value` to its associated node on the y-skeleton `self.C`.
@@ -859,7 +859,7 @@ class YPathFactory(object):
             n = 0
             for point in level_points:
                 pos[point] = (level,n-num_level_points/2.0)
-                labels[point] = C.node[point]['label'] + \
+                labels[point] = C.nodes[point]['label'] + \
                     '\n $' + str(point) + '$'
                 n += 1
 
