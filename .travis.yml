@@ -77,46 +77,46 @@ matrix:
     #     - SAGE_TARBALL=sage-8.4-OSX_10.13.6-x86_64.tar.bz2
     #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel/old
     #   osx_image: xcode10.1
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-8.5-OSX_10.14.2-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode11.2
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-8.6-OSX_10.14.2-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode11.2
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-8.7-OSX_10.13.6-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode10.1
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-8.8-OSX_10.14.5-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode11.2
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-8.9-OSX_10.14.6-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode11.2
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-9.0-OSX_10.11.6-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode8
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-9.1-OSX_10.11.6-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode8
-    - os: osx
-      env:
-        - SAGE_TARBALL=sage-9.2-OSX_10.15.7-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
-      osx_image: xcode12.2
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-8.5-OSX_10.14.2-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode11.2
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-8.6-OSX_10.14.2-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode11.2
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-8.7-OSX_10.13.6-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode10.1
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-8.8-OSX_10.14.5-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode11.2
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-8.9-OSX_10.14.6-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode11.2
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-9.0-OSX_10.11.6-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode8
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-9.1-OSX_10.11.6-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode8
+    # - os: osx
+    #   env:
+    #     - SAGE_TARBALL=sage-9.2-OSX_10.15.7-x86_64.tar.bz2
+    #     - SAGE_SERVER=${SAGE_SERVER_BASE}/osx/intel
+    #   osx_image: xcode12.2
 
 before_install:
   - cd ${HOME}
