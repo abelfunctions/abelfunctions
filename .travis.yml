@@ -29,17 +29,17 @@ matrix:
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.8-Ubuntu_18.04-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit
+        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit/old
       dist: bionic
     - os: linux
       env:
         - SAGE_TARBALL=sage-8.9-Ubuntu_18.04-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit
+        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit/old
       dist: bionic
     - os: linux
       env:
         - SAGE_TARBALL=sage-9.0-Ubuntu_18.04-x86_64.tar.bz2
-        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit
+        - SAGE_SERVER=${SAGE_SERVER_BASE}/linux/64bit/old
       dist: bionic
     - os: linux
       env:
