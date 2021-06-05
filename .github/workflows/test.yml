@@ -35,7 +35,7 @@ jobs:
       - name: Install SageMath
         run: |
           gcc --version
-          sudo apt-get install aria2 pbzip2
+          sudo apt-get update && apt-get install aria2 pbzip2
           aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
           pbzip2 -dc ${HOME}/${SAGE_TARBALL} | tar xf -
       - name: Install Python test dependencies
