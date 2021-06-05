@@ -7,26 +7,41 @@ on: [push, pull_request]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-
+    env:
+      SAGE: ${HOME}/SageMath/sage
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+       include:
+         - SAGE_TARBALL: sage-8.6-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-8.7-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-8.8-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-8.9-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-9.0-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-9.1-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
+         - SAGE_TARBALL: sage-9.2-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
+         - SAGE_TARBALL: sage-9.3-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        pytest
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install SageMath
+        run: |
+          gcc --version
+          sudo apt-get install aria2 pbzip2
+          aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
+          pbzip2 -dc ${HOME}/${SAGE_TARBALL} | tar xf -
+      - name: Install Python test dependencies
+        run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
+      - name: Install Abelfunctions
+        run: ${SAGE} setup.py build_ext --inplace
+      - name: Run tests
+        run: ${SAGE} runtests.py -v
+
