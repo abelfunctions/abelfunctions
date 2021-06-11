@@ -11,6 +11,7 @@ jobs:
       SAGE: ${HOME}/SageMath/sage
     runs-on: ubuntu-18.04
     strategy:
+      fail-fast: false
       matrix:
        include:
          - SAGE_TARBALL: sage-8.6-Ubuntu_18.04-x86_64.tar.bz2
