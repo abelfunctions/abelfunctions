@@ -33,13 +33,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Install SageMath
+      - name: Install apt packages
         run: |
-          gcc --version
           sudo apt-get update
           sudo apt-get install aria2 pbzip2
-          aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
-          pbzip2 -dc ${HOME}/${SAGE_TARBALL} | tar xf -
+      - name: Download SageMath
+        run: aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
+      - name: Extract SageMath
+        run: pbzip2 -dc ${HOME}/${SAGE_TARBALL} | tar xf -
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
       - name: Install Abelfunctions
