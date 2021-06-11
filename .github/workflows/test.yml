@@ -38,9 +38,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install aria2 pbzip2
       - name: Download SageMath
-        run: aria2c ${SAGE_SERVER}/${SAGE_TARBALL} --timeout=300
+        run: aria2c ${{ matrix.SAGE_SERVER }}/${{ matrix.SAGE_TARBALL }} --timeout=300
       - name: Extract SageMath
-        run: pbzip2 -dc ${HOME}/${SAGE_TARBALL} | tar xf -
+        run: pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
       - name: Install Abelfunctions
