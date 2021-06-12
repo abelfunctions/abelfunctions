@@ -40,7 +40,7 @@ jobs:
       - name: Extract SageMath
         run: cd ${HOME} && pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
       - name: Install Python test dependencies
-        run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
+        run: ${SAGE} -pip install -r test-requirements.txt
 
       - name: Checkout
         uses: actions/checkout@v2
