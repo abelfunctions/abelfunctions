@@ -48,6 +48,7 @@ jobs:
           cd ${HOME}
           pwd
           ls
+      - run: /home/runner/SageMath/sage -v
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
 
