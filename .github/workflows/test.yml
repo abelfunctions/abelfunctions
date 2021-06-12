@@ -39,15 +39,6 @@ jobs:
         run: cd ${HOME} && aria2c ${{ matrix.SAGE_SERVER }}/${{ matrix.SAGE_TARBALL }}
       - name: Extract SageMath
         run: cd ${HOME} && pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
-      - run: |
-          echo $HOME
-          echo $GITHUB_WORKSPACE
-          pwd
-          ls
-      - run: |
-          cd ${HOME}
-          pwd
-          ls
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
 
