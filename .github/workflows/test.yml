@@ -44,6 +44,10 @@ jobs:
           echo $GITHUB_WORKSPACE
           pwd
           ls
+      - run: |
+          cd ${HOME}
+          pwd
+          ls
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
 
