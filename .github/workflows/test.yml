@@ -31,19 +31,24 @@ jobs:
          - SAGE_TARBALL: sage-9.3-Ubuntu_18.04-x86_64.tar.bz2
            SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - 
       - name: Install apt packages
         run: |
           sudo apt-get update
           sudo apt-get install aria2 pbzip2
       - name: Download SageMath
-        run: aria2c ${{ matrix.SAGE_SERVER }}/${{ matrix.SAGE_TARBALL }} --timeout=300
+        run: aria2c ${{ matrix.SAGE_SERVER }}/${{ matrix.SAGE_TARBALL }} --dir=${HOME}
       - name: Extract SageMath
-        run: pbzip2 -dc ${{ matrix.SAGE_TARBALL }} | tar xf -
-      - run: ls
+        run: pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
+      - run: |
+          pwd
+          ls
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
+
+      - run: cd GITHUB_WORKSPACE
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Install Abelfunctions
         run: ${SAGE} setup.py build_ext --inplace
       - name: Run tests
