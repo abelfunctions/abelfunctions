@@ -8,7 +8,7 @@ on: [push, pull_request]
 jobs:
   build:
     env:
-      SAGE: ${HOME}/SageMath/sage
+      SAGE: /home/runner/SageMath/sage
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -48,11 +48,9 @@ jobs:
           cd ${HOME}
           pwd
           ls
-      - run: /home/runner/SageMath/sage -v
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
 
-      - run: cd $GITHUB_WORKSPACE
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Abelfunctions
