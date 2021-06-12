@@ -40,12 +40,14 @@ jobs:
       - name: Extract SageMath
         run: pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
       - run: |
+          echo $HOME
+          echo $GITHUB_WORKSPACE
           pwd
           ls
       - name: Install Python test dependencies
         run: ${SAGE} -pip install pytest-xdist pytest==4.6.4
 
-      - run: cd GITHUB_WORKSPACE
+      - run: cd $GITHUB_WORKSPACE
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Abelfunctions
