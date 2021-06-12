@@ -39,11 +39,11 @@ jobs:
         run: cd ${HOME} && aria2c ${{ matrix.SAGE_SERVER }}/${{ matrix.SAGE_TARBALL }}
       - name: Extract SageMath
         run: cd ${HOME} && pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
-      - name: Install Python test dependencies
-        run: ${SAGE} -pip install -r test-requirements.txt
 
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Install Python test dependencies
+        run: ${SAGE} -pip install -r test-requirements.txt
       - name: Install Abelfunctions
         run: ${SAGE} setup.py build_ext --inplace
       - name: Run tests
