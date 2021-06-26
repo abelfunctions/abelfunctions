@@ -1,0 +1,50 @@
+# This workflow tests Abelfunctions against various versions of SageMath
+
+name: Test
+
+on: [push]
+
+jobs:
+  build:
+    env:
+      SAGE: /home/runner/SageMath/sage
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+       include:
+         - SAGE_TARBALL: sage-8.6-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-8.7-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-8.8-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-8.9-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-9.0-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
+         - SAGE_TARBALL: sage-9.1-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
+         - SAGE_TARBALL: sage-9.2-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
+         - SAGE_TARBALL: sage-9.3-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
+    steps:
+      - name: Install apt packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install aria2 pbzip2
+      - name: Download SageMath
+        run: cd ${HOME} && aria2c ${{ matrix.SAGE_SERVER }}/${{ matrix.SAGE_TARBALL }}
+      - name: Extract SageMath
+        run: cd ${HOME} && pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
+
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Python test dependencies
+        run: ${SAGE} -pip install -r test-requirements.txt
+      - name: Install Abelfunctions
+        run: ${SAGE} setup.py build_ext --inplace
+      - name: Run tests
+        run: ${SAGE} runtests.py -v
+
