@@ -58,9 +58,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
-        run: sage -pip install -r test-requirements.txt
+        run: $CONDA/bin/sage -pip install -r test-requirements.txt
       - name: Install Abelfunctions
-        run: sage setup.py build_ext --inplace
+        run: $CONDA/bin/sage setup.py build_ext --inplace
       - name: Run tests
-        run: sage runtests.py -v
+        run: $CONDA/bin/sage runtests.py -v
 
