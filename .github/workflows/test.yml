@@ -54,6 +54,7 @@ jobs:
         run: |
           conda config --add channels conda-forge
           conda install sage=${{ matrix.sage-version }} -y
+          which sage
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
