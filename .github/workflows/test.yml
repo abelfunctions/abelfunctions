@@ -13,18 +13,6 @@ jobs:
       fail-fast: false
       matrix:
        include:
-         - SAGE_TARBALL: sage-8.6-Ubuntu_18.04-x86_64.tar.bz2
-           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
-         - SAGE_TARBALL: sage-8.7-Ubuntu_18.04-x86_64.tar.bz2
-           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
-         - SAGE_TARBALL: sage-8.8-Ubuntu_18.04-x86_64.tar.bz2
-           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
-         - SAGE_TARBALL: sage-8.9-Ubuntu_18.04-x86_64.tar.bz2
-           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
-         - SAGE_TARBALL: sage-9.0-Ubuntu_18.04-x86_64.tar.bz2
-           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit/old
-         - SAGE_TARBALL: sage-9.1-Ubuntu_18.04-x86_64.tar.bz2
-           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
          - SAGE_TARBALL: sage-9.2-Ubuntu_18.04-x86_64.tar.bz2
            SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
          - SAGE_TARBALL: sage-9.3-Ubuntu_18.04-x86_64.tar.bz2
