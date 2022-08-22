@@ -175,8 +175,6 @@ def N1_matrix(Pa, Pb, S, tol=1e-4):
     N1_RDF = VS*Ntilde[:g,:]
     N1 = N1_RDF.round().change_ring(GF(2))
 
-    print('N1_RDF', N1_RDF)
-
     # sanity check: N1 should be integral
     error = (N1_RDF.round() - N1_RDF).norm()
     if error > tol:
