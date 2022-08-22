@@ -440,13 +440,9 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         Pa = self.aklein
         Pb = self.bklein
         R = involution_matrix(Pa, Pb, tol=1e-3)
+        print('R', R)
         S = integer_kernel_basis(R)
         N1 = N1_matrix(Pa, Pb, S)
-        print('Pa', Pa)
-        print('Pb', Pb)
-        print('R', R)
-        print('S', S)
-        print('N1', N1)
         assert False
         H,Q = symmetric_block_diagonalize(N1)
         Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-3)
