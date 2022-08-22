@@ -124,9 +124,12 @@ def integer_kernel_basis(R):
 
     """
     twog, twog = R.dimensions()
+    print('R.dimensions()', R.dimensions())
     g = twog//2
     K = R.T - identity_matrix(ZZ, twog)
+    print('K', K)
     r = K.rank()
+    print('r', r)
 
     # sanity check: the rank of the kernel should be the genus of the curve
     if r != g:
@@ -135,6 +138,9 @@ def integer_kernel_basis(R):
 
     # compute the integer kernel from the Smith normal form of K
     D,U,V = K.smith_form()
+    print('D',D)
+    print('U',U)
+    print('V',V)
     S = V[:,g:]
     return S
 

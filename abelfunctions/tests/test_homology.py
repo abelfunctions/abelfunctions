@@ -442,6 +442,7 @@ class TestSymmetricBlockDiagonalization(HomologyTestData):
         R = involution_matrix(Pa, Pb, tol=1e-3)
         print('R', R)
         S = integer_kernel_basis(R)
+        print('S', S)
         N1 = N1_matrix(Pa, Pb, S)
         assert False
         H,Q = symmetric_block_diagonalize(N1)
