@@ -39,7 +39,7 @@ def thetag1(z,tau,N=2048):
     r"""Naive implementation of genus 1 theta function."""
     return sum(numpy.exp(numpy.pi*1.j*tau*n**2 + 2.j*numpy.pi*n*z)
                for n in range(-N,N))
-thetag1 = numpy.vectorize(thetag1, otypes=(numpy.complex,), excluded=(1,2))
+thetag1 = numpy.vectorize(thetag1, otypes=(complex,), excluded=(1,2))
 
 
 
@@ -48,7 +48,7 @@ class TestMaple(unittest.TestCase):
         self.Omega3 = numpy.array(
             [[1.j, 0.5, 0.5],
              [0.5, 1.j, 0.5],
-             [0.5, 0.5, 1.j]], dtype=numpy.complex)
+             [0.5, 0.5, 1.j]], dtype=complex)
         self.Omega4 = numpy.array([
             [ 0.39344262+0.79503971j, -0.75409836-0.36912558j,
               -0.44262295-0.02839428j,  0.20491803+0.26974562j],
@@ -344,7 +344,7 @@ class TestRiemannThetaValues(unittest.TestCase):
         self.Omega3 = numpy.array(
             [[1.j, 0.5, 0.5],
              [0.5, 1.j, 0.5],
-             [0.5, 0.5, 1.j]], dtype=numpy.complex)
+             [0.5, 0.5, 1.j]], dtype=complex)
         self.Omega4 = numpy.array(
             [[ 0.39344262+0.79503971j, -0.75409836-0.36912558j,
                -0.44262295-0.02839428j,  0.20491803+0.26974562j],
@@ -354,7 +354,7 @@ class TestRiemannThetaValues(unittest.TestCase):
               -0.37704918+0.68146261j, -0.91803279+0.45430841j],
              [ 0.20491803+0.26974562j, -0.43442623-0.15616852j,
                -0.91803279+0.45430841j, -1.27868852+0.88022254j]],
-            dtype=numpy.complex)
+            dtype=complex)
 
     def test_issue84_value(self):
         z = [0.5-1.10093687j, -0.11723434j]
@@ -406,7 +406,7 @@ class TestRiemannThetaValues(unittest.TestCase):
         dz0 = RiemannTheta(W,Omega,derivs=[[1,0,0]])
         dz1 = RiemannTheta(W,Omega,derivs=[[0,1,0]])
         dz2 = RiemannTheta(W,Omega,derivs=[[0,0,1]])
-        grad1 = numpy.zeros_like(W, dtype=numpy.complex)
+        grad1 = numpy.zeros_like(W, dtype=complex)
         grad1[:,0] = dz0
         grad1[:,1] = dz1
         grad1[:,2] = dz2
@@ -428,7 +428,7 @@ class TestRiemannThetaValues(unittest.TestCase):
         dz1 = RiemannTheta(W,Omega,derivs=[[0,1,0,0]])
         dz2 = RiemannTheta(W,Omega,derivs=[[0,0,1,0]])
         dz3 = RiemannTheta(W,Omega,derivs=[[0,0,0,1]])
-        grad1 = numpy.zeros_like(W, dtype=numpy.complex)
+        grad1 = numpy.zeros_like(W, dtype=complex)
         grad1[:,0] = dz0
         grad1[:,1] = dz1
         grad1[:,2] = dz2
@@ -533,7 +533,7 @@ class TestRiemannThetaValues(unittest.TestCase):
 
         values1 = RiemannTheta(z,tau,epsilon=1e-16)
         values2 = numpy.array([jtheta(3,wi,q) for wi in w],
-                              dtype=numpy.complex)
+                              dtype=complex)
 
         rel_error = abs((values1-values2)/values1)
         rel_error_avg = numpy.mean(rel_error)
@@ -545,7 +545,7 @@ class TestRiemannThetaValues(unittest.TestCase):
 
         values1 = RiemannTheta(z,tau,epsilon=1e-16)
         values2 = numpy.array([jtheta(3,wi,q) for wi in w],
-                              dtype=numpy.complex)
+                              dtype=complex)
 
         rel_error = abs((values1-values2)/values1)
         rel_error_avg = numpy.mean(rel_error)
@@ -555,7 +555,7 @@ class TestRiemannThetaValues(unittest.TestCase):
     #     Omega = numpy.array(
     #         [[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
     #          [-1.0 - 0.5773502693j, 1.0 + 1.154700539j]],
-    #         dtype=numpy.complex)
+    #         dtype=complex)
 
     #     # first z-value
     #     z = numpy.array([1.0 - 1.0j, 1.0 + 1.0j])
@@ -585,7 +585,7 @@ class TestRiemannThetaValues(unittest.TestCase):
     #     Omega = numpy.array(
     #         [[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
     #          [-1.0 - 0.5773502693j, 1.0 + 1.154700539j]],
-    #         dtype=numpy.complex)
+    #         dtype=complex)
 
     #     # first z-value
     #     z = numpy.array([1.0 - 1.0j, 1.0 + 1.0j])
@@ -615,7 +615,7 @@ class TestRiemannThetaValues(unittest.TestCase):
     # def test_value_at_point_1_derivs(self):
     #     Omega = numpy.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
     #                       [-1.0 - 0.5773502693j, 1.0 + 1.154700539j]],
-    #                      dtype=numpy.complex)
+    #                      dtype=complex)
 
     #     # test 1
     #     derivs = [[1,0]]
@@ -647,7 +647,7 @@ class TestRiemannThetaValues(unittest.TestCase):
     # def test_value_at_point_2_derivs(self):
     #     Omega = numpy.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
     #                       [-1.0 - 0.5773502693j, 1.0 + 1.154700539j]],
-    #                      dtype=numpy.complex)
+    #                      dtype=complex)
 
     #     # test 1
     #     derivs = [[1,0]]

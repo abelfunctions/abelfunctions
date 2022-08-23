@@ -882,7 +882,7 @@ class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         tprim = complex((x0-alpha)/xcoefficient)**(1./e)
         unity = [numpy.exp(2.j*numpy.pi*k/abs(e)) for k in range(abs(e))]
         tall = [unity[k]*tprim for k in range(abs(e))]
-        ytprim = numpy.array([p.eval_y(tk) for tk in tall], dtype=numpy.complex)
+        ytprim = numpy.array([p.eval_y(tk) for tk in tall], dtype=complex)
         k = numpy.argmin(numpy.abs(ytprim - y0))
         tcoefficient = tall[k]
 
@@ -926,7 +926,7 @@ def newton(df, xip1, yij):
     """
     df0 = df[0]
     df1 = df[1]
-    step = numpy.complex(1.0)
+    step = complex(1.0)
     maxIter = 1000
     numIter = 0
     while numpy.abs(step) > 1e-14:

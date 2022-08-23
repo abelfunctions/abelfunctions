@@ -12,7 +12,7 @@ from abelfunctions.riemann_theta.radius import (
 class TestRadiusN(unittest.TestCase):
     def test_vs_radius1_1e8(self):
         # genus 3 example
-        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=numpy.complex)
+        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=complex)
         T = numpy.diag([1,2,3]) + numpy.diag([4,5], k=1) + numpy.diag([6], k=2)
         rho = 0.9  # any rho is fine
         eps = 1e-8
@@ -39,7 +39,7 @@ class TestRadiusN(unittest.TestCase):
 
     def test_vs_radius1_1e14(self):
         # genus 3 example
-        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=numpy.complex)
+        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=complex)
         T = numpy.diag([1,2,3]) + numpy.diag([4,5], k=1) + numpy.diag([6], k=2)
         rho = 0.9  # any rho is fine
         eps = 1e-14
@@ -66,7 +66,7 @@ class TestRadiusN(unittest.TestCase):
 
     def test_vs_radius2_1e8(self):
         # genus 3 example
-        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=numpy.complex)
+        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=complex)
         T = numpy.diag([1,2,3]) + numpy.diag([4,5], k=1) + numpy.diag([6], k=2)
         rho = 0.9  # any rho is fine
         eps = 1e-8
@@ -124,7 +124,7 @@ class TestRadiusN(unittest.TestCase):
 
     def test_vs_radius2_1e14(self):
         # genus 3 example
-        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=numpy.complex)
+        z = numpy.array([0.2+0.5j, 0.3-0.1j, -0.1+0.2j], dtype=complex)
         T = numpy.diag([1,2,3]) + numpy.diag([4,5], k=1) + numpy.diag([6], k=2)
         rho = 0.9  # any rho is fine
         eps = 1e-14

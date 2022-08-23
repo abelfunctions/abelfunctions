@@ -938,7 +938,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         tprim = complex((x0-alpha)/xcoefficient)**(1./e)
         unity = [numpy.exp(2.j*numpy.pi*k/abs(e)) for k in range(abs(e))]
         tall = [unity[k]*tprim for k in range(abs(e))]
-        ytprim = numpy.array([p.eval_y(tk) for tk in tall], dtype=numpy.complex)
+        ytprim = numpy.array([p.eval_y(tk) for tk in tall], dtype=complex)
         k = numpy.argmin(numpy.abs(ytprim - y0))
         tcoefficient = tall[k]
 
@@ -1144,7 +1144,7 @@ cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
         f = riemann_surface.f.change_ring(CDF)
         x,y = f.parent().gens()
         df = [
-            fast_callable(f.derivative(y,k), vars=(x,y), domain=numpy.complex)
+            fast_callable(f.derivative(y,k), vars=(x,y), domain=complex)
             for k in range(degree+1)
         ]
         df = numpy.array(df, dtype=Wrapper_el)

@@ -343,7 +343,7 @@ class AbelMap_Function(object):
         D = args[0]
         X = D.RS
         g = X.genus()
-        value = numpy.zeros(g, dtype=numpy.complex)
+        value = numpy.zeros(g, dtype=complex)
         for P,n in D:
             Pvalue = self._eval_primitive(P)
             value += n*Pvalue
@@ -382,12 +382,12 @@ class AbelMap_Function(object):
         X = P.RS
         genus = X.genus()
         if P == X.base_place:
-            value = numpy.zeros(genus, dtype=numpy.complex)
+            value = numpy.zeros(genus, dtype=complex)
         else:
             gamma = X.path(P)
             omega = X.differentials
             value = numpy.array([X.integrate(omegai,gamma)
-                                 for omegai in omega], dtype=numpy.complex)
+                                 for omegai in omega], dtype=complex)
         return value
 
 AbelMap = AbelMap_Function()
