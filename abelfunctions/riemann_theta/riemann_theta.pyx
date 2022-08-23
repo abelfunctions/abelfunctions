@@ -87,7 +87,7 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
 
     # coerce z to a numpy array and determine the problem size: the genus g and
     # the number of vectors to compute
-    z = numpy.array(z, dtype=numpy.complex)
+    z = numpy.array(z, dtype=complex)
     if len(z.shape) == 1:
         num_vectors = 1
         g = len(z)
@@ -99,7 +99,7 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
     # coerce Omega to a numpy array and extract the requested information: the
     # real part, inverse of the imaginary part, and the cholesky decomposition
     # of the imaginary part
-    Omega = numpy.array(Omega, dtype=numpy.complex)
+    Omega = numpy.array(Omega, dtype=complex)
     Y = Omega.imag
     _T = numpy.linalg.cholesky(Y).T
     X = numpy.ascontiguousarray(Omega.real)
@@ -115,11 +115,11 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
     # set up storage locations and vectors
     real = <double*>malloc(sizeof(double))
     imag = <double*>malloc(sizeof(double))
-    values = numpy.zeros(num_vectors, dtype=numpy.complex)
+    values = numpy.zeros(num_vectors, dtype=complex)
 
     # get the derivatives
     if len(derivs):
-        derivs = numpy.array(derivs, dtype=numpy.complex).flatten()
+        derivs = numpy.array(derivs, dtype=complex).flatten()
         nderivs = len(derivs) / g
         derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
         derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
@@ -134,7 +134,7 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
                                         &x[0], &y[0], &S[0,0],
                                         &derivs_real[0], &derivs_imag[0],
                                         nderivs, g, N)
-            value = numpy.complex(real[0] + 1.0j*imag[0])
+            value = complex(real[0] + 1.0j*imag[0])
             values[k] = value
     else:
         # compute the finite sum for each z-vector
@@ -145,7 +145,7 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
             finite_sum_without_derivatives(real, imag,
                                            &X[0,0], &Yinv[0,0], &T[0,0],
                                            &x[0], &y[0], &S[0,0], g, N)
-            value = numpy.complex(real[0] + 1.0j*imag[0])
+            value = complex(real[0] + 1.0j*imag[0])
             values[k] = value
 
     if num_vectors == 1:
@@ -242,8 +242,8 @@ cdef class RiemannTheta_Function(object):
         # of Omega
         if len(numpy.shape(z)) == 1:
             z = [z]
-        z = numpy.array(z, dtype=numpy.complex)
-        Omega = numpy.array(Omega, dtype=numpy.complex)
+        z = numpy.array(z, dtype=complex)
+        Omega = numpy.array(Omega, dtype=complex)
         y = z.imag
         Yinv = numpy.linalg.inv(Omega.imag)
 
@@ -319,9 +319,9 @@ cdef class RiemannTheta_Function(object):
             gradient is listed along `axis`.
         """
         # get the genus and number of z-vectors
-        Omega = numpy.array(Omega, dtype=numpy.complex)
+        Omega = numpy.array(Omega, dtype=complex)
         g = Omega.shape[0]
-        gradients = numpy.zeros_like(z, dtype=numpy.complex)
+        gradients = numpy.zeros_like(z, dtype=complex)
 
         for i in range(g):
             # construct the direction derivative \partial z_i and compute the
@@ -414,14 +414,14 @@ cdef class RiemannTheta_Function(object):
             Hessian is indexed by the 0th coordinate.
         """
         # get the genus and number of z-vectors
-        Omega = numpy.array(Omega, dtype=numpy.complex)
+        Omega = numpy.array(Omega, dtype=complex)
         g = Omega.shape[0]
-        z = numpy.array(z, dtype=numpy.complex)
+        z = numpy.array(z, dtype=complex)
         if len(z.shape) == 1:
             n = 1
         else:
             n = z.shape[(axis+1) % 2]
-        hessians = numpy.zeros((n,g,g), dtype=numpy.complex)
+        hessians = numpy.zeros((n,g,g), dtype=complex)
 
         # since Riemann theta is analytic we only need to compute the lower
         # triangular portion of the Hessian and symmetrize

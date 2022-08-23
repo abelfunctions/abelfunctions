@@ -102,7 +102,7 @@ def initialize_half_lattice_vectors(X):
     half = list(product((0,0.5),repeat=g))
     half_lattice_vectors = numpy.array(
         [h1 + dot(Omega,h2) for h1 in half for h2 in half],
-        dtype=numpy.complex
+        dtype=complex
     )
     return half_lattice_vectors
 
@@ -394,7 +394,7 @@ def RiemannConstantVector(P, epsilon1=1e-6, epsilon2=1e-8, C=None):
     # shift by the abel map
     X = P.RS
     J = Jacobian(X)
-    g = numpy.complex(X.genus())
+    g = complex(X.genus())
     K0 = compute_K0(X, epsilon1, epsilon2, C)
     if P == X.base_place:
         return K0

@@ -142,7 +142,7 @@ if __name__=='__main__':
 
     # select a root at the base_point
     a = G.nodes[0]['basepoint']
-    fibre = map(numpy.complex,sympy.nroots(f.subs(x,a),n=15))
+    fibre = map(complex,sympy.nroots(f.subs(x,a),n=15))
 
     # analytically continue
     ypath = []
@@ -173,7 +173,7 @@ if __name__=='__main__':
     # plot
     fig = plt.figure()
     for j in range(n):
-        ypath = numpy.array(ys[j], dtype=numpy.complex)
+        ypath = numpy.array(ys[j], dtype=complex)
 
         ax = fig.add_subplot(1,n,j+1)
         ax.plot(ypath.real, ypath.imag, 'g')

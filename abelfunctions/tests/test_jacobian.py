@@ -70,9 +70,9 @@ class TestJacobian(AbelfunctionsTestCase):
         h1 = list(itertools.product((0,0.5),repeat=g))
         h2 = list(itertools.product((0,0.5),repeat=g))
         for hj in h1:
-            hj = numpy.array(hj, dtype=numpy.complex)
+            hj = numpy.array(hj, dtype=complex)
             for hk in h2:
-                hk = numpy.array(hk, dtype=numpy.complex)
+                hk = numpy.array(hk, dtype=complex)
                 z = hj + numpy.dot(Omega,hk)
                 error = numpy.linalg.norm(J(2*z))
                 self.assertLess(error, 1e-14)

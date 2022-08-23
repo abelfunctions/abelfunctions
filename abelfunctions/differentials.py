@@ -328,9 +328,9 @@ class Differential:
         self.RS = RS
         self.differential = self.numer / self.denom
         self.numer_n = fast_callable(self.numer.change_ring(CC), vars=[x,y],
-                                     domain=numpy.complex)
+                                     domain=complex)
         self.denom_n = fast_callable(self.denom.change_ring(CC), vars=[x,y],
-                                     domain=numpy.complex)
+                                     domain=complex)
 
     def __repr__(self):
         return str(self.differential)
@@ -342,7 +342,7 @@ class Differential:
         r"""Evaluate the differential at the complex point :math:`(x,y)`.
         """
         val = self.numer_n(*args, **kwds) / self.denom_n(*args, **kwds)
-        return numpy.complex(val)
+        return complex(val)
 
     def centered_at_place(self, P, order=None):
         r"""Rewrite the differential in terms of the local coordinates at `P`.

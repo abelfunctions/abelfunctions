@@ -82,15 +82,15 @@ def frobenius_transform(A,g):
     the transformation matrix alpha.
 
     """
-    if not isinstance(A,numpy.matrix):
-        K = numpy.matrix(A, dtype=numpy.int)
+    if not isinstance(A,numpy.ndarray):
+        K = numpy.array(A, dtype=int)
     else:
         K = numpy.copy(A)
     dim = K.shape[0]
 
     # the rand of an antisymmetric matrix is always even and is equal
     # to 2g in this case
-    T = numpy.eye(dim, dtype=numpy.int)
+    T = numpy.eye(dim, dtype=int)
 
     # create the block below the diagonal. make zeros everywhere else
     # in the first g columns
@@ -403,7 +403,7 @@ def intersection_matrix(final_edges, g):
     # the intersection matrix is anti-symmetric, so we only determine the
     # intersection numbers of the upper triangle
     num_final_edges = len(final_edges)
-    K = numpy.zeros((num_final_edges, num_final_edges), dtype=numpy.int)
+    K = numpy.zeros((num_final_edges, num_final_edges), dtype=int)
     for i in range(num_final_edges):
         ei = final_edges[i]
         for j in range(i+1,num_final_edges):
