@@ -113,8 +113,8 @@ def frobenius_transform(A, g):
     output of the procedure is the transformation matrix alpha.
 
     """
-    if not isinstance(A, numpy.matrix):
-        A = numpy.matrix(A, dtype=int)
+    if not isinstance(A, numpy.ndarray):
+        A = numpy.array(A, dtype=int)
     K = A
     dim = K.shape[0]
 
@@ -182,7 +182,7 @@ def frobenius_transform(A, g):
     # result?  T * K * T.T = J where J has the gxg identity I in the
     # top right block and -I in the lower left block (the Jacobian
     # matrix)
-    J = numpy.dot(numpy.dot(T, numpy.matrix(A)), T.T)
+    J = numpy.dot(numpy.dot(T, A), T.T)
     for i in range(g):
         for j in range(g):
             if j==i+g and i<g:   val = 1
