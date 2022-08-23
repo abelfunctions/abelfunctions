@@ -7,7 +7,7 @@ of a complex plane algebraic curve.
 """
 import numpy
 
-from numpy import double, complex, floor, angle
+from numpy import double, floor, angle
 from sage.all import infinity, QQbar, scatter_plot
 
 from abelfunctions.complex_path import (
