@@ -82,8 +82,8 @@ def frobenius_transform(A,g):
     the transformation matrix alpha.
 
     """
-    if not isinstance(A,numpy.matrix):
-        K = numpy.matrix(A, dtype=int)
+    if not isinstance(A,numpy.ndarray):
+        K = numpy.array(A, dtype=int)
     else:
         K = numpy.copy(A)
     dim = K.shape[0]
