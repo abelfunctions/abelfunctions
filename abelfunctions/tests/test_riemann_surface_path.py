@@ -1,7 +1,7 @@
 import unittest
 
 import numpy
-from numpy import pi, Infinity, exp, sqrt, power, complex
+from numpy import pi, sqrt
 from sage.all import QQ, QQbar, e, I
 
 from abelfunctions.complex_path import (

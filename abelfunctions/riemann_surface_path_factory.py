@@ -157,7 +157,7 @@ class RiemannSurfacePathFactory(object):
             x,y = self.riemann_surface.f.parent().gens()
             p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
             roots = p.roots(CDF, multiplicities=False)
-            base_sheets = numpy.array(roots, dtype=numpy.complex)
+            base_sheets = numpy.array(roots, dtype=complex)
         else:
             f = self.riemann_surface.f
             for sheet in base_sheets:
@@ -370,7 +370,7 @@ class RiemannSurfacePathFactory(object):
 
         # sanity check
         yend = gamma.get_y(1.0)[0]
-        if numpy.abs(yend - numpy.complex(P.y)) > 1.0e-8:
+        if numpy.abs(yend - complex(P.y)) > 1.0e-8:
             raise ValueError('Error in constructing Abel path.')
         return gamma
 

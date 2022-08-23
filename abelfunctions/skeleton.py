@@ -113,13 +113,13 @@ def frobenius_transform(A, g):
     output of the procedure is the transformation matrix alpha.
 
     """
-    if not isinstance(A, numpy.matrix):
-        A = numpy.matrix(A, dtype=numpy.int)
+    if not isinstance(A, numpy.ndarray):
+        A = numpy.array(A, dtype=int)
     K = A
     dim = K.shape[0]
 
     # the rank of an antisymmetric matrix is always even (equal to 2g)
-    T = numpy.eye(dim, dtype=numpy.int)
+    T = numpy.eye(dim, dtype=int)
 
     # create the block below the diagonal. make zeros everywhere else in the
     # first g columns
@@ -182,7 +182,7 @@ def frobenius_transform(A, g):
     # result?  T * K * T.T = J where J has the gxg identity I in the
     # top right block and -I in the lower left block (the Jacobian
     # matrix)
-    J = numpy.dot(numpy.dot(T, numpy.matrix(A)), T.T)
+    J = numpy.dot(numpy.dot(T, A), T.T)
     for i in range(g):
         for j in range(g):
             if j==i+g and i<g:   val = 1
@@ -443,7 +443,7 @@ def intersection_matrix(final_edges, g):
     # the intersection matrix is anti-symmetric, so we only determine the
     # intersection numbers of the upper triangle
     num_final_edges = len(final_edges)
-    K = numpy.zeros((num_final_edges, num_final_edges), dtype=numpy.int)
+    K = numpy.zeros((num_final_edges, num_final_edges), dtype=int)
     for i in range(num_final_edges):
         ei = final_edges[i]
         for j in range(i+1,num_final_edges):
@@ -690,7 +690,7 @@ class Skeleton(object):
             The genus of the Riemann surface.
 
         """
-        self.genus = numpy.int(genus)
+        self.genus = int(genus)
         self.C = tretkoff_graph(base_point, base_sheets, monodromy_group)
 
         # compute the a-, b-, and c-cycles by calling self.homology()
