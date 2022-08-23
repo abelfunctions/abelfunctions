@@ -37,10 +37,9 @@ from abelfunctions.riemann_surface_path import (
     )
 from abelfunctions.utilities import matching_permutation
 from abelfunctions.complex_path_factory import ComplexPathFactory
-#from abelfunctions.skeleton import Skeleton
 from abelfunctions.ypath_factory import YPathFactory as Skeleton
 
-from numpy import complex, array
+from numpy import array
 from sage.all import infinity, CC, CDF, cached_method
 
 class RiemannSurfacePathFactory(object):

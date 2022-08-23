@@ -4,7 +4,10 @@ import abelfunctions
 import numpy
 import unittest
 
+from abelfunctions import RiemannSurface
 from abelfunctions.abelmap import AbelMap, Jacobian
+from abelfunctions.differentials import Differential
+from sage.rings.rational_field import QQ
 from numpy.linalg import norm
 from sage.all import I
 
@@ -69,3 +72,16 @@ class TestJacobian(AbelfunctionsTestCase):
         value = J(zero)
         error = norm(value - zero)
         self.assertLess(error,1e-14)
+
+def test_close_discriminant():
+    """Evaluate the AbelMap close to a discriminant point, see issue #115"""
+    R = QQ['x,y']
+    x,y = R.gens()
+    f = x**2*y**3 - x**4 + 1
+    X = RiemannSurface(f)
+    omega = X.holomorphic_differentials()
+    numer = omega[0].as_expression().numerator() + omega[2].as_expression().numerator()
+    denom = omega[0].as_expression().denominator()
+    eta = Differential(X, numer, denom)
+    C = eta.valuation_divisor()
+    AbelMap(C)
