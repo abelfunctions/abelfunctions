@@ -44,3 +44,4 @@ doc/_build
 #######
 *.ipynb
 *.profile
+.vscode/settings.json

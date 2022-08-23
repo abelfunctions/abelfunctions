@@ -17,6 +17,8 @@ jobs:
            SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
          - SAGE_TARBALL: sage-9.3-Ubuntu_18.04-x86_64.tar.bz2
            SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
+         - SAGE_TARBALL: sage-9.4-Ubuntu_18.04-x86_64.tar.bz2
+           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
     steps:
       - name: Install apt packages
         run: |
