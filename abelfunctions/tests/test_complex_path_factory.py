@@ -2,16 +2,12 @@ import unittest
 import six
 
 import numpy
-from numpy import pi, Infinity, exp, sqrt, complex
+from numpy import pi, sqrt
 from abelfunctions.complex_path import (
-    ComplexPathPrimitive,
-    ComplexPath,
     ComplexLine,
     ComplexArc,
-    ComplexRay,
 )
 from abelfunctions.complex_path_factory import ComplexPathFactory
-from abelfunctions.riemann_surface import RiemannSurface
 from sage.all import QQ, QQbar, I
 
 class TestConstruction(unittest.TestCase):

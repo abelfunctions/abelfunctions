@@ -30,7 +30,7 @@ def riemanntheta_high_dim(X, Yinv, T, z, g, rad, max_points = 10000000):
     num_final_partition = num_int_points - num_partitions*max_points
     osc_part = 0 + 0*1.j
     if (num_partitions > 0):
-        S = gpuarray.zeros(np.int(max_points * g), dtype=np.double)
+        S = gpuarray.zeros(int(max_points * g), dtype=np.double)
     print "Required number of iterations"
     print num_partitions
     print 
@@ -40,7 +40,7 @@ def riemanntheta_high_dim(X, Yinv, T, z, g, rad, max_points = 10000000):
         S = box_points(point_finder, max_points*p, max_points*(p+1),g,R, S)
         parRiemann.cache_intpoints(S, gpu_already=True)
         osc_part += parRiemann.compute_v_without_derivs(np.array([z]))
-    S = gpuarray.zeros(np.int((num_int_points - num_partitions*max_points)*g), dtype = np.double)
+    S = gpuarray.zeros(int((num_int_points - num_partitions*max_points)*g), dtype = np.double)
     print num_partitions*max_points,num_int_points
     S = box_points(point_finder, num_partitions*max_points, num_int_points, g, R,S)
     parRiemann.cache_intpoints(S,gpu_already = True)
