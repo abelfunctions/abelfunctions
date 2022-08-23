@@ -587,7 +587,7 @@ class PuiseuxTSeries(object):
         else:
             return (complex(self.center),
                     complex(self.xcoefficient),
-                    numpy.int(self.ramification_index))
+                    int(self.ramification_index))
     @property
     def order(self):
         return self._singular_order + self._regular_order

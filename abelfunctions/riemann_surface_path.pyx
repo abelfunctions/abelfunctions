@@ -930,7 +930,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         y0 = complex(self._y0[0])
         alpha = 0 if self.target_point == infinity else self.target_point
         xcoefficient = complex(p.xcoefficient)
-        e = numpy.int(p.ramification_index)
+        e = int(p.ramification_index)
 
         # the parameter of the path s \in [0,1] does not necessarily match with
         # the local coordinate t of the place. perform the appropriate scaling
