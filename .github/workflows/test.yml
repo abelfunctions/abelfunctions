@@ -39,6 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         sage-version:
+          - '9.2'
           - '9.3'
           - '9.4'
           - '9.5'
@@ -47,6 +48,7 @@ jobs:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
+          conda install mamba -y
           mamba install sage=${{ matrix.sage-version }} -y
       - name: Checkout
         uses: actions/checkout@v2
