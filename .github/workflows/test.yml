@@ -45,11 +45,12 @@ jobs:
           - '9.5'
           - '9.6'
     steps:
-      - name: Install sage
+      - name: Install mamba
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          mamba install sage=${{ matrix.sage-version }} -y
+      - name: Install sage
+        run: mamba install sage=${{ matrix.sage-version }} -y
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
