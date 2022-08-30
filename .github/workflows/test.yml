@@ -5,40 +5,13 @@ name: Test
 on: [push]
 
 jobs:
-  test-old:
-    env:
-      SAGE: /home/runner/SageMath/sage
-    runs-on: ubuntu-18.04
-    strategy:
-      fail-fast: false
-      matrix:
-       include:
-         - SAGE_TARBALL: sage-9.2-Ubuntu_18.04-x86_64.tar.bz2
-           SAGE_SERVER: http://mirrors.mit.edu/sage/linux/64bit
-    steps:
-      - name: Install apt packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install aria2 pbzip2
-      - name: Download SageMath
-        run: cd ${HOME} && aria2c ${{ matrix.SAGE_SERVER }}/${{ matrix.SAGE_TARBALL }}
-      - name: Extract SageMath
-        run: cd ${HOME} && pbzip2 -dc ${HOME}/${{ matrix.SAGE_TARBALL }} | tar xf -
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install Python test dependencies
-        run: ${SAGE} -pip install -r test-requirements.txt
-      - name: Install Abelfunctions
-        run: ${SAGE} setup.py build_ext --inplace
-      - name: Run tests
-        run: ${SAGE} runtests.py -v
-
   test:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         sage-version:
+          - '9.2'
           - '9.3'
           - '9.4'
           - '9.5'
@@ -47,7 +20,8 @@ jobs:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
-          conda install sage=${{ matrix.sage-version }} -y
+          conda install mamba -y
+          $CONDA/bin/mamba install sage=${{ matrix.sage-version }} -y
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
