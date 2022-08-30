@@ -42,13 +42,13 @@ import sympy
 
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import xgcd
+from sage.all import xgcd, I
 from sage.functions.log import log
-from sage.functions.other import ceil
+from sage.functions.other import ceil, real_part, imag_part
 from sage.rings.big_oh import O
 from sage.rings.infinity import infinity
 from sage.rings.laurent_series_ring import LaurentSeriesRing
-from sage.rings.qqbar import QQbar
+from sage.rings.qqbar import QQbar, AlgebraicNumber
 from sage.rings.rational_field import QQ
 from sympy import Point, Segment
 
@@ -480,6 +480,8 @@ def puiseux(f, alpha, beta=None, order=None, parametric=True):
         falpha,_ = n.polynomial(x).quo_rem(d.univariate_polynomial())
         falpha = falpha(x).numerator()
     else:
+        if not isinstance(alpha, AlgebraicNumber):
+            alpha = QQbar(QQ(real_part(alpha))+I*QQ(imag_part(alpha)))
         falpha = f(x+alpha,y)
 
     # determine the points on the curve lying above x=alpha

@@ -13,6 +13,7 @@ from abelfunctions.puiseux import (
 )
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
+from abelfunctions import RiemannSurface, AbelMap
 
 from sage.all import SR, xgcd
 from sage.calculus.functional import taylor
@@ -505,3 +506,13 @@ class TestEvaluation(AbelfunctionsTestCase):
         yt = pi.eval_y(ti)
         error = abs(self.f2(xt,yt))
         self.assertLess(error, 1e-12)
+
+
+def test_puiseux_coersion():
+    """See issue #115"""
+    R = QQ['x,y']
+    x,y = R.gens()
+    f = y**2-x*(x**4-1)
+    alpha = (-0.204496929165702+0.16536419940365704j)
+    puiseux(f,alpha)
+
