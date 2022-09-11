@@ -176,5 +176,12 @@ setup(
     ext_modules = cythonize(ext_modules),
     python_requires=">=3.6",
     platforms = ['all'],
-    cmdclass = {'clean':clean}
+    cmdclass = {'clean':clean},
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3 :: Only",
+    ],
 )
