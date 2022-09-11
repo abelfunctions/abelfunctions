@@ -120,7 +120,7 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
     # get the derivatives
     if len(derivs):
         derivs = numpy.array(derivs, dtype=complex).flatten()
-        nderivs = len(derivs) / g
+        nderivs = int(len(derivs) / g)
         derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
         derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
 
