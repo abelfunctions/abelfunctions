@@ -174,6 +174,7 @@ setup(
     packages = packages,
     install_requires=['six'],
     ext_modules = cythonize(ext_modules),
+    python_requires=">=3.8",
     platforms = ['all'],
     cmdclass = {'clean':clean}
 )
