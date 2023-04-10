@@ -24,6 +24,7 @@ from distutils.core import setup, Command
 from distutils.extension import Extension
 from Cython.Build import cythonize
 from numpy.distutils.misc_util import get_numpy_include_dirs
+from sage.misc.package_dir import cython_namespace_package_support
 
 # raise error if the user is not using Sage to compile
 try:
@@ -160,6 +161,10 @@ class clean(Command):
 
 # configure setup
 exec(open('abelfunctions/version.py').read())
+
+with cython_namespace_package_support():
+    ext_modules = cythonize(ext_modules, compiler_directives={"language_level": "3"})
+
 setup(
     name = 'abelfunctions',
     version = __version__,
@@ -171,7 +176,7 @@ setup(
     license = 'MIT',
     packages = packages,
     python_requires=">=3.6",
-    ext_modules = cythonize(ext_modules, compiler_directives={"language_level": "3"}),
+    ext_modules = ext_modules,
     platforms = ['all'],
     cmdclass = {'clean':clean},
     classifiers=[
