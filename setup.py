@@ -20,11 +20,18 @@ Python .pyc and Cython .o/.so output and run:
 """
 import os
 import shutil
+import contextlib
 from distutils.core import setup, Command
 from distutils.extension import Extension
 from Cython.Build import cythonize
 from numpy.distutils.misc_util import get_numpy_include_dirs
-from sage.misc.package_dir import cython_namespace_package_support
+
+# Support for Sage < 9.7
+try:
+    from sage.misc.package_dir import cython_namespace_package_support
+except ImportError:
+    cython_namespace_package_support = contextlib.nullcontext
+
 
 # raise error if the user is not using Sage to compile
 try:
