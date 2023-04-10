@@ -6,7 +6,7 @@ on: [push]
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -22,8 +22,8 @@ jobs:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
-          conda install mamba=0.27.0 -y
-          $CONDA/bin/mamba install sage=${{ matrix.sage-version }} -y
+          conda install mamba -y
+          $CONDA/bin/mamba install sage=${{ matrix.sage-version }} python=3.9 -y
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
