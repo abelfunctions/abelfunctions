@@ -11,29 +11,25 @@ jobs:
       fail-fast: false
       matrix:
         deps:
-          - {"sage": 9.2, "python": 3.6}
-          - {"sage": 9.2, "python": 3.7}
-          - {"sage": 9.2, "python": 3.8}
           - {"sage": 9.2, "python": 3.9}
-          - {"sage": 9.2, "python": 3.10}
           - {"sage": 9.3, "python": 3.9}
           - {"sage": 9.4, "python": 3.9}
-          - {"sage": 9.5, "python": 3.9}
-          - {"sage": 9.6, "python": 3.9}
-          - {"sage": 9.7, "python": 3.9}
-          - {"sage": 9.8, "python": 3.9}
+          - {"sage": 9.5, "python": 3.10}
+          - {"sage": 9.6, "python": 3.10}
+          - {"sage": 9.7, "python": 3.10}
+          - {"sage": 9.8, "python": 3.10}
     steps:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba install sage=${{ matrix.deps.sage }} python=${{ matrix.deps.python }} -y
+          $CONDA/bin/mamba create -n sage install sage=${{ matrix.deps.sage }} -y
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
-        run: $CONDA/bin/sage -pip install -r test-requirements.txt
+        run: $CONDA/bin/mamba run -n sage sage -pip install -r test-requirements.txt
       - name: Install Abelfunctions
-        run: $CONDA/bin/sage setup.py build_ext --inplace
+        run: $CONDA/bin/mamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
-        run: $CONDA/bin/sage runtests.py -v
+        run: $CONDA/bin/mamba run -n sage sage runtests.py -v
 
