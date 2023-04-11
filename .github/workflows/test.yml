@@ -11,7 +11,11 @@ jobs:
       fail-fast: false
       matrix:
         deps:
+          - {"sage": 9.2, "python": 3.6}
+          - {"sage": 9.2, "python": 3.7}
           - {"sage": 9.2, "python": 3.8}
+          - {"sage": 9.2, "python": 3.9}
+          - {"sage": 9.2, "python": 3.10}
           - {"sage": 9.3, "python": 3.9}
           - {"sage": 9.4, "python": 3.9}
           - {"sage": 9.5, "python": 3.9}
@@ -23,7 +27,7 @@ jobs:
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba install sage=${{ matrix.deps.sage }} -y
+          $CONDA/bin/mamba install sage=${{ matrix.deps.sage }} python=${{ matrix.deps.python }} -y
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
