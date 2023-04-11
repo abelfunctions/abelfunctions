@@ -10,20 +10,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        deps:
-          - {"sage": 9.2, "python": 3.9}
-          - {"sage": 9.3, "python": 3.9}
-          - {"sage": 9.4, "python": 3.9}
-          - {"sage": 9.5, "python": 3.10}
-          - {"sage": 9.6, "python": 3.10}
-          - {"sage": 9.7, "python": 3.10}
-          - {"sage": 9.8, "python": 3.10}
+        sage-version:
+          - '9.2'
+          - '9.3'
+          - '9.4'
+          - '9.5'
+          - '9.6'
+          - '9.7'
+          - '9.8'
     steps:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba create -n sage sage=${{ matrix.deps.sage }} -y
+          $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} -y
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
