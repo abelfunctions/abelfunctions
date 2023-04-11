@@ -26,10 +26,10 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 from numpy.distutils.misc_util import get_numpy_include_dirs
 
-# Support for Sage < 9.7
 try:
     from sage.misc.package_dir import cython_namespace_package_support
 except ImportError:
+    # Support for Sage < 9.7 which does not have cython_namespace_package_support
     cython_namespace_package_support = contextlib.nullcontext
 
 
