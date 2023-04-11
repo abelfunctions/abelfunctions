@@ -23,7 +23,7 @@ jobs:
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba install sage=${{ matrix.deps.sage }} python=${{ matrix.deps.python }} -y
+          $CONDA/bin/mamba install sage=${{ matrix.deps.sage }} -y
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install Python test dependencies
