@@ -22,7 +22,7 @@ jobs:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
-          conda install mamba=1.4.2 -y
+          conda install mamba=1.4.6 -y
           $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} -y
       - name: Checkout
         uses: actions/checkout@v2
