@@ -707,7 +707,7 @@ class Skeleton(object):
         """Converts `value` to its associated node on the y-skeleton `self.C`.
 
         """
-        nodes = [n for n,d in self.C.nodes(data=True)
+        nodes: list = [n for n,d in self.C.nodes(data=True)
                  if numpy.all(d['value'] == value) and not d['final']]
         return nodes[0]
 
