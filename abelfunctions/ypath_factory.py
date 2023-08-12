@@ -644,6 +644,11 @@ class YPathFactory(object):
         """Converts `value` to its associated node on the y-skeleton `self.C`.
 
         """
+        for n,d in self.C.nodes(data=True):
+            print('d value', d['value'])
+            print('value', value)
+            print('np.all', numpy.all(d['value'] == value))
+
         nodes: list = [n for n,d in self.C.nodes(data=True)
                  if numpy.all(d['value'] == value) and not d['final']]
         return nodes[0]
