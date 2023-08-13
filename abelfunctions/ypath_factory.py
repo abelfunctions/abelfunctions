@@ -647,7 +647,7 @@ class YPathFactory(object):
         for n,d in self.C.nodes(data=True):
             print('d value', d['value'])
             print('value', value)
-            print('np.all', numpy.all(d['value'] == value))
+            print('all', all(d['value'] == value))
 
         nodes: list = [n for n,d in self.C.nodes(data=True)
                  if numpy.all(d['value'] == value) and not d['final']]
