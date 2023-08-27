@@ -644,14 +644,22 @@ class YPathFactory(object):
         """Converts `value` to its associated node on the y-skeleton `self.C`.
 
         """
-        for n,d in self.C.nodes(data=True):
-            print('d value', d['value'])
+        for node, data in self.C.nodes(data=True):
+            print('d value', data['value'])
             print('value', value)
-            print('all', numpy.all(numpy.array(d['value']) == value))
+            print('')
+            print('all', numpy.all(numpy.array(data['value']) == value))
+            try:
+                numpy.array(data['value'])
+            except ValueError:
+                # Inhomogeneous shape
+                continue
+            if numpy.all(data['value'] == value) and not data['final']:
+                return node
 
-        nodes: list = [n for n,d in self.C.nodes(data=True)
-                 if numpy.all(d['value'] == value) and not d['final']]
-        return nodes[0]
+        # nodes: list = [n for n,d in self.C.nodes(data=True)
+        #          if numpy.all(d['value'] == value) and not d['final']]
+        # return nodes[0]
 
     def _values(self, ypath, rotations=False):
         """Converts a ypath from value data to node data.
