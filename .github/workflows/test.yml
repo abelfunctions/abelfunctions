@@ -31,7 +31,7 @@ jobs:
       - name: Install Abelfunctions
         run: $CONDA/bin/mamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
-        run: $CONDA/bin/mamba run -n sage sage runtests.py -v
+        run: $CONDA/bin/mamba run -n sage sage runtests.py
 
   test-pip-install:
     runs-on: ubuntu-22.04
