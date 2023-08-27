@@ -33,3 +33,16 @@ jobs:
       - name: Run tests
         run: $CONDA/bin/mamba run -n sage sage runtests.py -v
 
+  test-apt-install:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install sage
+        run: apt update && apt install sagemath
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Python test dependencies
+        run:  sage -pip install -r test-requirements.txt
+      - name: Install Abelfunctions
+        run:  sage setup.py build_ext --inplace
+      - name: Run tests
+        run:  sage runtests.py
