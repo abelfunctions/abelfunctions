@@ -646,11 +646,11 @@ class YPathFactory(object):
         """
         for node, data in self.C.nodes(data=True):
             try:
-                numpy.array(data['value'])
+                data_value = numpy.array(data['value'])
             except ValueError:
                 # Inhomogeneous shape
                 continue
-            if numpy.all(data['value'] == value) and not data['final']:
+            if numpy.all(data_value == value) and not data['final']:
                 return node
             
         raise ValueError(f'Unable to find node associated with {value}')
