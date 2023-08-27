@@ -647,8 +647,6 @@ class YPathFactory(object):
         for node, data in self.C.nodes(data=True):
             print('d value', data['value'])
             print('value', value)
-            print('')
-            print('all', numpy.all(numpy.array(data['value']) == value))
             try:
                 numpy.array(data['value'])
             except ValueError:
