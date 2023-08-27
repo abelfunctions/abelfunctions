@@ -33,3 +33,10 @@ jobs:
       - name: Run tests
         run: $CONDA/bin/mamba run -n sage sage runtests.py -v
 
+  test-pip-install:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install sage
+        run: sudo apt update && sudo apt install sagemath
+      - name: Install Abelfunctions using pip
+        run:  sage --pip install git+https://github.com/abelfunctions/abelfunctions@${{ github.ref_name }}
