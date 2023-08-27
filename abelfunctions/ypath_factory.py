@@ -645,8 +645,6 @@ class YPathFactory(object):
 
         """
         for node, data in self.C.nodes(data=True):
-            print('d value', data['value'])
-            print('value', value)
             try:
                 numpy.array(data['value'])
             except ValueError:
@@ -654,10 +652,8 @@ class YPathFactory(object):
                 continue
             if numpy.all(data['value'] == value) and not data['final']:
                 return node
-
-        # nodes: list = [n for n,d in self.C.nodes(data=True)
-        #          if numpy.all(d['value'] == value) and not d['final']]
-        # return nodes[0]
+            
+        raise ValueError(f'Unable to find node associated with {value}')
 
     def _values(self, ypath, rotations=False):
         """Converts a ypath from value data to node data.
