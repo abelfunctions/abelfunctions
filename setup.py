@@ -36,7 +36,8 @@ except ImportError:
 # raise error if the user is not using Sage to compile
 try:
     from sage.env import sage_include_directories
-except ImportError:
+    SAGE_ROOT = os.environ['SAGE_ROOT']
+except (ImportError, KeyError):
     raise EnvironmentError('abelfunctions must be built using Sage:\n\n'
                            '\t$ sage setup.py <args> <kwds>\n')
 
