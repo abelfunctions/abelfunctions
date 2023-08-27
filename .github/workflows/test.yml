@@ -38,7 +38,5 @@ jobs:
     steps:
       - name: Install sage
         run: sudo apt update && sudo apt install sagemath
-      - name: Install Python test dependencies
-        run:  sage -pip install -r test-requirements.txt
       - name: Install Abelfunctions using pip
         run:  sage --pip install git+https://github.com/abelfunctions/abelfunctions@${{ github.ref_name }}
