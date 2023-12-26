@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install Python test dependencies
         run: $CONDA/bin/mamba run -n sage sage -pip install -r test-requirements.txt
-      - name: Upgrade certain libraries to resolve pythran compile error
+      - name: Update pythran to resolve compile error on Sage 9.8
         run: $CONDA/bin/mamba run -n sage sage -pip install -U pythran
       - name: Install Abelfunctions
         run: $CONDA/bin/mamba run -n sage sage setup.py build_ext --inplace
