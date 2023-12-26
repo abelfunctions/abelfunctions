@@ -1,6 +1,6 @@
 # Installation
 
-Abelfunctions requires [Sage (SageMath)](http://www.sagemath.org) 8.0 or later.
+Abelfunctions requires [Sage (SageMath)](http://www.sagemath.org) 9.2 or later.
 Sage makes it relatively easy to build and run the code.
 
 > **Note:** Depending on your system one of the below installation methods
