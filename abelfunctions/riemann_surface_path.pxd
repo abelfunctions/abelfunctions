@@ -14,11 +14,11 @@ cdef class RiemannSurfacePathPrimitive:
     cdef complex[:,:] _ycheckpoints
     cdef object _repr
 
-    cdef int _nearest_checkpoint_index(self, double s)
-    cdef complex get_x(self, double s)
-    cdef complex get_dxds(self, double s)
-    cdef complex[:] get_y(self, double s)
-    cdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1)
+    cpdef int _nearest_checkpoint_index(self, double s)
+    cpdef complex get_x(self, double s)
+    cpdef complex get_dxds(self, double s)
+    cpdef complex[:] get_y(self, double s)
+    cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1)
 
 cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
     cdef int segment_index_at_parameter(self, double s)

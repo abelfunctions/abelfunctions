@@ -164,7 +164,7 @@ cdef int _reallocate(int max_count, c_array rad, double[:] radii, c_array pts,
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef int[:] integer_points_cython(int genus, double radius, double[:,:] T):
+cpdef int[:] integer_points_cython(int genus, double radius, double[:,:] T):
     r"""Calculates the coordinates of the points with integer-valued coordinates
     contained in the ellipsoid defined by the equation
 
