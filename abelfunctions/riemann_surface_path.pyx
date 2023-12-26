@@ -242,7 +242,7 @@ cdef class RiemannSurfacePathPrimitive:
                                    self.y0, segments)
         return gamma
 
-    cpdef int _nearest_checkpoint_index(self, double s):
+    cdef int _nearest_checkpoint_index(self, double s):
         r"""Returns the index of the checkpoint closest to and preceding `s`.
 
         Parameters
@@ -323,7 +323,7 @@ cdef class RiemannSurfacePathPrimitive:
         self._xcheckpoints = x
         self._ycheckpoints = y
 
-    cpdef complex get_x(self, double s):
+    cdef complex get_x(self, double s):
         r"""Return the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
@@ -340,7 +340,7 @@ cdef class RiemannSurfacePathPrimitive:
         cdef complex value = self._complex_path.eval(s)
         return value
 
-    cpdef complex get_dxds(self, double s):
+    cdef complex get_dxds(self, double s):
         r"""Return the derivative of the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
@@ -357,7 +357,7 @@ cdef class RiemannSurfacePathPrimitive:
         cdef value = self._complex_path.derivative(s)
         return value
 
-    cpdef complex[:] get_y(self, double s):
+    cdef complex[:] get_y(self, double s):
         r"""Return the y-fibre of the path at :math:`s \in [0,1]`.
 
         Delegates to :meth:`analytically_continue`.
@@ -387,7 +387,7 @@ cdef class RiemannSurfacePathPrimitive:
         return yi
 
     @cython.boundscheck(False)
-    cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1):
+    cdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1):
         raise NotImplementedError('Implement in subclass.')
 
     def integrate(self, omega):
@@ -556,7 +556,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         cdef int index = k + (diff & dsgn)
         return index
 
-    cpdef complex get_x(self, double s):
+    cdef complex get_x(self, double s):
         r"""Return the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
@@ -576,7 +576,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         cdef complex value = segment.get_x(s_segment)
         return value
 
-    cpdef complex get_dxds(self, double s):
+    cdef complex get_dxds(self, double s):
         r"""Return the derivative of the x-part of the path at :math:`s \in [0,1]`.
 
         Parameters
@@ -596,7 +596,7 @@ cdef class RiemannSurfacePath(RiemannSurfacePathPrimitive):
         cdef complex value = segment.get_dxds(s_segment)
         return value
 
-    cpdef complex[:] get_y(self, double s):
+    cdef complex[:] get_y(self, double s):
         r"""Return the y-fibre of the path at :math:`s \in [0,1]`.
 
         Delegates to :meth:`analytically_continue`.
@@ -858,7 +858,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
             self, riemann_surface, complex_path, y0, ncheckpoints=ncheckpoints)
 
     @cython.boundscheck(False)
-    cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1):
+    cdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1):
         r"""Analytically continue the y-fibre `yi` lying above `xi` to the y-fibre
         lying above `xip1`.
 
@@ -1155,7 +1155,7 @@ cdef class RiemannSurfacePathSmale(RiemannSurfacePathPrimitive):
             self, riemann_surface, complex_path, y0, ncheckpoints=ncheckpoints)
 
     @cython.boundscheck(False)
-    cpdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1):
+    cdef complex[:] analytically_continue(self, complex xi, complex[:] yi, complex xip1):
         cdef int j,k
         cdef double betaij, betaik, distancejk, alpha
         cdef complex xiphalf, yij, yik

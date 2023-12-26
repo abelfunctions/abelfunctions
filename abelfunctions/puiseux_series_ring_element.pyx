@@ -116,7 +116,7 @@ def is_PuiseuxSeries(x):
 def make_element_from_parent(parent, *args):
     return parent(*args)
 
-cpdef LaurentSeries LaurentSeries_V(LaurentSeries f, long n):
+cdef LaurentSeries LaurentSeries_V(LaurentSeries f, long n):
     """
     If `f = \sum a_m x^m` then this function returns `\sum a_m x^{mn}`.
 
@@ -338,7 +338,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         n = g/n
         return g, m, n
 
-    cpdef _add_(self, right_m):
+    cdef _add_(self, right_m):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_m
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -349,7 +349,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         l = l1 + l2
         return PuiseuxSeries(self._parent, l, g)
 
-    cpdef _sub_(self, right_m):
+    cdef _sub_(self, right_m):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_m
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -360,7 +360,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         l = l1 - l2
         return PuiseuxSeries(self._parent, l, g)
 
-    cpdef _mul_(self, right_r):
+    cdef _mul_(self, right_r):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_r
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -371,13 +371,13 @@ cdef class PuiseuxSeries(AlgebraElement):
         l = l1 * l2
         return PuiseuxSeries(self._parent, l, g)
 
-    cpdef _rmul_(self, Element c):
+    cdef _rmul_(self, Element c):
         return PuiseuxSeries(self._parent, self.__l._rmul_(c), self.__e)
 
-    cpdef _lmul_(self, Element c):
+    cdef _lmul_(self, Element c):
         return PuiseuxSeries(self._parent, self.__l._lmul_(c), self.__e)
 
-    cpdef _div_(self, right_r):
+    cdef _div_(self, right_r):
         cdef PuiseuxSeries right = <PuiseuxSeries>right_r
         cdef LaurentSeries l, l1, l2
         cdef long g, m, n
@@ -412,7 +412,7 @@ cdef class PuiseuxSeries(AlgebraElement):
             e = self.__e * int(denom)
         return PuiseuxSeries(self._parent, l, e)
 
-    cpdef _richcmp_(self, right_r, int op):
+    cdef _richcmp_(self, right_r, int op):
         r"""
         Comparison of self and right.
 
