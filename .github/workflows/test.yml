@@ -29,7 +29,7 @@ jobs:
       - name: Install Python test dependencies
         run: $CONDA/bin/mamba run -n sage sage -pip install -r test-requirements.txt
       - name: Install Abelfunctions
-        run: $CONDA/bin/mamba run -n sage sage setup.py build_ext --inplace
+        run: SCIPY_USE_PYTHRAN=0 $CONDA/bin/mamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
         run: $CONDA/bin/mamba run -n sage sage runtests.py
 
