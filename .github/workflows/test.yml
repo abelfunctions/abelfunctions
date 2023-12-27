@@ -45,4 +45,4 @@ jobs:
       - name: Install sage
         run: sudo apt update && sudo apt install sagemath
       - name: Install Abelfunctions using pip
-        run:  sage --pip install git+https://github.com/abelfunctions/abelfunctions@${{ github.ref_name }}
+        run:  sage --pip install .
