@@ -42,9 +42,9 @@ jobs:
   test-pip-install:
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Install sage
         run: sudo apt update && sudo apt install sagemath
       - name: Install Abelfunctions using pip
-        run: |
-          branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
-          sage --pip install git+https://github.com/abelfunctions/abelfunctions@$branch
+        run:  sage --pip install .
