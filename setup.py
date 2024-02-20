@@ -20,16 +20,23 @@ Python .pyc and Cython .o/.so output and run:
 """
 import os
 import shutil
+import contextlib
 from distutils.core import setup, Command
 from distutils.extension import Extension
 from Cython.Build import cythonize
 from numpy.distutils.misc_util import get_numpy_include_dirs
 
+try:
+    from sage.misc.package_dir import cython_namespace_package_support
+except ImportError:
+    # Support for Sage < 9.7 which does not have cython_namespace_package_support
+    cython_namespace_package_support = contextlib.nullcontext
+
+
 # raise error if the user is not using Sage to compile
 try:
     from sage.env import sage_include_directories
-    SAGE_ROOT = os.environ['SAGE_ROOT']
-except (ImportError, KeyError):
+except ImportError:
     raise EnvironmentError('abelfunctions must be built using Sage:\n\n'
                            '\t$ sage setup.py <args> <kwds>\n')
 
@@ -160,6 +167,10 @@ class clean(Command):
 
 # configure setup
 exec(open('abelfunctions/version.py').read())
+
+with cython_namespace_package_support():
+    ext_modules = cythonize(ext_modules, compiler_directives={"language_level": "3"})
+
 setup(
     name = 'abelfunctions',
     version = __version__,
@@ -171,7 +182,7 @@ setup(
     license = 'MIT',
     packages = packages,
     python_requires=">=3.6",
-    ext_modules = cythonize(ext_modules, compiler_directives={"language_level": "3"}),
+    ext_modules = ext_modules,
     platforms = ['all'],
     cmdclass = {'clean':clean},
     classifiers=[

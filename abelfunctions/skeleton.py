@@ -707,9 +707,16 @@ class Skeleton(object):
         """Converts `value` to its associated node on the y-skeleton `self.C`.
 
         """
-        nodes = [n for n,d in self.C.nodes(data=True)
-                 if numpy.all(d['value'] == value) and not d['final']]
-        return nodes[0]
+        for node, data in self.C.nodes(data=True):
+            try:
+                data_value = numpy.array(data['value'])
+            except ValueError:
+                # Inhomogeneous shape
+                continue
+            if numpy.all(data_value == value) and not data['final']:
+                return node
+            
+        raise ValueError(f'Unable to find node associated with {value}')
 
     def _values(self, ypath, rotations=False):
         """Converts a ypath from value data to node data.
