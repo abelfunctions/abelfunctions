@@ -147,13 +147,13 @@ class RiemannSurfacePathFactory(object):
         self.complex_path_factory = ComplexPathFactory(
             riemann_surface.f, base_point=base_point, kappa=kappa)
 
-        # now that the compelx path factory is built we have a base point
+        # now that the complex path factory is built we have a base point
         # (either provided or chosen). we now need to determine the base
         # sheets.
         #
         # if not provided then compute some. otherwise, check they are roots
         if not base_sheets:
-            x,y = self.riemann_surface.f.parent().gens()
+            x, y = self.riemann_surface.f.parent().gens()
             p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
             roots = p.roots(CDF, multiplicities=False)
             base_sheets = numpy.array(roots, dtype=complex)
@@ -563,7 +563,7 @@ class RiemannSurfacePathFactory(object):
             raise ValueError('The point %s is not at the start of the '
                              'ComplexPath %s'%(x0, complex_path))
         f = self.riemann_surface.f
-        curve_error = [abs(complex(f(x0,y0k))) for y0k in y0]
+        curve_error = [abs(complex(f(x0, y0k))) for y0k in y0]
         if max(curve_error) > 1e-7:
             raise ValueError('The fibre %s above %s does not lie on the '
                              'curve %s'%(y0.tolist(), x0, f))
