@@ -84,7 +84,7 @@ def finite_sum_opencl(X, Yinv, T, x, y, S, g):
                                                buf_fsum_real,
                                                buf_fsum_imag)
 
-    
+
     cl.enqueue_copy(_queue,fsum_real,buf_fsum_real)
     cl.enqueue_copy(_queue,fsum_imag,buf_fsum_imag)
 
@@ -92,51 +92,51 @@ def finite_sum_opencl(X, Yinv, T, x, y, S, g):
     return np.sum(fsum_real) + 1.0j*np.sum(fsum_imag)
 
 def finite_sum(X, Yinv, T, x, y, S, g, deriv):
-    """
+    r"""
     Computes the oscillatory part of the finite sum
-    
+
     .. math::
-    
+
     \theta( z | \Omega ) = \sum_{ U_R } e^{ 2 \pi i \left( \tfrac{1}{2} \langle \Omega n, n \rangle +  \langle z, n \rangle \right) }
-    
+
     where
-    
+
     .. math::
-    
-        U_R = \left\{ n \in \ZZ^g : \pi ( n - c )^{t} \cdot Y \cdot 
+
+        U_R = \left\{ n \in \ZZ^g : \pi ( n - c )^{t} \cdot Y \cdot
         (n - c ) < R^2, |c_j| < 1/2, j=1,\ldots,g \right\}.
-    
+
     The oscillatory part
-    
+
     .. note::
-    
+
         For accuracy issues we split the computation into its real and
         imaginary components.
 
     INPUT:
-        
+
     - ``x`` -- the real part of the input vector `z`
-        
+
     - ``y`` -- the imaginary part of the input vector `z`
 
-    - ``S`` -- the set of integer points over which to compute the finite sum. 
+    - ``S`` -- the set of integer points over which to compute the finite sum.
       Often, this is set to `U_R` by calling ``RiemannTheta.integer_points()`.
-        
+
     - ``deriv`` -- the derivative, if any
 
-    - ``domain`` -- a ``RealField`` object. Sets the ring over which 
-      comptuations are performed. For computational accuracy, we separate real 
+    - ``domain`` -- a ``RealField`` object. Sets the ring over which
+      comptuations are performed. For computational accuracy, we separate real
       and imaginary parts of the finite sum and compute over the reals.
 
-      
+
     OUTPUT:
 
     - the value of the oscillatory part of the Riemann theta function
-            
+
 
     EXAMPLES:
 
-    ``_finite_sum`` is implicitly called when, for example, computing the 
+    ``_finite_sum`` is implicitly called when, for example, computing the
     value of a genus 2 Riemann theta function at the origin::
 
         sage: from sage.functions.riemann_theta import RiemannTheta
@@ -145,7 +145,7 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
         sage: theta = RiemannTheta(Omega)
         sage: theta.value_at_point([0,0])
         1.050286258 - 0.1663490011*I
-    """    
+    """
     I     = 1.0j
     pi    = np.pi
 
@@ -162,8 +162,8 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
         # for ease of computation, we perform derivative product
         # computation in a complex ring
         derivprod = lambda a: np.prod([2*pi*I*np.dot(d,a-intshift) for d in deriv])
-        
-#    pdb.set_trace()       
+
+#    pdb.set_trace()
 
     # compute the finite sum
     fsum_real = 0
@@ -174,7 +174,7 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
         npt   = np.exp(normpart(n))
         cpart = npt * np.cos(ept)
         spart = npt * np.sin(ept)
-            
+
         if (len(deriv) > 0):
             dp         = derivprod(n)
             dpr        = dp.real
@@ -187,4 +187,3 @@ def finite_sum(X, Yinv, T, x, y, S, g, deriv):
             fsum_imag += spart
 
     return fsum_real + fsum_imag*1.0j
-

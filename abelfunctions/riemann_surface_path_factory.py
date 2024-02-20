@@ -42,6 +42,7 @@ from abelfunctions.ypath_factory import YPathFactory as Skeleton
 from numpy import array
 from sage.all import infinity, CC, CDF, cached_method
 
+
 class RiemannSurfacePathFactory(object):
     r"""Factory class for constructing paths on the Riemann surface.
 
@@ -147,16 +148,16 @@ class RiemannSurfacePathFactory(object):
         self.complex_path_factory = ComplexPathFactory(
             riemann_surface.f, base_point=base_point, kappa=kappa)
 
-        # now that the compelx path factory is built we have a base point
+        # now that the complex path factory is built we have a base point
         # (either provided or chosen). we now need to determine the base
         # sheets.
         #
         # if not provided then compute some. otherwise, check they are roots
         if not base_sheets:
-            x,y = self.riemann_surface.f.parent().gens()
+            x, y = self.riemann_surface.f.parent().gens()
             p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
             roots = p.roots(CDF, multiplicities=False)
-            base_sheets = numpy.array(roots, dtype=complex)
+            base_sheets = array(roots, dtype=complex)
         else:
             f = self.riemann_surface.f
             for sheet in base_sheets:
@@ -259,7 +260,7 @@ class RiemannSurfacePathFactory(object):
         ya = complex(p.eval_y(ta))
 
         # construct the place Q and compute the path going from P0 to Q
-        Q = self.riemann_surface(xa,ya)
+        Q = self.riemann_surface(xa, ya)
         gamma_P0_to_Q = self.path_to_place(Q)
 
         # construct the path going from Q to P
@@ -270,7 +271,6 @@ class RiemannSurfacePathFactory(object):
             self.riemann_surface, gamma_x, yend)
         gamma = gamma_P0_to_Q + gamma_Q_to_P
         return gamma
-
 
     def _path_to_discriminant_place(self, P):
         r"""Returns a path to a discriminant place on the surface.
@@ -306,7 +306,7 @@ class RiemannSurfacePathFactory(object):
 
         # construct a path going from the base place to this regular
         # place to the left of the target discriminant point
-        P1 = self.riemann_surface(a,y)
+        P1 = self.riemann_surface(a, y)
         gamma1 = self._path_to_regular_place(P1)
 
         # construct the RiemannSurfacePath going from this regular place to the
@@ -358,7 +358,7 @@ class RiemannSurfacePathFactory(object):
         if sheet_index != 0:
             ypath = self.skeleton.ypath_from_base_to_sheet(sheet_index)
             gamma_swap = self.RiemannSurfacePath_from_cycle(ypath)
-            ordered_base_sheets = numpy.array(gamma_swap.get_y(1.0), dtype=complex)
+            ordered_base_sheets = array(gamma_swap.get_y(1.0), dtype=complex)
 
             # take the new ordering of branch points and construct the
             # path to the target place. there is an inherent check that
@@ -563,7 +563,7 @@ class RiemannSurfacePathFactory(object):
             raise ValueError('The point %s is not at the start of the '
                              'ComplexPath %s'%(x0, complex_path))
         f = self.riemann_surface.f
-        curve_error = [abs(complex(f(x0,y0k))) for y0k in y0]
+        curve_error = [abs(complex(f(x0, y0k))) for y0k in y0]
         if max(curve_error) > 1e-7:
             raise ValueError('The fibre %s above %s does not lie on the '
                              'curve %s'%(y0.tolist(), x0, f))
