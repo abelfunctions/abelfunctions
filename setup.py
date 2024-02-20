@@ -21,10 +21,9 @@ Python .pyc and Cython .o/.so output and run:
 import os
 import shutil
 import contextlib
-from distutils.core import setup, Command
-from distutils.extension import Extension
+import numpy
+from setuptools import setup, Command, Extension
 from Cython.Build import cythonize
-from numpy.distutils.misc_util import get_numpy_include_dirs
 
 try:
     from sage.misc.package_dir import cython_namespace_package_support
@@ -83,7 +82,7 @@ ext_modules = [
 # * most modules depend on Sage and Numpy. Provide include directories.
 # * disable warnings in gcc step
 INCLUDES = sage_include_directories()
-INCLUDES_NUMPY = get_numpy_include_dirs()
+INCLUDES_NUMPY = numpy.get_include()
 for mod in ext_modules:
     mod.include_dirs.extend(INCLUDES)
     mod.include_dirs.extend(INCLUDES_NUMPY)
