@@ -149,14 +149,14 @@ class Divisor(object):
                              'on the same Riemann surface.')
 
         all_places = set(self.places + other.places)
-        d = dict((P, self[P] + other[P]) for P in all_places)
+        d = {P: self[P] + other[P] for P in all_places}
         return Divisor(self.RS, d)
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __neg__(self):
-        d = dict((P,-m) for P,m in self.items)
+        d = {P: -m for P,m in self.items}
         return Divisor(self.RS, d)
 
     def __sub__(self, other):
@@ -164,7 +164,7 @@ class Divisor(object):
 
     def __mul__(self, other):
         other = int(other)
-        d = dict((P,other*m) for P,m in self.items)
+        d = {P: other*m for P,m in self.items}
         return Divisor(self.RS, d)
 
     def __rmul__(self, other):

@@ -708,7 +708,7 @@ class ComplexPathFactory(object):
         if abs(phi_w0_w1 - phi_w0_b) < 1e-13:
             theta0 = numpy.angle(w0-b)
             dtheta = -numpy.pi  # default above
-            if not orientation is None:
+            if orientation is not None:
                 dtheta *= orientation
             return ComplexArc(R, b, theta0, dtheta)
 
@@ -748,7 +748,7 @@ class ComplexPathFactory(object):
         # above/below implies dtheta negative/positive.
         #
         # when the signs are same then make adjustments:
-        if not orientation is None:
+        if orientation is not None:
             if orientation == 1 and dtheta > 0:
                 dtheta = dtheta - 2*numpy.pi
             elif orientation == -1 and dtheta < 0:

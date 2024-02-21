@@ -139,7 +139,7 @@ def frobenius_transform(A, g):
             k = i+g+1
             while K[i+g,i] == 0:
                 if K[k,i] != 0:
-                    pivot = -1/K[k,i];
+                    pivot = -1/K[k,i]
 
                     T[k,:]      *= pivot         # scale row
                     T[[k,i+g],:] = T[[i+g,k],:]  # swap rows
@@ -485,7 +485,7 @@ def compute_c_cycles(tretkoff_graph, final_edges):
         point `b_{i_k}`.
 
     """
-    root = tuple([0])
+    root = (0,)
     C = tretkoff_graph
     c_cycles = []
 

@@ -148,8 +148,8 @@ class Permutation(object):
 #         new_other = other[:] + [i+1 for i in range(len(other), len(self))]
 #         new_p1 = self[:] + [i+1 for i in range(len(self), len(other))]
 #         return Permutation([new_p1[i-1] for i in new_other])
-        new_other = other[:] + [i for i in range(len(other), len(self))]
-        new_p1 = self[:] + [i for i in range(len(self), len(other))]
+        new_other = other[:] + list(range(len(other), len(self)))
+        new_p1 = self[:] + list(range(len(self), len(other)))
         return Permutation([new_p1[i] for i in new_other])
 
     def __call__(self, i):

@@ -357,7 +357,7 @@ def compute_bd(f, b, df, r, alpha):
             # solution exists then the integral basis element is not singular
             # enough at alphak
             sols = solve_coefficient_system(Q, equations, a)
-            if not sols is None:
+            if sols is not None:
                 bdm1 = sum(F(sols[i][0])*b[i] for i in range(d))
                 bd = F(bdm1 + bd)/ F(k)
             else:

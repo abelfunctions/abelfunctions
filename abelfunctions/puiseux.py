@@ -127,7 +127,7 @@ def newton_polygon(H, additional_points=[]):
     polygon = []
     for side in sides:
         polygon_side = [P for P in support if P in side]
-        polygon_side = sorted(map(lambda P: (int(P.x),int(P.y)), polygon_side))
+        polygon_side = sorted(((int(P.x),int(P.y)) for P in polygon_side))
         polygon.append(polygon_side)
 
         # stop the moment we hit the i-axis. despite the filtration at
@@ -392,7 +392,7 @@ def puiseux_rational(H, recurse=False):
         u,v = bezout(q,m)
         for psi,k in phi.squarefree_decomposition():
             roots = psi.roots(ring=QQbar, multiplicities=False)
-            map(lambda x: x.exactify(), roots)
+            (x.exactify() for x in roots)
             for xi in roots:
                 Hprime = transform_newton_polynomial(H, q, m, l, xi)
                 next_terms = puiseux_rational(Hprime, recurse=True)
@@ -492,7 +492,7 @@ def puiseux(f, alpha, beta=None, order=None, parametric=True):
     betas = galpha.roots(ring=QQbar, multiplicities=False)
 
     # filter for requested value of beta. raise error if not found
-    if not beta is None:
+    if beta is not None:
         betas = [b for b in betas if b == beta]
         if not betas:
             raise ValueError('The point ({0}, {1}) is not on the '
@@ -790,7 +790,7 @@ class PuiseuxTSeries(object):
             conjugates = [mu*zeta_e**k for k in range(abse)]
         else:
             conjugates = [mu]
-        map(lambda x: x.exactify(), conjugates)
+        (x.exactify() for x in conjugates)
 
         # determine the resulting x-series
         xseries = []
