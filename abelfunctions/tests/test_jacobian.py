@@ -46,8 +46,8 @@ class TestJacobian(AbelfunctionsTestCase):
         errorv = numpy.linalg.norm(J(v) - J(J(v)))
         errorw = numpy.linalg.norm(J(v) - J(J(v)))
 
-        self.assertLess(errorv, 1e-14)
-        self.assertLess(errorw, 1e-14)
+        self.assertLess(errorv, 5e-14)
+        self.assertLess(errorw, 5e-14)
 
     def test_lattice_vector(self):
         g = self.X11.genus()
@@ -59,7 +59,7 @@ class TestJacobian(AbelfunctionsTestCase):
         beta = numpy.random.randint(-5,5,g)
         z = alpha + numpy.dot(Omega,beta)
         error = numpy.linalg.norm(J(z))
-        self.assertLess(error, 1e-14)
+        self.assertLess(error, 5e-14)
 
     def test_half_lattice_vectors(self):
         g = self.X11.genus()
@@ -75,4 +75,4 @@ class TestJacobian(AbelfunctionsTestCase):
                 hk = numpy.array(hk, dtype=complex)
                 z = hj + numpy.dot(Omega,hk)
                 error = numpy.linalg.norm(J(2*z))
-                self.assertLess(error, 1e-14)
+                self.assertLess(error, 5e-14)

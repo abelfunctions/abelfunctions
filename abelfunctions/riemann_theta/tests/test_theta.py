@@ -492,8 +492,8 @@ class TestRiemannThetaValues(unittest.TestCase):
         rel_error = abs((values1-values2)/values1)
         rel_error_max = numpy.max(rel_error)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_max,1e-13)
-        self.assertLess(rel_error_avg,1e-13)
+        self.assertLess(rel_error_max,5e-14)
+        self.assertLess(rel_error_avg,5e-14)
 
         # next, test the relative error using larger magnitude values. we don't
         # test the max error due to possible numerical roundoff issues
@@ -507,7 +507,7 @@ class TestRiemannThetaValues(unittest.TestCase):
 
         rel_error = abs((values1-values2)/values1)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_avg,1e-13)
+        self.assertLess(rel_error_avg,5e-14)
 
         # repeat for different tau
         tau = [[1.0 + 2.5j]]
@@ -517,7 +517,7 @@ class TestRiemannThetaValues(unittest.TestCase):
 
         rel_error = abs((values1-values2)/values1)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_avg,1e-13)
+        self.assertLess(rel_error_avg,5e-14)
 
     @unittest.skipIf(NO_JTHETA, 'Could not find sympy.mpmath.jtheta')
     def test_against_sympy_jtheta(self):
