@@ -84,8 +84,8 @@ ext_modules = [
 INCLUDES = sage_include_directories()
 INCLUDES_NUMPY = numpy.get_include()
 for mod in ext_modules:
-    mod.include_dirs.extend(INCLUDES)
-    mod.include_dirs.extend(INCLUDES_NUMPY)
+    # mod.include_dirs.extend(INCLUDES)
+    # mod.include_dirs.extend(INCLUDES_NUMPY)
     mod.extra_compile_args.append('-w')
     mod.extra_compile_args.append('-std=c99')
 
