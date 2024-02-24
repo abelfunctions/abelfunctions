@@ -198,7 +198,7 @@ class RiemannSurface(object):
             return places
 
         # otherwise, return a regular place if far enough away
-        if not beta is None:
+        if beta is not None:
             curve_eval = self.f(alpha, beta)
             if abs(curve_eval) > 1e-8:
                 raise ValueError('The place (%s, %s) does not lie on the curve '

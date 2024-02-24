@@ -58,7 +58,7 @@ def reorder_cycle(c, j=None):
     """
     n = len(c)
     try:
-        if j != None:
+        if j is not None:
             i = c.index(j)
         else:
             sheet = smallest(c)
@@ -441,7 +441,7 @@ def compute_c_cycles(tretkoff_graph, final_edges):
     point, and "n_{i_k}" is the number of times and direction to go
     about branch point "b_{i_k}".
     """
-    root = tuple([0])
+    root = (0,)
     C = tretkoff_graph
     c_cycles = []
 

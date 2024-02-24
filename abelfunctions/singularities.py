@@ -108,14 +108,14 @@ def singular_points_infinite(f):
     normalized_points = []
     for xi,yi,zi in all_points:
         P = (1,yi/xi,0) if xi != 0 else (xi/yi,1,0)
-        if not P in normalized_points:
+        if P not in normalized_points:
             normalized_points.append(P)
 
     # finally, check the gradient condition to get the actual singular points
     grad = F.gradient()
     for xi,yi,zi in normalized_points:
         grad_vals = [dFi(xi,yi,zi) for dFi in grad]
-        is_zero = all(map(lambda arg: arg.is_zero(), grad_vals))
+        is_zero = all((arg.is_zero() for arg in grad_vals))
         if is_zero:
             S.append((xi,yi,zi))
     return S

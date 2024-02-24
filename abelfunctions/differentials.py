@@ -454,7 +454,7 @@ class Differential:
         # entries such that x=0 and x=oo appear first because differential
         # numerators tend to be monomial, resulting in better performance.
         xvalues = []
-        roots = set([]).union(numer_roots)
+        roots = set().union(numer_roots)
         roots = roots.union(denom_roots)
         roots = roots.union(discriminant_points)
         if 0 in roots:
@@ -538,7 +538,7 @@ class Differential:
         for k in range(nseg):
             segment = gamma.segments[k]
             osegment = numpy.array(self.evaluate(segment,t),dtype=complex)
-            tsegment = (t+k)/nseg;
+            tsegment = (t+k)/nseg
             ax.plot(tsegment, osegment.real, 'b')
             ax.plot(tsegment, osegment.imag, 'r--')
 
