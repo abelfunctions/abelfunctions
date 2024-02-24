@@ -82,10 +82,10 @@ ext_modules = [
 # * most modules depend on Sage and Numpy. Provide include directories.
 # * disable warnings in gcc step
 INCLUDES = sage_include_directories()
-INCLUDES_NUMPY = numpy.get_include()
+INCLUDES_NUMPY = [numpy.get_include()]
 for mod in ext_modules:
-    # mod.include_dirs.extend(INCLUDES)
-    # mod.include_dirs.extend(INCLUDES_NUMPY)
+    mod.include_dirs.extend(INCLUDES)
+    mod.include_dirs.extend(INCLUDES_NUMPY)
     mod.extra_compile_args.append('-w')
     mod.extra_compile_args.append('-std=c99')
 
