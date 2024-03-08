@@ -21,7 +21,7 @@ jobs:
       - name: Install ruff
         run: pip3 install ruff
       - name: Check code with ruff
-        run: ruff check
+        run: ruff check ./abelfunctions
 
   test:
     runs-on: ubuntu-22.04
