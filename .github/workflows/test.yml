@@ -21,7 +21,7 @@ jobs:
       - name: Install ruff
         uses: pip3 install ruff
       - name: Check code with ruff
-        uses: ruff check
+        run: ruff check
 
   test:
     runs-on: ubuntu-22.04
