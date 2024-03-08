@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: 3.12
       - name: Install ruff
-        uses: pip3 install ruff
+        run: pip3 install ruff
       - name: Check code with ruff
         run: ruff check
 
