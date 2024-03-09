@@ -1,8 +1,6 @@
 import unittest
 
 from abelfunctions.differentials import (
-    mnuk_conditions,
-    recenter_curve,
     differentials_numerators,
     differentials,
     validate_differentials,

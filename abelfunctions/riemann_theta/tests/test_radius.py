@@ -2,8 +2,6 @@ import pytest
 import numpy
 
 from abelfunctions.riemann_theta.radius import (
-    radius,
-    radius0,
     radius1,
     radius2,
     radiusN,

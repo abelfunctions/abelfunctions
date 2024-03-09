@@ -1,14 +1,10 @@
 from .test_abelfunctions import AbelfunctionsTestCase
-from abelfunctions.riemann_surface import RiemannSurface
 from abelfunctions.abelmap import Jacobian, fractional_part
 
 import numpy
-import sympy
 
 from numpy.linalg import norm
-from sympy.abc import x,y
 
-import unittest
 import itertools
 
 

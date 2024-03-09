@@ -1,17 +1,12 @@
 import unittest
 
-from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
 from abelfunctions.complex_path import (
-    ComplexPathPrimitive,
-    ComplexPath,
     ComplexLine,
     ComplexArc,
-    ComplexRay,
 )
 from abelfunctions.riemann_surface import RiemannSurface
 from abelfunctions.riemann_surface_path import (
-    RiemannSurfacePath,
     RiemannSurfacePathPuiseux,
     RiemannSurfacePathSmale
     )

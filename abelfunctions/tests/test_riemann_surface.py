@@ -1,4 +1,3 @@
-import unittest
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
 from abelfunctions import RiemannSurface

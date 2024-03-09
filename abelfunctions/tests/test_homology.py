@@ -1,7 +1,7 @@
 import unittest
 
 from sage.all import (
-    GF, ZZ, QQ, CDF, RDF, I, Matrix, zero_matrix, identity_matrix, real, imag
+    GF, ZZ, QQ, CDF, I, Matrix, zero_matrix, identity_matrix, imag
 )
 from abelfunctions.homology import (
     involution_matrix,

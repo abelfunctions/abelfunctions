@@ -1,8 +1,6 @@
 from .test_abelfunctions import AbelfunctionsTestCase
 
-import abelfunctions
 import numpy
-import unittest
 
 from abelfunctions import RiemannSurface
 from abelfunctions.abelmap import AbelMap, Jacobian

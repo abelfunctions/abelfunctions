@@ -12,16 +12,15 @@ import numpy
 import scipy
 import scipy.linalg
 
-import abelfunctions
 from abelfunctions.differentials import differentials as generate_differentials
 from abelfunctions.differentials import validate_differentials
-from abelfunctions.divisor import Place, DiscriminantPlace, RegularPlace, Divisor
+from abelfunctions.divisor import DiscriminantPlace, RegularPlace
 from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_surface_path_factory import RiemannSurfacePathFactory
 from abelfunctions.singularities import genus
 
 from sage.all import QQbar, infinity
-from sage.misc.cachefunc import cached_function, cached_method
+from sage.misc.cachefunc import cached_method
 
 
 class RiemannSurface(object):

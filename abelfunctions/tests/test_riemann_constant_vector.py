@@ -1,16 +1,10 @@
 from .test_abelfunctions import AbelfunctionsTestCase
 
-import abelfunctions
-import numpy
-import sympy
-import unittest
 
 from abelfunctions import (AbelMap, Jacobian, RiemannTheta,
                            RiemannConstantVector)
 from abelfunctions.divisor import ZeroDivisor
 from numpy.linalg import norm
-from sympy import prod
-from sympy.abc import x,y,z,t
 
 
 class TestRCVTheta(AbelfunctionsTestCase):

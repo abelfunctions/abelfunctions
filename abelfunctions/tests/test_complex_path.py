@@ -2,8 +2,6 @@ import unittest
 
 from numpy import pi, Infinity, exp, sqrt
 from abelfunctions.complex_path import (
-    ComplexPathPrimitive,
-    ComplexPath,
     ComplexLine,
     ComplexArc,
     ComplexRay,

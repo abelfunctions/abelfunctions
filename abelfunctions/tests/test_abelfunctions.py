@@ -1,4 +1,3 @@
-import abelfunctions
 import unittest
 
 from abelfunctions import RiemannSurface

@@ -1,6 +1,6 @@
 from .test_abelfunctions import AbelfunctionsTestCase
 from abelfunctions.divisor import (
-    Place, DiscriminantPlace, RegularPlace, Divisor, ZeroDivisor
+    RegularPlace, Divisor, ZeroDivisor
 )
 
 

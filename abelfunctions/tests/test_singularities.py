@@ -1,5 +1,3 @@
-import sympy
-import unittest
 
 from abelfunctions.singularities import (
     singularities,
@@ -11,8 +9,6 @@ from abelfunctions.singularities import (
 from .test_abelfunctions import AbelfunctionsTestCase
 
 from sage.rings.rational_field import QQ
-from sage.rings.qqbar import QQbar
-from sage.rings.infinity import infinity
 
 class TestSmooth(AbelfunctionsTestCase):
 

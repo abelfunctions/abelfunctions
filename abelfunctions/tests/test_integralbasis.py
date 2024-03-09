@@ -1,13 +1,8 @@
-import unittest
 
 from abelfunctions.integralbasis import integral_basis
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
-from sage.all import SR
-from sage.rings.big_oh import O
-from sage.rings.laurent_series_ring import LaurentSeriesRing
 from sage.rings.rational_field import QQ
-from sage.rings.qqbar import QQbar
 
 class TestIntegralBasis(AbelfunctionsTestCase):
 

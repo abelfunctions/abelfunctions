@@ -10,18 +10,14 @@ from abelfunctions.puiseux import (
     puiseux_rational,
     transform_newton_polynomial,
 )
-from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
-from abelfunctions import RiemannSurface, AbelMap
 
-from sage.all import SR, xgcd
 from sage.calculus.functional import taylor
 from sage.calculus.var import var
-from sage.rings.laurent_series_ring import LaurentSeriesRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
 from sage.rings.infinity import infinity
-from sympy import Poly, Point, Segment, Polygon, RootOf, sqrt, S
+from sympy import sqrt, S
 
 # every example will be over QQ[x,y]. consider putting in setup?
 R = QQ['x,y']
