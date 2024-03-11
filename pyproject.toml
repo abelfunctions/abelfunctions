@@ -3,4 +3,5 @@ exclude = ["presentation.py"]
 
 [tool.ruff.lint]
 ignore-init-module-imports = true
+ignore = ["E741"]
 
