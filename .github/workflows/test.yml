@@ -22,7 +22,7 @@ jobs:
         run: pip3 install ruff
       - name: Check code with ruff
         run: |
-          ruff check ./abelfunctions --output-format=github
+          ruff check --output-format=github
           ruff format --check --output-format=github
 
   test:

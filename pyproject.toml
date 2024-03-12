@@ -1,5 +1,5 @@
 [tool.ruff]
-exclude = ["presentation.py"]
+exclude = ["presentation.py", "examples/*"]
 
 [tool.ruff.lint]
 ignore-init-module-imports = true
