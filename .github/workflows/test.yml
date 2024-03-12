@@ -23,7 +23,7 @@ jobs:
       - name: Check code with ruff
         run: |
           ruff check --output-format=github
-          ruff format --check --output-format=github
+          ruff format --check
 
   test:
     runs-on: ubuntu-22.04
