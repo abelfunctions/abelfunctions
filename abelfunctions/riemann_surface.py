@@ -68,8 +68,11 @@ class RiemannSurface(object):
     def path_factory(self):
         if not self._path_factory:
             self._path_factory = RiemannSurfacePathFactory(
-                self, base_point=self._base_point,
-                base_sheets=self._base_sheets, kappa=self._kappa)
+                self,
+                base_point=self._base_point,
+                base_sheets=self._base_sheets,
+                kappa=self._kappa,
+            )
             self._base_point = self._path_factory.base_point
             self._base_sheets = self._path_factory.base_sheets
         return self._path_factory
@@ -91,10 +94,10 @@ class RiemannSurface(object):
         """Specify a list of Differentials to use or None to clear."""
 
         if value is not None and not validate_differentials(value, self.genus()):
-                raise ValueError('Invalid list of differentials')
+            raise ValueError("Invalid list of differentials")
         self._user_differentials = value
 
-    def __init__(self, f, base_point=None, base_sheets=None, kappa=3./5):
+    def __init__(self, f, base_point=None, base_sheets=None, kappa=3.0 / 5):
         """Construct a Riemann surface.
 
         Parameters
@@ -111,7 +114,7 @@ class RiemannSurface(object):
             branch points.
         """
         R = f.parent()
-        x,y = R.gens()
+        x, y = R.gens()
         self._f = f
         self._degree = f.degree(y)
         self._base_point = base_point
@@ -124,7 +127,7 @@ class RiemannSurface(object):
         self._user_differentials = None
 
     def __repr__(self):
-        s = 'Riemann surface defined by f = %s'%(self.f)
+        s = "Riemann surface defined by f = %s" % (self.f)
         return s
 
     def __call__(self, alpha, beta=None):
@@ -171,7 +174,7 @@ class RiemannSurface(object):
 
         """
         # alpha = infinity case
-        infinities = [infinity, 'oo', numpy.Inf]
+        infinities = [infinity, "oo", numpy.Inf]
         if alpha in infinities:
             alpha = infinity
             p = puiseux(self.f, alpha)
@@ -187,7 +190,7 @@ class RiemannSurface(object):
         except TypeError:
             alpha = complex(alpha)
             exact = False
-        b = self.path_factory.closest_discriminant_point(alpha,exact=exact)
+        b = self.path_factory.closest_discriminant_point(alpha, exact=exact)
 
         # if alpha is equal to or close to a discriminant point then return a
         # discriminant place
@@ -200,16 +203,18 @@ class RiemannSurface(object):
         if beta is not None:
             curve_eval = self.f(alpha, beta)
             if abs(curve_eval) > 1e-8:
-                raise ValueError('The place (%s, %s) does not lie on the curve '
-                                 '/ surface.' % (alpha, beta))
+                raise ValueError(
+                    "The place (%s, %s) does not lie on the curve "
+                    "/ surface." % (alpha, beta)
+                )
             place = RegularPlace(self, alpha, beta)
             return place
 
         # if a beta (y-coordinate) is not specified then return all places
         # lying above x=alpha
         R = self.f.parent()
-        x,y = R.gens()
-        falpha = self.f(alpha,y).univariate_polynomial()
+        x, y = R.gens()
+        falpha = self.f(alpha, y).univariate_polynomial()
         yroots = falpha.roots(ring=falpha.base_ring(), multiplicities=False)
         places = [RegularPlace(self, alpha, beta) for beta in yroots]
         return places
@@ -401,11 +406,12 @@ class RiemannSurface(object):
         # tau[i,j] = \int_{a_j} \omega_i,  j < g
         # tau[i,j] = \int_{b_j} \omega_i,  j >= g
         #
-        tau = numpy.zeros((g,2*g), dtype=complex)
+        tau = numpy.zeros((g, 2 * g), dtype=complex)
         for i in range(g):
-            for j in range(2*g):
-                tau[i,j] = sum(linear_combinations[j,k] * c_periods[i][k]
-                               for k in range(m))
+            for j in range(2 * g):
+                tau[i, j] = sum(
+                    linear_combinations[j, k] * c_periods[i][k] for k in range(m)
+                )
         return tau
 
     @cached_method
@@ -431,7 +437,7 @@ class RiemannSurface(object):
         """
         g = self.genus()
         tau = self.period_matrix()
-        A = tau[:,:g]
-        B = tau[:,g:]
+        A = tau[:, :g]
+        B = tau[:, g:]
         omega = numpy.dot(scipy.linalg.inv(A), B)
         return omega

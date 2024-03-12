@@ -97,9 +97,11 @@ be the sum of all places lying above the point :math:`x=2`. We compute
 Contents
 --------
 """
+
 import numpy
 
 from sage.all import cached_method
+
 
 def fractional_part(z, tol=1e-8):
     r"""Returns the fractional part of a vector.
@@ -134,8 +136,9 @@ def fractional_part(z, tol=1e-8):
     #
     # if any component is close to an integer, (in this case the integer should
     # be 1) set it equal to zero
-    w[numpy.isclose(w,1)] = 0
+    w[numpy.isclose(w, 1)] = 0
     return w
+
 
 class Jacobian(object):
     r"""The Jacobian of a Riemann Surface.
@@ -166,6 +169,7 @@ class Jacobian(object):
     eval
 
     """
+
     def __init__(self, X):
         r"""Initialize using a :class:`RiemannSurface`.
 
@@ -178,10 +182,10 @@ class Jacobian(object):
         Omega = X.riemann_matrix()
         g = X.genus()
 
-        M = numpy.zeros((2*g,2*g), dtype=numpy.double)
-        M[:g,:g] = numpy.eye(g)  # upper left block = I
-        M[:g,g:] = Omega.real    # upper right block = Re(Omega)
-        M[g:,g:] = Omega.imag    # lower right block = Im(Omega)
+        M = numpy.zeros((2 * g, 2 * g), dtype=numpy.double)
+        M[:g, :g] = numpy.eye(g)  # upper left block = I
+        M[:g, g:] = Omega.real  # upper right block = Re(Omega)
+        M[g:, g:] = Omega.imag  # lower right block = Im(Omega)
 
         self.Omega = Omega
         self.M = M
@@ -236,18 +240,18 @@ class Jacobian(object):
         # reduces z = alpha + Omega*beta into its fractional components alpha
         # and beta
         g = self.g
-        w = numpy.zeros(2*g, dtype=numpy.double)
+        w = numpy.zeros(2 * g, dtype=numpy.double)
         w[:g] = z.real[:]
         w[g:] = z.imag[:]
 
         # solve linear system to decompose z = z1 + Omega z2
-        v = numpy.linalg.solve(self.M,w)
+        v = numpy.linalg.solve(self.M, w)
 
         # round to the nearest 15 digits due to possible floating point error
         # in the components. see note in description.
         z1 = v[:g]
         z2 = v[g:]
-        return z1,z2
+        return z1, z2
 
 
 class AbelMap_Function(object):
@@ -277,6 +281,7 @@ class AbelMap_Function(object):
     _eval_primitive
 
     """
+
     def __init__(self):
         pass
 
@@ -311,16 +316,17 @@ class AbelMap_Function(object):
 
         """
         if len(args) > 2:
-            raise ValueError('Too many arguments.')
+            raise ValueError("Too many arguments.")
         elif len(args) == 2:
             # it's always assumed that the first input is a place and that the
             # inputs live on the same Riemann surface
-            P,D = args
+            P, D = args
             if P.degree != 1:
-                raise ValueError('First argument must be a place. (A divisor '
-                                 'of order one.)')
+                raise ValueError(
+                    "First argument must be a place. (A divisor " "of order one.)"
+                )
             if P.RS != D.RS:
-                raise ValueError('Inputs must be on the same Riemann surface')
+                raise ValueError("Inputs must be on the same Riemann surface")
 
             # perform the necessary transformation when the first place is
             # changed:
@@ -328,7 +334,7 @@ class AbelMap_Function(object):
             #   A(P,D) = A(P0,D) - (deg D)A(P0,P)
             #
             J = Jacobian(P.RS)
-            value = self.eval(D) - (D.degree)*self.eval(P)
+            value = self.eval(D) - (D.degree) * self.eval(P)
             return J(value)
 
         # compute the sum of the scaled Abel maps on the consituent places of
@@ -344,9 +350,9 @@ class AbelMap_Function(object):
         X = D.RS
         g = X.genus()
         value = numpy.zeros(g, dtype=complex)
-        for P,n in D:
+        for P, n in D:
             Pvalue = self._eval_primitive(P)
-            value += n*Pvalue
+            value += n * Pvalue
 
         # the definition of the Abel map involves the normalized holomorphic
         # differentials. achieve the same result by scaling the output with
@@ -356,8 +362,8 @@ class AbelMap_Function(object):
         # with every evaluation
         J = Jacobian(X)
         tau = X.period_matrix()
-        A = tau[:g,:g]
-        value = numpy.linalg.solve(A,value)
+        A = tau[:g, :g]
+        value = numpy.linalg.solve(A, value)
         return J(value)
 
     @cached_method
@@ -386,8 +392,10 @@ class AbelMap_Function(object):
         else:
             gamma = X.path(P)
             omega = X.differentials
-            value = numpy.array([X.integrate(omegai,gamma)
-                                 for omegai in omega], dtype=complex)
+            value = numpy.array(
+                [X.integrate(omegai, gamma) for omegai in omega], dtype=complex
+            )
         return value
+
 
 AbelMap = AbelMap_Function()

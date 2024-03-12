@@ -37,6 +37,7 @@ Contents
 --------
 
 """
+
 import numpy
 import sympy
 
@@ -56,9 +57,10 @@ from sympy import Point, Segment
 def newton_polygon_exceptional(H):
     r"""Computes the exceptional Newton polygon of `H`."""
     R = H.parent()
-    x,y = R.gens()
-    d = H(0,y).degree(y)
-    return [[(0,0),(d,0)]]
+    x, y = R.gens()
+    d = H(0, y).degree(y)
+    return [[(0, 0), (d, 0)]]
+
 
 def newton_polygon(H, additional_points=[]):
     r"""Computes the Newton polygon of `H`.
@@ -127,7 +129,7 @@ def newton_polygon(H, additional_points=[]):
     polygon = []
     for side in sides:
         polygon_side = [P for P in support if P in side]
-        polygon_side = sorted(((int(P.x),int(P.y)) for P in polygon_side))
+        polygon_side = sorted(((int(P.x), int(P.y)) for P in polygon_side))
         polygon.append(polygon_side)
 
         # stop the moment we hit the i-axis. despite the filtration at
@@ -135,9 +137,11 @@ def newton_polygon(H, additional_points=[]):
         # returning to the starting point of the newton polygon.
         #
         # (See test_puiseux.TestNewtonPolygon.test_multiple)
-        if side.p2.y == 0: break
+        if side.p2.y == 0:
+            break
 
     return polygon
+
 
 def generalized_polygon_side(side):
     r"""Returns the generalization of a side on the Newton polygon.
@@ -154,12 +158,13 @@ def generalized_polygon_side(side):
     side
     """
     if side.slope < -1:
-        p1,p2 = side.points
+        p1, p2 = side.points
         p1y = p2.x + p2.y
-        side = Segment((0,p1y),p2)
+        side = Segment((0, p1y), p2)
     return side
 
-def bezout(q,m):
+
+def bezout(q, m):
     r"""Returns :math:`u,v` such that :math:`uq+mv=1`.
 
     Parameters
@@ -173,9 +178,10 @@ def bezout(q,m):
 
     """
     if q == 1:
-        return (1,0)
-    g,u,v = xgcd(q,-m)
-    return (u,v)
+        return (1, 0)
+    g, u, v = xgcd(q, -m)
+    return (u, v)
+
 
 def transform_newton_polynomial(H, q, m, l, xi):
     r"""Recenters a Newton polynomial at a given singular term.
@@ -200,16 +206,16 @@ def transform_newton_polynomial(H, q, m, l, xi):
     polynomial
     """
     R = H.parent()
-    x,y = R.gens()
+    x, y = R.gens()
 
-    u,v = bezout(q,m)
-    newx = (xi**v)*(x**q)
-    newy = (x**m)*(xi**u + y)
-    newH = H(newx,newy)
+    u, v = bezout(q, m)
+    newx = (xi**v) * (x**q)
+    newy = (x**m) * (xi**u + y)
+    newH = H(newx, newy)
 
     # divide by x**l
     R = newH.parent()
-    x,y = R.gens()
+    x, y = R.gens()
     exponents, coefficients = zip(*(newH.dict().items()))
     exponents = [(e[0] - l, e[1]) for e in exponents]
     newH = R(dict(zip(exponents, coefficients)))
@@ -242,7 +248,7 @@ def newton_data(H, exceptional=False):
         A list of the tuples :math:`(q,m,l,\phi)`.
     """
     R = H.parent()
-    x,y = R.gens()
+    x, y = R.gens()
 
     if exceptional:
         newton = newton_polygon_exceptional(H)
@@ -262,8 +268,10 @@ def newton_data(H, exceptional=False):
         slope = QQ(j1 - j0) / QQ(i1 - i0)
         q = slope.denom()
         m = -slope.numer()
-        l = min(q*j0 + m*i0, q*j1 + m*i1)
-        phi = sum(H.coefficient({y:i, x:j})*x**((i - i0)//int(q)) for i, j in side)
+        l = min(q * j0 + m * i0, q * j1 + m * i1)
+        phi = sum(
+            H.coefficient({y: i, x: j}) * x ** ((i - i0) // int(q)) for i, j in side
+        )
         phi = phi.univariate_polynomial()
         result.append((q, m, l, phi))
     return result
@@ -292,9 +300,9 @@ def newton_iteration(G, n):
 
     """
     R = G.parent()
-    x,y = R.gens()
+    x, y = R.gens()
     if n < 0:
-        raise ValueError('Number of terms must be positive. (n=%d'%n)
+        raise ValueError("Number of terms must be positive. (n=%d" % n)
     elif n == 0:
         return R(0)
 
@@ -303,15 +311,17 @@ def newton_iteration(G, n):
     try:
         pi = R(x).polynomial(x)
         gi = R(0)
-        si = R(phiprime(x,gi)).polynomial(x).inverse_mod(pi)
+        si = R(phiprime(x, gi)).polynomial(x).inverse_mod(pi)
     except NotImplementedError:
-        raise ValueError('Newton iteration for computing regular part of '
-                         'Puiseux expansion failed. Curve is most likely '
-                         'not regular at center.')
+        raise ValueError(
+            "Newton iteration for computing regular part of "
+            "Puiseux expansion failed. Curve is most likely "
+            "not regular at center."
+        )
 
-    r = ceil(log(n,2))
+    r = ceil(log(n, 2))
     for i in range(r):
-        gi,si,pi = newton_iteration_step(phi,phiprime,gi,si,pi)
+        gi, si, pi = newton_iteration_step(phi, phiprime, gi, si, pi)
     return R(gi)
 
 
@@ -336,21 +346,21 @@ def newton_iteration_step(phi, phiprime, g, s, p):
 
     """
     R = phi.parent()
-    x,y = R.gens()
+    x, y = R.gens()
     g = R(g).univariate_polynomial()
     s = R(s).univariate_polynomial()
     p = R(p).univariate_polynomial()
 
     pnext = p**2
-    gnext = g - phi(x,g).univariate_polynomial()*s
+    gnext = g - phi(x, g).univariate_polynomial() * s
     gnext = gnext % pnext
-    snext = 2*s - phiprime(x,gnext).univariate_polynomial()*s**2
+    snext = 2 * s - phiprime(x, gnext).univariate_polynomial() * s**2
     snext = snext % pnext
 
     gnext = R(gnext)
     snext = R(snext)
     pnext = R(pnext)
-    return gnext,snext,pnext
+    return gnext, snext, pnext
 
 
 def puiseux_rational(H, recurse=False):
@@ -377,27 +387,27 @@ def puiseux_rational(H, recurse=False):
         y-series.
     """
     R = H.parent()
-    x,y = R.gens()
+    x, y = R.gens()
 
     # when recurse is true, return if the leading order of H(0,y) is y
     if recurse:
-        IH = H(0,y).polynomial(y).ord()
+        IH = H(0, y).polynomial(y).ord()
         if IH == 1:
-            return [(H,x,y)]
+            return [(H, x, y)]
 
     # for each newton polygon side branch out a new puiseux series
     data = newton_data(H, exceptional=(not recurse))
     singular_terms = []
-    for q,m,l,phi in data:
-        u,v = bezout(q,m)
-        for psi,k in phi.squarefree_decomposition():
+    for q, m, l, phi in data:
+        u, v = bezout(q, m)
+        for psi, k in phi.squarefree_decomposition():
             roots = psi.roots(ring=QQbar, multiplicities=False)
             (x.exactify() for x in roots)
             for xi in roots:
                 Hprime = transform_newton_polynomial(H, q, m, l, xi)
                 next_terms = puiseux_rational(Hprime, recurse=True)
-                for (G,P,Q) in next_terms:
-                    singular_term = (G, xi**v*P**q, P**m*(xi**u + Q))
+                for G, P, Q in next_terms:
+                    singular_term = (G, xi**v * P**q, P**m * (xi**u + Q))
                     singular_terms.append(singular_term)
 
     return singular_terms
@@ -427,7 +437,7 @@ def almost_monicize(f):
         such that `y -> y/transform`.
     """
     R = f.parent()
-    x,y = R.gens()
+    x, y = R.gens()
     transform = R(1)
     monic = False
     while not monic:
@@ -435,16 +445,17 @@ def almost_monicize(f):
             # the denominator is always of the form x**d. Sage, however, has
             # trouble reducing the expression to simplest terms. the following
             # is a manual version
-            r = f(x,y/x)
+            r = f(x, y / x)
             n = r.numerator().polynomial(x)
             d = r.denominator().degree(x)
             shift = min(n.exponents() + [d])
             n = n.shift(-shift)
-            f = R(n(x,y)) # XXX numerator evaluation is important!
+            f = R(n(x, y))  # XXX numerator evaluation is important!
             transform *= x
         else:
             monic = True
     return f, transform
+
 
 def puiseux(f, alpha, beta=None, order=None, parametric=True):
     r"""Singular parts of the Puiseux series above :math:`x=\alpha`.
@@ -469,58 +480,63 @@ def puiseux(f, alpha, beta=None, order=None, parametric=True):
 
     """
     R = f.parent()
-    x,y = R.gens()
+    x, y = R.gens()
 
     # recenter the curve at x=alpha
-    if alpha in [infinity,'oo']:
+    if alpha in [infinity, "oo"]:
         alpha = infinity
         d = f.degree(x)
-        F = f(1/x,y)*x**d
-        n,d = F.numerator(), F.denominator()
-        falpha,_ = n.polynomial(x).quo_rem(d.univariate_polynomial())
+        F = f(1 / x, y) * x**d
+        n, d = F.numerator(), F.denominator()
+        falpha, _ = n.polynomial(x).quo_rem(d.univariate_polynomial())
         falpha = falpha(x).numerator()
     else:
         if not isinstance(alpha, AlgebraicNumber):
-            alpha = QQbar(QQ(real_part(alpha))+I*QQ(imag_part(alpha)))
-        falpha = f(x+alpha,y)
+            alpha = QQbar(QQ(real_part(alpha)) + I * QQ(imag_part(alpha)))
+        falpha = f(x + alpha, y)
 
     # determine the points on the curve lying above x=alpha
     R = falpha.parent()
-    x,y = R.gens()
+    x, y = R.gens()
     g, transform = almost_monicize(falpha)
-    galpha = R(g(0,y)).univariate_polynomial()
+    galpha = R(g(0, y)).univariate_polynomial()
     betas = galpha.roots(ring=QQbar, multiplicities=False)
 
     # filter for requested value of beta. raise error if not found
     if beta is not None:
         betas = [b for b in betas if b == beta]
         if not betas:
-            raise ValueError('The point ({0}, {1}) is not on the '
-                             'curve {2}.'.format(alpha, beta, f))
+            raise ValueError(
+                "The point ({0}, {1}) is not on the " "curve {2}.".format(
+                    alpha, beta, f
+                )
+            )
 
     # for each (alpha, beta) determine the corresponding singular parts of the
     # Puiseux series expansions. note that there may be multiple, distinct
     # places above the same point.
     singular_parts = []
     for beta in betas:
-        H = g(x,y+beta)
+        H = g(x, y + beta)
         singular_part_ab = puiseux_rational(H)
 
         # recenter the result back to (alpha, beta) from (0,0)
-        for G,P,Q in singular_part_ab:
+        for G, P, Q in singular_part_ab:
             Q += beta
-            Q = Q/transform.univariate_polynomial()(P)
+            Q = Q / transform.univariate_polynomial()(P)
             if alpha == infinity:
-                P = 1/P
+                P = 1 / P
             else:
                 P += alpha
 
             # append to list of singular data
-            singular_parts.append((G,P,Q))
+            singular_parts.append((G, P, Q))
 
     # instantiate PuiseuxTSeries from the singular data
-    series = [PuiseuxTSeries(f, alpha, singular_data, order=order)
-              for singular_data in singular_parts]
+    series = [
+        PuiseuxTSeries(f, alpha, singular_data, order=order)
+        for singular_data in singular_parts
+    ]
     return series
 
 
@@ -561,9 +577,11 @@ class PuiseuxTSeries(object):
     eval_y
 
     """
+
     @property
     def xdata(self):
         return (self.center, self.xcoefficient, self.ramification_index)
+
     @xdata.setter
     def xdata(self, value):
         self.center, self.xcoefficient, self.ramification_index = value
@@ -571,6 +589,7 @@ class PuiseuxTSeries(object):
     @property
     def is_symbolic(self):
         return self._is_symbolic
+
     @property
     def is_numerical(self):
         return not self._is_symbolic
@@ -580,16 +599,20 @@ class PuiseuxTSeries(object):
         terms = self.ypart.laurent_polynomial().dict().items()
         # note that the following greatly affects singularities() and Int()
         if not terms:
-            terms = [(0,0)]
+            terms = [(0, 0)]
         return terms
+
     @property
     def xdatan(self):
         if self.is_numerical:
             return self.xdata
         else:
-            return (complex(self.center),
-                    complex(self.xcoefficient),
-                    int(self.ramification_index))
+            return (
+                complex(self.center),
+                complex(self.xcoefficient),
+                int(self.ramification_index),
+            )
+
     @property
     def order(self):
         return self._singular_order + self._regular_order
@@ -610,7 +633,6 @@ class PuiseuxTSeries(object):
         terms = self.ypart.laurent_polynomial().dict().items()
         return len(terms)
 
-
     def __init__(self, f, x0, singular_data, order=None):
         r"""Initialize a PuiseuxTSeries using a set of :math:`\pi = \{\tau\}`
         data.
@@ -628,9 +650,9 @@ class PuiseuxTSeries(object):
 
         """
         R = f.parent()
-        x,y = R.gens()
+        x, y = R.gens()
         extension_polynomial, xpart, ypart = singular_data
-        L = LaurentSeriesRing(ypart.base_ring(), 't')
+        L = LaurentSeriesRing(ypart.base_ring(), "t")
         t = L.gen()
 
         self.f = f
@@ -645,19 +667,21 @@ class PuiseuxTSeries(object):
         self.center = x0
 
         # extract and store information about the x-part of the puiseux series
-        xpart = xpart(t,0)
+        xpart = xpart(t, 0)
         xpartshift = xpart - x0
-        ramification_index, xcoefficient = xpartshift.laurent_polynomial().dict().popitem()
+        ramification_index, xcoefficient = (
+            xpartshift.laurent_polynomial().dict().popitem()
+        )
         self.xcoefficient = xcoefficient
         self.ramification_index = QQ(ramification_index).numerator()
         self.xpart = xpart
 
         # extract and store information about the y-part of the puiseux series
-        self.ypart = L(ypart(t,0))
+        self.ypart = L(ypart(t, 0))
         self._initialize_extension(extension_polynomial)
 
         # determine the initial order. See the order property
-        val = L(ypart(t,O(t))).prec()
+        val = L(ypart(t, O(t))).prec()
         self._singular_order = 0 if val == infinity else val
         self._regular_order = self._p.degree(x)
 
@@ -690,7 +714,7 @@ class PuiseuxTSeries(object):
             Internally sets hidden regular extension attributes.
         """
         R = extension_polynomial.parent()
-        x,y = R.gens()
+        x, y = R.gens()
 
         # store attributes
         _phi = extension_polynomial
@@ -704,17 +728,17 @@ class PuiseuxTSeries(object):
         # compute inverse of phi'(g) modulo x and store
         _g = _g.univariate_polynomial()
         _p = _p.univariate_polynomial()
-        ppg = self._phiprime.subs({y:_g}).univariate_polynomial()
+        ppg = self._phiprime.subs({y: _g}).univariate_polynomial()
         _s = ppg.inverse_mod(_p)
         self._s = _s
 
     def __repr__(self):
         """Print the x- and y-parts of the Puiseux series."""
-        s = '('
+        s = "("
         s += str(self.xpart)
-        s += ', '
+        s += ", "
         s += str(self.ypart)
-        s += ' + O(%s^%s))'%(self.t,self.order)
+        s += " + O(%s^%s))" % (self.t, self.order)
         return s
 
     def __hash__(self):
@@ -764,11 +788,11 @@ class PuiseuxTSeries(object):
         #   o P = Puiseux series ring
         L = self.ypart.parent()
         t = L.gen()
-        S = L.base_ring()['z']
+        S = L.base_ring()["z"]
         z = S.gen()
 
         R = self.f.parent()
-        x,y = R.gens()
+        x, y = R.gens()
         P = PuiseuxSeriesRing(L.base_ring(), str(x))
         x = P.gen()
 
@@ -780,14 +804,14 @@ class PuiseuxTSeries(object):
         lamb = S(self.xcoefficient)
         order = self.order
         if e > 0:
-            phi = lamb*z**e - 1
+            phi = lamb * z**e - 1
         else:
             phi = z**abse - lamb
         mu = phi.roots(QQbar, multiplicities=False)[0]
 
         if all_conjugates:
-            zeta_e=QQbar.zeta(abse)
-            conjugates = [mu*zeta_e**k for k in range(abse)]
+            zeta_e = QQbar.zeta(abse)
+            conjugates = [mu * zeta_e**k for k in range(abse)]
         else:
             conjugates = [mu]
         (x.exactify() for x in conjugates)
@@ -796,9 +820,9 @@ class PuiseuxTSeries(object):
         xseries = []
         for c in conjugates:
             t = self.ypart.parent().gen()
-            fconj = self.ypart(c*t)
-            p = P(fconj(x**(QQ(1)/e)))
-            p = p.add_bigoh(QQ(order+1)/abse)
+            fconj = self.ypart(c * t)
+            p = P(fconj(x ** (QQ(1) / e)))
+            p = p.add_bigoh(QQ(order + 1) / abse)
             xseries.append(p)
         return xseries
 
@@ -811,8 +835,9 @@ class PuiseuxTSeries(object):
         two greater than the current order.
 
         """
-        g,s,p = newton_iteration_step(
-            self._phi, self._phiprime, self._g, self._s, self._p)
+        g, s, p = newton_iteration_step(
+            self._phi, self._phiprime, self._g, self._s, self._p
+        )
 
         self._g = g
         self._s = s
@@ -822,7 +847,7 @@ class PuiseuxTSeries(object):
         t = self.t
         L = self.ypart.parent()
         g = g.univariate_polynomial()(t)
-        self.ypart = L(self._ypart(t,g))
+        self.ypart = L(self._ypart(t, g))
         self._regular_order = self._p.degree()
 
     def extend(self, order=None, nterms=None):
@@ -887,9 +912,9 @@ class PuiseuxTSeries(object):
         while num_iter < max_iter:
             xt = self.eval_x(t)
             yt = self.eval_y(t)
-            n,a = max(self.terms)
-            curve_error = abs(self.f(xt,yt))
-            if (curve_error < curve_tol):
+            n, a = max(self.terms)
+            curve_error = abs(self.f(xt, yt))
+            if curve_error < curve_tol:
                 break
             else:
                 self.add_term()
@@ -916,7 +941,7 @@ class PuiseuxTSeries(object):
         # simply convert to t and pass to extend. choose any conjugate since
         # the convergence rates between each conjugate is equal
         center, xcoefficient, ramification_index = self.xdata
-        t = numpy.power((x-center)/xcoefficient, 1.0/ramification_index)
+        t = numpy.power((x - center) / xcoefficient, 1.0 / ramification_index)
         self.extend_to_t(t, curve_tol=curve_tol)
 
     def eval_x(self, t):
@@ -933,7 +958,7 @@ class PuiseuxTSeries(object):
         """
         try:
             center, xcoefficient, ramification_index = self.xdata
-            val = center + xcoefficient*t**ramification_index
+            val = center + xcoefficient * t**ramification_index
         except ZeroDivisionError:
             val = infinity
         return val
@@ -951,7 +976,7 @@ class PuiseuxTSeries(object):
         """
         try:
             center, xcoefficient, ramification_index = self.xdata
-            val = xcoefficient*ramification_index*t**(ramification_index-1)
+            val = xcoefficient * ramification_index * t ** (ramification_index - 1)
         except ZeroDivisionError:
             val = infinity
         return val
@@ -989,12 +1014,12 @@ class PuiseuxTSeries(object):
 
         # set which terms will be used for evaluation
         if order is not None and order >= 0:
-            terms = [(n,alpha) for n,alpha in self.terms if n < order]
+            terms = [(n, alpha) for n, alpha in self.terms if n < order]
         else:
             terms = self.terms
 
         try:
-            val = sum(alpha*t**n for n,alpha in terms)
+            val = sum(alpha * t**n for n, alpha in terms)
         except ZeroDivisionError:
             val = infinity
         return val

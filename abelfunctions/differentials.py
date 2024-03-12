@@ -40,6 +40,7 @@ Contents
 --------
 
 """
+
 from abelfunctions.divisor import Divisor
 from abelfunctions.integralbasis import integral_basis
 from abelfunctions.puiseux import puiseux
@@ -51,6 +52,7 @@ from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
 
 import numpy
+
 
 def mnuk_conditions(g, b, generic_adjoint):
     """Determine the Mnuk conditions on the coefficients of :math:`P`.
@@ -90,18 +92,18 @@ def mnuk_conditions(g, b, generic_adjoint):
     # coefficients of y in g need to be units)
     B = PolynomialRing(QQbar, [R.variable_names()[0]] + list(B.variable_names()))
     Q = B.fraction_field()[R.variable_names()[1]]
-    u,v = map(Q,R.gens())
+    u, v = map(Q, R.gens())
     numer = b.numerator()
     denom = b.denominator()
-    expr = numer(u,v) * generic_adjoint(u,v)
-    modulus = g(u,v)
+    expr = numer(u, v) * generic_adjoint(u, v)
+    modulus = g(u, v)
     r_reduced_mod_g = expr % modulus
 
     # now mod out by the denominator to get the remaining component, R(x,y). we
     # need to cast into the ring QQbar[y,*c][x] in order to do so. (note that
     # we don't need a base fraction field since the denominator is univariate
     # and therefore the leading coefficient is always a unit)
-    u,v = map(T, R.gens())
+    u, v = map(T, R.gens())
     r = r_reduced_mod_g(v).numerator()
     r_reduced_mod_denom = r.polynomial(u) % T(denom).polynomial(u)
 
@@ -138,10 +140,10 @@ def recenter_curve(g, singular_point):
     """
     # recenter the curve and adjoint polynomial at the singular point: find
     # the affine plane u,v such that the singularity occurs at u=0
-    gsing,u0,v0 = _transform(g,singular_point)
+    gsing, u0, v0 = _transform(g, singular_point)
     R = gsing.parent()
-    u,v = R.gens()
-    h = gsing(u+u0,v)
+    u, v = R.gens()
+    h = gsing(u + u0, v)
     return h
 
 
@@ -162,22 +164,25 @@ def differentials_numerators(f):
     """
     # homogenize and compute total degree
     R = f.parent().change_ring(QQbar)
-    x,y = R.gens()
+    x, y = R.gens()
     d = f.total_degree()
 
     # construct the generalized adjoint polynomial. we want to think of it as
     # an element of B[*c][x,y] where B is the base ring of f and *c are the
     # indeterminates
-    cvars = ['c_%d_%d'%(i,j) for i in range(d-2) for j in range(d-2)]
+    cvars = ["c_%d_%d" % (i, j) for i in range(d - 2) for j in range(d - 2)]
     vars = list(R.variable_names()) + cvars
     C = PolynomialRing(QQbar, cvars)
-    S = PolynomialRing(C, [x,y])
+    S = PolynomialRing(C, [x, y])
     T = PolynomialRing(QQbar, vars)
     c = S.base_ring().gens()
-    x,y = S(x),S(y)
-    P = sum(c[j+(d-2)*i] * x**i * y**j
-            for i in range(d-2) for j in range(d-2)
-            if i+j <= d-3)
+    x, y = S(x), S(y)
+    P = sum(
+        c[j + (d - 2) * i] * x**i * y**j
+        for i in range(d - 2)
+        for j in range(d - 2)
+        if i + j <= d - 3
+    )
 
     # for each singular point [x:y:z] = [alpha:beta:gamma], map f onto the
     # "most convenient and appropriate" affine subspace, (u,v), and center at
@@ -208,7 +213,7 @@ def differentials_numerators(f):
         T = T.change_ring(QQ)
         ideal = T.ideal(conditions)
         basis = ideal.groebner_basis()
-    except:
+    except TypeError:
         pass
 
     ideal = T.ideal(conditions)
@@ -217,10 +222,11 @@ def differentials_numerators(f):
     if basis != [0]:
         P_reduced = P_reduced.reduce(basis)
     U = R[S.base_ring().variable_names()]
-    args =  [U(x),U(y)] + [U(ci) for ci in c]
+    args = [U(x), U(y)] + [U(ci) for ci in c]
     Pc = P_reduced(*args)
     numerators = Pc.coefficients()
     return numerators
+
 
 def differentials(RS):
     r"""Returns a basis for the space of Abelian differentials of the first kind on
@@ -238,7 +244,7 @@ def differentials(RS):
     """
     f = RS.f.change_ring(QQbar)
     R = f.parent()
-    x,y = R.gens()
+    x, y = R.gens()
 
     dfdy = f.derivative(y)
     numers = differentials_numerators(f)
@@ -270,15 +276,15 @@ def validate_differentials(differential_list, genus):
     is_valid = True
     try:
         # Check types
-        assert(all(isinstance(diff, Differential) for diff in differential_list))
+        assert all(isinstance(diff, Differential) for diff in differential_list)
 
         # Check that the number of differentials matches the genus
-        assert(len(differential_list) == genus)
+        assert len(differential_list) == genus
 
         # Check that they are all defined on the same surface
         if len(differential_list) > 0:
             riemann_surface = differential_list[0].RS
-            assert(all(diff.RS is riemann_surface for diff in differential_list))
+            assert all(diff.RS is riemann_surface for diff in differential_list)
 
     except AssertionError:
         is_valid = False
@@ -309,12 +315,14 @@ class Differential:
     of differentials.
 
     """
+
     def __init__(self, RS, *args):
-        """Create a differential on the Riemann surface `RS`.
-        """
+        """Create a differential on the Riemann surface `RS`."""
         if (len(args) < 1) or (len(args) > 2):
-            raise ValueError('Instantiate Differential with Sympy expression '
-                             'or numerator/denominator pair.')
+            raise ValueError(
+                "Instantiate Differential with Sympy expression "
+                "or numerator/denominator pair."
+            )
 
         # determine the numerator and denominator of the differentials
         if len(args) == 1:
@@ -324,13 +332,15 @@ class Differential:
             self.numer = args[0]
             self.denom = args[1]
 
-        x,y = RS.f.parent().gens()
+        x, y = RS.f.parent().gens()
         self.RS = RS
         self.differential = self.numer / self.denom
-        self.numer_n = fast_callable(self.numer.change_ring(CC), vars=[x,y],
-                                     domain=complex)
-        self.denom_n = fast_callable(self.denom.change_ring(CC), vars=[x,y],
-                                     domain=complex)
+        self.numer_n = fast_callable(
+            self.numer.change_ring(CC), vars=[x, y], domain=complex
+        )
+        self.denom_n = fast_callable(
+            self.denom.change_ring(CC), vars=[x, y], domain=complex
+        )
 
     def __repr__(self):
         return str(self.differential)
@@ -339,8 +349,7 @@ class Differential:
         return self.eval(*args, **kwds)
 
     def eval(self, *args, **kwds):
-        r"""Evaluate the differential at the complex point :math:`(x,y)`.
-        """
+        r"""Evaluate the differential at the complex point :math:`(x,y)`."""
         val = self.numer_n(*args, **kwds) / self.denom_n(*args, **kwds)
         return complex(val)
 
@@ -378,7 +387,7 @@ class Differential:
         xt = p.xpart
         yt = p.ypart.add_bigoh(p.order)
         dxdt = xt.derivative()
-        omega = self.numer(xt,yt) * dxdt / self.denom(xt,yt)
+        omega = self.numer(xt, yt) * dxdt / self.denom(xt, yt)
         return omega
 
     def localize(self, *args, **kwds):
@@ -429,12 +438,12 @@ class Differential:
         # we need to work over QQbar anyway
         f = self.RS.f.change_ring(QQbar)
         R = f.parent()
-        x,y = R.gens()
+        x, y = R.gens()
 
         # get possible x-values from the numerator by computing the roots of
         # the resolvent with the curve f
         numer = self.numer
-        res = f.resultant(numer,y).univariate_polynomial()
+        res = f.resultant(numer, y).univariate_polynomial()
         numer_roots = res.roots(ring=QQbar, multiplicities=False)
 
         # get possible x-values from the denominator. in the case when the
@@ -443,7 +452,7 @@ class Differential:
         if denom == f.derivative(y):
             denom_roots = self.RS.discriminant_points
         else:
-            res = f.resultant(denom,y).univariate_polynomial()
+            res = f.resultant(denom, y).univariate_polynomial()
             denom_roots = res.roots(ring=QQbar, multiplicities=False)
 
         # finally, the possible x-points contributed by dx are the discriminant
@@ -490,21 +499,22 @@ class Differential:
 
         # for each xvalue, compute the places above it and determine the
         # valuation of the differential over each of these places
-        D = Divisor(self.RS,0)
+        D = Divisor(self.RS, 0)
         genus = self.RS.genus()
         for alpha in xvalues:
             places_above_alpha = self.RS(alpha)
             for P in places_above_alpha:
                 n = P.valuation(self)
-                D += n*P
+                D += n * P
 
         # the valuation divisor of a generic meromorphic differential is still
         # canonical. check the degree condition
-        target_genus = 2*genus - 2
+        target_genus = 2 * genus - 2
         if D.degree != target_genus:
             raise ValueError(
-                'Could not compute valuation divisor of %s: '
-                'did not reach genus requirement.'%self)
+                "Could not compute valuation divisor of %s: "
+                "did not reach genus requirement." % self
+            )
         return D
 
     def plot(self, gamma, N=256, grid=False, **kwds):
@@ -528,25 +538,25 @@ class Differential:
 
         """
         import matplotlib.pyplot as plt  # XXX switch to Sage plotting
-        
+
         fig = plt.figure()
-        ax = fig.add_subplot(1,1,1)
+        ax = fig.add_subplot(1, 1, 1)
         ax.hold(True)
 
         nseg = len(gamma.segments)
-        t = numpy.linspace(0,1,N/nseg)
+        t = numpy.linspace(0, 1, N / nseg)
         for k in range(nseg):
             segment = gamma.segments[k]
-            osegment = numpy.array(self.evaluate(segment,t),dtype=complex)
-            tsegment = (t+k)/nseg
-            ax.plot(tsegment, osegment.real, 'b')
-            ax.plot(tsegment, osegment.imag, 'r--')
+            osegment = numpy.array(self.evaluate(segment, t), dtype=complex)
+            tsegment = (t + k) / nseg
+            ax.plot(tsegment, osegment.real, "b")
+            ax.plot(tsegment, osegment.imag, "r--")
 
         # plot gridlines at the interface between each set of segments
         if grid:
-            ticks = numpy.linspace(0,1,len(gamma.segments)+1)
+            ticks = numpy.linspace(0, 1, len(gamma.segments) + 1)
             ax.xaxis.set_ticks(ticks)
-            ax.grid(True, which='major')
+            ax.grid(True, which="major")
         return fig
 
     def as_numer_denom(self):
@@ -606,28 +616,31 @@ class AbelianDifferentialFirstKind(Differential):
 
         # for each xvalue, compute the places above it and determine valuation
         # of the differential over each of these places.
-        D = Divisor(self.RS,0)
+        D = Divisor(self.RS, 0)
         genus = self.RS.genus()
-        target_genus = 2*genus - 2
+        target_genus = 2 * genus - 2
         for alpha in xvalues:
             places_above_alpha = self.RS(alpha)
             for P in places_above_alpha:
                 n = P.valuation(self)
-                D += n*P
+                D += n * P
 
                 # abelian differentials of the first kind should have no poles
                 if n < 0:
                     raise ValueError(
-                        'Could not compute valuation divisor of %s: '
-                        'found a pole of differential of first kind.'%self)
+                        "Could not compute valuation divisor of %s: "
+                        "found a pole of differential of first kind." % self
+                    )
 
                 # break out if the target degree is met
                 if (D.degree == target_genus) and (not proof):
                     return D
 
         if D.degree != target_genus:
-            raise ValueError('Could not compute valuation divisor of %s: '
-                             'did not reach genus requirement.'%self)
+            raise ValueError(
+                "Could not compute valuation divisor of %s: "
+                "did not reach genus requirement." % self
+            )
         return D
 
 
@@ -639,6 +652,7 @@ class AbelianDifferentialSecondKind(Differential):
     :math:`m` an Abelian differential of second kind is a meromorphic
     differential with a pole only at :math:`P` of order :math:`m+1`.
     """
+
     def valuation_divisor(self, **kwds):
         r"""Returns the valuation divisor of the Abelian differential of the second
         kind.
@@ -656,23 +670,25 @@ class AbelianDifferentialSecondKind(Differential):
 
         # for each xvalue, compute the places above it and determine valuation
         # of the differential over each of these places.
-        D = Divisor(self.RS,0)
+        D = Divisor(self.RS, 0)
         genus = self.RS.genus()
-        target_genus = 2*genus - 2
+        target_genus = 2 * genus - 2
         num_poles = 0
         for alpha in xvalues:
             places_above_alpha = self.RS(alpha)
             for P in places_above_alpha:
                 n = P.valuation(self)
-                D += n*P
+                D += n * P
 
                 # differentials of the second kind should have a single
                 # pole. raise an error if more are found
-                if n < 0: num_poles += 1
+                if n < 0:
+                    num_poles += 1
                 if num_poles > 1:
                     raise ValueError(
-                        'Could not compute valuation divisor of %s: '
-                        'found more than one pole.'%self)
+                        "Could not compute valuation divisor of %s: "
+                        "found more than one pole." % self
+                    )
 
                 # break out if (a) the degree requirement is met and (b) the
                 # pole was found.
@@ -680,6 +696,8 @@ class AbelianDifferentialSecondKind(Differential):
                     return D
 
         if D.degree != target_genus:
-            raise ValueError('Could not compute valuation divisor of %s: '
-                             'did not reach genus requirement.'%self)
+            raise ValueError(
+                "Could not compute valuation divisor of %s: "
+                "did not reach genus requirement." % self
+            )
         return D
