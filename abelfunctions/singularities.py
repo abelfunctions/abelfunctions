@@ -20,6 +20,7 @@ Examples
 Contents
 --------
 """
+
 from abelfunctions.puiseux import puiseux
 from abelfunctions.integralbasis import Int
 
@@ -49,23 +50,24 @@ def singular_points_finite(f):
     # the discriminant points (roots of resultant) contain the x-points where
     # singularities may occur. todo: reuse RiemannSurface.discriminant_points()
     R = f.parent()
-    x,y = R.gens()
-    res = f.resultant(f.derivative(y),y).univariate_polynomial()
+    x, y = R.gens()
+    res = f.resultant(f.derivative(y), y).univariate_polynomial()
     xroots = res.roots(ring=QQbar, multiplicities=True)
-    for xk,deg in xroots:
+    for xk, deg in xroots:
         if deg > 1:
             # compute the y-roots above x=xk
-            fxk = f(xk,y).univariate_polynomial()
+            fxk = f(xk, y).univariate_polynomial()
             yroots = fxk.roots(ring=QQbar, multiplicities=True)
 
             # for each y-root ykj above xk, record a singular point if the
             # gradient vanishes at (xk,ykj)
-            for ykj,_ in yroots:
-                dfdx = f.derivative(x)(xk,ykj)
-                dfdy = f.derivative(y)(xk,ykj)
+            for ykj, _ in yroots:
+                dfdx = f.derivative(x)(xk, ykj)
+                dfdy = f.derivative(y)(xk, ykj)
                 if (dfdx == 0) and (dfdy == 0):
-                    S.append((xk,ykj,1))
+                    S.append((xk, ykj, 1))
     return S
+
 
 def singular_points_infinite(f):
     r"""Returns the singular points of `f` at infinity.
@@ -88,36 +90,36 @@ def singular_points_infinite(f):
     S = []
 
     # homogenize
-    F = f.homogenize('z')
+    F = f.homogenize("z")
     R = F.parent()
     x, y, z = R.gens()
 
     # find the possible singular points at infinity. these consist of the roots
     # of F(1,y,0) = 0 and F(x,1,0) = 0
-    F0 = F(x,y,0)
-    F0x1 = R(F0(1,y,0)).univariate_polynomial()
-    F0y1 = R(F0(x,1,0)).univariate_polynomial()
+    F0 = F(x, y, 0)
+    F0x1 = R(F0(1, y, 0)).univariate_polynomial()
+    F0y1 = R(F0(x, 1, 0)).univariate_polynomial()
     solsx1 = F0x1.roots(ring=QQbar, multiplicities=True)
     solsy1 = F0y1.roots(ring=QQbar, multiplicities=True)
-    all_points = [(1,yi,0) for yi,_ in solsx1]
-    all_points.extend([(xi,1,0) for xi,_ in solsy1])
+    all_points = [(1, yi, 0) for yi, _ in solsx1]
+    all_points.extend([(xi, 1, 0) for xi, _ in solsy1])
 
     # these possible singularities are in projective space, so filter out equal
     # points such as (0,1,I) == (0,-I,1). normalize these projective points
     # such that 1 appears in either the x- or y- coordinate, where appropriate
     normalized_points = []
-    for xi,yi,zi in all_points:
-        P = (1,yi/xi,0) if xi != 0 else (xi/yi,1,0)
+    for xi, yi, zi in all_points:
+        P = (1, yi / xi, 0) if xi != 0 else (xi / yi, 1, 0)
         if P not in normalized_points:
             normalized_points.append(P)
 
     # finally, check the gradient condition to get the actual singular points
     grad = F.gradient()
-    for xi,yi,zi in normalized_points:
-        grad_vals = [dFi(xi,yi,zi) for dFi in grad]
+    for xi, yi, zi in normalized_points:
+        grad_vals = [dFi(xi, yi, zi) for dFi in grad]
         is_zero = all((arg.is_zero() for arg in grad_vals))
         if is_zero:
-            S.append((xi,yi,zi))
+            S.append((xi, yi, zi))
     return S
 
 
@@ -154,8 +156,8 @@ def singularities(f):
     for singular_pt in S:
         # perform a projective transformation of the curve so it's almost
         # centered at the singular point.
-        g,u0,v0 = _transform(f,singular_pt)
-        P = puiseux(g,u0,v0)
+        g, u0, v0 = _transform(f, singular_pt)
+        P = puiseux(g, u0, v0)
 
         # filter out any places with infinite v-part: they are being handled by
         # other centerings / transformations
@@ -163,7 +165,7 @@ def singularities(f):
             # make sure the order of the y-part is positive
             while Pi.order <= 0:
                 Pi.add_term()
-            n,alpha = zip(*Pi.terms)
+            n, alpha = zip(*Pi.terms)
 
             # if there are still no terms then they are positive exponent
             if not n:
@@ -176,7 +178,7 @@ def singularities(f):
         m = _multiplicity(P)
         delta = _delta_invariant(P)
         r = _branching_number(P)
-        info.append((m,delta,r))
+        info.append((m, delta, r))
 
     return list(zip(S, info))
 
@@ -220,24 +222,25 @@ def _transform(f, singular_pt):
 
     # if the point is affine then return the affine curve and point
     if gamma == 1:
-        return f,alpha,beta
+        return f, alpha, beta
 
     # otherwise, homogenize and recenter at the singular point
-    F = f.homogenize('z')
+    F = f.homogenize("z")
     R = F.parent()
-    x,y,z = R.gens()
+    x, y, z = R.gens()
     if alpha == 0:
-        g = F(x,beta,z)
+        g = F(x, beta, z)
         S = g.base_ring()[g.variables()]
-        x,z = S.gens()
-        g = g(x,0,z)
-        return g,alpha,gamma
+        x, z = S.gens()
+        g = g(x, 0, z)
+        return g, alpha, gamma
     else:
-        g = F(alpha,y,z)
+        g = F(alpha, y, z)
         S = g.base_ring()[g.variables()]
-        y,z = S.gens()
-        g = g(0,y,z)
-        return g,beta,gamma
+        y, z = S.gens()
+        g = g(0, y, z)
+        return g, beta, gamma
+
 
 def _multiplicity(P):
     r"""Computes the multiplicity of the singularity at :math:`u_0,v_0`.
@@ -268,7 +271,7 @@ def _multiplicity(P):
     """
     m = 0
     for Pi in P:
-        n,alpha = zip(*Pi.terms)
+        n, alpha = zip(*Pi.terms)
         ri = abs(Pi.ramification_index)
 
         # get the leading order behavior of the y-part. we can save time if the
@@ -281,13 +284,13 @@ def _multiplicity(P):
             else:
                 # extend to order ri. if there are still no non-zero terms then
                 # used the shortcut above
-                Pi.extend(ri+1)
+                Pi.extend(ri + 1)
                 try:
                     si = min([ni for ni in n if ni != 0])
                 except ValueError:
                     si = ri
 
-        m += min(ri,si)
+        m += min(ri, si)
     return ZZ(m)
 
 
@@ -342,13 +345,13 @@ def _delta_invariant(P):
         # other puiseux series, the contribution to Int() will be zero.
         Pxi = Px[i]
         j = Px_all.index(Pxi)
-        IntPxi = Int(j,Px_all)
+        IntPxi = Int(j, Px_all)
 
         # obtain the ramification index by retreiving the corresponding
         # parametric form. By definition, this parametric series satisfies
         # Y(t=0) = v0
         ri = Pxi.ramification_index
-        delta += QQ(ri * IntPxi - ri + 1)/2
+        delta += QQ(ri * IntPxi - ri + 1) / 2
     return delta.numerator()
 
 
@@ -372,7 +375,7 @@ def genus(f):
     """
     d = f.total_degree()
     S = singularities(f)
-    g = (d-1)*(d-2) // 2
-    for point, (m,delta,r) in S:
+    g = (d - 1) * (d - 2) // 2
+    for point, (m, delta, r) in S:
         g -= delta
     return g

@@ -7,6 +7,7 @@ Riemann surface but also mechanisms for travelling from one sheet to another on
 the Riemann surface.
 
 """
+
 import numpy
 import numpy.testing
 import networkx as nx
@@ -46,7 +47,7 @@ def smallest(l):
         a = a[1:] + [a[0]]
 
     # Return the smallest sheet number appearing in the cycle
-    return min([a[2*i] for i in range(len(a)/2)])
+    return min([a[2 * i] for i in range(len(a) / 2)])
 
 
 def reorder_cycle(c, j=None):
@@ -64,13 +65,12 @@ def reorder_cycle(c, j=None):
             sheet = smallest(c)
             i = c.index(sheet)
     except ValueError:
-        raise ValueError("%d does not appear in the cycle %s"%(j,c))
+        raise ValueError("%d does not appear in the cycle %s" % (j, c))
 
-    return [c[k%n] for k in range(i,i+n)]
+    return [c[k % n] for k in range(i, i + n)]
 
 
-
-def frobenius_transform(A,g):
+def frobenius_transform(A, g):
     """Perform the Frobenius transform on the matrix `A`.
 
     This procedure brings any intersection matrix a to its canonical form b by
@@ -82,7 +82,7 @@ def frobenius_transform(A,g):
     the transformation matrix alpha.
 
     """
-    if not isinstance(A,numpy.ndarray):
+    if not isinstance(A, numpy.ndarray):
         K = numpy.array(A, dtype=int)
     else:
         K = numpy.copy(A)
@@ -97,57 +97,56 @@ def frobenius_transform(A,g):
     for i in range(g):
         # make sure column i has a suitable pivot by swapping rows
         # and columns
-        counter = dim-1
+        counter = dim - 1
 
-        while numpy.all( K[(g+i):,i] == numpy.zeros(dim-(g+i)) ):
-            T[[i,counter],:] = T[[counter,i],:]
-            K[:,[i,counter]] = K[:,[counter,i]]
-            K[[i,counter],:] = K[[counter,i],:]
+        while numpy.all(K[(g + i) :, i] == numpy.zeros(dim - (g + i))):
+            T[[i, counter], :] = T[[counter, i], :]
+            K[:, [i, counter]] = K[:, [counter, i]]
+            K[[i, counter], :] = K[[counter, i], :]
             counter -= 1
 
-        if K[i+g,i] == 0:
+        if K[i + g, i] == 0:
             # if the pivot element is zero then change rows to make it
             # non-zero
-            k = i+g+1
-            while K[i+g,i] == 0:
-                if K[k,i] != 0:
-                    pivot = -1//K[k,i]
+            k = i + g + 1
+            while K[i + g, i] == 0:
+                if K[k, i] != 0:
+                    pivot = -1 // K[k, i]
 
-                    T[k,:]      *= pivot                         # scale row
-                    T[[k,i+g],:] = T[[i+g,k],:]                  # swap rows
+                    T[k, :] *= pivot  # scale row
+                    T[[k, i + g], :] = T[[i + g, k], :]  # swap rows
 
-                    K[k,:]      *= pivot                         # scale row
-                    K[[k,i+g],:] = K[[i+g,k],:]                  # swap rows
-                    K[:,k]      *= pivot                         # scale column
-                    K[:,[k,i+g]] = K[:,[i+g,k]]                  # swap columns
+                    K[k, :] *= pivot  # scale row
+                    K[[k, i + g], :] = K[[i + g, k], :]  # swap rows
+                    K[:, k] *= pivot  # scale column
+                    K[:, [k, i + g]] = K[:, [i + g, k]]  # swap columns
 
                 k += 1
         else:
             # otherwise, if the pivot element is non-zero then scale
             # it so it's equal to -1
-            pivot = -1//K[i+g,i]
-            T[i+g,:] *= pivot
-            K[i+g,:] *= pivot
-            K[:,i+g] *= pivot
+            pivot = -1 // K[i + g, i]
+            T[i + g, :] *= pivot
+            K[i + g, :] *= pivot
+            K[:, i + g] *= pivot
 
         for j in list(range(i, i + g)) + list(range(i + g + 1, dim)):
             # use the pivot to create zeros in the rows above it and below it
-            pivot = -K[j,i]//K[i+g,i]
-            T[j,:] += pivot * T[i+g,:]
-            K[j,:] += pivot * K[i+g,:]
-            K[:,j] += pivot * K[:,i+g]
+            pivot = -K[j, i] // K[i + g, i]
+            T[j, :] += pivot * T[i + g, :]
+            K[j, :] += pivot * K[i + g, :]
+            K[:, j] += pivot * K[:, i + g]
 
     for i in range(g):
         # the block above the diagonal is already there. use it to
         # create zeros everywhere else in the second block of g
         # columns. automatically all other coluns are then zero,
         # because the rank of the intersection matrix K is only 2g
-        for j in range(i+g+1,dim): #XXX check dims
-            pivot = -K[j,i+g]
-            T[j,:] = T[j] + pivot * T[i,:]
-            K[j,:] = K[j,:] + pivot * K[i,:]
-            K[:,j] = K[:,j] + pivot * K[:,i]
-
+        for j in range(i + g + 1, dim):  # XXX check dims
+            pivot = -K[j, i + g]
+            T[j, :] = T[j] + pivot * T[i, :]
+            K[j, :] = K[j, :] + pivot * K[i, :]
+            K[:, j] = K[:, j] + pivot * K[:, i]
 
     # sanity check: did the Frobenius transform produce the correct
     # result?  T * K * T.T = J where J has the gxg identity I in the
@@ -156,15 +155,18 @@ def frobenius_transform(A,g):
     J = numpy.dot(numpy.dot(T, A), T.T)
     for i in range(g):
         for j in range(g):
-            if j==i+g and i<g:   val = 1
-            elif i==j+g and j<g: val = -1
-            else:                val = 0
+            if j == i + g and i < g:
+                val = 1
+            elif i == j + g and j < g:
+                val = -1
+            else:
+                val = 0
 
-            if J[i,j] != val:
-                raise ValueError("Could not compute Frobenuis transform of " + \
-                                 "intersection matrix.")
+            if J[i, j] != val:
+                raise ValueError(
+                    "Could not compute Frobenuis transform of " + "intersection matrix."
+                )
     return T
-
 
 
 def tretkoff_graph(monodromy_group):
@@ -187,11 +189,11 @@ def tretkoff_graph(monodromy_group):
     C = nx.Graph()
     node = (0,)
     C.add_node(node)
-    C.nodes[node]['value'] = 0
-    C.nodes[node]['label'] = "$0$"
-    C.nodes[node]['final'] = False
-    C.nodes[node]['level'] = 0
-    C.nodes[node]['nrots'] = 0
+    C.nodes[node]["value"] = 0
+    C.nodes[node]["label"] = "$0$"
+    C.nodes[node]["final"] = False
+    C.nodes[node]["level"] = 0
+    C.nodes[node]["nrots"] = 0
 
     # keep track of sheets and branch places that we've already
     # visited. initialize with the zero sheet and all branch places
@@ -200,19 +202,20 @@ def tretkoff_graph(monodromy_group):
     t = len(branch_points)
     visited_sheets = [0]
     visited_branch_places = [
-        (branch_points[i],find_cycle(monodromy[i],j))
+        (branch_points[i], find_cycle(monodromy[i], j))
         for j in range(covering_number)
         for i in range(t)
-        if len(find_cycle(monodromy[i],j)) == 1
-        ]
+        if len(find_cycle(monodromy[i], j)) == 1
+    ]
 
     level = 0
     endpoints = [node]
     while endpoints:
         # obtain the endpoints on the previous level that are not
         # final and sort by their "succession" order".
-        endpoints = sorted([n for n,d in C.nodes(data=True)
-                            if d['level'] == level and not d['final']])
+        endpoints = sorted(
+            [n for n, d in C.nodes(data=True) if d["level"] == level and not d["final"]]
+        )
 
         for node in endpoints:
             # determine the successors for this node. we use a
@@ -227,7 +230,7 @@ def tretkoff_graph(monodromy_group):
             # place whose order is determined by the predecessor sheet.
             ###################################################################
             if level % 2 == 0:
-                current_sheet = C.nodes[node]['value']
+                current_sheet = C.nodes[node]["value"]
 
                 # determine which branch points to add. in the initial
                 # case, add all branch points. for all subsequent
@@ -237,9 +240,9 @@ def tretkoff_graph(monodromy_group):
                     branch_point_indices = list(range(t))
                 else:
                     pred = list(C.neighbors(node))[0]
-                    bpt,pi = C.nodes[pred]['value']
+                    bpt, pi = C.nodes[pred]["value"]
                     ind = branch_points.index(bpt)
-                    branch_point_indices = list(range(ind+1,t)) + list(range(ind))
+                    branch_point_indices = list(range(ind + 1, t)) + list(range(ind))
 
                 # for each branch place connecting the curent sheet to other
                 # sheets, add a final edge if we've already visited the place
@@ -248,8 +251,8 @@ def tretkoff_graph(monodromy_group):
                 for idx in branch_point_indices:
                     succ = tuple(list(node) + [ctr])
                     bpt = branch_points[idx]
-                    pi = find_cycle(monodromy[idx],current_sheet)
-                    value = (bpt,pi)
+                    pi = find_cycle(monodromy[idx], current_sheet)
+                    value = (bpt, pi)
 
                     if value in visited_branch_places:
                         final = True
@@ -258,17 +261,17 @@ def tretkoff_graph(monodromy_group):
                         visited_branch_places.append(value)
 
                     if len(pi) > 1:
-                        C.add_edge(node,succ)
-                        C.nodes[succ]['value'] = value
-                        C.nodes[succ]['label'] = "$b_{%d},%s$"%(idx,pi)
-                        C.nodes[succ]['final'] = final
-                        C.nodes[succ]['level'] = level+1
+                        C.add_edge(node, succ)
+                        C.nodes[succ]["value"] = value
+                        C.nodes[succ]["label"] = "$b_{%d},%s$" % (idx, pi)
+                        C.nodes[succ]["final"] = final
+                        C.nodes[succ]["level"] = level + 1
                         ctr += 1
 
             ###################################################################
             else:
-                current_place = C.nodes[node]['value']
-                bpt,pi = current_place
+                current_place = C.nodes[node]["value"]
+                bpt, pi = current_place
 
                 # C is always a tree. obtain the previous node (which
                 # is the source sheet) since we order cycles with the
@@ -278,10 +281,10 @@ def tretkoff_graph(monodromy_group):
                 # by allowing reverse rotations.
                 n = len(pi)
                 pred = list(C.neighbors(node))[0]
-                previous_sheet = C.nodes[pred]['value']
-                pi = reorder_cycle(pi,previous_sheet)
+                previous_sheet = C.nodes[pred]["value"]
+                pi = reorder_cycle(pi, previous_sheet)
                 ctr = 0
-                for idx in range(1,n):
+                for idx in range(1, n):
                     succ = tuple(list(node) + [ctr])
                     value = pi[idx]
 
@@ -291,12 +294,12 @@ def tretkoff_graph(monodromy_group):
                         final = False
                         visited_sheets.append(value)
 
-                    C.add_edge(node,succ)
-                    C.nodes[succ]['value'] = value
-                    C.nodes[succ]['label'] = "$%d$"%(value)
-                    C.nodes[succ]['final'] = final
-                    C.nodes[succ]['level'] = level+1
-                    C.nodes[succ]['nrots'] = idx if idx <= n/2 else idx-n
+                    C.add_edge(node, succ)
+                    C.nodes[succ]["value"] = value
+                    C.nodes[succ]["label"] = "$%d$" % (value)
+                    C.nodes[succ]["final"] = final
+                    C.nodes[succ]["level"] = level + 1
+                    C.nodes[succ]["nrots"] = idx if idx <= n / 2 else idx - n
                     ctr += 1
 
         # we are done adding succesors to all endpoints at this
@@ -304,7 +307,6 @@ def tretkoff_graph(monodromy_group):
         level += 1
 
     return C
-
 
 
 def final_edges(C):
@@ -326,14 +328,18 @@ def final_edges(C):
     - list of (ordered) tuples representing the final edges
 
     """
-    final_nodes = [n for n in C.nodes() if C.nodes[n]['final']]
+    final_nodes = [n for n in C.nodes() if C.nodes[n]["final"]]
     edges = []
     while len(final_nodes) > 0:
         node = final_nodes.pop()
         pred = list(C.neighbors(node))[0]
-        pred_val = C.nodes[pred]['value']
-        other = [n for n in final_nodes if C.nodes[n]['value'] == pred_val and
-                 C.nodes[list(C.neighbors(n))[0]]['value'] == C.nodes[node]['value']]
+        pred_val = C.nodes[pred]["value"]
+        other = [
+            n
+            for n in final_nodes
+            if C.nodes[n]["value"] == pred_val
+            and C.nodes[list(C.neighbors(n))[0]]["value"] == C.nodes[node]["value"]
+        ]
         other = other[0]
 
         final_nodes.remove(other)
@@ -343,10 +349,10 @@ def final_edges(C):
         # help determine replative ordering of cycles. We choose final
         # edges such that the predecessors of the nodes give the correct
         # ordering
-        if isinstance(C.nodes[node]['value'],tuple):
-            edges.append((other,node))
+        if isinstance(C.nodes[node]["value"], tuple):
+            edges.append((other, node))
         else:
-            edges.append((node,other))
+            edges.append((node, other))
 
     return edges
 
@@ -367,26 +373,27 @@ def intersection_matrix(final_edges, g):
       singularities.genus()
 
     """
-    def intersection_number(ei,ej):
+
+    def intersection_number(ei, ej):
         """Returns the intersection number of two edges of the Tretkoff graph.
 
         Note: Python is smart and uses lexicographical ordering on lists which
         is exactly what we need.
 
         """
-        ei_start,ei_end = ei
-        ej_start,ej_end = ej
+        ei_start, ei_end = ei
+        ej_start, ej_end = ej
 
         # the intersection number changes sign when a single edge is
         # reversed. normalize the edges such that the starting node of
         # each edge occurs before the ending node and that ei's starting
         # node occurs before ej's. (intersection is anti-symmetic)
         if ei_start > ei_end:
-            return (-1)*intersection_number((ei[1],ei[0]),ej)
+            return (-1) * intersection_number((ei[1], ei[0]), ej)
         elif ej_start > ej_end:
-            return (-1)*intersection_number(ei,(ej[1],ej[0]))
+            return (-1) * intersection_number(ei, (ej[1], ej[0]))
         elif ei_start > ej_start:
-            return (-1)*intersection_number(ej,ei)
+            return (-1) * intersection_number(ej, ei)
 
         # after the above transformations, there is only one
         # configuration resulting in a non-zero intersection number. (24
@@ -397,8 +404,10 @@ def intersection_matrix(final_edges, g):
         else:
             return 0
 
-        raise ValueError('Unable to determine intersection index of ' + \
-                         'edge %s with edge %s'%(ei,ej))
+        raise ValueError(
+            "Unable to determine intersection index of "
+            + "edge %s with edge %s" % (ei, ej)
+        )
 
     # the intersection matrix is anti-symmetric, so we only determine the
     # intersection numbers of the upper triangle
@@ -406,9 +415,9 @@ def intersection_matrix(final_edges, g):
     K = numpy.zeros((num_final_edges, num_final_edges), dtype=int)
     for i in range(num_final_edges):
         ei = final_edges[i]
-        for j in range(i+1,num_final_edges):
+        for j in range(i + 1, num_final_edges):
             ej = final_edges[j]
-            K[i,j] = intersection_number(ei,ej)
+            K[i, j] = intersection_number(ei, ej)
 
     # obtain the intersection numbers below the diagonal
     K = K - K.T
@@ -416,9 +425,10 @@ def intersection_matrix(final_edges, g):
     # sanity_check: make sure the intersection matrix predicts the same genus
     # that the genus formula otuputs
     rank = numpy.linalg.matrix_rank(K)
-    if rank/2 != g:
-        raise ValueError("Found inconsistent genus in homolgy " + \
-                         "intersection matrix.")
+    if rank / 2 != g:
+        raise ValueError(
+            "Found inconsistent genus in homolgy " + "intersection matrix."
+        )
     return K
 
 
@@ -456,34 +466,35 @@ def compute_c_cycles(tretkoff_graph, final_edges):
         # see the comment in homology:final_edges() for an explanation
         # on the ordering / direction of the cycle.
         edge = [list(C.neighbors(n))[0] for n in final_edge]
-        path_to_edge = nx.shortest_path(C,root,edge[0])
-        path_from_edge = nx.shortest_path(C,edge[1],root)
+        path_to_edge = nx.shortest_path(C, root, edge[0])
+        path_from_edge = nx.shortest_path(C, edge[1], root)
         path = path_to_edge + path_from_edge
-        path_values = [C.nodes[n]['value'] for n in path]
+        path_values = [C.nodes[n]["value"] for n in path]
 
         # convert branch places (branch point, permutation) to
         # point-rotations pairs (branch point, number and direction of
         # rotations)
-#         for n in range(1,len(path),2):
-#             branch_place = path_values[n]
+        #         for n in range(1,len(path),2):
+        #             branch_place = path_values[n]
 
-#             if n <= len(path_to_edge):
-#                 next_sheet = path[n+1]
-#                 nrots = C.nodes[next_sheet]['nrots']
-#             else:
-#                 next_sheet = path[n-1]
-#                 nrots = - C.nodes[next_sheet]['nrots']
-#             path_values[n] = (branch_place[0], nrots)
+        #             if n <= len(path_to_edge):
+        #                 next_sheet = path[n+1]
+        #                 nrots = C.nodes[next_sheet]['nrots']
+        #             else:
+        #                 next_sheet = path[n-1]
+        #                 nrots = - C.nodes[next_sheet]['nrots']
+        #             path_values[n] = (branch_place[0], nrots)
 
         # go the the sheet number in the final edge, recording number of
         # rotations normally
         for n in range(1, len(path), 2):
-            bi,pi = path_values[n]
-            prev_sheet = C.nodes[path[n-1]]['value']
-            next_sheet = C.nodes[path[n+1]]['value']
+            bi, pi = path_values[n]
+            prev_sheet = C.nodes[path[n - 1]]["value"]
+            next_sheet = C.nodes[path[n + 1]]["value"]
 
             nrots = pi.index(next_sheet) - pi.index(prev_sheet)
-            if nrots > len(pi)/2: nrots -= len(pi)
+            if nrots > len(pi) / 2:
+                nrots -= len(pi)
 
             path_values[n] = (bi, nrots)
 
@@ -492,17 +503,15 @@ def compute_c_cycles(tretkoff_graph, final_edges):
     return c_cycles
 
 
-
 def reverse_cycle(cycle):
     """
     Returns the reversed cycle. Note that rotation numbers around
     branch points are correctly computed.
     """
     rev_cycle = list(reversed(cycle))
-    for n in range(1,len(cycle),2):
+    for n in range(1, len(cycle), 2):
         rev_cycle[n] = (rev_cycle[n][0], -rev_cycle[n][1])
     return rev_cycle
-
 
 
 def compress_cycle(cycle, tretkoff_graph):
@@ -514,16 +523,16 @@ def compress_cycle(cycle, tretkoff_graph):
     # elements if the branch points are equal
     N = len(cycle)
     n = 1
-    while n < (N-2):
+    while n < (N - 2):
         curr_place = cycle[n]
-        next_place = cycle[n+2]
+        next_place = cycle[n + 2]
 
         # if two successive branch points are the same then delete one
         # of them and sum the number of rotations.
         if complex(curr_place[0]) == complex(next_place[0]):
             cycle[n] = (curr_place[0], curr_place[1] + next_place[1])
-            cycle.pop(n+1)
-            cycle.pop(n+1)
+            cycle.pop(n + 1)
+            cycle.pop(n + 1)
             N -= 2
         else:
             n += 2
@@ -531,8 +540,8 @@ def compress_cycle(cycle, tretkoff_graph):
     # Compression #2: delete cycle elements with zero rotations
     N = len(cycle)
     n = 0
-    while n < (N-1):
-        branch = cycle[n+1]
+    while n < (N - 1):
+        branch = cycle[n + 1]
 
         if branch[1] == 0:
             cycle.pop(n)
@@ -556,7 +565,7 @@ def compute_ab_cycles(c_cycles, linear_combinations, g, tretkoff_graph):
     - linear_combinations: output of the Frobenius transform of the
     """
     lincomb = linear_combinations
-    M,N = lincomb.shape
+    M, N = lincomb.shape
 
     a_cycles = []
     b_cycles = []
@@ -565,13 +574,13 @@ def compute_ab_cycles(c_cycles, linear_combinations, g, tretkoff_graph):
         a = []
         b = []
         for j in range(N):
-            cij = lincomb[i,j]
+            cij = lincomb[i, j]
             c = c_cycles[j] if cij >= 0 else reverse_cycle(c_cycles[j])
-            a.extend(abs(cij)*c[:-1])
+            a.extend(abs(cij) * c[:-1])
 
-            cij = lincomb[i+g,j]
+            cij = lincomb[i + g, j]
             c = c_cycles[j] if cij >= 0 else reverse_cycle(c_cycles[j])
-            b.extend(abs(cij)*c[:-1])
+            b.extend(abs(cij) * c[:-1])
 
         a = a + [0]
         b = b + [0]
@@ -631,29 +640,26 @@ class YPathFactory(object):
         self.C = tretkoff_graph(monodromy_group)
 
         # compute the a-, b-, and c-cycles by calling self.homology()
-        self._a_cycles, self._b_cycles, self._c_cycles, \
-            self._linear_combinations = self.homology()
+        self._a_cycles, self._b_cycles, self._c_cycles, self._linear_combinations = (
+            self.homology()
+        )
 
     def _value(self, node):
-        """Gets the value associated with `node` on the y-skeleton `self.C`.
-
-        """
-        return self.C.nodes[node]['value']
+        """Gets the value associated with `node` on the y-skeleton `self.C`."""
+        return self.C.nodes[node]["value"]
 
     def _node(self, value):
-        """Converts `value` to its associated node on the y-skeleton `self.C`.
-
-        """
+        """Converts `value` to its associated node on the y-skeleton `self.C`."""
         for node, data in self.C.nodes(data=True):
             try:
-                data_value = numpy.array(data['value'])
+                data_value = numpy.array(data["value"])
             except ValueError:
                 # Inhomogeneous shape
                 continue
-            if numpy.all(data_value == value) and not data['final']:
+            if numpy.all(data_value == value) and not data["final"]:
                 return node
-            
-        raise ValueError(f'Unable to find node associated with {value}')
+
+        raise ValueError(f"Unable to find node associated with {value}")
 
     def _values(self, ypath, rotations=False):
         """Converts a ypath from value data to node data.
@@ -678,22 +684,21 @@ class YPathFactory(object):
         if rotations:
             for i in range(1, len(values), 2):
                 bi, pi = values[i]
-                prev_sheet = values[i-1]
-                next_sheet = values[i+1]
+                prev_sheet = values[i - 1]
+                next_sheet = values[i + 1]
 
                 # compute the number of rotations needed to move between
                 # sheets.  take the shorest of the forward / reverse
                 # path options.
                 nrots = pi.index(next_sheet) - pi.index(prev_sheet)
-                if nrots > len(pi)/2: nrots -= len(pi)
+                if nrots > len(pi) / 2:
+                    nrots -= len(pi)
                 values[i] = (bi, nrots)
 
         return values
 
     def _nodes(self, ypath):
-        """Converts a ypath from node data to value data.
-
-        """
+        """Converts a ypath from node data to value data."""
         return [self._node(value) for value in ypath]
 
     def _trim_ypath(self, ypath):
@@ -797,7 +802,7 @@ class YPathFactory(object):
         for k in range(len(c_cycles)):
             c_cycles[k] = c_cycles[k][1::2]
 
-        linear_combinations = T[:2*g,:]
+        linear_combinations = T[: 2 * g, :]
         return a_cycles, b_cycles, c_cycles, linear_combinations
 
     def a_cycles(self):
@@ -812,8 +817,7 @@ class YPathFactory(object):
         return self._a_cycles
 
     def b_cycles(self):
-        """Returns the y-paths of the b-cycles of the Riemann surface.
-        """
+        """Returns the y-paths of the b-cycles of the Riemann surface."""
         return self._b_cycles
 
     def c_cycles(self):
@@ -840,44 +844,44 @@ class YPathFactory(object):
         return self._c_cycles, self._linear_combinations
 
     def plot(self):
-        """Plots the y-skeleton of the Riemann surface.
-        """
+        """Plots the y-skeleton of the Riemann surface."""
         import matplotlib.pyplot as plt  # XXX switch to Sage plotting
 
         # get the edges and final edges of the graph.
         C = self.C
-        final_nodes = [n for n,d in C.nodes(data=True) if d['final']]
-        final_edges = [e for e in C.edges()
-                       if e[0] in final_nodes or e[1] in final_nodes]
+        final_nodes = [n for n, d in C.nodes(data=True) if d["final"]]
+        final_edges = [
+            e for e in C.edges() if e[0] in final_nodes or e[1] in final_nodes
+        ]
         edges = [e for e in C.edges() if e not in final_edges]
 
         # custom node position makes it clear which branch points lead
         # to which sheets. corresponding nodes are positioned in a line
         # above each "level" of the graph.
-        pos = {(0,):(0,0)}
-        labels = {(0,):"$0$"}
+        pos = {(0,): (0, 0)}
+        labels = {(0,): "$0$"}
         level = 0
         level_points = [(0,)]  # a list of points at each level
         while len(level_points) > 0:
             level += 1
-            level_points = sorted([n for n,d in C.nodes(data=True)
-                                   if d['level'] == level])
+            level_points = sorted(
+                [n for n, d in C.nodes(data=True) if d["level"] == level]
+            )
             num_level_points = len(level_points)
             n = 0
             for point in level_points:
-                pos[point] = (level,n-num_level_points/2.0)
-                labels[point] = C.nodes[point]['label'] + \
-                    '\n $' + str(point) + '$'
+                pos[point] = (level, n - num_level_points / 2.0)
+                labels[point] = C.nodes[point]["label"] + "\n $" + str(point) + "$"
                 n += 1
 
         # draw it with separate coloring for the final edges
-        nx.draw_networkx_nodes(C, pos, node_color='w')
-        nx.draw_networkx_nodes(C, pos, nodelist=final_nodes, node_color='w')
+        nx.draw_networkx_nodes(C, pos, node_color="w")
+        nx.draw_networkx_nodes(C, pos, nodelist=final_nodes, node_color="w")
         nx.draw_networkx_edges(C, pos, edgelist=edges)
-        nx.draw_networkx_edges(C, pos, edgelist=final_edges,
-                               edge_color='b', style='dashed')
+        nx.draw_networkx_edges(
+            C, pos, edgelist=final_edges, edge_color="b", style="dashed"
+        )
         nx.draw_networkx_labels(C, pos, labels=labels, font_size=13)
         plt.xticks([])
         plt.yticks([])
         return plt.gcf()
-

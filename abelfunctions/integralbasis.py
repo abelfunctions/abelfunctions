@@ -59,6 +59,7 @@ from sage.rings.qqbar import QQbar
 
 import warnings
 
+
 def Int(i, px):
     r"""Computes :math:`Int_i = \sum_{k \neq i} v(p_i-p_k)`.
 
@@ -83,8 +84,9 @@ def Int(i, px):
     val = QQ(0)
     for k in range(n):
         if k != i:
-            val += (pxi-px[k]).valuation()
+            val += (pxi - px[k]).valuation()
     return val
+
 
 def compute_expansion_bounds(px):
     r"""Returns a list of necessary bounds on each Puiseux series in ``px``.
@@ -122,8 +124,7 @@ def compute_expansion_bounds(px):
     N = []
     max_Int = max([Int(k, px) for k in range(n)])
     for i in range(n):
-        pairwise_diffs = [(px[k] - px[i]).valuation()
-                          for k in range(n) if k != i]
+        pairwise_diffs = [(px[k] - px[i]).valuation() for k in range(n) if k != i]
         Ni = max(pairwise_diffs) + max_Int - Int(i, px) + 1
         N.append(Ni)
     return N
@@ -151,7 +152,7 @@ def compute_series_truncations(f, alpha):
     """
     # compute the parametric Puiseix series with the minimal number of terms
     # needed to distinguish them.
-    pt = puiseux(f,alpha)
+    pt = puiseux(f, alpha)
     px = [p for P in pt for p in P.xseries()]
 
     # compute the orders necessary for the integral basis algorithm. the orders
@@ -160,7 +161,7 @@ def compute_series_truncations(f, alpha):
     N = compute_expansion_bounds(px)
     for i in range(len(N)):
         e = px[i].ramification_index
-        N[i] = ceil(N[i]*e)
+        N[i] = ceil(N[i] * e)
 
     order = max(N) + 1
     for pti in pt:
@@ -195,38 +196,40 @@ def integral_basis(f):
 
     """
     R = f.parent()
-    x,y = R.gens()
+    x, y = R.gens()
 
     # The base algorithm assumes f is monic. If this is not the case then
     # monicize by applying the map `y -> y/lc(x), f -> lc^(d-1) f` where lc(x)
     # is the leading coefficient of f.
-    d  = f.degree(y)
+    d = f.degree(y)
     lc = f.polynomial(y).leading_coefficient()
     if lc.degree() > 0:
         # we have to carefully manage rings here. the path is:
         #     R(x)[y] -> R[x][y] -> R[x,y]
-        fmonic = f(x,y/lc)*lc**(d-1) # element of R(x)[y]
+        fmonic = f(x, y / lc) * lc ** (d - 1)  # element of R(x)[y]
         B = R.base_ring()
         fmonic = fmonic.change_ring(B[x])  # element of R[x][y]
         fmonic = R(fmonic)  # element of R[x,y]
     else:
-        fmonic = f/R.base_ring()(lc)
+        fmonic = f / R.base_ring()(lc)
         lc = 1
 
     # if the curve lives in QQ[x,y] then use singular. otherwise, use slow
     # self-implemented version
     try:
         fmonic = fmonic.change_ring(QQ)
-    except:
-        warnings.warn('using slower integral basis algorithm: '
-                      'cannot coerce curve %s to QQ[%s,%s]'%(fmonic,x,y))
+    except TypeError:
+        warnings.warn(
+            "using slower integral basis algorithm: "
+            "cannot coerce curve %s to QQ[%s,%s]" % (fmonic, x, y)
+        )
         b = _integral_basis_monic(fmonic)
     else:
         b = _integral_basis_monic_singular(fmonic)
 
     # reverse leading coefficient scaling
-    for i in range(1,len(b)):
-        b[i] = b[i](x,lc*y)
+    for i in range(1, len(b)):
+        b[i] = b[i](x, lc * y)
     return b
 
 
@@ -246,12 +249,13 @@ def _integral_basis_monic_singular(f):
         A list of integral basis elements.
     """
     from sage.all import singular
-    singular.load('integralbasis.lib')
 
-    l = singular.integralBasis(f,2)
+    singular.load("integralbasis.lib")
+
+    l = singular.integralBasis(f, 2)
     ideal, denom = l.sage()
     numerators = ideal.gens()
-    b = [numer/denom for numer in numerators]
+    b = [numer / denom for numer in numerators]
     return b
 
 
@@ -276,15 +280,14 @@ def _integral_basis_monic(f):
 
     """
     R = f.parent()
-    x,y = R.gens()
+    x, y = R.gens()
 
     # compute df: the set of monic, irreducible polynomials k such that k**2
     # divides the resultant
     n = f.degree(y)
-    res = f.resultant(f.derivative(y),y).univariate_polynomial()
+    res = f.resultant(f.derivative(y), y).univariate_polynomial()
     factor = res.squarefree_decomposition()
-    df = [k for k,deg in factor
-          if (deg > 1) and (k.leading_coefficient() == 1)]
+    df = [k for k, deg in factor if (deg > 1) and (k.leading_coefficient() == 1)]
 
     # for each element k of df, take any root of k and compute the
     # corresponding Puisuex series centered at that point
@@ -293,15 +296,16 @@ def _integral_basis_monic(f):
     for k in df:
         alphak = k.roots(ring=QQbar, multiplicities=False)[0]
         alpha.append(alphak)
-        rk = compute_series_truncations(f,alphak)
+        rk = compute_series_truncations(f, alphak)
         r.append(rk)
 
     # main loop
     b = [R.fraction_field()(1)]
-    for d in range(1,n):
-        bd = compute_bd(f,b,df,r,alpha)
+    for d in range(1, n):
+        bd = compute_bd(f, b, df, r, alpha)
         b.append(bd)
     return b
+
 
 def compute_bd(f, b, df, r, alpha):
     """Determine the next integral basis element form those already computed."""
@@ -310,19 +314,19 @@ def compute_bd(f, b, df, r, alpha):
     # ring. (below we will have to introduce symbolic indeterminants)
     R = f.parent()
     F = R.fraction_field()
-    x,y = R.gens()
+    x, y = R.gens()
 
     # construct a list of indeterminants and a guess for the next integral
     # basis element. to make computations uniform in the univariate and
     # multivariate cases an additional generator of the underlying polynomial
     # ring is introduced.
     d = len(b)
-    Q = PolynomialRing(QQbar, ['a%d'%n for n in range(d)] + ['dummy'])
+    Q = PolynomialRing(QQbar, ["a%d" % n for n in range(d)] + ["dummy"])
     a = tuple(Q.gens())
     b = tuple(b)
     P = PuiseuxSeriesRing(Q, str(x))
     xx = P.gen()
-    bd = F(y*b[-1])
+    bd = F(y * b[-1])
 
     # XXX HACK
     for l in range(len(r)):
@@ -346,7 +350,7 @@ def compute_bd(f, b, df, r, alpha):
             equations = []
             for rki in rk:
                 #                A = sum(a[j] * b[j](xx,rki) for j in range(d))
-                A = evaluate_A(a,b,xx,rki,d)
+                A = evaluate_A(a, b, xx, rki, d)
                 A += bd(xx, rki)
 
                 # implicit division by x-alphak, hence truncation to x^1
@@ -358,16 +362,18 @@ def compute_bd(f, b, df, r, alpha):
             # enough at alphak
             sols = solve_coefficient_system(Q, equations, a)
             if sols is not None:
-                bdm1 = sum(F(sols[i][0])*b[i] for i in range(d))
-                bd = F(bdm1 + bd)/ F(k)
+                bdm1 = sum(F(sols[i][0]) * b[i] for i in range(d))
+                bd = F(bdm1 + bd) / F(k)
             else:
                 sufficiently_singular = True
     return bd
 
+
 @cached_function
-def evaluate_A(a,b,xx,rki,d):
-    A = sum(a[j] * b[j](xx,rki) for j in range(d))
+def evaluate_A(a, b, xx, rki, d):
+    A = sum(a[j] * b[j](xx, rki) for j in range(d))
     return A
+
 
 def solve_coefficient_system(Q, equations, vars):
     # NOTE: to make things easier (and uniform) in the univariate case a dummy
@@ -376,7 +382,7 @@ def solve_coefficient_system(Q, equations, vars):
     B = Q.base_ring()
 
     # construct the coefficient system and right-hand side
-    system = [[e.coefficient({ai:1}) for ai in a] for e in equations]
+    system = [[e.coefficient({ai: 1}) for ai in a] for e in equations]
     rhs = [-e.constant_coefficient() for e in equations]
     system = Matrix(B, system)
     rhs = Matrix(B, rhs).transpose()
@@ -389,4 +395,3 @@ def solve_coefficient_system(Q, equations, vars):
     except ValueError:
         return None
     return sol
-

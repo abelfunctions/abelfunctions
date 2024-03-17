@@ -9,8 +9,25 @@ on:
   pull_request:
 
 jobs:
+  static-analysis:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - name: Install ruff
+        run: pip3 install ruff
+      - name: Check code with ruff
+        run: |
+          ruff check --output-format=github
+          ruff format --check
+
   test:
     runs-on: ubuntu-22.04
+    needs: static-analysis
     strategy:
       fail-fast: false
       matrix:
@@ -41,6 +58,7 @@ jobs:
 
   test-pip-install:
     runs-on: ubuntu-22.04
+    needs: static-analysis
     steps:
       - name: Checkout
         uses: actions/checkout@v2

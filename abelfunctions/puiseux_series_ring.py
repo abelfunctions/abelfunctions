@@ -29,6 +29,7 @@ See :mod:`abelfunctions.puiseux_series_ring_element` for examples.
 Contents
 --------
 """
+
 import weakref
 
 from sage.all import parent
@@ -47,21 +48,29 @@ from sage.rings.power_series_ring_element import is_PowerSeries
 
 
 puiseux_series = {}
-def PuiseuxSeriesRing(base_ring, name=None, names=None, default_prec=None, sparse=False):
+
+
+def PuiseuxSeriesRing(
+    base_ring, name=None, names=None, default_prec=None, sparse=False
+):
     if names is not None:
         name = names
     if name is None:
-        raise TypeError('You must specify the name of the indeterminate of the Puiseux series ring.')
+        raise TypeError(
+            "You must specify the name of the indeterminate of the Puiseux series ring."
+        )
 
     if default_prec is None:
         from sage.misc.defaults import series_precision
+
         default_prec = series_precision()
 
     global puiseux_series
     key = (base_ring, name, default_prec, sparse)
     if key in puiseux_series:
         x = puiseux_series[key]()
-        if x is not None: return x
+        if x is not None:
+            return x
 
     if isinstance(base_ring, Field):
         R = PuiseuxSeriesRing_field(base_ring, name, default_prec, sparse)
@@ -80,16 +89,21 @@ def is_PuiseuxSeriesRing(x):
 
 
 class PuiseuxSeriesRing_generic(CommutativeRing):
-    def __init__(self, base_ring, name=None, default_prec=None, sparse=False,
-                 category=None):
+    def __init__(
+        self, base_ring, name=None, default_prec=None, sparse=False, category=None
+    ):
         CommutativeRing.__init__(
-            self, base_ring, names=name,
-            category=getattr(self, '_default_category', Fields()))
+            self,
+            base_ring,
+            names=name,
+            category=getattr(self, "_default_category", Fields()),
+        )
 
         # If self is R(( x^(1/e) )) then the corresponding Laurent series
         # ring will be R(( x ))
         self._laurent_series_ring = LaurentSeriesRing(
-            base_ring, name=name, default_prec=default_prec, sparse=sparse)
+            base_ring, name=name, default_prec=default_prec, sparse=sparse
+        )
 
     def base_extend(self, R):
         if R.has_coerce_map_from(self.base_ring()):
@@ -98,30 +112,41 @@ class PuiseuxSeriesRing_generic(CommutativeRing):
             raise TypeError("no valid base extension defined")
 
     def change_ring(self, R):
-        return PuiseuxSeriesRing(R, self.variable_name(),
-                                 default_prec=self.default_prec(),
-                                 sparse=self.is_sparse())
+        return PuiseuxSeriesRing(
+            R,
+            self.variable_name(),
+            default_prec=self.default_prec(),
+            sparse=self.is_sparse(),
+        )
 
     def is_sparse(self):
         return self.laurent_series_ring().is_sparse()
 
-    def is_field(self, proof = True):
+    def is_field(self, proof=True):
         return self.base_ring().is_field()
 
     def is_dense(self):
         return self.laurent_series_ring().is_dense()
 
     def __reduce__(self):
-        return self.__class__, (self.base_ring(), self.variable_name(),
-                                self.default_prec(), self.is_sparse())
+        return self.__class__, (
+            self.base_ring(),
+            self.variable_name(),
+            self.default_prec(),
+            self.is_sparse(),
+        )
 
     def _repr_(self):
-        s = "Puiseux Series Ring in %s over %s"%(self.variable_name(), self.base_ring())
+        s = "Puiseux Series Ring in %s over %s" % (
+            self.variable_name(),
+            self.base_ring(),
+        )
         if self.is_sparse():
-            s = 'Sparse ' + s
+            s = "Sparse " + s
         return s
 
     Element = PuiseuxSeries
+
     def _element_constructor_(self, x, e=1):
         r"""Construct a Puiseux series from `x`.
 
@@ -149,8 +174,7 @@ class PuiseuxSeriesRing_generic(CommutativeRing):
             l = self.laurent_series_ring()(x)
             e = 1
         # 4. x is a Laurent or power series with the same base ring
-        elif ((is_LaurentSeries(x) or is_PowerSeries(x))
-              and P is self.base_ring()):
+        elif (is_LaurentSeries(x) or is_PowerSeries(x)) and P is self.base_ring():
             l = self.laurent_series_ring()(x)
         # 5. everything else: try to coerce to laurent series ring
         else:
@@ -186,10 +210,15 @@ class PuiseuxSeriesRing_generic(CommutativeRing):
 
         # Laurent series rings, power series rings, and polynomial rings with
         # the same variable name and the base rings are coercible
-        if ((is_PuiseuxSeriesRing(P) or is_LaurentSeriesRing(P) or
-             is_PowerSeriesRing(P))
+        if (
+            (
+                is_PuiseuxSeriesRing(P)
+                or is_LaurentSeriesRing(P)
+                or is_PowerSeriesRing(P)
+            )
             and P.variable_name() == self.variable_name()
-            and A.has_coerce_map_from(P.base_ring())):
+            and A.has_coerce_map_from(P.base_ring())
+        ):
             return True
 
         # # other Puiseux series rings with the same variable name and
@@ -205,8 +234,8 @@ class PuiseuxSeriesRing_generic(CommutativeRing):
         try:
             return self.__generator
         except AttributeError:
-            #l = self.laurent_series_ring()([0,1])
-            self.__generator = PuiseuxSeries(self, [0,1], e=1)
+            # l = self.laurent_series_ring()([0,1])
+            self.__generator = PuiseuxSeries(self, [0, 1], e=1)
             return self.__generator
 
     def ngens(self):
@@ -218,14 +247,14 @@ class PuiseuxSeriesRing_generic(CommutativeRing):
     def default_prec(self):
         return self.laurent_series_ring().default_prec()
 
+
 class PuiseuxSeriesRing_domain(PuiseuxSeriesRing_generic, IntegralDomain):
     def __init__(self, base_ring, name=None, default_prec=None, sparse=False):
         PuiseuxSeriesRing_generic.__init__(self, base_ring, name, default_prec, sparse)
+
 
 class PuiseuxSeriesRing_field(PuiseuxSeriesRing_generic, Field):
     _default_category = CompleteDiscreteValuationFields()
 
     def __init__(self, base_ring, name=None, default_prec=None, sparse=False):
         PuiseuxSeriesRing_generic.__init__(self, base_ring, name, default_prec, sparse)
-
-
