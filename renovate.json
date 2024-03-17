@@ -1,0 +1,9 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "group:all"],
+  "schedule": ["before 5am on Saturday"],
+  "reviewers": ["rparini"],
+  "pre-commit": {"enabled": true},
+  "automerge": true,
+  "automergeStrategy": "squash"
+}
