@@ -10,6 +10,7 @@ Authors
 * Chris Swierczewski (Feb 2014)
 """
 
+
 class Permutation(object):
     """A permutation on `n` elements.
 
@@ -27,6 +28,7 @@ class Permutation(object):
     inverse()
         Returns the inverse of the Permutation.
     """
+
     def __init__(self, l):
         """Construct a Permutation from a list.
 
@@ -63,8 +65,8 @@ class Permutation(object):
         >>> p == q
         True
         """
-        if isinstance(l,list):
-            if isinstance(l[0],list):
+        if isinstance(l, list):
+            if isinstance(l[0], list):
                 l = self._list_from_cycles(l)
             self._list = l
         else:
@@ -74,7 +76,6 @@ class Permutation(object):
 
         self._cycles = self._cycles_from_list(self._list)
         self._hash = None
-
 
     def _list_from_cycles(self, cycles):
         """Create a permutation list `i \to l[i]` from a cycle notation list.
@@ -95,13 +96,13 @@ class Permutation(object):
             if not cycle:
                 continue
             first = cycle[0]
-            for i in range(len(cycle)-1):
-                l[cycle[i]] = cycle[i+1]
+            for i in range(len(cycle) - 1):
+                l[cycle[i]] = cycle[i + 1]
             l[cycle[-1]] = first
 
         return l
 
-    def _cycles_from_list(self,l):
+    def _cycles_from_list(self, l):
         """Create a list of cycles from a permutation list."""
         n = len(l)
         cycles = []
@@ -144,21 +145,23 @@ class Permutation(object):
         return self.__rmul__(other)
 
     def __rmul__(self, other):
-#         # pad the permutations if they are of different lengths
-#         new_other = other[:] + [i+1 for i in range(len(other), len(self))]
-#         new_p1 = self[:] + [i+1 for i in range(len(self), len(other))]
-#         return Permutation([new_p1[i-1] for i in new_other])
-        new_other = other[:] + [i for i in range(len(other), len(self))]
-        new_p1 = self[:] + [i for i in range(len(self), len(other))]
+        #         # pad the permutations if they are of different lengths
+        #         new_other = other[:] + [i+1 for i in range(len(other), len(self))]
+        #         new_p1 = self[:] + [i+1 for i in range(len(self), len(other))]
+        #         return Permutation([new_p1[i-1] for i in new_other])
+        new_other = other[:] + list(range(len(other), len(self)))
+        new_p1 = self[:] + list(range(len(self), len(other)))
         return Permutation([new_p1[i] for i in new_other])
 
     def __call__(self, i):
         """Returns the image of the integer i under this permutation."""
-        if isinstance(i,int) and 0 <= i < len(self):
+        if isinstance(i, int) and 0 <= i < len(self):
             return self[i]
         else:
-            raise TypeError("i (= %s) must be an integer between "
-                            "%s and %s" % (i, 0, len(self) - 1))
+            raise TypeError(
+                "i (= %s) must be an integer between "
+                "%s and %s" % (i, 0, len(self) - 1)
+            )
 
     def is_identity(self):
         """Returns `True` if permutation is the identity."""
@@ -238,8 +241,8 @@ def matching_permutation(a, b):
     if N != len(b):
         raise ValueError("Lists must be of same length.")
 
-    perm = [-1]*N
-    eps  = 0.5*min([abs(a[i]-a[j]) for i in range(N) for j in range(i)])
+    perm = [-1] * N
+    eps = 0.5 * min([abs(a[i] - a[j]) for i in range(N) for j in range(i)])
 
     for i in range(N):
         for j in range(N):
@@ -249,10 +252,8 @@ def matching_permutation(a, b):
                 break
 
     if -1 in perm:
-        raise ValueError("Could not compute matching permutation "
-                         "between %s and %s." % (a, b))
+        raise ValueError(
+            "Could not compute matching permutation " "between %s and %s." % (a, b)
+        )
 
     return Permutation(perm)
-
-
-

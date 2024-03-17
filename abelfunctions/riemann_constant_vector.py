@@ -79,6 +79,7 @@ from itertools import product
 
 from sage.all import cached_function
 
+
 def initialize_half_lattice_vectors(X):
     r"""Generate a list of all half-lattice vectors.
 
@@ -99,10 +100,9 @@ def initialize_half_lattice_vectors(X):
     Omega = X.riemann_matrix()
 
     # compute a list of all vectors in {0,1/2}^g
-    half = list(product((0,0.5),repeat=g))
+    half = list(product((0, 0.5), repeat=g))
     half_lattice_vectors = numpy.array(
-        [h1 + dot(Omega,h2) for h1 in half for h2 in half],
-        dtype=complex
+        [h1 + dot(Omega, h2) for h1 in half for h2 in half], dtype=complex
     )
     return half_lattice_vectors
 
@@ -141,7 +141,7 @@ def half_lattice_filter(half_lattice_vectors, J, C, D, epsilon=1e-8):
     """
     # construct the set of "shifted" half-lattice vectors: the vectors J(h +
     # A(D) - 0.5*A(C)) where h is a half-lattice vector
-    Z = AbelMap(D) - 0.5*AbelMap(C)
+    Z = AbelMap(D) - 0.5 * AbelMap(C)
     shifted_half_lattice_vectors = [J(elt) for elt in half_lattice_vectors + Z]
 
     # evaluate Riemann theta at each of these half-lattice vectors.
@@ -188,7 +188,7 @@ def find_regular_places(X, n):
 
         # compute regular places if we are far enough away from any
         # discriminant points
-        if abs(a-b) > R:
+        if abs(a - b) > R:
             places.extend(X(a))
 
         # pick a new a
@@ -222,7 +222,7 @@ def sum_partitions(n):
 
     """
     # create the cartesian product of {0,...,n}
-    cartesian = product(range(n+1), repeat=n)
+    cartesian = product(range(n + 1), repeat=n)
     for p in cartesian:
         if sum(p) == n:
             yield p
@@ -248,21 +248,21 @@ def half_lattice_vector(X, C, epsilon1, epsilon2):
     g = X.genus()
 
     # filter pass #1: D = (g-1)*P0
-    D = (g-1)*X.base_place
+    D = (g - 1) * X.base_place
     h = half_lattice_filter(h, J, C, D, epsilon=epsilon1)
     if len(h) == 1:
         return h[0].T
     if len(h) == 0:
-        raise AssertionError('Filtered out all half-lattice vectors.')
+        raise AssertionError("Filtered out all half-lattice vectors.")
 
     # filter pass #2: D = sum of g-1 distinct regular places
-    places = find_regular_places(X,g-1)
+    places = find_regular_places(X, g - 1)
     D = sum(places)
     h = half_lattice_filter(h, J, C, D, epsilon=epsilon2)
     if len(h) == 1:
         return h[0].T
     if len(h) == 0:
-        raise AssertionError('Filtered out all half-lattice vectors.')
+        raise AssertionError("Filtered out all half-lattice vectors.")
 
     # filter pass #3: iterate over every degree g-1 divisor using the places
     # computed above
@@ -272,9 +272,9 @@ def half_lattice_vector(X, C, epsilon1, epsilon2):
         if len(h) == 1:
             return h[0].T
     if len(h) == 0:
-        raise AssertionError('Filtered out all half-lattice vectors.')
+        raise AssertionError("Filtered out all half-lattice vectors.")
 
-    raise ValueError('Could not find appropriate lattice vector.')
+    raise ValueError("Could not find appropriate lattice vector.")
 
 
 @cached_function
@@ -305,8 +305,7 @@ def canonical_divisor(X):
 
     """
     holomorphic_oneforms = X.differentials
-    canonical_divisors = [omega.valuation_divisor()
-                          for omega in holomorphic_oneforms]
+    canonical_divisors = [omega.valuation_divisor() for omega in holomorphic_oneforms]
 
     # only take the divisors with the fewest number of distinct places
     N = min(len(C.places) for C in canonical_divisors)
@@ -315,7 +314,7 @@ def canonical_divisor(X):
     # if there is a divisor with no infinite places, return that
     # one. otherwise, return any (the first) divisor computed
     for C in canonical_divisors:
-        has_infinite_place = any(P.is_infinite() for P, n in C)
+        has_infinite_place = any(P.is_infinite() for P, _ in C)
         if not has_infinite_place:
             return C
     return canonical_divisors[0]
@@ -344,7 +343,7 @@ def compute_K0(X, epsilon1, epsilon2, C):
     """
     h = half_lattice_vector(X, C, epsilon1, epsilon2)
     J = Jacobian(X)
-    K0 = J(h - 0.5*AbelMap(C))
+    K0 = J(h - 0.5 * AbelMap(C))
     return K0
 
 
@@ -374,19 +373,23 @@ def RiemannConstantVector(P, epsilon1=1e-6, epsilon2=1e-8, C=None):
 
     """
     if not isinstance(P, Place):
-        raise ValueError('P must be a Place of a Rieamnn surface.')
+        raise ValueError("P must be a Place of a Rieamnn surface.")
 
     # check if C is a canonical divisor if one is provided
     if C is not None:
         degree = C.degree
         n = numpy.array(C.multiplicities)
-        if (degree != (2*P.RS.genus()-2)) or any(n < 0):
-            raise ValueError("Cannot compute Riemann constant vector: given "
-                             "divisor %s is not canonical."%C)
+        if (degree != (2 * P.RS.genus() - 2)) or any(n < 0):
+            raise ValueError(
+                "Cannot compute Riemann constant vector: given "
+                "divisor %s is not canonical." % C
+            )
         if C.RS != P.RS:
-            raise ValueError("Cannot compute Riemann constant vector: the "
-                             "place %s and the canonical divisor %s do not "
-                             "live on the same Riemann surface."%(P,C))
+            raise ValueError(
+                "Cannot compute Riemann constant vector: the "
+                "place %s and the canonical divisor %s do not "
+                "live on the same Riemann surface." % (P, C)
+            )
     else:
         C = canonical_divisor(P.RS)
 
@@ -398,4 +401,4 @@ def RiemannConstantVector(P, epsilon1=1e-6, epsilon2=1e-8, C=None):
     K0 = compute_K0(X, epsilon1, epsilon2, C)
     if P == X.base_place:
         return K0
-    return J(K0 + (g-1)*AbelMap(P))
+    return J(K0 + (g - 1) * AbelMap(P))

@@ -24,7 +24,7 @@ sage: gamma.plot_x(); gamma.plot_y(color='green');
 
 ## Documentation and Help
 
-For installation instructions, tutorials on how to use this software, and a complete reference to the code, please see the [Documentation](https://github.com/abelfunctions/abelfunctions/blob/master/doc/README.md). You can also post questions in the [Abelfunctions chat room](https://gitter.im/abelfunctions/abelfunctions)
+For installation instructions, tutorials on how to use this software, and a complete reference to the code, please see the [Documentation](https://github.com/abelfunctions/abelfunctions/blob/master/doc/README.md). You can also post questions in the [Discussions Page](https://github.com/abelfunctions/abelfunctions/discussions).
 
 Please report any bugs you find or suggest enhancements on the [Issues Page](https://github.com/cswiercz/abelfunctions/issues).
 

@@ -34,13 +34,14 @@ from abelfunctions.riemann_surface_path import (
     RiemannSurfacePath,
     RiemannSurfacePathPuiseux,
     RiemannSurfacePathSmale,
-    )
+)
 from abelfunctions.utilities import matching_permutation
 from abelfunctions.complex_path_factory import ComplexPathFactory
 from abelfunctions.ypath_factory import YPathFactory as Skeleton
 
 from numpy import array
 from sage.all import infinity, CC, CDF, cached_method
+
 
 class RiemannSurfacePathFactory(object):
     r"""Factory class for constructing paths on the Riemann surface.
@@ -84,6 +85,7 @@ class RiemannSurfacePathFactory(object):
       _path_to_discriminant_place
       _path_to_regular_
     """
+
     @property
     def base_point(self):
         return self.complex_path_factory.base_point
@@ -107,13 +109,13 @@ class RiemannSurfacePathFactory(object):
     @property
     def skeleton(self):
         if not self._skeleton:
-            mon = (self.base_point, self.base_sheets) + \
-                  self.monodromy_group()
+            mon = (self.base_point, self.base_sheets) + self.monodromy_group()
             self._skeleton = Skeleton(self.riemann_surface, mon)
         return self._skeleton
 
-    def __init__(self, riemann_surface, base_point=None, base_sheets=None,
-                 kappa=3./5.):
+    def __init__(
+        self, riemann_surface, base_point=None, base_sheets=None, kappa=3.0 / 5.0
+    ):
         r"""Initialize the Riemann surface path factory.
 
         The user can manually supply a base point in the complex x-plane as
@@ -145,32 +147,35 @@ class RiemannSurfacePathFactory(object):
         """
         self.riemann_surface = riemann_surface
         self.complex_path_factory = ComplexPathFactory(
-            riemann_surface.f, base_point=base_point, kappa=kappa)
+            riemann_surface.f, base_point=base_point, kappa=kappa
+        )
 
-        # now that the compelx path factory is built we have a base point
+        # now that the complex path factory is built we have a base point
         # (either provided or chosen). we now need to determine the base
         # sheets.
         #
         # if not provided then compute some. otherwise, check they are roots
         if not base_sheets:
-            x,y = self.riemann_surface.f.parent().gens()
+            x, y = self.riemann_surface.f.parent().gens()
             p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
             roots = p.roots(CDF, multiplicities=False)
-            base_sheets = numpy.array(roots, dtype=complex)
+            base_sheets = array(roots, dtype=complex)
         else:
             f = self.riemann_surface.f
             for sheet in base_sheets:
                 value = f(self.base_point, sheet)
                 if abs(value) > 1e-15:
-                    raise ValueError('Base sheets %s do not lie above base '
-                                     'point %s'%(base_sheets, self.base_point))
+                    raise ValueError(
+                        "Base sheets %s do not lie above base "
+                        "point %s" % (base_sheets, self.base_point)
+                    )
         self._base_sheets = base_sheets
 
         # skeleton is computed when first used
         self._skeleton = None
 
     def __repr__(self):
-        s = 'Path Factory for %s'%(self.riemann_surface)
+        s = "Path Factory for %s" % (self.riemann_surface)
         return s
 
     def show_paths(self, *args, **kwds):
@@ -245,32 +250,30 @@ class RiemannSurfacePathFactory(object):
         # pick an appropriate x-point over which a Q is chosen
         x0 = self.base_point
         if numpy.real(x0) < 0:
-            xa = 5*x0  # move away from the origin
+            xa = 5 * x0  # move away from the origin
         else:
-            xa = -5   # arbitrary choice away from the origin
+            xa = -5  # arbitrary choice away from the origin
 
         # next, determine an appropriate y-part from where we can reach the
         # place at infinity
         p = P.puiseux_series
         center, coefficient, ramification_index = p.xdata
-        ta = CC(xa/coefficient).nth_root(abs(ramification_index))
-        ta = ta if ramification_index > 0 else 1/ta
+        ta = CC(xa / coefficient).nth_root(abs(ramification_index))
+        ta = ta if ramification_index > 0 else 1 / ta
         p.extend_to_t(ta)
         ya = complex(p.eval_y(ta))
 
         # construct the place Q and compute the path going from P0 to Q
-        Q = self.riemann_surface(xa,ya)
+        Q = self.riemann_surface(xa, ya)
         gamma_P0_to_Q = self.path_to_place(Q)
 
         # construct the path going from Q to P
         xend = complex(gamma_P0_to_Q.get_x(1.0))
         yend = array(gamma_P0_to_Q.get_y(1.0), dtype=complex)
         gamma_x = ComplexRay(xend)
-        gamma_Q_to_P = RiemannSurfacePathPuiseux(
-            self.riemann_surface, gamma_x, yend)
+        gamma_Q_to_P = RiemannSurfacePathPuiseux(self.riemann_surface, gamma_x, yend)
         gamma = gamma_P0_to_Q + gamma_Q_to_P
         return gamma
-
 
     def _path_to_discriminant_place(self, P):
         r"""Returns a path to a discriminant place on the surface.
@@ -299,22 +302,21 @@ class RiemannSurfacePathFactory(object):
         center, coefficient, ramification_index = p.xdata
         R = self.complex_path_factory.radius(center)
         a = center - R
-        t = (-R/coefficient)**(1.0/ramification_index)
+        t = (-R / coefficient) ** (1.0 / ramification_index)
         # p.coerce_to_numerical()
         p.extend_to_t(t)
         y = p.eval_y(t)
 
         # construct a path going from the base place to this regular
         # place to the left of the target discriminant point
-        P1 = self.riemann_surface(a,y)
+        P1 = self.riemann_surface(a, y)
         gamma1 = self._path_to_regular_place(P1)
 
         # construct the RiemannSurfacePath going from this regular place to the
         # discriminant point.
         yend = array(gamma1.get_y(1.0), dtype=complex)
         gamma_x = ComplexLine(complex(a), complex(center))
-        segment = RiemannSurfacePathPuiseux(
-            self.riemann_surface, gamma_x, yend)
+        segment = RiemannSurfacePathPuiseux(self.riemann_surface, gamma_x, yend)
         gamma = gamma1 + segment
         return gamma
 
@@ -348,8 +350,10 @@ class RiemannSurfacePathFactory(object):
         end_sheets = array(gamma.get_y(1.0), dtype=complex)
         end_diffs = abs(end_sheets - complex(P.y))
         if min(end_diffs) > 1.0e-8:
-            raise ValueError('Error in constructing Abel path: end of regular '
-                             'path does not match with target place.')
+            raise ValueError(
+                "Error in constructing Abel path: end of regular "
+                "path does not match with target place."
+            )
         sheet_index = numpy.argmin(end_diffs)
 
         # if this sheet index is zero (the base sheet) then simply return the
@@ -358,19 +362,20 @@ class RiemannSurfacePathFactory(object):
         if sheet_index != 0:
             ypath = self.skeleton.ypath_from_base_to_sheet(sheet_index)
             gamma_swap = self.RiemannSurfacePath_from_cycle(ypath)
-            ordered_base_sheets = numpy.array(gamma_swap.get_y(1.0), dtype=complex)
+            ordered_base_sheets = array(gamma_swap.get_y(1.0), dtype=complex)
 
             # take the new ordering of branch points and construct the
             # path to the target place. there is an inherent check that
             # the y-values above the base point match
             gamma_rest = self.RiemannSurfacePath_from_complex_path(
-                gamma_x, y0=ordered_base_sheets)
+                gamma_x, y0=ordered_base_sheets
+            )
             gamma = gamma_swap + gamma_rest
 
         # sanity check
         yend = gamma.get_y(1.0)[0]
         if numpy.abs(yend - complex(P.y)) > 1.0e-8:
-            raise ValueError('Error in constructing Abel path.')
+            raise ValueError("Error in constructing Abel path.")
         return gamma
 
     def _path_near_discriminant_point(self, P):
@@ -423,7 +428,7 @@ class RiemannSurfacePathFactory(object):
         for sigma in permutations:
             phi_prod_all = sigma * phi_prod_all
         if not phi_prod_all.is_identity():
-            raise ValueError('Contradictory permutation at infinity.')
+            raise ValueError("Contradictory permutation at infinity.")
 
         # add infinity if it's a branch point
         if not phi_oo.is_identity():
@@ -506,10 +511,11 @@ class RiemannSurfacePathFactory(object):
         # contribute to a c-cycles
         cycles, linear_combinations = self.skeleton.c_cycles()
         ncols = linear_combinations.shape[1]
-        indices = [j for j in range(ncols)
-                   if not (linear_combinations[:,j] == 0).all()]
+        indices = [
+            j for j in range(ncols) if not (linear_combinations[:, j] == 0).all()
+        ]
         c_cycles = [cycles[i] for i in indices]
-        linear_combinations = linear_combinations[:,indices]
+        linear_combinations = linear_combinations[:, indices]
 
         paths = [self.RiemannSurfacePath_from_cycle(c) for c in c_cycles]
         return paths, linear_combinations
@@ -560,13 +566,17 @@ class RiemannSurfacePathFactory(object):
         x0 = complex(x0)
         y0 = array(y0, dtype=complex)
         if abs(x0 - complex_path(0)) > 1e-7:
-            raise ValueError('The point %s is not at the start of the '
-                             'ComplexPath %s'%(x0, complex_path))
+            raise ValueError(
+                "The point %s is not at the start of the "
+                "ComplexPath %s" % (x0, complex_path)
+            )
         f = self.riemann_surface.f
-        curve_error = [abs(complex(f(x0,y0k))) for y0k in y0]
+        curve_error = [abs(complex(f(x0, y0k))) for y0k in y0]
         if max(curve_error) > 1e-7:
-            raise ValueError('The fibre %s above %s does not lie on the '
-                             'curve %s'%(y0.tolist(), x0, f))
+            raise ValueError(
+                "The fibre %s above %s does not lie on the "
+                "curve %s" % (y0.tolist(), x0, f)
+            )
 
         # build a list of path segments from each tuple of xdata. build a line
         # segment or arc depending on xdata input
@@ -579,17 +589,18 @@ class RiemannSurfacePathFactory(object):
             xend = segment_x(1.0)
             b = self.complex_path_factory.closest_discriminant_point(xend)
             R = self.complex_path_factory.radius(b)
-            if abs(xend - b) > 0.9*R:
+            if abs(xend - b) > 0.9 * R:
                 segment = RiemannSurfacePathSmale(
-                    self.riemann_surface, segment_x, y0_segment)
+                    self.riemann_surface, segment_x, y0_segment
+                )
             else:
                 segment = RiemannSurfacePathPuiseux(
-                    self.riemann_surface, segment_x, y0_segment)
+                    self.riemann_surface, segment_x, y0_segment
+                )
 
             # determine the starting place of the next segment
             y0_segment = segment.get_y(1.0)
             segments.append(segment)
 
         # build the entire path from the path segments
-        return RiemannSurfacePath(self.riemann_surface, complex_path, y0,
-                                  segments)
+        return RiemannSurfacePath(self.riemann_surface, complex_path, y0, segments)

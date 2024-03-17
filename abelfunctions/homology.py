@@ -36,13 +36,26 @@ Contents
 
 import numpy
 from sage.all import (
-    real, imag, Matrix, ZZ, QQ, RDF, CDF, GF, identity_matrix, zero_matrix)
+    real,
+    imag,
+    Matrix,
+    ZZ,
+    QQ,
+    RDF,
+    CDF,
+    GF,
+    identity_matrix,
+    zero_matrix,
+)
+
 
 def Re(M):
     return M.apply_map(real)
 
+
 def Im(M):
     return M.apply_map(imag)
+
 
 def involution_matrix(Pa, Pb, tol=1e-4):
     r"""Returns the transformation matrix `R` corresponding to the anti-holomorphic
@@ -74,26 +87,28 @@ def involution_matrix(Pa, Pb, tol=1e-4):
     For numerical stability, replace matrix inversion with linear system
     solves.
     """
-    g,g = Pa.dimensions()
-    R_RDF = Matrix(RDF, 2*g, 2*g)
+    g, g = Pa.dimensions()
+    R_RDF = Matrix(RDF, 2 * g, 2 * g)
 
     Ig = identity_matrix(RDF, g)
-    M = Im(Pb.T)*Re(Pa) - Im(Pa.T)*Re(Pb)
+    M = Im(Pb.T) * Re(Pa) - Im(Pa.T) * Re(Pb)
     Minv = M.inverse()
 
-    R_RDF[:g,:g] = (2*Re(Pb)*Minv*Im(Pa.T) + Ig).T
-    R_RDF[:g,g:] = -2*Re(Pa)*Minv*Im(Pa.T)
-    R_RDF[g:,:g] = 2*Re(Pb)*Minv*Im(Pb.T)
-    R_RDF[g:,g:] = -(2*Re(Pb)*Minv*Im(Pa.T) + Ig)
+    R_RDF[:g, :g] = (2 * Re(Pb) * Minv * Im(Pa.T) + Ig).T
+    R_RDF[:g, g:] = -2 * Re(Pa) * Minv * Im(Pa.T)
+    R_RDF[g:, :g] = 2 * Re(Pb) * Minv * Im(Pb.T)
+    R_RDF[g:, g:] = -(2 * Re(Pb) * Minv * Im(Pa.T) + Ig)
     R = R_RDF.round().change_ring(ZZ)
 
     # sanity check: make sure that R_RDF is close to integral. we perform this
     # test here since the matrix returned should be over ZZ
     error = (R_RDF.round() - R_RDF).norm()
     if error > tol:
-        raise ValueError("The anti-holomorphic involution matrix is not "
-                         "integral. Try increasing the precision of the input "
-                         "period matrices.")
+        raise ValueError(
+            "The anti-holomorphic involution matrix is not "
+            "integral. Try increasing the precision of the input "
+            "period matrices."
+        )
     return R
 
 
@@ -124,19 +139,21 @@ def integer_kernel_basis(R):
 
     """
     twog, twog = R.dimensions()
-    g = twog//2
+    g = twog // 2
     K = R.T - identity_matrix(ZZ, twog)
     r = K.rank()
 
     # sanity check: the rank of the kernel should be the genus of the curve
     if r != g:
-        raise ValueError("The rank of the integer kernel of K should be "
-                         "equal to the genus.")
+        raise ValueError(
+            "The rank of the integer kernel of K should be " "equal to the genus."
+        )
 
     # compute the integer kernel from the Smith normal form of K
-    D,U,V = K.smith_form()
-    S = V[:,g:]
+    D, U, V = K.smith_form()
+    S = V[:, g:]
     return S
+
 
 def N1_matrix(Pa, Pb, S, tol=1e-4):
     r"""Returns the matrix `N1` from the integer kernel of the anti-holomorphic
@@ -162,24 +179,26 @@ def N1_matrix(Pa, Pb, S, tol=1e-4):
     """
     # compute the Smith normal form of S, itself
     g = S.ncols()
-    S1 = S[:g,:]
-    S2 = S[g:,:]
+    S1 = S[:g, :]
+    S2 = S[g:, :]
     ES, US, VS = S.smith_form()
 
     # construct the matrix N1 piece by piece
-    Nper = zero_matrix(RDF, 2*g,g)
-    Nper[:g,:] = -Re(Pb)[:,:]
-    Nper[g:,:] = Re(Pa)[:,:]
-    Nhat = (S1.T*Re(Pa) + S2.T*Re(Pb)).inverse()
-    Ntilde = 2*US*Nper*Nhat
-    N1_RDF = VS*Ntilde[:g,:]
+    Nper = zero_matrix(RDF, 2 * g, g)
+    Nper[:g, :] = -Re(Pb)[:, :]
+    Nper[g:, :] = Re(Pa)[:, :]
+    Nhat = (S1.T * Re(Pa) + S2.T * Re(Pb)).inverse()
+    Ntilde = 2 * US * Nper * Nhat
+    N1_RDF = VS * Ntilde[:g, :]
     N1 = N1_RDF.round().change_ring(GF(2))
 
     # sanity check: N1 should be integral
     error = (N1_RDF.round() - N1_RDF).norm()
     if error > tol:
-        raise ValueError("The N1 matrix is not integral. Try increasing the "
-                         "precision of the input period matrices.")
+        raise ValueError(
+            "The N1 matrix is not integral. Try increasing the "
+            "precision of the input period matrices."
+        )
     return N1
 
 
@@ -237,50 +256,50 @@ def symmetric_block_diagonalize(N1):
     # if N1 is the zero matrix the H is also the zero matrix (and Q is the
     # identity transformation)
     if (N1 % 2) == 0:
-        return H,Q
+        return H, Q
 
     # perform the "modified gaussian elimination"
-    B = Matrix(GF(2),[[0,1],[1,0]])
+    B = Matrix(GF(2), [[0, 1], [1, 0]])
     H = N1.change_ring(GF(2))
     j = 0
-    while (j < g) and (H[:,j:] != 0):
+    while (j < g) and (H[:, j:] != 0):
         # if the current column is zero then swap with the last non-zero column
         if H.column(j) == 0:
-            last_non_zero_col = max(k for k in range(j,g) if H.column(k) != 0)
-            Q.swap_columns(j,last_non_zero_col)
-            H = Q.T*N1*Q
+            last_non_zero_col = max(k for k in range(j, g) if H.column(k) != 0)
+            Q.swap_columns(j, last_non_zero_col)
+            H = Q.T * N1 * Q
 
         # if the current diagonal element is 1 then gaussian eliminate as
         # usual. otherwise, swap rows so that a "1" appears in H[j+1,j] and
         # then eliminate from H[j+1,j]
-        if H[j,j] == 1:
-            rows_to_eliminate = (r for r in range(g) if H[r,j] == 1 and r != j)
+        if H[j, j] == 1:
+            rows_to_eliminate = (r for r in range(g) if H[r, j] == 1 and r != j)
             for r in rows_to_eliminate:
-                Q.add_multiple_of_column(r,j,1)
-            H = Q.T*N1*Q
+                Q.add_multiple_of_column(r, j, 1)
+            H = Q.T * N1 * Q
         else:
             # find the first non-zero element in the column after the diagonal
             # element and swap rows with this element
-            first_non_zero = min(k for k in range(j,g) if H[k,j] != 0)
-            Q.swap_columns(j+1,first_non_zero)
-            H = Q.T*N1*Q
+            first_non_zero = min(k for k in range(j, g) if H[k, j] != 0)
+            Q.swap_columns(j + 1, first_non_zero)
+            H = Q.T * N1 * Q
 
             # eliminate *all* other ones in the column, including those above
             # the element (j,j+1)
-            rows_to_eliminate = (r for r in range(g) if H[r,j] == 1 and r != j+1)
+            rows_to_eliminate = (r for r in range(g) if H[r, j] == 1 and r != j + 1)
             for r in rows_to_eliminate:
-                Q.add_multiple_of_column(r,j+1,1)
-            H = Q.T*N1*Q
+                Q.add_multiple_of_column(r, j + 1, 1)
+            H = Q.T * N1 * Q
 
         # increment the column based on the diagonal element
-        if H[j,j] == 1:
+        if H[j, j] == 1:
             j += 1
-        elif H[j:(j+2),j:(j+2)] == B:
+        elif H[j : (j + 2), j : (j + 2)] == B:
             # in the block diagonal case, need to eliminate below the j+1 term
-            rows_to_eliminate = (r for r in range(g) if H[r,j+1] == 1 and r != j)
+            rows_to_eliminate = (r for r in range(g) if H[r, j + 1] == 1 and r != j)
             for r in rows_to_eliminate:
-                Q.add_multiple_of_column(r,j,1)
-            H = Q.T*N1*Q
+                Q.add_multiple_of_column(r, j, 1)
+            H = Q.T * N1 * Q
             j += 2
 
     # finally, check if there are blocks of "special" form. that is, shift all
@@ -290,13 +309,15 @@ def symmetric_block_diagonalize(N1):
         j = index_B
 
         Qtilde = zero_matrix(GF(2), g)
-        Qtilde[0,0] = 1
-        Qtilde[j,0] = 1; Qtilde[j+1,0] = 1
-        Qtilde[0,j] = 1; Qtilde[0,j+1] = 1
-        Qtilde[j:(j+2),j:(j+2)] = B
+        Qtilde[0, 0] = 1
+        Qtilde[j, 0] = 1
+        Qtilde[j + 1, 0] = 1
+        Qtilde[0, j] = 1
+        Qtilde[0, j + 1] = 1
+        Qtilde[j : (j + 2), j : (j + 2)] = B
 
-        Q = Q*Qtilde
-        H = Q.T*N1*Q
+        Q = Q * Qtilde
+        H = Q.T * N1 * Q
 
         # continue until none are left
         index_one, index_B = diagonal_locations(H)
@@ -304,7 +325,8 @@ def symmetric_block_diagonalize(N1):
     # above, we used Q to store column operations on N1. switch to rows
     # operations on H so that N1 = Q*H*Q.T
     Q = Q.T.inverse()
-    return H,Q
+    return H, Q
+
 
 def diagonal_locations(H):
     r"""Returns the indices of the last `1` along the diagonal and the first block
@@ -326,14 +348,14 @@ def diagonal_locations(H):
 
     """
     g = H.nrows()
-    B = Matrix(GF(2),[[0,1],[1,0]])
+    B = Matrix(GF(2), [[0, 1], [1, 0]])
     try:
-        index_one = min(j for j in range(g) if H[j,j] == 1)
+        index_one = min(j for j in range(g) if H[j, j] == 1)
     except ValueError:
         index_one = g
 
     try:
-        index_B = max(j for j in range(g-1) if H[j:(j+2),j:(j+2)] == B)
+        index_B = max(j for j in range(g - 1) if H[j : (j + 2), j : (j + 2)] == B)
     except ValueError:
         index_B = -1
 
@@ -368,20 +390,20 @@ def symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4):
         A `2g x 2g` symplectic matrix.
     """
     # compute A and B
-    g,g = Pa.dimensions()
-    rhs = S*Q.change_ring(ZZ)
-    A = rhs[:g,:g].T
-    B = rhs[g:,:g].T
+    g, g = Pa.dimensions()
+    rhs = S * Q.change_ring(ZZ)
+    A = rhs[:g, :g].T
+    B = rhs[g:, :g].T
     H = H.change_ring(ZZ)
 
     # compute C and D
-    half = QQ(1)/QQ(2)
-    temp = (A*Re(Pa) + B*Re(Pb)).inverse()
-    CT = half*A.T*H - Re(Pb)*temp
+    half = QQ(1) / QQ(2)
+    temp = (A * Re(Pa) + B * Re(Pb)).inverse()
+    CT = half * A.T * H - Re(Pb) * temp
     CT_ZZ = CT.round().change_ring(ZZ)
     C = CT_ZZ.T
 
-    DT = half*B.T*H + Re(Pa)*temp
+    DT = half * B.T * H + Re(Pa) * temp
     DT_ZZ = DT.round().change_ring(ZZ)
     D = DT_ZZ.T
 
@@ -389,17 +411,20 @@ def symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=1e-4):
     C_error = (CT.round() - CT).norm()
     D_error = (DT.round() - DT).norm()
     if (C_error > tol) or (D_error > tol):
-        raise ValueError("The symmetric transformation matrix is not integral. "
-                         "Try increasing the precision of the input period "
-                         "matrices.")
+        raise ValueError(
+            "The symmetric transformation matrix is not integral. "
+            "Try increasing the precision of the input period "
+            "matrices."
+        )
 
     # construct Gamma
-    Gamma = zero_matrix(ZZ, 2*g, 2*g)
-    Gamma[:g,:g] = A
-    Gamma[:g,g:] = B
-    Gamma[g:,:g] = C
-    Gamma[g:,g:] = D
+    Gamma = zero_matrix(ZZ, 2 * g, 2 * g)
+    Gamma[:g, :g] = A
+    Gamma[:g, g:] = B
+    Gamma[g:, :g] = C
+    Gamma[g:, g:] = D
     return Gamma
+
 
 def symmetrize_periods(Pa, Pb, tol=1e-4):
     r"""Returns symmetric a- and b-periods `Pa_symm` and `Pb_symm`, as well as the
@@ -439,20 +464,20 @@ def symmetrize_periods(Pa, Pb, tol=1e-4):
     Pb = Pb.T
 
     # use above functions to obtain topological type matrix
-    g,g = Pa.dimensions()
+    g, g = Pa.dimensions()
     R = involution_matrix(Pa, Pb, tol=tol)
     S = integer_kernel_basis(R)
     N1 = N1_matrix(Pa, Pb, S, tol=tol)
-    H,Q = symmetric_block_diagonalize(N1)
+    H, Q = symmetric_block_diagonalize(N1)
     Gamma = symmetric_transformation_matrix(Pa, Pb, S, H, Q, tol=tol)
 
     # compute the corresponding symmetric periods
-    stacked_periods = zero_matrix(CDF, 2*g, g)
-    stacked_periods[:g,:] = Pa
-    stacked_periods[g:,:] = Pb
-    stacked_symmetric_periods = Gamma*stacked_periods
-    Pa_symm = stacked_symmetric_periods[:g,:]
-    Pb_symm = stacked_symmetric_periods[g:,:]
+    stacked_periods = zero_matrix(CDF, 2 * g, g)
+    stacked_periods[:g, :] = Pa
+    stacked_periods[g:, :] = Pb
+    stacked_symmetric_periods = Gamma * stacked_periods
+    Pa_symm = stacked_symmetric_periods[:g, :]
+    Pb_symm = stacked_symmetric_periods[g:, :]
 
     # transpose results back
     Pa_symm = Pa_symm.T

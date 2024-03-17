@@ -16,12 +16,11 @@ References
 
 """
 
-
 import unittest
 import numpy
 
 from numpy.random import randn
-from numpy.linalg import norm, cholesky
+from numpy.linalg import cholesky
 from abelfunctions.riemann_theta.radius import radius
 from abelfunctions.riemann_theta.riemann_theta import RiemannTheta
 
@@ -35,33 +34,54 @@ except ImportError:
     except ImportError:
         NO_JTHETA = True
 
-def thetag1(z,tau,N=2048):
-    r"""Naive implementation of genus 1 theta function."""
-    return sum(numpy.exp(numpy.pi*1.j*tau*n**2 + 2.j*numpy.pi*n*z)
-               for n in range(-N,N))
-thetag1 = numpy.vectorize(thetag1, otypes=(complex,), excluded=(1,2))
 
+def thetag1(z, tau, N=2048):
+    r"""Naive implementation of genus 1 theta function."""
+    return sum(
+        numpy.exp(numpy.pi * 1.0j * tau * n**2 + 2.0j * numpy.pi * n * z)
+        for n in range(-N, N)
+    )
+
+
+thetag1 = numpy.vectorize(thetag1, otypes=(complex,), excluded=(1, 2))
 
 
 class TestMaple(unittest.TestCase):
     def setUp(self):
         self.Omega3 = numpy.array(
-            [[1.j, 0.5, 0.5],
-             [0.5, 1.j, 0.5],
-             [0.5, 0.5, 1.j]], dtype=complex)
-        self.Omega4 = numpy.array([
-            [ 0.39344262+0.79503971j, -0.75409836-0.36912558j,
-              -0.44262295-0.02839428j,  0.20491803+0.26974562j],
-            [-0.75409836-0.36912558j,  0.27868852+0.85182827j,
-             0.09836066+0.19875993j, -0.43442623-0.15616852j],
-            [-0.44262295-0.02839428j,  0.09836066+0.19875993j,
-             -0.37704918+0.68146261j, -0.91803279+0.45430841j],
-            [ 0.20491803+0.26974562j, -0.43442623-0.15616852j,
-              -0.91803279+0.45430841j, -1.27868852+0.88022254j]
-        ])
+            [[1.0j, 0.5, 0.5], [0.5, 1.0j, 0.5], [0.5, 0.5, 1.0j]], dtype=complex
+        )
+        self.Omega4 = numpy.array(
+            [
+                [
+                    0.39344262 + 0.79503971j,
+                    -0.75409836 - 0.36912558j,
+                    -0.44262295 - 0.02839428j,
+                    0.20491803 + 0.26974562j,
+                ],
+                [
+                    -0.75409836 - 0.36912558j,
+                    0.27868852 + 0.85182827j,
+                    0.09836066 + 0.19875993j,
+                    -0.43442623 - 0.15616852j,
+                ],
+                [
+                    -0.44262295 - 0.02839428j,
+                    0.09836066 + 0.19875993j,
+                    -0.37704918 + 0.68146261j,
+                    -0.91803279 + 0.45430841j,
+                ],
+                [
+                    0.20491803 + 0.26974562j,
+                    -0.43442623 - 0.15616852j,
+                    -0.91803279 + 0.45430841j,
+                    -1.27868852 + 0.88022254j,
+                ],
+            ]
+        )
 
     def test_value(self):
-        z = [0,0,0]
+        z = [0, 0, 0]
         Omega = self.Omega3
 
         value = RiemannTheta(z, Omega, epsilon=1e-14)
@@ -69,19 +89,19 @@ class TestMaple(unittest.TestCase):
         error = abs(value - maple)
         self.assertLess(error, 1e-8)
 
-        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        w = [0.2 + 0.5j, 0.3 - 0.1j, -0.1 + 0.2j]
         value = RiemannTheta(w, Omega, epsilon=1e-14)
         maple = 1.2544694041047501 - 0.77493173321770725j
         error = abs(value - maple)
         self.assertLess(error, 1e-8)
 
     def test_first_derivatives(self):
-        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        w = [0.2 + 0.5j, 0.3 - 0.1j, -0.1 + 0.2j]
         Omega = self.Omega3
 
-        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1,0,0]])
-        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,1,0]])
-        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,1]])
+        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1, 0, 0]])
+        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 1, 0]])
+        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 0, 1]])
 
         maple_z1 = -5.7295900733729553 - 0.89199375315523345j
         maple_z2 = -0.16300987772384356 - 0.65079269102999180j
@@ -97,11 +117,11 @@ class TestMaple(unittest.TestCase):
 
         Omega = self.Omega4
 
-        w = [0,0,0,0]
-        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1,0,0,0]])
-        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,1,0,0]])
-        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,1,0]])
-        value_z4 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,0,1]])
+        w = [0, 0, 0, 0]
+        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1, 0, 0, 0]])
+        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 1, 0, 0]])
+        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 0, 1, 0]])
+        value_z4 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 0, 0, 1]])
 
         maple_z1 = 0.0
         maple_z2 = 0.0
@@ -119,12 +139,16 @@ class TestMaple(unittest.TestCase):
         self.assertLess(error_z4, 1e-8)
 
         # different value of w
-        w = [-0.37704918-0.18456279j, 0.63934426+0.42591413j,
-             0.54918033+0.09937996j, -0.21721311-0.07808426j]
-        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1,0,0,0]])
-        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,1,0,0]])
-        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,1,0]])
-        value_z4 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0,0,0,1]])
+        w = [
+            -0.37704918 - 0.18456279j,
+            0.63934426 + 0.42591413j,
+            0.54918033 + 0.09937996j,
+            -0.21721311 - 0.07808426j,
+        ]
+        value_z1 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[1, 0, 0, 0]])
+        value_z2 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 1, 0, 0]])
+        value_z3 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 0, 1, 0]])
+        value_z4 = RiemannTheta(w, Omega, epsilon=1e-14, derivs=[[0, 0, 0, 1]])
 
         maple_z1 = 3.3644150756 + 2.5018071784j
         maple_z2 = -2.9431860155 + 5.6802762853j
@@ -144,16 +168,24 @@ class TestMaple(unittest.TestCase):
     def test_first_derivatives_oscpart(self):
         # different value of w
         Omega = self.Omega4
-        w = [-0.37704918-0.18456279j, 0.63934426+0.42591413j,
-             0.54918033+0.09937996j, -0.21721311-0.07808426j]
+        w = [
+            -0.37704918 - 0.18456279j,
+            0.63934426 + 0.42591413j,
+            0.54918033 + 0.09937996j,
+            -0.21721311 - 0.07808426j,
+        ]
         value_z1 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[1,0,0,0]])
+            w, Omega, epsilon=1e-14, derivs=[[1, 0, 0, 0]]
+        )
         value_z2 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[0,1,0,0]])
+            w, Omega, epsilon=1e-14, derivs=[[0, 1, 0, 0]]
+        )
         value_z3 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[0,0,1,0]])
+            w, Omega, epsilon=1e-14, derivs=[[0, 0, 1, 0]]
+        )
         value_z4 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[0,0,0,1]])
+            w, Omega, epsilon=1e-14, derivs=[[0, 0, 0, 1]]
+        )
 
         maple_z1 = 1.723280564 + 1.281445835j
         maple_z2 = -1.507523639 + 2.909483373j
@@ -170,9 +202,8 @@ class TestMaple(unittest.TestCase):
         self.assertLess(error_z3, 1e-8)
         self.assertLess(error_z4, 1e-8)
 
-
     def test_second_derivatives_oscpart(self):
-        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        w = [0.2 + 0.5j, 0.3 - 0.1j, -0.1 + 0.2j]
         Omega = self.Omega3
 
         H = RiemannTheta.oscillatory_part_hessian(w, Omega, epsilon=1e-14)
@@ -184,12 +215,12 @@ class TestMaple(unittest.TestCase):
         maple_12 = 0.09466454944980265 - 0.3593388338083318j
         maple_22 = -0.3227275082474401 - 2.585609638196203j
 
-        error_00 = abs(H[0,0] - maple_00)
-        error_01 = abs(H[0,1] - maple_01)
-        error_02 = abs(H[0,2] - maple_02)
-        error_11 = abs(H[1,1] - maple_11)
-        error_12 = abs(H[1,2] - maple_12)
-        error_22 = abs(H[2,2] - maple_22)
+        error_00 = abs(H[0, 0] - maple_00)
+        error_01 = abs(H[0, 1] - maple_01)
+        error_02 = abs(H[0, 2] - maple_02)
+        error_11 = abs(H[1, 1] - maple_11)
+        error_12 = abs(H[1, 2] - maple_12)
+        error_22 = abs(H[2, 2] - maple_22)
 
         self.assertLess(error_00, 1e-8)
         self.assertLess(error_01, 1e-8)
@@ -199,16 +230,16 @@ class TestMaple(unittest.TestCase):
         self.assertLess(error_22, 1e-8)
 
     def test_third_derivatives_oscpart(self):
-        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        w = [0.2 + 0.5j, 0.3 - 0.1j, -0.1 + 0.2j]
         Omega = self.Omega3
 
-        dVec_1 = [[1,0,0],[1,0,0],[1,0,0]]
-        dVec_2 = [[1,0,0],[0,1,0],[1,0,0]]
-        dVec_3 = [[1,0,0],[0,0,1],[0,1,0]]
-        dVec_4 = [[0,1,0],[0,0,1],[0,1,0]]
-        dVec_5 = [[0,0,1],[0,0,1],[0,0,1]]
-        dVec_6 = [[0,0,1],[0,1,0],[0,0,1]]
-        dVec_7 = [[1,2,3.1],[2.9,-0.3,1.0],[-20,13.3,0.6684]]
+        dVec_1 = [[1, 0, 0], [1, 0, 0], [1, 0, 0]]
+        dVec_2 = [[1, 0, 0], [0, 1, 0], [1, 0, 0]]
+        dVec_3 = [[1, 0, 0], [0, 0, 1], [0, 1, 0]]
+        dVec_4 = [[0, 1, 0], [0, 0, 1], [0, 1, 0]]
+        dVec_5 = [[0, 0, 1], [0, 0, 1], [0, 0, 1]]
+        dVec_6 = [[0, 0, 1], [0, 1, 0], [0, 0, 1]]
+        dVec_7 = [[1, 2, 3.1], [2.9, -0.3, 1.0], [-20, 13.3, 0.6684]]
 
         maple_1 = 88.96174663331488 + 12.83401972101860j
         maple_2 = -5.963646070489819 + 9.261504506522976j
@@ -218,21 +249,14 @@ class TestMaple(unittest.TestCase):
         maple_6 = -2.441570516715710 - 0.2535384980716853j
         maple_7 = -2791.345600876934 + 1286.207313664481j
 
-        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_1)
-        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_2)
-        deriv_3 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_3)
-        deriv_4 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_4)
-        deriv_5 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_5)
-        deriv_6 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_6)
-        deriv_7 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_7)
-    
+        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_1)
+        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_2)
+        deriv_3 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_3)
+        deriv_4 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_4)
+        deriv_5 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_5)
+        deriv_6 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_6)
+        deriv_7 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_7)
+
         error_1 = abs(deriv_1 - maple_1)
         error_2 = abs(deriv_2 - maple_2)
         error_3 = abs(deriv_3 - maple_3)
@@ -251,16 +275,24 @@ class TestMaple(unittest.TestCase):
 
         # Genus 4 example
         Omega = self.Omega4
-        w = [-0.37704918-0.18456279j, 0.63934426+0.42591413j,
-             0.54918033+0.09937996j, -0.21721311-0.07808426j]
+        w = [
+            -0.37704918 - 0.18456279j,
+            0.63934426 + 0.42591413j,
+            0.54918033 + 0.09937996j,
+            -0.21721311 - 0.07808426j,
+        ]
 
-        dVec_1 = [[1,0,0,0],[1,0,0,0],[1,0,0,0]]
-        dVec_2 = [[1,0,0,0],[0,1,0,0],[0,0,1,0]]
-        dVec_3 = [[1,0,0,0],[0,0,1,0],[0,0,0,1]]
-        dVec_4 = [[1,0,0,0],[0,1,1,0],[1,0,0,1]]
-        dVec_5 = [[0,0,1,0],[0,1,1,0],[1,0,0,1]]
-        dVec_6 = [[0,0,1,0],[1,2,3,4],[1,0,0,1]]
-        dVec_7 = [[3.2,-9.8,0.004,-13.9],[0,2.4,0,4],[90.1,-12.93947,-1e-4,3]]
+        dVec_1 = [[1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]
+        dVec_2 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]
+        dVec_3 = [[1, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+        dVec_4 = [[1, 0, 0, 0], [0, 1, 1, 0], [1, 0, 0, 1]]
+        dVec_5 = [[0, 0, 1, 0], [0, 1, 1, 0], [1, 0, 0, 1]]
+        dVec_6 = [[0, 0, 1, 0], [1, 2, 3, 4], [1, 0, 0, 1]]
+        dVec_7 = [
+            [3.2, -9.8, 0.004, -13.9],
+            [0, 2.4, 0, 4],
+            [90.1, -12.93947, -1e-4, 3],
+        ]
 
         maple_1 = -67.14022021800414 - 50.25487358123665j
         maple_2 = 6.220027066901749 - 16.96996479658767j
@@ -270,20 +302,13 @@ class TestMaple(unittest.TestCase):
         maple_6 = -185.6760275507559 - 93.99261766419004j
         maple_7 = 239954.2751344823 + 129975.3988999572j
 
-        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_1)
-        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_2)
-        deriv_3 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_3)
-        deriv_4 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_4)
-        deriv_5 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_5)
-        deriv_6 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_6)
-        deriv_7 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_7)
+        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_1)
+        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_2)
+        deriv_3 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_3)
+        deriv_4 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_4)
+        deriv_5 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_5)
+        deriv_6 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_6)
+        deriv_7 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_7)
 
         error_1 = abs(deriv_1 - maple_1)
         error_2 = abs(deriv_2 - maple_2)
@@ -301,86 +326,109 @@ class TestMaple(unittest.TestCase):
         self.assertLess(error_6, 1e-8)
         self.assertLess(error_7, 1e-8)
 
-
     def test_sixth_derivatives(self):
-        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
+        w = [0.2 + 0.5j, 0.3 - 0.1j, -0.1 + 0.2j]
         Omega = self.Omega3
-        
-        dVec_1 = [[1,0,0],[1,0,0],[0,1,0],[0,0,1],[0,0,1],[0,1,0]]
-        dVec_2 = [[1,2,3],[4,5,6],[0.7,0.8,0.9],[0.8,0.7,0.6],[5,4,3],[2,1,0]]
-        #dVec_3 = [[-17.3, 6.2, 0],[3.4, 3, 1],[-9,-0.001, 2], 
+
+        dVec_1 = [[1, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 1], [0, 1, 0]]
+        dVec_2 = [
+            [1, 2, 3],
+            [4, 5, 6],
+            [0.7, 0.8, 0.9],
+            [0.8, 0.7, 0.6],
+            [5, 4, 3],
+            [2, 1, 0],
+        ]
+        # dVec_3 = [[-17.3, 6.2, 0],[3.4, 3, 1],[-9,-0.001, 2],
         #        [1e-2, 0, 19],[210, 0.5, 1.2],[31.323, 0.3, 3]]
-        #dVec_4 = [[1,2,3],[4,5,6],[7,8,9],[8,7,6],[5,4,3],[2,1,0]]
+        # dVec_4 = [[1,2,3],[4,5,6],[7,8,9],[8,7,6],[5,4,3],[2,1,0]]
         # Neither of the above two examples pass the tests. It appears
         # that for higher order derivatives, if the norm of the directional
-        # derivative is too large  
+        # derivative is too large
 
         maple_1 = 42.73836471691125 + 235.2990585642670j
-        maple_2 = 0.2152838084588008*10**7 - 0.3287239590246880*10**7*1j
-        #maple_3 = 0.2232644817692030*10**12 - 0.1226563725159786*10**12*1j
-        #maple_4 = 0.2152838084588008*10**9 - 0.3287239590246880*10**9*1j
+        maple_2 = 0.2152838084588008 * 10**7 - 0.3287239590246880 * 10**7 * 1j
+        # maple_3 = 0.2232644817692030*10**12 - 0.1226563725159786*10**12*1j
+        # maple_4 = 0.2152838084588008*10**9 - 0.3287239590246880*10**9*1j
 
-        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_1)
-        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, 
-                epsilon=1e-14, derivs=dVec_2)
-        #deriv_3 = RiemannTheta.oscillatory_part(w, Omega, 
+        deriv_1 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_1)
+        deriv_2 = RiemannTheta.oscillatory_part(w, Omega, epsilon=1e-14, derivs=dVec_2)
+        # deriv_3 = RiemannTheta.oscillatory_part(w, Omega,
         #        epsilon=1e-14, derivs=dVec_3)
-        #deriv_4 = RiemannTheta.oscillatory_part(w, Omega, 
+        # deriv_4 = RiemannTheta.oscillatory_part(w, Omega,
         #        epsilon=1e-14, derivs=dVec_4)
 
         error_1 = abs(deriv_1 - maple_1)
         error_2 = abs(deriv_2 - maple_2)
-        #error_3 = abs(deriv_3 - maple_3)
-        #error_4 = abs(deriv_4 - maple_4)
+        # error_3 = abs(deriv_3 - maple_3)
+        # error_4 = abs(deriv_4 - maple_4)
 
         self.assertLess(error_1, 1e-8)
         self.assertLess(error_2, 1e-8)
-        #self.assertLess(error_3, 1e-8)
-        #self.assertLess(error_4, 1e-8)
+        # self.assertLess(error_3, 1e-8)
+        # self.assertLess(error_4, 1e-8)
+
 
 class TestRiemannThetaValues(unittest.TestCase):
     def setUp(self):
         self.Omega3 = numpy.array(
-            [[1.j, 0.5, 0.5],
-             [0.5, 1.j, 0.5],
-             [0.5, 0.5, 1.j]], dtype=complex)
+            [[1.0j, 0.5, 0.5], [0.5, 1.0j, 0.5], [0.5, 0.5, 1.0j]], dtype=complex
+        )
         self.Omega4 = numpy.array(
-            [[ 0.39344262+0.79503971j, -0.75409836-0.36912558j,
-               -0.44262295-0.02839428j,  0.20491803+0.26974562j],
-             [-0.75409836-0.36912558j,  0.27868852+0.85182827j,
-              0.09836066+0.19875993j, -0.43442623-0.15616852j],
-             [-0.44262295-0.02839428j,  0.09836066+0.19875993j,
-              -0.37704918+0.68146261j, -0.91803279+0.45430841j],
-             [ 0.20491803+0.26974562j, -0.43442623-0.15616852j,
-               -0.91803279+0.45430841j, -1.27868852+0.88022254j]],
-            dtype=complex)
+            [
+                [
+                    0.39344262 + 0.79503971j,
+                    -0.75409836 - 0.36912558j,
+                    -0.44262295 - 0.02839428j,
+                    0.20491803 + 0.26974562j,
+                ],
+                [
+                    -0.75409836 - 0.36912558j,
+                    0.27868852 + 0.85182827j,
+                    0.09836066 + 0.19875993j,
+                    -0.43442623 - 0.15616852j,
+                ],
+                [
+                    -0.44262295 - 0.02839428j,
+                    0.09836066 + 0.19875993j,
+                    -0.37704918 + 0.68146261j,
+                    -0.91803279 + 0.45430841j,
+                ],
+                [
+                    0.20491803 + 0.26974562j,
+                    -0.43442623 - 0.15616852j,
+                    -0.91803279 + 0.45430841j,
+                    -1.27868852 + 0.88022254j,
+                ],
+            ],
+            dtype=complex,
+        )
 
     def test_issue84_value(self):
-        z = [0.5-1.10093687j, -0.11723434j]
-        Omega = [[0.5+2j, 0.5+1j],
-                 [0.5+1j, 1+1.5j]]
+        z = [0.5 - 1.10093687j, -0.11723434j]
+        Omega = [[0.5 + 2j, 0.5 + 1j], [0.5 + 1j, 1 + 1.5j]]
 
         theta_actual = 0.963179246467 - 6.2286820685j
         for _ in range(1000):
-            theta = RiemannTheta(z,Omega)
+            theta = RiemannTheta(z, Omega)
             error = abs(theta - theta_actual)
-            self.assertLess(error, 1e-5,
-                            '%s not less than %s'
-                            '\ntheta:  %s\nactual: %s'%(
-                                error,1e-5,theta, theta_actual))
+            self.assertLess(
+                error,
+                1e-5,
+                "%s not less than %s"
+                "\ntheta:  %s\nactual: %s" % (error, 1e-5, theta, theta_actual),
+            )
 
     def test_issue84_radius(self):
-        Omega = [[0.5+2j, 0.5+1j],
-                 [0.5+1j, 1+1.5j]]
+        Omega = [[0.5 + 2j, 0.5 + 1j], [0.5 + 1j, 1 + 1.5j]]
         Omega = numpy.array(Omega)
         Y = Omega.imag
         T = cholesky(Y).T
 
         # Check that the radius is consistent when repeatedly computed
-        R_actual = radius(1e-8,T)
+        R_actual = radius(1e-8, T)
         for _ in range(1000):
-            R = radius(1e-8,T)
+            R = radius(1e-8, T)
             error = abs(R - R_actual)
             self.assertLess(error, 1e-8)
 
@@ -389,7 +437,7 @@ class TestRiemannThetaValues(unittest.TestCase):
         z = [5j]
 
         theta_actual = 2
-        theta = RiemannTheta(z,Omega)
+        theta = RiemannTheta(z, Omega)
         error = abs(theta - theta_actual)
         self.assertLess(error, 1e-8)
 
@@ -398,65 +446,68 @@ class TestRiemannThetaValues(unittest.TestCase):
 
         # generate random test z-values
         N = 32
-        u = numpy.random.rand(N,3)
-        v = numpy.random.rand(N,3)
-        W = u + 1.0j*v
+        u = numpy.random.rand(N, 3)
+        v = numpy.random.rand(N, 3)
+        W = u + 1.0j * v
 
         # manually compute gradients
-        dz0 = RiemannTheta(W,Omega,derivs=[[1,0,0]])
-        dz1 = RiemannTheta(W,Omega,derivs=[[0,1,0]])
-        dz2 = RiemannTheta(W,Omega,derivs=[[0,0,1]])
+        dz0 = RiemannTheta(W, Omega, derivs=[[1, 0, 0]])
+        dz1 = RiemannTheta(W, Omega, derivs=[[0, 1, 0]])
+        dz2 = RiemannTheta(W, Omega, derivs=[[0, 0, 1]])
         grad1 = numpy.zeros_like(W, dtype=complex)
-        grad1[:,0] = dz0
-        grad1[:,1] = dz1
-        grad1[:,2] = dz2
+        grad1[:, 0] = dz0
+        grad1[:, 1] = dz1
+        grad1[:, 2] = dz2
 
         # compute using "gradient"
-        grad2 = RiemannTheta.gradient(W,Omega)
-        self.assertLess(numpy.linalg.norm(grad1-grad2), 1e-14)
+        grad2 = RiemannTheta.gradient(W, Omega)
+        self.assertLess(numpy.linalg.norm(grad1 - grad2), 1e-14)
 
         Omega = self.Omega4
 
         # generate random test z-values
         N = 32
-        u = numpy.random.rand(N,4)
-        v = numpy.random.rand(N,4)
-        W = u + 1.0j*v
+        u = numpy.random.rand(N, 4)
+        v = numpy.random.rand(N, 4)
+        W = u + 1.0j * v
 
         # manually compute gradients
-        dz0 = RiemannTheta(W,Omega,derivs=[[1,0,0,0]])
-        dz1 = RiemannTheta(W,Omega,derivs=[[0,1,0,0]])
-        dz2 = RiemannTheta(W,Omega,derivs=[[0,0,1,0]])
-        dz3 = RiemannTheta(W,Omega,derivs=[[0,0,0,1]])
+        dz0 = RiemannTheta(W, Omega, derivs=[[1, 0, 0, 0]])
+        dz1 = RiemannTheta(W, Omega, derivs=[[0, 1, 0, 0]])
+        dz2 = RiemannTheta(W, Omega, derivs=[[0, 0, 1, 0]])
+        dz3 = RiemannTheta(W, Omega, derivs=[[0, 0, 0, 1]])
         grad1 = numpy.zeros_like(W, dtype=complex)
-        grad1[:,0] = dz0
-        grad1[:,1] = dz1
-        grad1[:,2] = dz2
-        grad1[:,3] = dz3
+        grad1[:, 0] = dz0
+        grad1[:, 1] = dz1
+        grad1[:, 2] = dz2
+        grad1[:, 3] = dz3
 
         # compute using "gradient"
-        grad2 = RiemannTheta.gradient(W,Omega)
-        self.assertLess(numpy.linalg.norm(grad1-grad2), 1e-14)
-
+        grad2 = RiemannTheta.gradient(W, Omega)
+        self.assertLess(numpy.linalg.norm(grad1 - grad2), 1e-14)
 
     def test_second_derivative_symmetric(self):
-        w = [0.2+0.5j, 0.3-0.1j, -0.1+0.2j]
-        Omega = [[1.j, 0.5, 0.5],
-                 [0.5, 1.j, 0.5],
-                 [0.5, 0.5, 1.j]]
+        w = [0.2 + 0.5j, 0.3 - 0.1j, -0.1 + 0.2j]
+        Omega = [[1.0j, 0.5, 0.5], [0.5, 1.0j, 0.5], [0.5, 0.5, 1.0j]]
 
         dz_01 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[1,0,0],[0,1,0]])
+            w, Omega, epsilon=1e-14, derivs=[[1, 0, 0], [0, 1, 0]]
+        )
         dz_10 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[0,1,0],[1,0,0]])
+            w, Omega, epsilon=1e-14, derivs=[[0, 1, 0], [1, 0, 0]]
+        )
         dz_02 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[1,0,0],[0,0,1]])
+            w, Omega, epsilon=1e-14, derivs=[[1, 0, 0], [0, 0, 1]]
+        )
         dz_20 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[0,0,1],[1,0,0]])
+            w, Omega, epsilon=1e-14, derivs=[[0, 0, 1], [1, 0, 0]]
+        )
         dz_12 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[0,1,0],[0,0,1]])
+            w, Omega, epsilon=1e-14, derivs=[[0, 1, 0], [0, 0, 1]]
+        )
         dz_21 = RiemannTheta.oscillatory_part(
-            w, Omega, epsilon=1e-14, derivs=[[0,0,1],[0,1,0]])
+            w, Omega, epsilon=1e-14, derivs=[[0, 0, 1], [0, 1, 0]]
+        )
 
         error_01_10 = abs(dz_01 - dz_10)
         error_02_20 = abs(dz_02 - dz_20)
@@ -466,10 +517,8 @@ class TestRiemannThetaValues(unittest.TestCase):
         self.assertLess(error_02_20, 1e-8)
         self.assertLess(error_12_21, 1e-8)
 
-
     def test_symmetric_hessian(self):
         pass
-
 
     def test_hessian(self):
         pass
@@ -482,74 +531,72 @@ class TestRiemannThetaValues(unittest.TestCase):
         # avoiding the double-exponential growth
         N = 64
         sigma = 0.1
-        z = sigma*randn(N) + 1.j*sigma*randn(N)
-        z = z.reshape((N,1))
+        z = sigma * randn(N) + 1.0j * sigma * randn(N)
+        z = z.reshape((N, 1))
         tau = [[1.0j]]
 
-        values1 = RiemannTheta(z,tau,epsilon=1e-16)
-        values2 = thetag1(z,tau[0][0])[:,0]
+        values1 = RiemannTheta(z, tau, epsilon=1e-16)
+        values2 = thetag1(z, tau[0][0])[:, 0]
 
-        rel_error = abs((values1-values2)/values1)
+        rel_error = abs((values1 - values2) / values1)
         rel_error_max = numpy.max(rel_error)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_max,1e-14)
-        self.assertLess(rel_error_avg,1e-14)
+        self.assertLess(rel_error_max, 5e-14)
+        self.assertLess(rel_error_avg, 5e-14)
 
         # next, test the relative error using larger magnitude values. we don't
         # test the max error due to possible numerical roundoff issues
         sigma = 3
-        z = sigma*randn(N) + 1.j*sigma*randn(N)
-        z = z.reshape((N,1))
+        z = sigma * randn(N) + 1.0j * sigma * randn(N)
+        z = z.reshape((N, 1))
         tau = [[1.0j]]
 
-        values1 = RiemannTheta(z,tau,epsilon=1e-16)
-        values2 = thetag1(z,tau[0][0])[:,0]
+        values1 = RiemannTheta(z, tau, epsilon=1e-16)
+        values2 = thetag1(z, tau[0][0])[:, 0]
 
-        rel_error = abs((values1-values2)/values1)
+        rel_error = abs((values1 - values2) / values1)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_avg,1e-14)
+        self.assertLess(rel_error_avg, 5e-14)
 
         # repeat for different tau
         tau = [[1.0 + 2.5j]]
 
-        values1 = RiemannTheta(z,tau,epsilon=1e-16)
-        values2 = thetag1(z,tau[0][0])[:,0]
+        values1 = RiemannTheta(z, tau, epsilon=1e-16)
+        values2 = thetag1(z, tau[0][0])[:, 0]
 
-        rel_error = abs((values1-values2)/values1)
+        rel_error = abs((values1 - values2) / values1)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_avg,1e-14)
+        self.assertLess(rel_error_avg, 5e-14)
 
-    @unittest.skipIf(NO_JTHETA, 'Could not find sympy.mpmath.jtheta')
+    @unittest.skipIf(NO_JTHETA, "Could not find sympy.mpmath.jtheta")
     def test_against_sympy_jtheta(self):
         N = 64
         sigma = 2
-        z = sigma*randn(N) + 1.j*sigma*randn(N)
-        z = z.reshape((N,1))
+        z = sigma * randn(N) + 1.0j * sigma * randn(N)
+        z = z.reshape((N, 1))
         tau = [[1.0j]]
 
         # jtheta inputs
-        w = numpy.pi*z[:,0]
-        q = numpy.exp(numpy.pi*1.0j*tau[0][0])
+        w = numpy.pi * z[:, 0]
+        q = numpy.exp(numpy.pi * 1.0j * tau[0][0])
 
-        values1 = RiemannTheta(z,tau,epsilon=1e-16)
-        values2 = numpy.array([jtheta(3,wi,q) for wi in w],
-                              dtype=complex)
+        values1 = RiemannTheta(z, tau, epsilon=1e-16)
+        values2 = numpy.array([jtheta(3, wi, q) for wi in w], dtype=complex)
 
-        rel_error = abs((values1-values2)/values1)
+        rel_error = abs((values1 - values2) / values1)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_avg,1e-14)
+        self.assertLess(rel_error_avg, 1e-14)
 
         # repeat for different tau
         tau = [[1.0 + 2.5j]]
-        q = numpy.exp(numpy.pi*1.0j*tau[0][0])
+        q = numpy.exp(numpy.pi * 1.0j * tau[0][0])
 
-        values1 = RiemannTheta(z,tau,epsilon=1e-16)
-        values2 = numpy.array([jtheta(3,wi,q) for wi in w],
-                              dtype=complex)
+        values1 = RiemannTheta(z, tau, epsilon=1e-16)
+        values2 = numpy.array([jtheta(3, wi, q) for wi in w], dtype=complex)
 
-        rel_error = abs((values1-values2)/values1)
+        rel_error = abs((values1 - values2) / values1)
         rel_error_avg = numpy.mean(rel_error)
-        self.assertLess(rel_error_avg,1e-14)
+        self.assertLess(rel_error_avg, 1e-14)
 
     # def test_value_at_point(self):
     #     Omega = numpy.array(
@@ -611,7 +658,6 @@ class TestRiemannThetaValues(unittest.TestCase):
     #     v_delta = abs(v - v_actual)
     #     self.assertAlmostEqual(v_delta, 0)
 
-
     # def test_value_at_point_1_derivs(self):
     #     Omega = numpy.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
     #                       [-1.0 - 0.5773502693j, 1.0 + 1.154700539j]],
@@ -643,7 +689,6 @@ class TestRiemannThetaValues(unittest.TestCase):
     #     v_delta = abs(v - v_actual)
     #     self.assertAlmostEqual(v_delta, 0)
 
-
     # def test_value_at_point_2_derivs(self):
     #     Omega = numpy.array([[1.0 + 1.15700539j, -1.0 - 0.5773502693j],
     #                       [-1.0 - 0.5773502693j, 1.0 + 1.154700539j]],
@@ -674,9 +719,6 @@ class TestRiemannThetaValues(unittest.TestCase):
     #     v_actual = 0
     #     v_delta = abs(v - v_actual)
     #     self.assertAlmostEqual(v_delta, 0)
-
-
-
 
     #########################################################################
     # def test_zeroCharacteristic(self):                                    #

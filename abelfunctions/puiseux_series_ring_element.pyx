@@ -2,9 +2,9 @@ r"""Puiseux Series Ring Element :mod:`abelfunctions.puiseux_series_ring_element`
 ============================================================================
 
 Behavior of the elements of a :class:`PuiseuxSeriesRing`. Defines how to
-construct an element given a Laurent series, center, and ramficiation
+construct an element given a Laurent series, center, and ramification
 index. Designed to use and be compatible with [Sage's coercion
-model](http://doc.sagemath.org/html/en/reference/coercion/index.html).
+model](https://doc.sagemath.org/html/en/reference/coercion/index.html).
 
 A Puiseux series is a series of the form .. math::
 
@@ -44,8 +44,8 @@ determined from the greatest common divisor of the exponents.
     sage: p = x^(1/2)
     sage: p.ramification_index
     2
-    sage: q = x^(1/2) + x*(1/3)
-    sage: q.ramficiation_index
+    sage: q = x^(1/2) + x^(1/3)
+    sage: q.ramification_index
     6
 
 Other arithmetic can be performed with Puiseux Series.
@@ -227,7 +227,7 @@ cdef class PuiseuxSeries(AlgebraElement):
         x = self.parent().variable_name()
         X = x
 
-        # extract coefficients and exponets of the laurent part.
+        # extract coefficients and exponents of the laurent part.
         #
         # NOTE: self.__l.coefficients() is bugged when the coefficients are in
         # QQbar but coerced into SR. Therefore, we use self.__l.list() instead

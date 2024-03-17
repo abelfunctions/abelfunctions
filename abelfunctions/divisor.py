@@ -1,4 +1,4 @@
-r""" Places and Divisors :mod:`divisor`
+r"""Places and Divisors :mod:`divisor`
 ==================================
 
 A module defining places and divisors on a Riemann surface. A *regular
@@ -53,6 +53,7 @@ class Divisor(object):
         The corresponding multiplicities of the places in this divisor.
 
     """
+
     @property
     def places(self):
         return tuple(self._d.keys())
@@ -100,21 +101,21 @@ class Divisor(object):
             # construct the zero divisor
             self.dict = {}
         else:
-            raise ValueError('d must be a dictionary')
+            raise ValueError("d must be a dictionary")
 
     def __repr__(self):
         if not self.is_zero():
-            s = ''
-            for P,n in self:
-                s += ' + '
+            s = ""
+            for P, n in self:
+                s += " + "
                 if n > 1:
                     s += str(n)
                 elif n < 0:
-                    s += '(' + str(n) + ')'
+                    s += "(" + str(n) + ")"
                 s += P.name
             return s[3:]
         else:
-            return 'Div0'
+            return "Div0"
 
     def __getitem__(self, key):
         try:
@@ -141,22 +142,24 @@ class Divisor(object):
         if other == 0:
             return self
 
-        if not isinstance(other,Divisor):
-            raise ValueError('%s is not a Divisor on %s.'%(other,self.RS))
+        if not isinstance(other, Divisor):
+            raise ValueError("%s is not a Divisor on %s." % (other, self.RS))
 
         if self.RS != other.RS:
-            raise ValueError('Can only add or subtract divisors defined '
-                             'on the same Riemann surface.')
+            raise ValueError(
+                "Can only add or subtract divisors defined "
+                "on the same Riemann surface."
+            )
 
         all_places = set(self.places + other.places)
-        d = dict((P, self[P] + other[P]) for P in all_places)
+        d = {P: self[P] + other[P] for P in all_places}
         return Divisor(self.RS, d)
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __neg__(self):
-        d = dict((P,-m) for P,m in self.items)
+        d = {P: -m for P, m in self.items}
         return Divisor(self.RS, d)
 
     def __sub__(self, other):
@@ -164,7 +167,7 @@ class Divisor(object):
 
     def __mul__(self, other):
         other = int(other)
-        d = dict((P,other*m) for P,m in self.items)
+        d = {P: other * m for P, m in self.items}
         return Divisor(self.RS, d)
 
     def __rmul__(self, other):
@@ -178,17 +181,21 @@ class Divisor(object):
     def as_place(self):
         items = list(self.dict.items())
         if len(items) != 1:
-            raise ValueError('Divisor contains more than one place. '
-                             'Cannot coerce to place.')
+            raise ValueError(
+                "Divisor contains more than one place. " "Cannot coerce to place."
+            )
         P, m = items[0]
         if m != 1:
-            raise ValueError('Divisor contains place of multiplicity. '
-                             'Cannot coerce to single place.')
+            raise ValueError(
+                "Divisor contains place of multiplicity. "
+                "Cannot coerce to single place."
+            )
         return P
 
 
 class ZeroDivisor(Divisor):
     r"""A class representing the zero divisor on a Riemann surface."""
+
     def __init__(self, RS):
         Divisor.__init__(self, RS, {})
 
@@ -228,6 +235,7 @@ class Place(Divisor):
     is_discriminant
 
     """
+
     @property
     def name(self):
         return self._name
@@ -235,31 +243,31 @@ class Place(Divisor):
     @name.setter
     def name(self, value):
         if not value:
-            value = str((self.x,self.y))
+            value = str((self.x, self.y))
         self._name = value
 
     def __init__(self, RS, name=None):
         self.RS = RS
         self.name = name
-        Divisor.__init__(self, RS, {self:1})
+        Divisor.__init__(self, RS, {self: 1})
 
     def __repr__(self):
         return self.name
 
     def __eq__(self, other):
-        raise NotImplementedError('Override in Place subtype.')
+        raise NotImplementedError("Override in Place subtype.")
 
     def __hash__(self):
-        raise NotImplementedError('Override in Place subtype.')
+        raise NotImplementedError("Override in Place subtype.")
 
     def as_place(self):
         return self
 
     def is_discriminant(self):
-        raise NotImplementedError('Override in Place subtype.')
+        raise NotImplementedError("Override in Place subtype.")
 
     def is_infinite(self):
-        raise NotImplementedError('Override in Place subtype.')
+        raise NotImplementedError("Override in Place subtype.")
 
     def valuation(self, omega):
         r"""Returns the valuation of `omega` at this place.
@@ -285,13 +293,12 @@ class Place(Divisor):
         -------
         int
         """
-        raise NotImplementedError('Override in Place subtype')
+        raise NotImplementedError("Override in Place subtype")
 
 
 class RegularPlace(Place):
-    r"""A regular place on a Riemann surface.
+    r"""A regular place on a Riemann surface."""
 
-    """
     def __init__(self, RS, x, y, **kwds):
         r"""Initialize a regular place from a point on the curve.
 
@@ -326,8 +333,8 @@ class RegularPlace(Place):
 
     def valuation(self, omega):
         f = self.RS.f
-        x,y = f.parent().gens()
-        a,b = self.x, self.y
+        x, y = f.parent().gens()
+        a, b = self.x, self.y
 
         def mult(p, a, b):
             r"""Returns the multiplicity of the zero `(a,b)` on `p`."""
@@ -335,15 +342,15 @@ class RegularPlace(Place):
             degrees = [sum(exp) for exp in pab.exponents()]
             return min(degrees)
 
-        numer,denom = omega.as_numer_denom() # XXX
-        zero_mult = mult(numer,a,b)
-        pole_mult = mult(denom,a,b)
+        numer, denom = omega.as_numer_denom()  # XXX
+        zero_mult = mult(numer, a, b)
+        pole_mult = mult(denom, a, b)
         return zero_mult - pole_mult
 
 
 class DiscriminantPlace(Place):
-    r"""A discriminant place on a Riemann surface.
-    """
+    r"""A discriminant place on a Riemann surface."""
+
     def __init__(self, RS, P, **kwds):
         r"""Initialize a disc. place from its Puiseux series representation.
 
@@ -385,4 +392,3 @@ class DiscriminantPlace(Place):
         omegat = omega.localize(self)
         valuation = omegat.valuation()
         return valuation
-
