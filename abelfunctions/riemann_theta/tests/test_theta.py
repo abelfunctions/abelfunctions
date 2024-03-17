@@ -23,16 +23,7 @@ from numpy.random import randn
 from numpy.linalg import cholesky
 from abelfunctions.riemann_theta.radius import radius
 from abelfunctions.riemann_theta.riemann_theta import RiemannTheta
-
-# try to import mpmath's jtheta function
-NO_JTHETA = False
-try:
-    from sympy.mpmath import jtheta
-except ImportError:
-    try:
-        from mpmath import jtheta
-    except ImportError:
-        NO_JTHETA = True
+from mpmath import jtheta
 
 
 def thetag1(z, tau, N=2048):
@@ -568,7 +559,6 @@ class TestRiemannThetaValues(unittest.TestCase):
         rel_error_avg = numpy.mean(rel_error)
         self.assertLess(rel_error_avg, 5e-14)
 
-    @unittest.skipIf(NO_JTHETA, "Could not find sympy.mpmath.jtheta")
     def test_against_sympy_jtheta(self):
         N = 64
         sigma = 2
