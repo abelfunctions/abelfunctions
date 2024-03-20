@@ -366,7 +366,7 @@ def integer_points_python(g, R, T):
         form. That is, each row of the output array is an integer vector over which
         the finite sum is computed.
     """
-    c = numpy.zeros((g,1))
+    c = numpy.zeros(g)
     points = _find_int_points_python(g-1, R, T, c, [])
     points = numpy.array(points, dtype=numpy.double)
     N = len(points)//g
