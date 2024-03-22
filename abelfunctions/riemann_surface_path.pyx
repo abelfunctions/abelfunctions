@@ -404,7 +404,7 @@ cdef class RiemannSurfacePathPrimitive:
            The integral of omega along self.
         """
         omega_gamma = self.parameterize(omega)
-        integral = scipy.integrate.romberg(omega_gamma, 0.0, 1.0)
+        integral = scipy.integrate.quad(omega_gamma, 0.0, 1.0, complex_func=True)[0]
         return integral
 
     def evaluate(self, omega, s):
