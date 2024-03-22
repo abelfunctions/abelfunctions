@@ -27,7 +27,7 @@ class TestRCVTheta(AbelfunctionsTestCase):
     """
 
     # helper function for Riemann theta function theorem test
-    def is_theta_zero(self, X, W, prec=1e-7):
+    def is_theta_zero(self, X, W, prec=1e-6):
         Omega = X.riemann_matrix()
         J = Jacobian(X)
         W = J(W)
@@ -45,11 +45,11 @@ class TestRCVTheta(AbelfunctionsTestCase):
 
         D = sum(self.X11(2))
         W_D = AbelMap(D) + RiemannConstantVector(P0)
-        self.is_theta_zero(self.X11, W_D, prec=1e-6)
+        self.is_theta_zero(self.X11, W_D)
 
         # until AbelMap(P_oo,D) is implemented properly
         W_D_oo = AbelMap(P0, D) - D.degree * AbelMap(P_oo) + RiemannConstantVector(P_oo)
-        self.is_theta_zero(self.X11, W_D_oo, prec=1e-6)
+        self.is_theta_zero(self.X11, W_D_oo)
 
 
 class TestRCVCanonical(AbelfunctionsTestCase):
