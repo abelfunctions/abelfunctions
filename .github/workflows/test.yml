@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
           python-version: 3.12
       - name: Install ruff
@@ -46,7 +46,7 @@ jobs:
           conda install mamba -y
           $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} -y
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
       - name: Install Python test dependencies
         run: $CONDA/bin/mamba run -n sage sage -pip install -r test-requirements.txt
       - name: Update pythran to resolve compile error on Sage 9.8 (#216)
@@ -61,7 +61,7 @@ jobs:
     needs: static-analysis
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
       - name: Install sage
         run: sudo apt update && sudo apt install sagemath
       - name: Install Abelfunctions using pip
