@@ -181,7 +181,11 @@ setup(
     url="https://github.com/cswiercz/abelfunctions",
     license="MIT",
     packages=packages,
-    python_requires=">=3.6",
+    python_requires=">=3.8",
+    install_requires=[
+        "numpy",
+        "scipy>=1.10.0"
+    ],
     ext_modules=ext_modules,
     platforms=["all"],
     cmdclass={"clean": clean},
