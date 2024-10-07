@@ -10,10 +10,10 @@ on:
 
 jobs:
   static-analysis:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Setup Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5
         with:
@@ -26,7 +26,7 @@ jobs:
           ruff format --check
 
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: static-analysis
     strategy:
       fail-fast: false
@@ -46,7 +46,7 @@ jobs:
           conda install mamba -y
           $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} -y
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Python test dependencies
         run: $CONDA/bin/mamba run -n sage sage -pip install -r test-requirements.txt
       - name: Update pythran to resolve compile error on Sage 9.8 (#216)
@@ -57,11 +57,11 @@ jobs:
         run: $CONDA/bin/mamba run -n sage sage runtests.py
 
   test-pip-install:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: static-analysis
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install sage
         run: sudo apt update && sudo apt install sagemath
       - name: Install Abelfunctions using pip
