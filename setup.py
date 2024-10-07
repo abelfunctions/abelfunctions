@@ -182,7 +182,11 @@ setup(
     license="MIT",
     packages=packages,
     python_requires=">=3.8",
-    install_requires=["numpy", "scipy>=1.10.0"],
+    install_requires=[
+        "numpy",
+        "scipy>=1.10.0",
+        "pythran>=0.13.0",
+    ],
     ext_modules=ext_modules,
     platforms=["all"],
     cmdclass={"clean": clean},
