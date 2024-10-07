@@ -68,4 +68,4 @@ jobs:
           conda install mamba -y
           $CONDA/bin/mamba create -n sage sage=9.8 -y
       - name: Install Abelfunctions using pip
-        run:  sage --pip install .
+        run:  $CONDA/bin/mamba run -n sage sage -pip install .
