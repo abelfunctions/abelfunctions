@@ -185,7 +185,7 @@ setup(
     install_requires=[
         "numpy",
         "scipy>=1.10.0",
-        "pythran>=0.13.0",
+        "pythran>=0.13.1",
     ],
     ext_modules=ext_modules,
     platforms=["all"],
