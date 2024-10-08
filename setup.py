@@ -183,7 +183,7 @@ setup(
     packages=packages,
     python_requires=">=3.9",
     install_requires=[
-        "numpy",
+        "numpy<2",
         "scipy>=1.10.0",
         "pythran>=0.13.1",
     ],
