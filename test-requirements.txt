@@ -2,3 +2,8 @@
 # testing Abelfunctions
 pytest==8.3.3
 pytest-xdist==3.6.1
+
+cython<3
+numpy<2
+scipy>=1.10.0
+pythran>=0.13.1
