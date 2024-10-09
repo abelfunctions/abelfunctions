@@ -31,20 +31,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sage-version:
-          - '9.2'
-          - '9.3'
-          - '9.4'
-          - '9.5'
-          - '9.6'
-          - '9.7'
-          - '9.8'
+        sage:
+          - version: '9.2'
+          - version: '9.3'
+          - version: '9.4'
+          - version: '9.5'
+          - version: '9.6'
+          - version: '9.7'
+          - version: '9.8'
     steps:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} -y
+          $CONDA/bin/mamba create -n sage sage=${{ matrix.sage.version }} -y
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Python test dependencies
