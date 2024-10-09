@@ -10,10 +10,10 @@ on:
 
 jobs:
   static-analysis:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Setup Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5
         with:
@@ -26,43 +26,53 @@ jobs:
           ruff format --check
 
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: static-analysis
     strategy:
       fail-fast: false
       matrix:
-        sage-version:
-          - '9.2'
-          - '9.3'
-          - '9.4'
-          - '9.5'
-          - '9.6'
-          - '9.7'
-          - '9.8'
+        sage:
+          - version: '9.2'
+            libtiff: 4.3.0
+          - version: '9.3'
+            libtiff: 4.5.1
+          - version: '9.4'
+            libtiff: 4.5.1
+          - version: '9.5'
+            libtiff: 4.5.1
+          - version: '9.6'
+            libtiff: 4.5.1
+          - version: '9.7'
+            libtiff: 4.5.1
+          - version: '9.8'
+            libtiff: 4.5.1
     steps:
       - name: Install sage
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} -y
+          $CONDA/bin/mamba create -n sage sage=${{ matrix.sage.version }} libtiff=${{ matrix.sage.libtiff }} -y
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Python test dependencies
         run: $CONDA/bin/mamba run -n sage sage -pip install -r test-requirements.txt
-      - name: Update pythran to resolve compile error on Sage 9.8 (#216)
-        run: $CONDA/bin/mamba run -n sage sage -pip install -U pythran
+      # - name: Update pythran to resolve compile error on Sage 9.8 (#216)
+      #   run: $CONDA/bin/mamba run -n sage sage -pip install -U pythran
       - name: Install Abelfunctions
         run: $CONDA/bin/mamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
         run: $CONDA/bin/mamba run -n sage sage runtests.py
 
   test-pip-install:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: static-analysis
     steps:
-      - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Install sage
-        run: sudo apt update && sudo apt install sagemath
+        run: |
+          conda config --add channels conda-forge
+          conda install mamba -y
+          $CONDA/bin/mamba create -n sage sage=9.8 libtiff=4.5.1 -y
+      - name: Checkout
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Abelfunctions using pip
-        run:  sage --pip install .
+        run:  $CONDA/bin/mamba run -n sage sage -pip install .

@@ -1,3 +1,10 @@
+[build-system]
+requires = [
+    "setuptools",
+    "cython<3",
+    "numpy<2",
+]
+
 [tool.ruff]
 exclude = ["presentation.py", "examples/*"]
 
