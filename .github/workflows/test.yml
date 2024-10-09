@@ -44,7 +44,7 @@ jobs:
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} python=3.9 libtiff -y
+          $CONDA/bin/mamba create -n sage sage=${{ matrix.sage-version }} python=3.9 libtiff=4.5.1 -y
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Python test dependencies
