@@ -64,7 +64,7 @@ jobs:
         run: |
           conda config --add channels conda-forge
           conda install mamba -y
-          $CONDA/bin/mamba create -n sage sage=9.8 python=3.9 -y
+          $CONDA/bin/mamba create -n sage sage=9.8 -y
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Abelfunctions using pip
