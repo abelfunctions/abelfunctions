@@ -12,7 +12,7 @@ installation method (via `setup.py`) is greatly appreciated.
 In a terminal, run the following commands
 
 ```bash
-$ sage --pip install git+https://github.com/abelfunctions/abelfunctions
+$ sage --pip install --no-build-isolation git+https://github.com/abelfunctions/abelfunctions
 ```
 
 # Alternate method
