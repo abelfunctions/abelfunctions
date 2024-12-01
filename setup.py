@@ -36,11 +36,11 @@ except ImportError:
 # raise error if the user is not using Sage to compile
 try:
     from sage.env import sage_include_directories
-except ImportError:
+except ImportError as e:
     raise EnvironmentError(
         "abelfunctions must be built using Sage:\n\n"
         "\t$ sage setup.py <args> <kwds>\n"
-    )
+    ) from e
 
 # list of Abelfunctions extension modules. most modules need to be compiled
 # against the Sage and Numpy (included with Sage) libraries. The necessary
@@ -185,7 +185,6 @@ setup(
     install_requires=[
         "numpy<2",
         "scipy>=1.10.0",
-        "pythran>=0.13.1",
     ],
     ext_modules=ext_modules,
     platforms=["all"],
