@@ -75,4 +75,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Abelfunctions using pip
-        run:  $CONDA/bin/mamba run -n sage sage -pip install .
+        run:  $CONDA/bin/mamba run -n sage sage -pip install . --no-build-isolation
