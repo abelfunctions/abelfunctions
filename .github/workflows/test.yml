@@ -48,13 +48,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Install Python test dependencies
-        run: mamba run -n sage sage -pip install -r test-requirements.txt
+        run: micromamba run -n sage sage -pip install -r test-requirements.txt
       - name: Update pythran to resolve compile error on Sage 9.8 (#216)
-        run: mamba run -n sage sage -pip install -U pythran
+        run: micromamba run -n sage sage -pip install -U pythran
       - name: Install Abelfunctions
-        run: mamba run -n sage sage setup.py build_ext --inplace
+        run: micromamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
-        run: mamba run -n sage sage runtests.py
+        run: micromamba run -n sage sage runtests.py
 
   test-pip-install:
     runs-on: ubuntu-22.04
