@@ -53,7 +53,7 @@ from libc.stdlib cimport malloc
 from abelfunctions.riemann_theta.radius import radius
 from abelfunctions.riemann_theta.integer_points import integer_points_python
 
-cdef extern from *:
+cdef extern from "finite_sum.h":
     void finite_sum_without_derivatives(double*, double*, double*,
                                         double*, double*, double*,
                                         double*, double*, int, int)

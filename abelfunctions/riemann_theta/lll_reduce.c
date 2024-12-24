@@ -13,7 +13,7 @@ Authors
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
+#include "lll_reduce.h"
 /*
   gram_schmidt
 
