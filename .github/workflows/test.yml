@@ -31,21 +31,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sage:
-          - version: '9.2'
-            libtiff: 4.3.0
-          - version: '9.3'
-            libtiff: 4.5.1
-          - version: '9.4'
-            libtiff: 4.5.1
-          - version: '9.5'
-            libtiff: 4.5.1
-          - version: '9.6'
-            libtiff: 4.5.1
-          - version: '9.7'
-            libtiff: 4.5.1
-          - version: '9.8'
-            libtiff: 4.5.1
+        sage-version:
+          - '9.2'
+          - '9.3'
+          - '9.4'
+          - '9.5'
+          - '9.6'
+          - '9.7'
+          - '9.8'
     steps:
       - name: Install sage
         uses: mamba-org/setup-micromamba@v2
@@ -53,7 +46,6 @@ jobs:
           environment-name: sage
           create-args: >-
             sage=${{ matrix.sage-version }}
-            libtiff=${{ matrix.sage.libtiff }}
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Python test dependencies
@@ -75,7 +67,6 @@ jobs:
           environment-name: sage
           create-args: >-
             sage=9.8
-            libtiff=4.5.1
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Abelfunctions using pip
