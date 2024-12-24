@@ -40,7 +40,8 @@ jobs:
           - '9.7'
           - '9.8'
     steps:
-      - uses: mamba-org/setup-micromamba@v2
+      - name: Install sage
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: sage
           create-args: >-
