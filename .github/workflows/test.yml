@@ -54,7 +54,7 @@ jobs:
         run: micromamba run -n sage sage -pip install -r build-requirements.txt
       - run: micromamba run -n sage sage -pip freeze
       - name: Install Abelfunctions with pip
-        run: micromamba run -n sage sage -pip install . --no-build-isolation
+        run: micromamba run -n sage sage -pip install -e . --no-build-isolation
       - name: Run tests
         run: micromamba run -n sage sage runtests.py
 
