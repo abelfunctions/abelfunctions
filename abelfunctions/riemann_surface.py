@@ -19,7 +19,7 @@ from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_surface_path_factory import RiemannSurfacePathFactory
 from abelfunctions.singularities import genus
 
-from sage.all import CC, QQbar, infinity
+from sage.all import QQbar, infinity
 from sage.misc.cachefunc import cached_method
 
 
@@ -115,7 +115,7 @@ class RiemannSurface(object):
         """
         R = f.parent()
         x, y = R.gens()
-        self._f = f.change_ring(CC)
+        self._f = f
         self._degree = f.degree(y)
         self._base_point = base_point
         self._base_sheets = base_sheets
