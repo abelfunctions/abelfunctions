@@ -19,7 +19,7 @@ from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_surface_path_factory import RiemannSurfacePathFactory
 from abelfunctions.singularities import genus
 
-from sage.all import QQbar, infinity
+from sage.all import QQbar, infinity, CC
 from sage.misc.cachefunc import cached_method
 
 
@@ -201,7 +201,7 @@ class RiemannSurface(object):
 
         # otherwise, return a regular place if far enough away
         if beta is not None:
-            curve_eval = self.f(alpha, beta)
+            curve_eval = self.f.change_ring(CC)(alpha, beta)
             if abs(curve_eval) > 1e-8:
                 raise ValueError(
                     "The place (%s, %s) does not lie on the curve "
