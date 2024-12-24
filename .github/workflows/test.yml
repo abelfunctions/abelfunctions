@@ -53,12 +53,12 @@ jobs:
       - name: Install build dependencies
         run: micromamba run -n sage sage -pip install -r build-requirements.txt
       - run: micromamba run -n sage sage -pip freeze
-      - name: Install Abelfunctions
-        run: micromamba run -n sage sage setup.py build_ext --inplace
+      - name: Install Abelfunctions with pip
+        run: micromamba run -n sage sage -pip install -e . --no-build-isolation
       - name: Run tests
         run: micromamba run -n sage sage runtests.py
 
-  test-pip-install:
+  test-setuppy-install:
     runs-on: ubuntu-24.04
     needs: static-analysis
     steps:
@@ -70,7 +70,11 @@ jobs:
             sage=9.8
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - name: Install Python test dependencies
+        run: micromamba run -n sage sage -pip install -r test-requirements.txt
       - name: Install build dependencies # since pip with --no-build-isolation doesn't install them
         run: micromamba run -n sage sage -pip install -r build-requirements.txt
-      - name: Install Abelfunctions using pip
-        run:  micromamba run -n sage sage -pip install . --no-build-isolation
+      - name: Install Abelfunctions with setup.py
+        run: micromamba run -n sage sage setup.py build_ext --inplace
+      - name: Run tests
+        run: micromamba run -n sage sage runtests.py
