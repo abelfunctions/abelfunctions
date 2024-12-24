@@ -10,10 +10,10 @@ on:
 
 jobs:
   static-analysis:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Setup Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5
         with:
@@ -26,7 +26,7 @@ jobs:
           ruff format --check
 
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: static-analysis
     strategy:
       fail-fast: false
@@ -47,23 +47,30 @@ jobs:
           create-args: >-
             sage=${{ matrix.sage-version }}
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Python test dependencies
         run: micromamba run -n sage sage -pip install -r test-requirements.txt
-      - name: Update pythran to resolve compile error on Sage 9.8 (#216)
-        run: micromamba run -n sage sage -pip install -U pythran
+      - name: Install build dependencies
+        run: micromamba run -n sage sage -pip install -r build-requirements.txt
+      - run: micromamba run -n sage sage -pip freeze
       - name: Install Abelfunctions
         run: micromamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
         run: micromamba run -n sage sage runtests.py
 
   test-pip-install:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: static-analysis
     steps:
-      - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Install sage
-        run: sudo apt update && sudo apt install sagemath
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: sage
+          create-args: >-
+            sage=9.8
+      - name: Checkout
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - name: Install build dependencies # since pip with --no-build-isolation doesn't install them
+        run: micromamba run -n sage sage -pip install -r build-requirements.txt
       - name: Install Abelfunctions using pip
-        run:  sage --pip install .
+        run:  micromamba run -n sage sage -pip install . --no-build-isolation
