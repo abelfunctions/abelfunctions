@@ -50,8 +50,6 @@ jobs:
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       - name: Install Python test dependencies
         run: micromamba run -n sage sage -pip install -r test-requirements.txt
-#       - name: Update pythran to resolve compile error on Sage 9.8 (#216)
-#         run: micromamba run -n sage sage -pip install -U pythran
       - name: Install Abelfunctions
         run: micromamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
@@ -69,5 +67,7 @@ jobs:
             sage=9.8
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - name: Update pythran to resolve compile error on Sage 9.8 (#216)
+        run: micromamba run -n sage sage -pip install "pythran>=0.13.1"
       - name: Install Abelfunctions using pip
         run:  micromamba run -n sage sage -pip install . --no-build-isolation
