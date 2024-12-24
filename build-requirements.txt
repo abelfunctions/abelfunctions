@@ -1,0 +1,4 @@
+setuptools>=61.0
+cython<3
+numpy<2
+pythran>=0.13.1
