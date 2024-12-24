@@ -155,15 +155,16 @@ class RiemannSurfacePathFactory(object):
         # sheets.
         #
         # if not provided then compute some. otherwise, check they are roots
+        f = self.riemann_surface.f
         if not base_sheets:
-            x, y = self.riemann_surface.f.parent().gens()
-            p = self.riemann_surface.f(self.base_point, y).univariate_polynomial()
+            x, y = f.parent().gens()
+            p = f.change_ring(CC)(self.base_point, y).univariate_polynomial()
             roots = p.roots(CDF, multiplicities=False)
             base_sheets = array(roots, dtype=complex)
         else:
             f = self.riemann_surface.f
             for sheet in base_sheets:
-                value = f(self.base_point, sheet)
+                value = f.change_ring(CC)(self.base_point, sheet)
                 if abs(value) > 1e-15:
                     raise ValueError(
                         "Base sheets %s do not lie above base "
@@ -571,7 +572,7 @@ class RiemannSurfacePathFactory(object):
                 "ComplexPath %s" % (x0, complex_path)
             )
         f = self.riemann_surface.f
-        curve_error = [abs(complex(f(x0, y0k))) for y0k in y0]
+        curve_error = [abs(f.change_ring(CC)(x0, y0k)) for y0k in y0]
         if max(curve_error) > 1e-7:
             raise ValueError(
                 "The fibre %s above %s does not lie on the "

@@ -43,7 +43,7 @@ import sympy
 
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import xgcd, I
+from sage.all import xgcd, I, CC
 from sage.functions.log import log
 from sage.functions.other import ceil, real_part, imag_part
 from sage.rings.big_oh import O
@@ -913,7 +913,7 @@ class PuiseuxTSeries(object):
             xt = self.eval_x(t)
             yt = self.eval_y(t)
             n, a = max(self.terms)
-            curve_error = abs(self.f(xt, yt))
+            curve_error = abs(self.f.change_ring(CC)(xt, yt))
             if curve_error < curve_tol:
                 break
             else:
