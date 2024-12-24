@@ -48,16 +48,14 @@ jobs:
             sage=${{ matrix.sage-version }}
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - name: Install Abelfunctions with pip
+        run: sage --pip install . --no-build-isolation
       - name: Install Python test dependencies
         run: micromamba run -n sage sage -pip install -r test-requirements.txt
-      - name: Update pythran to resolve compile error on Sage 9.8 (#216)
-        run: micromamba run -n sage sage -pip install -U pythran
-      - name: Install Abelfunctions
-        run: micromamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
         run: micromamba run -n sage sage runtests.py
 
-  test-pip-install:
+  test-sage-install:
     runs-on: ubuntu-22.04
     needs: static-analysis
     steps:
@@ -65,5 +63,11 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Install sage
         run: sudo apt update && sudo apt install sagemath
-      - name: Install Abelfunctions using pip
-        run:  sage --pip install .
+      - name: Update pythran to resolve compile error on Sage 9.8 (#216)
+        run: micromamba run -n sage sage -pip install -U pythran
+      - name: Install Abelfunctions with setup.py
+        run: micromamba run -n sage sage setup.py build_ext --inplace
+      - name: Install Python test dependencies
+        run: micromamba run -n sage sage -pip install -r test-requirements.txt
+      - name: Run tests
+        run: micromamba run -n sage sage runtests.py
