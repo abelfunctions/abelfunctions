@@ -1,4 +1,4 @@
 # This file defines the Python dependencies which will be installed before 
 # testing Abelfunctions
-pytest==8.3.3
+pytest==8.3.4
 pytest-xdist==3.6.1

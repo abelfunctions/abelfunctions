@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
           python-version: 3.12
       - name: Install ruff
@@ -46,13 +46,13 @@ jobs:
           # - '10.4'
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29 # v2
         with:
           environment-name: sage
           create-args: >-
             sage=${{ matrix.sage-version }}
       - name: Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Install Python test dependencies
         run: micromamba run -n sage sage -pip install -r test-requirements.txt
       - name: Install build dependencies
@@ -68,13 +68,13 @@ jobs:
     needs: static-analysis
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29 # v2
         with:
           environment-name: sage
           create-args: >-
             sage=9.8
       - name: Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Install Python test dependencies
         run: micromamba run -n sage sage -pip install -r test-requirements.txt
       - name: Install build dependencies # since pip with --no-build-isolation doesn't install them
