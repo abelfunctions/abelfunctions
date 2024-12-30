@@ -1,9 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:best-practices", "group:all"],
+  "extends": ["config:best-practices", "group:allNonMajor"],
   "schedule": ["before 5am on Saturday"],
   "reviewers": ["rparini"],
   "pre-commit": {"enabled": true},
   "automerge": true,
-  "automergeStrategy": "squash"
+  "automergeStrategy": "squash",
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
+  ]
 }
