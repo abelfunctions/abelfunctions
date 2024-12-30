@@ -23,6 +23,7 @@ import os
 import shutil
 import contextlib
 import numpy
+import cython
 from setuptools import setup, Command, Extension
 from Cython.Build import cythonize
 
@@ -170,6 +171,8 @@ exec(open("abelfunctions/version.py").read())
 
 with cython_namespace_package_support():
     ext_modules = cythonize(ext_modules, compiler_directives={"language_level": "3"})
+
+print(f"Building against cython {cython.__version__} and NumPy {numpy.__version__}")
 
 setup(
     name="abelfunctions",
