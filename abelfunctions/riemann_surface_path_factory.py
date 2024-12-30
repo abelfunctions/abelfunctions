@@ -162,9 +162,9 @@ class RiemannSurfacePathFactory(object):
             roots = p.roots(CDF, multiplicities=False)
             base_sheets = array(roots, dtype=complex)
         else:
-            f = self.riemann_surface.f
+            fc = f.change_ring(CC)
             for sheet in base_sheets:
-                value = f.change_ring(CC)(self.base_point, sheet)
+                value = fc(self.base_point, sheet)
                 if abs(value) > 1e-15:
                     raise ValueError(
                         "Base sheets %s do not lie above base "
