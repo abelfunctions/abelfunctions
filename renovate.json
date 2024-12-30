@@ -4,6 +4,6 @@
   "schedule": ["before 5am on Saturday"],
   "reviewers": ["rparini"],
   "pre-commit": {"enabled": true},
-  "automerge": true,
+  "automerge": false,
   "automergeStrategy": "squash"
 }
