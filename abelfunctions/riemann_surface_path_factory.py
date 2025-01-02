@@ -40,7 +40,10 @@ from abelfunctions.complex_path_factory import ComplexPathFactory
 from abelfunctions.ypath_factory import YPathFactory as Skeleton
 
 from numpy import array
-from sage.all import infinity, CC, CDF, cached_method
+from sage.rings.infinity import Infinity as infinity
+from sage.rings.cc import CC
+from sage.rings.complex_double import CDF
+from sage.misc.cachefunc import cached_method
 
 
 class RiemannSurfacePathFactory(object):

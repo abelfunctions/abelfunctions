@@ -43,7 +43,9 @@ import sympy
 
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import xgcd, I, CC
+from sage.arith.misc import XGCD as xgcd
+from sage.rings.imaginary_unit import I
+from sage.rings.cc import CC
 from sage.functions.log import log
 from sage.functions.other import ceil, real_part, imag_part
 from sage.rings.big_oh import O
