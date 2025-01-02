@@ -77,7 +77,7 @@ import numpy
 from numpy import dot
 from itertools import product
 
-from sage.all import cached_function
+from sage.misc.cachefunc import cached_function
 
 
 def initialize_half_lattice_vectors(X):
