@@ -6,6 +6,8 @@ requires = [
     "cython<3",
     "numpy<2",
     "pythran>=0.13.1",
+    "passagemath-categories",
+    "passagemath-environment",
 ]
 build-backend = "setuptools.build_meta"
 
