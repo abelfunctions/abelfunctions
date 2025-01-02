@@ -9,7 +9,9 @@ of a complex plane algebraic curve.
 import numpy
 
 from numpy import double, floor, angle
-from sage.all import infinity, QQbar, scatter_plot
+from sage.rings.infinity import Infinity as infinity
+from sage.rings.qqbar import QQbar
+from sage.plot.scatter_plot import scatter_plot
 
 from abelfunctions.complex_path import (
     ComplexLine,

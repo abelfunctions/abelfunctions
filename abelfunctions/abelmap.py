@@ -100,7 +100,7 @@ Contents
 
 import numpy
 
-from sage.all import cached_method
+from sage.misc.cachefunc import cached_method
 
 
 def fractional_part(z, tol=1e-8):
