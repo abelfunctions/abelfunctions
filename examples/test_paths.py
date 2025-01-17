@@ -1,4 +1,4 @@
-print "=== Riemann surface path ==="
+print("=== Riemann surface path ===")
 import sympy
 from sympy.abc import x,y
 from abelfunctions.monodromy import (
