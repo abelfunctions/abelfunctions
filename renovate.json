@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:best-practices", "group:allNonMajor"],
-  "schedule": ["before 5am on Saturday"],
+  "schedule": ["every weekend"],
   "reviewers": ["rparini"],
   "gitIgnoredAuthors": ["renovate[bot]@users.noreply.github.com"],
   "pre-commit": {"enabled": true},
