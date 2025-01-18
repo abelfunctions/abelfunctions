@@ -3,6 +3,7 @@
   "extends": ["config:best-practices", "group:allNonMajor"],
   "schedule": ["before 5am on Saturday"],
   "reviewers": ["rparini"],
+  "gitIgnoredAuthors": ["renovate[bot]@users.noreply.github.com"],
   "pre-commit": {"enabled": true},
   "automerge": true,
   "automergeStrategy": "squash",
