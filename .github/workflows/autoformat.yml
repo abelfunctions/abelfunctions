@@ -1,0 +1,27 @@
+name: Autoformat
+
+on:
+  push:
+    branches:
+        - "renovate/ruff"
+
+jobs:
+  autoformat:
+    permissions:
+        contents: write
+    runs-on: ubuntu-24.04
+    steps:
+        - name: Checkout
+          uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        - name: Setup Python
+          uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        - name: Install ruff
+          run: pip install ruff==0.8.5
+        - name: Fix
+          run: ruff check --fix
+        - name: Format
+          run: ruff format
+        - uses: stefanzweifel/git-auto-commit-action@e348103e9026cc0eee72ae06630dbe30c8bf7a79 # v5
+          with:
+            commit_message: Autoupdate formtatting with ruff
+  
