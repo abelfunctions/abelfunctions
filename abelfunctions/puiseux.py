@@ -507,9 +507,7 @@ def puiseux(f, alpha, beta=None, order=None, parametric=True):
         betas = [b for b in betas if b == beta]
         if not betas:
             raise ValueError(
-                "The point ({0}, {1}) is not on the " "curve {2}.".format(
-                    alpha, beta, f
-                )
+                "The point ({0}, {1}) is not on the curve {2}.".format(alpha, beta, f)
             )
 
     # for each (alpha, beta) determine the corresponding singular parts of the
