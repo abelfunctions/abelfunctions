@@ -9,7 +9,7 @@ The code is available as a git repository at
 """
 
 try:
-    import sage.all__sagemath_modules
+    import sage.all__sagemath_modules  # noqa: F401
 except ImportError:
     pass
 
