@@ -195,4 +195,16 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3 :: Only",
     ],
+    extras_require={
+        'passagemath': [
+            'passagemath-combinat',
+            'passagemath-flint',
+            'passagemath-modules',
+            'passagemath-plot',
+            'passagemath-repl',
+            'passagemath-symbolics',
+            'networkx',
+            'sympy',
+        ],
+    },
 )

@@ -8,6 +8,11 @@ The code is available as a git repository at
 
 """
 
+try:
+    import sage.all__sagemath_modules  # noqa: F401
+except ImportError:
+    pass
+
 from abelfunctions.version import __version__
 from abelfunctions.abelmap import AbelMap, Jacobian
 from abelfunctions.homology import symmetrize_periods
