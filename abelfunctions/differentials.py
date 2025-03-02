@@ -46,8 +46,10 @@ from abelfunctions.integralbasis import integral_basis
 from abelfunctions.puiseux import puiseux
 from abelfunctions.singularities import singularities, _transform
 
-from sage.all import infinity, CC, fast_callable
-from sage.rings.polynomial.all import PolynomialRing
+from sage.rings.infinity import Infinity as infinity
+from sage.rings.cc import CC
+from sage.ext.fast_callable import fast_callable
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
 

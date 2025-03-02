@@ -100,7 +100,12 @@ Contents
 
 """
 
-from sage.all import gcd, fast_callable, O, ZZ, QQ, CC
+from sage.arith.misc import GCD as gcd
+from sage.ext.fast_callable import fast_callable
+from sage.rings.big_oh import O
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.rational_field import Q as QQ
+from sage.rings.cc import CC
 from sage.rings.infinity import infinity
 from sage.rings.laurent_series_ring_element import is_LaurentSeries
 from sage.rings.laurent_series_ring_element cimport LaurentSeries
