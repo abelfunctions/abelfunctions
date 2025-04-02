@@ -41,7 +41,12 @@ from abelfunctions.ypath_factory import YPathFactory as Skeleton
 
 from numpy import array
 from sage.rings.infinity import Infinity as infinity
-from sage.rings.cc import CC
+
+try:
+    from sage.rings.cc import CC
+except ImportError:
+    from sage.all import CC
+
 from sage.rings.complex_double import CDF
 from sage.misc.cachefunc import cached_method
 
