@@ -17,7 +17,11 @@ from numpy import sqrt, pi
 from sage.rings.rational_field import Q as QQ
 from sage.rings.qqbar import QQbar
 from sage.rings.infinity import Infinity as infinity
-from sage.rings.imaginary_unit import I
+
+try:
+    from sage.rings.imaginary_unit import I
+except ImportError:
+    from sage.all import I
 
 
 class TestConstruction(unittest.TestCase):
