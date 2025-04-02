@@ -47,7 +47,12 @@ from abelfunctions.puiseux import puiseux
 from abelfunctions.singularities import singularities, _transform
 
 from sage.rings.infinity import Infinity as infinity
-from sage.rings.cc import CC
+
+try:
+    from sage.rings.cc import CC
+except ImportError:
+    from sage.all import CC
+
 from sage.ext.fast_callable import fast_callable
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.rational_field import QQ
