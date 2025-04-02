@@ -11,7 +11,7 @@ The code is available as a git repository at
 try:
     import sage.all__sagemath_modules  # noqa: F401
 except ImportError:
-    pass
+    import sage.misc.all  # noqa: F401
 
 from abelfunctions.version import __version__
 from abelfunctions.abelmap import AbelMap, Jacobian
