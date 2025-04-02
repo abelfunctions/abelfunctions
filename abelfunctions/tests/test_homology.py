@@ -4,7 +4,6 @@ from sage.rings.finite_rings.finite_field_constructor import FiniteField as GF
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.rational_field import Q as QQ
 from sage.rings.complex_double import CDF
-from sage.rings.imaginary_unit import I
 from sage.matrix.constructor import Matrix
 from sage.matrix.special import zero_matrix
 from sage.matrix.special import identity_matrix
@@ -18,6 +17,11 @@ from abelfunctions.homology import (
     symmetric_transformation_matrix,
     symmetrize_periods,
 )
+
+try:
+    from sage.rings.imaginary_unit import I
+except ImportError:
+    from sage.all import I
 
 
 class HomologyTestData(unittest.TestCase):

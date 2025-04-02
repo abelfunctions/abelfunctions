@@ -10,7 +10,11 @@ from abelfunctions.riemann_surface import RiemannSurface
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
 from sage.rings.rational_field import Q as QQ
-from sage.rings.cc import CC
+
+try:
+    from sage.rings.cc import CC
+except ImportError:
+    from sage.all import CC
 
 
 class DummyRS:

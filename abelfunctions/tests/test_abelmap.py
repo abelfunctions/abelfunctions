@@ -7,7 +7,11 @@ from abelfunctions.abelmap import AbelMap, Jacobian
 from abelfunctions.differentials import Differential
 from sage.rings.rational_field import QQ
 from numpy.linalg import norm
-from sage.rings.imaginary_unit import I
+
+try:
+    from sage.rings.imaginary_unit import I
+except ImportError:
+    from sage.all import I
 
 
 class TestDivisors(AbelfunctionsTestCase):
