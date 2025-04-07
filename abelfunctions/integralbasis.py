@@ -50,10 +50,10 @@ Contents
 from abelfunctions.puiseux import puiseux
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
-from sage.all import cached_function
+from sage.misc.cachefunc import cached_function
 from sage.functions.other import ceil
 from sage.matrix.constructor import Matrix
-from sage.rings.polynomial.all import PolynomialRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
 
@@ -248,7 +248,7 @@ def _integral_basis_monic_singular(f):
     b : list
         A list of integral basis elements.
     """
-    from sage.all import singular
+    from sage.interfaces.singular import singular
 
     singular.load("integralbasis.lib")
 
