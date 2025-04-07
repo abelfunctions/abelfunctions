@@ -41,9 +41,9 @@ jobs:
           - '9.8'
           - '10.0'
           - '10.1'
-          # - '10.2'
-          # - '10.3'
-          # - '10.4'
+          - '10.2'
+          - '10.3'
+          - '10.4'
     steps:
       - name: Install sage
         uses: mamba-org/setup-micromamba@0dea6379afdaffa5d528b3d1dabc45da37f443fc # v2
