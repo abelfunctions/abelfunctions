@@ -7,7 +7,13 @@ from abelfunctions.complex_path import (
     ComplexArc,
 )
 from abelfunctions.complex_path_factory import ComplexPathFactory
-from sage.all import QQ, QQbar, I
+from sage.rings.rational_field import Q as QQ
+from sage.rings.qqbar import QQbar
+
+try:
+    from sage.rings.imaginary_unit import I
+except ImportError:
+    from sage.all import I
 
 
 class TestConstruction(unittest.TestCase):
