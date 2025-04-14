@@ -3,7 +3,7 @@
 # but pip does not currently install these dependencies in this case
 requires = [
     "setuptools>=61.0",
-    "cython<3",
+    "cython<4",
     "numpy<2",
     "pythran>=0.13.1",
 ]
