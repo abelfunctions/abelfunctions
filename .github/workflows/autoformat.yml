@@ -16,7 +16,7 @@ jobs:
         - name: Setup Python
           uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         - name: Install ruff
-          run: pip install ruff==0.11.5
+          run: pip install ruff==0.11.6
         - name: Fix
           run: ruff check --fix
         - name: Format
