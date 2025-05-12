@@ -30,7 +30,7 @@ Contents
 
 """
 
-from sage.all import infinity
+from sage.rings.infinity import Infinity as infinity
 
 
 class Divisor(object):
