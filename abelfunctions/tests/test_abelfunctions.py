@@ -1,7 +1,7 @@
 import unittest
 
 from abelfunctions import RiemannSurface
-from sage.all import QQ
+from sage.rings.rational_field import Q as QQ
 
 
 class AbelfunctionsTestCase(unittest.TestCase):
