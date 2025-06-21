@@ -1,5 +1,5 @@
 setuptools>=61.0
 cython<3
-numpy<2
+numpy<3
 # Update pythran to resolve compile error on Sage 9.8 (#216)
 pythran>=0.13.1

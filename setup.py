@@ -182,7 +182,7 @@ setup(
     packages=packages,
     python_requires=">=3.8",
     install_requires=[
-        "numpy<2",
+        "numpy<3",
         "scipy>=1.10.0",
     ],
     ext_modules=ext_modules,
