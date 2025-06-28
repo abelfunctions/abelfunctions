@@ -35,18 +35,16 @@ Contents
 """
 
 import numpy
-from sage.all import (
-    real,
-    imag,
-    Matrix,
-    ZZ,
-    QQ,
-    RDF,
-    CDF,
-    GF,
-    identity_matrix,
-    zero_matrix,
-)
+from sage.functions.other import real
+from sage.functions.other import imag
+from sage.matrix.constructor import Matrix
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_double import RDF
+from sage.rings.complex_double import CDF
+from sage.rings.finite_rings.finite_field_constructor import FiniteField as GF
+from sage.matrix.special import identity_matrix
+from sage.matrix.special import zero_matrix
 
 
 def Re(M):
