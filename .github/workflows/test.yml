@@ -17,11 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: 3.12
       - name: Install ruff
-        run: pip3 install ruff==0.11.2
+        run: pip3 install ruff==0.12.3
       - name: Check code with ruff
         run: |
           ruff check --output-format=github
@@ -48,7 +48,7 @@ jobs:
           # - '10.4'
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@0dea6379afdaffa5d528b3d1dabc45da37f443fc # v2
+        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b # v2
         with:
           environment-name: sage
           create-args: >-
@@ -74,7 +74,7 @@ jobs:
     needs: static-analysis
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@0dea6379afdaffa5d528b3d1dabc45da37f443fc # v2
+        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b # v2
         with:
           environment-name: sage
           create-args: >-
