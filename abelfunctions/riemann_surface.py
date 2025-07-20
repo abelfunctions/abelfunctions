@@ -174,7 +174,7 @@ class RiemannSurface(object):
 
         """
         # alpha = infinity case
-        infinities = [infinity, "oo", numpy.Inf]
+        infinities = [infinity, "oo", numpy.inf]
         if alpha in infinities:
             alpha = infinity
             p = puiseux(self.f, alpha)

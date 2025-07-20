@@ -827,7 +827,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         # if the complex path leads to a discriminant point then get the exact
         # representation of said discrimimant point
         target_point = complex_path.eval(1)
-        if target_point in [numpy.Infinity, infinity]:
+        if target_point in [numpy.inf, infinity]:
             target_point = infinity
         elif abs(CDF(target_point)) > 1e12:
             target_point = infinity
