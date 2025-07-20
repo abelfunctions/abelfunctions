@@ -323,7 +323,7 @@ class AbelMap_Function(object):
             P, D = args
             if P.degree != 1:
                 raise ValueError(
-                    "First argument must be a place. (A divisor " "of order one.)"
+                    "First argument must be a place. (A divisor of order one.)"
                 )
             if P.RS != D.RS:
                 raise ValueError("Inputs must be on the same Riemann surface")

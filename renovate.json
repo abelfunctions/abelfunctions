@@ -1,9 +1,49 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:best-practices", "group:all"],
-  "schedule": ["before 5am on Saturday"],
-  "reviewers": ["rparini"],
-  "pre-commit": {"enabled": true},
+  "extends": [
+    "config:best-practices",
+    "group:allNonMajor"
+  ],
+  "schedule": [
+    "every weekend"
+  ],
+  "reviewers": [
+    "rparini"
+  ],
+  "gitIgnoredAuthors": [
+    "renovate[bot]@users.noreply.github.com"
+  ],
+  "pre-commit": {
+    "enabled": true
+  },
   "automerge": true,
-  "automergeStrategy": "squash"
+  "automergeStrategy": "squash",
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "groupName": "ruff",
+      "matchPackageNames": [
+        "ruff",
+        "astral-sh/ruff-pre-commit"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/.yml$/",
+        "/.yaml$/"
+      ],
+      "matchStrings": [
+        "pip3? install (?<depName>[^\\s]+)\\s*==\\s*(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "pypi"
+    }
+  ]
 }

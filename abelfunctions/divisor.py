@@ -147,8 +147,7 @@ class Divisor(object):
 
         if self.RS != other.RS:
             raise ValueError(
-                "Can only add or subtract divisors defined "
-                "on the same Riemann surface."
+                "Can only add or subtract divisors defined on the same Riemann surface."
             )
 
         all_places = set(self.places + other.places)
@@ -182,13 +181,12 @@ class Divisor(object):
         items = list(self.dict.items())
         if len(items) != 1:
             raise ValueError(
-                "Divisor contains more than one place. " "Cannot coerce to place."
+                "Divisor contains more than one place. Cannot coerce to place."
             )
         P, m = items[0]
         if m != 1:
             raise ValueError(
-                "Divisor contains place of multiplicity. "
-                "Cannot coerce to single place."
+                "Divisor contains place of multiplicity. Cannot coerce to single place."
             )
         return P
 

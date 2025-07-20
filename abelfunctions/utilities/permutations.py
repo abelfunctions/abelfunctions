@@ -159,8 +159,7 @@ class Permutation(object):
             return self[i]
         else:
             raise TypeError(
-                "i (= %s) must be an integer between "
-                "%s and %s" % (i, 0, len(self) - 1)
+                "i (= %s) must be an integer between %s and %s" % (i, 0, len(self) - 1)
             )
 
     def is_identity(self):
@@ -253,7 +252,7 @@ def matching_permutation(a, b):
 
     if -1 in perm:
         raise ValueError(
-            "Could not compute matching permutation " "between %s and %s." % (a, b)
+            "Could not compute matching permutation between %s and %s." % (a, b)
         )
 
     return Permutation(perm)
