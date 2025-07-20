@@ -215,7 +215,7 @@ cdef class PuiseuxSeries(AlgebraElement):
             l = parent.laurent_series_ring()(f)
 
         self.__l = l
-        self.__e = long(abs(e))
+        self.__e = <long> abs(e)
 
     def __reduce__(self):
         return make_element_from_parent, (self.parent(), self.__l, self.__e)
