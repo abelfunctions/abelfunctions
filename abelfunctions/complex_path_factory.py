@@ -569,7 +569,7 @@ class ComplexPathFactory(object):
             rotations about the discriminant point `bi`.
 
         """
-        if bi in [infinity, numpy.Infinity, "oo"]:
+        if bi in [infinity, numpy.inf, "oo"]:
             return self.monodromy_path_infinity(nrots=nrots)
 
         path_to_bi = self.path_to_discriminant_point(bi)

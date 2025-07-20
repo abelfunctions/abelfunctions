@@ -1,6 +1,6 @@
 import unittest
 
-from numpy import pi, Infinity, exp, sqrt
+from numpy import pi, inf, exp, sqrt
 from abelfunctions.complex_path import (
     ComplexLine,
     ComplexArc,
@@ -157,7 +157,7 @@ class TestEvaluation(unittest.TestCase):
         self.assertAlmostEqual(gamma(0), -1)
         self.assertAlmostEqual(gamma(0.5), -2)
         self.assertAlmostEqual(gamma(0.75), -4)
-        self.assertEqual(gamma(1), Infinity)
+        self.assertEqual(gamma(1), inf)
 
     def test_composite(self):
         gamma1 = ComplexLine(-1, 0)
@@ -201,7 +201,7 @@ class TestEvaluationDerivative(unittest.TestCase):
         self.assertAlmostEqual(gamma.derivative(0), 1)
         self.assertAlmostEqual(gamma.derivative(0.5), 4)
         self.assertAlmostEqual(gamma.derivative(0.75), 16)
-        self.assertAlmostEqual(gamma.derivative(1), Infinity)
+        self.assertAlmostEqual(gamma.derivative(1), inf)
 
     def test_composite(self):
         gamma1 = ComplexLine(-1, 0)  # derivative == 1
