@@ -146,7 +146,7 @@ def integer_kernel_basis(R):
     # sanity check: the rank of the kernel should be the genus of the curve
     if r != g:
         raise ValueError(
-            "The rank of the integer kernel of K should be " "equal to the genus."
+            "The rank of the integer kernel of K should be equal to the genus."
         )
 
     # compute the integer kernel from the Smith normal form of K

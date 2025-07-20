@@ -197,7 +197,7 @@ def frobenius_transform(A, g):
 
             if J[i, j] != val:
                 raise ValueError(
-                    "Could not compute Frobenuis transform of " "intersection matrix."
+                    "Could not compute Frobenuis transform of intersection matrix."
                 )
     return T
 
@@ -475,7 +475,7 @@ def intersection_matrix(final_edges, g):
     # that the genus formula otuputs
     rank = numpy.linalg.matrix_rank(K)
     if rank / 2 != g:
-        raise ValueError("Found inconsistent genus in homolgy " "intersection matrix.")
+        raise ValueError("Found inconsistent genus in homolgy intersection matrix.")
     return K
 
 

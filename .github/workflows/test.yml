@@ -15,11 +15,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Python
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: 3.12
       - name: Install ruff
-        run: pip3 install ruff
+        run: pip3 install ruff==0.12.4
       - name: Check code with ruff
         run: |
           ruff check --output-format=github
@@ -46,7 +46,7 @@ jobs:
           - '10.4'
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29 # v2
+        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b # v2
         with:
           environment-name: sage
           create-args: >-
@@ -58,6 +58,10 @@ jobs:
       - name: Install build dependencies
         run: micromamba run -n sage sage -pip install -r build-requirements.txt
       - run: micromamba run -n sage sage -pip freeze
+      - name: NumPy version
+        run: micromamba run -n sage sage -c 'import numpy; print(numpy.__version__)'
+      - name: Cython version
+        run: micromamba run -n sage sage -c 'import cython; print(cython.__version__)'
       - name: Install Abelfunctions with pip
         run: micromamba run -n sage sage -pip install -e . --no-build-isolation
       - name: Run tests
@@ -68,7 +72,7 @@ jobs:
     needs: static-analysis
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29 # v2
+        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b # v2
         with:
           environment-name: sage
           create-args: >-

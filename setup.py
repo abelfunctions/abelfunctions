@@ -38,8 +38,7 @@ try:
     from sage.env import sage_include_directories
 except ImportError as e:
     raise EnvironmentError(
-        "abelfunctions must be built using Sage:\n\n"
-        "\t$ sage setup.py <args> <kwds>\n"
+        "abelfunctions must be built using Sage:\n\n\t$ sage setup.py <args> <kwds>\n"
     ) from e
 
 # list of Abelfunctions extension modules. most modules need to be compiled
@@ -183,7 +182,7 @@ setup(
     packages=packages,
     python_requires=">=3.8",
     install_requires=[
-        "numpy<3",
+        "numpy<2",
         "scipy>=1.10.0",
     ],
     ext_modules=ext_modules,

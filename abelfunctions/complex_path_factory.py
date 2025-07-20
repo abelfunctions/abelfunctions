@@ -750,7 +750,7 @@ class ComplexPathFactory(object):
         # sanity check: |dtheta| should be less than pi
         if abs(dtheta) >= numpy.pi:
             raise ValueError(
-                "Cannot construct avoiding arc: " "|dtheta| must be less than pi."
+                "Cannot construct avoiding arc: |dtheta| must be less than pi."
             )
 
         dtheta = dtheta_sign * abs(dtheta)
