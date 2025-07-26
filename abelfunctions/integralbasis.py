@@ -225,6 +225,9 @@ def integral_basis(f):
         )
         b = _integral_basis_monic(fmonic)
     else:
+        print("---debugging---")
+        print(fmonic)
+        print(fmonic.parent())
         b = _integral_basis_monic_singular(fmonic)
 
     # reverse leading coefficient scaling
