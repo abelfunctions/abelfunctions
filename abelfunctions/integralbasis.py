@@ -259,6 +259,7 @@ def _integral_basis_monic_singular(f):
     ideal, denom = l.sage()
     numerators = ideal.gens()
     b = [numer / denom for numer in numerators]
+    print("b", b)
     return b
 
 
