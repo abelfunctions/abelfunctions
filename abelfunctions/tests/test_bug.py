@@ -1,7 +1,5 @@
-import unittest
-
 from abelfunctions import RiemannSurface
-from abelfunctions.abelmap import AbelMap, Jacobian
+from abelfunctions.abelmap import Jacobian
 
 from sage.rings.rational_field import Q as QQ
 
