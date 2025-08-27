@@ -35,7 +35,7 @@ Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and lin
    have a clean copy of the code in `master`.
    
    ```
-   $ git checkout -b my-branch-name
+   git checkout -b my-branch-name
    ```
    
 2. **Make changes:**
@@ -50,8 +50,8 @@ Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and lin
    propagating issues that may have cropped up.
 
    ```
-   $ sage setup.py build_ext --inplace
-   $ sage runtests.py
+   sage setup.py build_ext --inplace
+   sage runtests.py
    ```
 
 4. **Commit:**
@@ -65,7 +65,7 @@ Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and lin
    Push your changes to a remote branch.
    
    ```
-   $ git push origin my-branch-name
+   git push origin my-branch-name
    ```
 
    Then, create a "Pull Request" of this remote branch against the main
@@ -209,14 +209,14 @@ Riemann surface paths:
 To run the test suite simply execute
 
 ```
-$ sage runtests.py
+sage runtests.py
 ```
 
 from the top-level directory. To only run the test suite on certain modules you
 can optionally supply a partial filename. For example,
 
 ```
-$ sage runtests.py puiseux
+sage runtests.py puiseux
 ```
 
 will run the test suite on every module matching the expression
