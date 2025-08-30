@@ -64,7 +64,7 @@ def runtests(argv):
 
     # determine list of search patterns for tests
     patterns = " ".join(args)
-    pytest_args = ["-W error", "-k", patterns, "--ignore=examples", "-x"]
+    pytest_args = ["-W error", "-k", patterns, "--ignore=examples", "-x", "-s"]
     if processes > 1:
         pytest_args += ["-n", str(processes)]
 
