@@ -19,7 +19,14 @@ from abelfunctions.puiseux import puiseux
 from abelfunctions.riemann_surface_path_factory import RiemannSurfacePathFactory
 from abelfunctions.singularities import genus
 
-from sage.all import QQbar, infinity, CC
+from sage.rings.qqbar import QQbar
+from sage.rings.infinity import Infinity as infinity
+
+try:
+    from sage.rings.cc import CC
+except ImportError:
+    from sage.all import CC
+
 from sage.misc.cachefunc import cached_method
 
 
@@ -174,7 +181,7 @@ class RiemannSurface(object):
 
         """
         # alpha = infinity case
-        infinities = [infinity, "oo", numpy.Inf]
+        infinities = [infinity, "oo", numpy.inf]
         if alpha in infinities:
             alpha = infinity
             p = puiseux(self.f, alpha)

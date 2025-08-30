@@ -9,7 +9,9 @@ of a complex plane algebraic curve.
 import numpy
 
 from numpy import double, floor, angle
-from sage.all import infinity, QQbar, scatter_plot
+from sage.rings.infinity import Infinity as infinity
+from sage.rings.qqbar import QQbar
+from sage.plot.scatter_plot import scatter_plot
 
 from abelfunctions.complex_path import (
     ComplexLine,
@@ -569,7 +571,7 @@ class ComplexPathFactory(object):
             rotations about the discriminant point `bi`.
 
         """
-        if bi in [infinity, numpy.Infinity, "oo"]:
+        if bi in [infinity, numpy.inf, "oo"]:
             return self.monodromy_path_infinity(nrots=nrots)
 
         path_to_bi = self.path_to_discriminant_point(bi)

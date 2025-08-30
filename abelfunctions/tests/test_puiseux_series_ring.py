@@ -3,10 +3,15 @@ import unittest
 from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 from abelfunctions.puiseux_series_ring_element import LaurentSeries_V
 
-from sage.all import SR, CC
+from sage.symbolic.ring import SR
 from sage.rings.laurent_series_ring import LaurentSeriesRing
 from sage.rings.rational_field import QQ
 from sage.rings.qqbar import QQbar
+
+try:
+    from sage.rings.cc import CC
+except ImportError:
+    from sage.all import CC
 
 
 class TestPuiseuxSeriesRing(unittest.TestCase):
