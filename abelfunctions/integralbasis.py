@@ -230,8 +230,6 @@ def integral_basis(f):
     try:
         fmonic = fmonic.change_ring(QQ)
         print(f"{fmonic=}")
-        print(f"{fmonic.numerator()=}")
-        print(f"{fmonic.denominator()=}")
     except TypeError:
         warnings.warn(
             "using slower integral basis algorithm: "
@@ -271,7 +269,7 @@ def _integral_basis_monic_singular(f):
     singular.load("integralbasis.lib")
     singular.set_seed(42)
     # Options might need to be passed in as a double quoted string e.g. '"hensel"'
-    l = singular.integralBasis(f, 2, '"hensel"')
+    l = singular.integralBasis(f, 2, '"global"')
     print(f"{l=}")
     ideal, denom = l.sage()
     print(f"{ideal=}, {denom=}")
