@@ -12,7 +12,7 @@ installation method (via `setup.py`) is greatly appreciated.
 In a terminal, run the following commands
 
 ```bash
-$ sage --pip install --no-build-isolation git+https://github.com/abelfunctions/abelfunctions
+sage --pip install --no-build-isolation git+https://github.com/abelfunctions/abelfunctions
 ```
 
 # Alternate method
@@ -23,7 +23,7 @@ $ sage --pip install --no-build-isolation git+https://github.com/abelfunctions/a
 2. Enter the top-level directory, the one containing `setup.py` and run
 
    ```
-   $ sage setup.py install
+   sage setup.py install
    ```
 
 # Alternate Method
@@ -41,7 +41,7 @@ If the above does not work for whatever reason, try this instead:
 2. Convert the entire project into a Sage SPKG:
 
    ```
-   $ tar cjf abelfunctions.spkg /path/to/abelfunctions
+   tar cjf abelfunctions.spkg /path/to/abelfunctions
    ```
 
    *Note: some day this step will be done for you or will be unnecessary.*
@@ -49,6 +49,6 @@ If the above does not work for whatever reason, try this instead:
 3. Install the SPKG into Sage:
 
    ```
-   $ sage -p abelfunctions.spkg     # without running test suite
-   $ sage -p -c abelfunctions.spkg  # with running test suite
+   sage -p abelfunctions.spkg     # without running test suite
+   sage -p -c abelfunctions.spkg  # with running test suite
    ```
