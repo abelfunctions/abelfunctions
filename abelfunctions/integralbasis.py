@@ -249,7 +249,6 @@ def _integral_basis_monic_singular(f):
 
     # See function here: https://github.com/Singular/Singular/blob/spielwiese/Singular/LIB/integralbasis.lib
     singular.load("integralbasis.lib")
-    singular.set_seed(42)
     singular_result = singular.integralBasis(f, 2, '"normal"')
     ideal, denom = singular_result.sage()
     numerators = ideal.gens()
