@@ -268,10 +268,9 @@ def _integral_basis_monic_singular(f):
     # See function here: https://github.com/Singular/Singular/blob/spielwiese/Singular/LIB/integralbasis.lib
     singular.load("integralbasis.lib")
     singular.set_seed(42)
-    # Options might need to be passed in as a double quoted string e.g. '"hensel"'
-    l = singular.integralBasis(f, 2, '"global"')
-    print(f"{l=}")
-    ideal, denom = l.sage()
+    singular_result = singular.integralBasis(f, 2, '"normal"')
+    print(f"{singular_result=}")
+    ideal, denom = singular_result.sage()
     print(f"{ideal=}, {denom=}")
     numerators = ideal.gens()
     print(f"{numerators=}")
