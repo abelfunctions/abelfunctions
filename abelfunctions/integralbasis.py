@@ -250,10 +250,10 @@ def _integral_basis_monic_singular(f):
     """
     from sage.interfaces.singular import singular
 
+    # See function here: https://github.com/Singular/Singular/blob/spielwiese/Singular/LIB/integralbasis.lib
     singular.load("integralbasis.lib")
-
-    l = singular.integralBasis(f, 2)
-    ideal, denom = l.sage()
+    singular_result = singular.integralBasis(f, 2, '"normal"')
+    ideal, denom = singular_result.sage()
     numerators = ideal.gens()
     b = [numer / denom for numer in numerators]
     return b
