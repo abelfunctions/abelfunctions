@@ -32,8 +32,10 @@ Contents
 
 import weakref
 
-from sage.all import parent
-from sage.rings.all import IntegralDomain, CommutativeRing, Field
+from sage.structure.element import parent
+from sage.rings.ring import IntegralDomain
+from sage.rings.ring import CommutativeRing
+from sage.rings.ring import Field
 
 from abelfunctions.puiseux_series_ring_element import PuiseuxSeries
 from sage.categories.complete_discrete_valuation import CompleteDiscreteValuationFields

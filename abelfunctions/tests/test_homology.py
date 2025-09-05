@@ -1,6 +1,13 @@
 import unittest
 
-from sage.all import GF, ZZ, QQ, CDF, I, Matrix, zero_matrix, identity_matrix, imag
+from sage.rings.finite_rings.finite_field_constructor import FiniteField as GF
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.rational_field import Q as QQ
+from sage.rings.complex_double import CDF
+from sage.matrix.constructor import Matrix
+from sage.matrix.special import zero_matrix
+from sage.matrix.special import identity_matrix
+from sage.functions.other import imag
 from abelfunctions.homology import (
     involution_matrix,
     integer_kernel_basis,
@@ -10,6 +17,11 @@ from abelfunctions.homology import (
     symmetric_transformation_matrix,
     symmetrize_periods,
 )
+
+try:
+    from sage.rings.imaginary_unit import I
+except ImportError:
+    from sage.all import I
 
 
 class HomologyTestData(unittest.TestCase):

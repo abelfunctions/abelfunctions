@@ -2,7 +2,8 @@ import unittest
 
 import numpy
 from numpy import pi, sqrt
-from sage.all import QQ, QQbar
+from sage.rings.rational_field import Q as QQ
+from sage.rings.qqbar import QQbar
 
 from abelfunctions.complex_path import (
     ComplexLine,

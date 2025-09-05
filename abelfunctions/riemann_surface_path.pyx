@@ -52,8 +52,13 @@ from abelfunctions.divisor import DiscriminantPlace
 from abelfunctions.puiseux import puiseux
 from abelfunctions.utilities import matching_permutation
 
-from sage.all import (
-    QQ, QQbar, CDF, infinity, fast_callable, cached_method, cached_function)
+from sage.rings.rational_field import Q as QQ
+from sage.rings.qqbar import QQbar
+from sage.rings.complex_double import CDF
+from sage.rings.infinity import Infinity as infinity
+from sage.ext.fast_callable import fast_callable
+from sage.misc.cachefunc import cached_method
+from sage.misc.cachefunc import cached_function
 from sage.functions.other import real_part, imag_part
 from sage.plot.line import line
 
@@ -827,7 +832,7 @@ cdef class RiemannSurfacePathPuiseux(RiemannSurfacePathPrimitive):
         # if the complex path leads to a discriminant point then get the exact
         # representation of said discrimimant point
         target_point = complex_path.eval(1)
-        if target_point in [numpy.Infinity, infinity]:
+        if target_point in [numpy.inf, infinity]:
             target_point = infinity
         elif abs(CDF(target_point)) > 1e12:
             target_point = infinity

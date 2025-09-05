@@ -9,7 +9,12 @@ from abelfunctions.differentials import (
 from abelfunctions.riemann_surface import RiemannSurface
 from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
 
-from sage.all import QQ, CC
+from sage.rings.rational_field import Q as QQ
+
+try:
+    from sage.rings.cc import CC
+except ImportError:
+    from sage.all import CC
 
 
 class DummyRS:
