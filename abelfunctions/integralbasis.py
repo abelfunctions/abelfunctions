@@ -213,6 +213,9 @@ def integral_basis(f):
     else:
         fmonic = f / R.base_ring()(lc)
         lc = 1
+
+    # if the curve lives in QQ[x,y] then use singular. otherwise, use slow
+    # self-implemented version
     try:
         fmonic = fmonic.change_ring(QQ)
     except TypeError:

@@ -65,7 +65,7 @@ jobs:
       - name: Install Abelfunctions with pip
         run: micromamba run -n sage sage -pip install -e . --no-build-isolation
       - name: Run tests
-        run: micromamba run -n sage sage runtests.py TestIntegralBasis
+        run: micromamba run -n sage sage runtests.py
 
   test-setuppy-install:
     runs-on: ubuntu-24.04
