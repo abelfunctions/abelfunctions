@@ -196,40 +196,25 @@ def integral_basis(f):
 
     """
     R = f.parent()
-    print(f"{R=}")
-    print(f"{f=}")
     x, y = R.gens()
-    print(f"{x=}, {y=}")
 
     # The base algorithm assumes f is monic. If this is not the case then
     # monicize by applying the map `y -> y/lc(x), f -> lc^(d-1) f` where lc(x)
     # is the leading coefficient of f.
     d = f.degree(y)
-    print(f"{d=}")
     lc = f.polynomial(y).leading_coefficient()
-    print(f"{lc=}")
-    print(f"{lc.degree()=}")
-    print(f"{lc.degree() > 0=}")
     if lc.degree() > 0:
         # we have to carefully manage rings here. the path is:
         #     R(x)[y] -> R[x][y] -> R[x,y]
         fmonic = f(x, y / lc) * lc ** (d - 1)  # element of R(x)[y]
-        print(f"{fmonic=}")
         B = R.base_ring()
-        print(f"{B=}")
         fmonic = fmonic.change_ring(B[x])  # element of R[x][y]
-        print(f"{fmonic=}")
         fmonic = R(fmonic)  # element of R[x,y]
     else:
         fmonic = f / R.base_ring()(lc)
         lc = 1
-    print(f"{fmonic=}")
-
-    # if the curve lives in QQ[x,y] then use singular. otherwise, use slow
-    # self-implemented version
     try:
         fmonic = fmonic.change_ring(QQ)
-        print(f"{fmonic=}")
     except TypeError:
         warnings.warn(
             "using slower integral basis algorithm: "
@@ -239,12 +224,9 @@ def integral_basis(f):
     else:
         b = _integral_basis_monic_singular(fmonic)
 
-    print(f"{b=}")
-
     # reverse leading coefficient scaling
     for i in range(1, len(b)):
         b[i] = b[i](x, lc * y)
-    print(f"{b=}")
     return b
 
 
@@ -269,11 +251,8 @@ def _integral_basis_monic_singular(f):
     singular.load("integralbasis.lib")
     singular.set_seed(42)
     singular_result = singular.integralBasis(f, 2, '"normal"')
-    print(f"{singular_result=}")
     ideal, denom = singular_result.sage()
-    print(f"{ideal=}, {denom=}")
     numerators = ideal.gens()
-    print(f"{numerators=}")
     b = [numer / denom for numer in numerators]
     return b
 
