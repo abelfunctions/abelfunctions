@@ -48,7 +48,7 @@ jobs:
           - '10.4'
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b # v2
+        uses: mamba-org/setup-micromamba@7f29b8b80078b1b601dfa018b0f7425c587c63bb # v2
         with:
           environment-name: sage
           create-args: >-
@@ -74,7 +74,7 @@ jobs:
     needs: static-analysis
     steps:
       - name: Install sage
-        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b # v2
+        uses: mamba-org/setup-micromamba@7f29b8b80078b1b601dfa018b0f7425c587c63bb # v2
         with:
           environment-name: sage
           create-args: >-
