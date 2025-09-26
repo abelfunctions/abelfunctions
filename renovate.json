@@ -20,6 +20,9 @@
   "automergeStrategy": "squash",
   "packageRules": [
     {
+      "matchCategories": [
+        "python"
+      ],
       "matchUpdateTypes": [
         "major"
       ],
