@@ -35,8 +35,6 @@ Contents
 """
 
 import numpy
-from sage.functions.other import real
-from sage.functions.other import imag
 from sage.matrix.constructor import Matrix
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.rational_field import Q as QQ
@@ -48,10 +46,14 @@ from sage.matrix.special import zero_matrix
 
 
 def Re(M):
+    from sage.functions.other import real
+
     return M.apply_map(real)
 
 
 def Im(M):
+    from sage.functions.other import imag
+
     return M.apply_map(imag)
 
 
