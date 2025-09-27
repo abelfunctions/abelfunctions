@@ -22,6 +22,11 @@ sage --pip install --no-build-isolation git+https://github.com/abelfunctions/abe
    [repository page](https://github.com/abelfunctions/abelfunctions).
 2. Enter the top-level directory, the one containing `setup.py` and run
 
+   ```bash
+   sage --pip install --no-build-isolation --editable .
    ```
-   sage setup.py install
-   ```
+
+   With the optional flag `--editable`, any changes to Python modules in
+   the directory will take immediate effect after restarting the Sage
+   session. If you make changes to Cython sources, repeat the above
+   command so that the modules are recompiled.
