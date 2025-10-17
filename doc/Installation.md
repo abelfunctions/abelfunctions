@@ -3,10 +3,6 @@
 Abelfunctions requires [Sage (SageMath)](http://www.sagemath.org) 9.2 or later.
 Sage makes it relatively easy to build and run the code.
 
-> **Note:** Depending on your system one of the below installation methods
-may not work. I'm not sure what is causing this. Any contributions to the
-installation method (via `setup.py`) is greatly appreciated.
-
 # Recommended Method
 
 In a terminal, run the following commands
