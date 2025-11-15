@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: 3.13
       - name: Install ruff
-        run: pip3 install ruff==0.14.4
+        run: pip3 install ruff==0.14.5
       - name: Check code with ruff
         run: |
           ruff check --output-format=github
