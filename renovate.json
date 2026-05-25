@@ -19,7 +19,6 @@
   "automerge": true,
   "minimumReleaseAge": "3 days",
   "automergeStrategy": "squash",
-  "enabled": false,
   "packageRules": [
     {
       "matchCategories": [
