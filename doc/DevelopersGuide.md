@@ -27,7 +27,7 @@ improvements, follow the instructions at
 [GitHub - Fork a Repo](https://help.github.com/articles/fork-a-repo/) to create
 a personal "fork" of Abelfunctions on GitHub. You only need to do this once.
 
-Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and linting. It's recommented to configure this to run on save in your editor of choice. You can also install [pre-commit](https://pre-commit.com/#installation) to automatically run `ruff` when you commit your changes. Python dependencies used for development and CI are pinned in `uv.lock`.
+Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and linting. It's recommended to configure this to run on save in your editor of choice. You can also install [pre-commit](https://pre-commit.com/#installation) to automatically run `ruff` when you commit your changes. Python dependencies used for development and CI are pinned in `uv.lock`.
 
 1. **Create a new branch:**
 

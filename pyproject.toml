@@ -16,6 +16,7 @@ name = "abelfunctions"
 dynamic = ["version"]
 description = "A library for computing with Abelian functions, Riemann surfaces, and algebraic curves."
 readme = "README.md"
+# Locked PassageMath build dependencies published on PyPI require Python 3.9+.
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
