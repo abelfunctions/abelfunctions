@@ -20,9 +20,9 @@ jobs:
         - name: Install locked lint dependencies
           run: uv sync --frozen --only-group lint --no-install-project
         - name: Fix
-          run: .venv/bin/ruff check --fix
+          run: uv run ruff check --fix
         - name: Format
-          run: .venv/bin/ruff format
+          run: uv run ruff format
         - uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7
           with:
             commit_message: Autoupdate formtatting with ruff
