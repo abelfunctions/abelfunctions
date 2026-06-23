@@ -6,8 +6,8 @@ requires = [
     "cython",
     "numpy",
     "pythran>=0.13.1",
-    "passagemath-categories",
-    "passagemath-environment",
+    "passagemath-categories<10.8",
+    "passagemath-environment<10.8",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -36,12 +36,12 @@ classifiers = [
 
 [project.optional-dependencies]
 passagemath = [
-    "passagemath-combinat",
-    "passagemath-flint",
-    "passagemath-modules",
-    "passagemath-plot",
-    "passagemath-repl",
-    "passagemath-symbolics",
+    "passagemath-combinat<10.8",
+    "passagemath-flint<10.8",
+    "passagemath-modules<10.8",
+    "passagemath-plot<10.8",
+    "passagemath-repl<10.8",
+    "passagemath-symbolics<10.8",
     "networkx",
     "sympy",
 ]
@@ -58,8 +58,8 @@ build = [
     "cython",
     "numpy",
     "pythran>=0.13.1",
-    "passagemath-categories",
-    "passagemath-environment",
+    "passagemath-categories<10.8",
+    "passagemath-environment<10.8",
 ]
 lint = [
     "ruff==0.15.1",
