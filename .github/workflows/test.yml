@@ -26,8 +26,8 @@ jobs:
         run: uv sync --frozen --only-group lint --no-install-project
       - name: Check code with ruff
         run: |
-          .venv/bin/ruff check --output-format=github
-          .venv/bin/ruff format --check
+          uv run --no-sync ruff check --output-format=github
+          uv run --no-sync ruff format --check
 
   test:
     runs-on: ubuntu-24.04
