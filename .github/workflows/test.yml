@@ -65,9 +65,7 @@ jobs:
       - name: Resolve Sage Python
         run: echo "SAGE_PYTHON=$(micromamba run -n sage sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
-        run: |
-          uv export --frozen --group test --no-emit-project --output-file /tmp/abelfunctions-test-requirements.txt
-          uv pip install --python "$SAGE_PYTHON" --require-hashes --strict -r /tmp/abelfunctions-test-requirements.txt
+        run: uv export --frozen --group test --no-emit-project | uv pip install --python "$SAGE_PYTHON" --require-hashes --strict -r -
       - run: uv pip freeze --python "$SAGE_PYTHON"
       - name: NumPy version
         run: micromamba run -n sage sage -c 'import numpy; print(numpy.__version__)'
@@ -95,9 +93,7 @@ jobs:
       - name: Resolve Sage Python
         run: echo "SAGE_PYTHON=$(micromamba run -n sage sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
-        run: |
-          uv export --frozen --group test --no-emit-project --output-file /tmp/abelfunctions-test-requirements.txt
-          uv pip install --python "$SAGE_PYTHON" --require-hashes --strict -r /tmp/abelfunctions-test-requirements.txt
+        run: uv export --frozen --group test --no-emit-project | uv pip install --python "$SAGE_PYTHON" --require-hashes --strict -r -
       - name: Install Abelfunctions with setup.py
         run: micromamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
@@ -117,9 +113,7 @@ jobs:
       - name: Resolve Python
         run: echo "TEST_PYTHON=$(python -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
-        run: |
-          uv export --frozen --group build --group test --extra passagemath --no-emit-project --output-file /tmp/abelfunctions-passagemath-requirements.txt
-          uv pip install --python "$TEST_PYTHON" --require-hashes --strict -r /tmp/abelfunctions-passagemath-requirements.txt
+        run: uv export --frozen --group build --group test --extra passagemath --no-emit-project | uv pip install --python "$TEST_PYTHON" --require-hashes --strict -r -
       - name: Install Abelfunctions with uv
         run: uv pip install --python "$TEST_PYTHON" --editable . --no-build-isolation --no-deps
       - name: Run tests
