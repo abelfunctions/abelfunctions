@@ -31,23 +31,17 @@ passagemath = [
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "passagemath-combinat", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-combinat", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-combinat", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-combinat", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "passagemath-flint", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-flint", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-flint", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-flint", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "passagemath-modules", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-modules", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "passagemath-plot", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-plot", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-plot", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-plot", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "passagemath-repl", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-repl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-repl", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-repl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "passagemath-symbolics", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-symbolics", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-symbolics", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-symbolics", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "sympy" },
 ]
 
@@ -59,11 +53,9 @@ build = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "passagemath-categories", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "passagemath-environment", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pythran" },
     { name = "setuptools" },
 ]
@@ -79,12 +71,12 @@ test = [
 requires-dist = [
     { name = "networkx", marker = "extra == 'passagemath'" },
     { name = "numpy" },
-    { name = "passagemath-combinat", marker = "extra == 'passagemath'" },
-    { name = "passagemath-flint", marker = "extra == 'passagemath'" },
-    { name = "passagemath-modules", marker = "extra == 'passagemath'" },
-    { name = "passagemath-plot", marker = "extra == 'passagemath'" },
-    { name = "passagemath-repl", marker = "extra == 'passagemath'" },
-    { name = "passagemath-symbolics", marker = "extra == 'passagemath'" },
+    { name = "passagemath-combinat", marker = "extra == 'passagemath'", specifier = "<10.8" },
+    { name = "passagemath-flint", marker = "extra == 'passagemath'", specifier = "<10.8" },
+    { name = "passagemath-modules", marker = "extra == 'passagemath'", specifier = "<10.8" },
+    { name = "passagemath-plot", marker = "extra == 'passagemath'", specifier = "<10.8" },
+    { name = "passagemath-repl", marker = "extra == 'passagemath'", specifier = "<10.8" },
+    { name = "passagemath-symbolics", marker = "extra == 'passagemath'", specifier = "<10.8" },
     { name = "scipy", specifier = ">=1.10.0" },
     { name = "sympy", marker = "extra == 'passagemath'" },
 ]
@@ -94,8 +86,8 @@ provides-extras = ["passagemath"]
 build = [
     { name = "cython" },
     { name = "numpy" },
-    { name = "passagemath-categories" },
-    { name = "passagemath-environment" },
+    { name = "passagemath-categories", specifier = "<10.8" },
+    { name = "passagemath-environment", specifier = "<10.8" },
     { name = "pythran", specifier = ">=0.13.1" },
     { name = "setuptools", specifier = ">=61.0" },
 ]
@@ -680,7 +672,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -2178,12 +2170,16 @@ name = "passagemath-categories"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "memory-allocator", marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-objects", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "memory-allocator", marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-objects", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e5/e6/dc975797304934c133360b153a466e520c9812bfcaa4ae356317072bb4c7/passagemath_categories-10.6.48.tar.gz", hash = "sha256:e6df626f65a8810546b6968f6e5d08b2417670432b3a348d28d1ba8bb8861dcc", size = 2899092, upload-time = "2026-02-02T18:10:45.589Z" }
 wheels = [
@@ -2235,64 +2231,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a8/5a/e4aba43ebdaeb7b400250793a54f0242bc18af5a36a6c14f1310f5825532/passagemath_categories-10.6.48-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:ceb40a931e134b3dfb09e7b304b723a8947cc76580c74202e1bc8bd3ecaf9fed", size = 46212601, upload-time = "2026-02-02T12:37:06.498Z" },
     { url = "https://files.pythonhosted.org/packages/a9/c9/803b22c4a7335c70e88db3720b807e1e9a7414e3bdbb10bc6371ffb0402d/passagemath_categories-10.6.48-cp314-cp314t-win_amd64.whl", hash = "sha256:4dc106ff11ea487bf635a3e2e26d125431c2bd98cd1ed7fcce136c65ca607e14", size = 10871746, upload-time = "2026-02-02T23:26:11.227Z" },
     { url = "https://files.pythonhosted.org/packages/2b/06/548e81bd704a1c9a68d270504c70455ef89d13da198c713b8b590ba1e182/passagemath_categories-10.6.48-cp314-cp314t-win_arm64.whl", hash = "sha256:eeffc51e96c38ce2180893aebf4ce2e248b93b709a86a96d7a46ddd0760e0ed0", size = 9445667, upload-time = "2026-02-02T01:36:13.899Z" },
-]
-
-[[package]]
-name = "passagemath-categories"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "memory-allocator", marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-objects", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/df/51/577bc6ac02b7e5037a23ce5b6292ad950d283e9d0c16ed4d547701e22560/passagemath_categories-10.8.4.tar.gz", hash = "sha256:b38a13dcec15507b17474f06c45c64153d890a39ef147c1303acc310ef3da9ba", size = 2914784, upload-time = "2026-04-23T01:26:13.977Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/43/5100df714417844b03532a1873e1a5d62f8c5798d3007f50a9e7e6479369/passagemath_categories-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:ee0d8ce3988250a4748cfaa2666816fe9db8063ea075999e7ad0a49a952e5d37", size = 9787965, upload-time = "2026-04-20T14:34:42.321Z" },
-    { url = "https://files.pythonhosted.org/packages/c3/bf/f473e4c7fb991e4fb213c69f5c50e77ab1a1c5e85620f43c9fb1eafe8d3d/passagemath_categories-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:091d1db8412927f35139d63563ff610e24d783fcf636e5e0d85bc1dec4ccfa26", size = 10449586, upload-time = "2026-04-20T14:34:55.971Z" },
-    { url = "https://files.pythonhosted.org/packages/6b/81/62ef9f995f2b38d72538e039ed27874fb1da9bba21a9e04bb0b966fd2981/passagemath_categories-10.8.4-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7e8bf80586298d339ae712a52fd6b750d30e55d66eb3a3a8fd022481c2bc6919", size = 45934855, upload-time = "2026-04-20T14:37:51.276Z" },
-    { url = "https://files.pythonhosted.org/packages/61/d9/1ee4a035485ed60f6bf499596ebaa53c6ac975d558ed378065909b511075/passagemath_categories-10.8.4-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1ffb14150597c199ffd1d3d080c9406a9fb6f5f515e93206ba18f95fd18e1a69", size = 46260427, upload-time = "2026-04-20T14:37:56.706Z" },
-    { url = "https://files.pythonhosted.org/packages/b7/3e/de401c08054ac9660855d110f0b2e42b4fbed14f0dd74a5dd770b968afc0/passagemath_categories-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:27e9300ef19ec0d5a8216578a313f72bac6ac6e99ba85385ad3e6ca949832787", size = 46248309, upload-time = "2026-04-20T14:36:06.909Z" },
-    { url = "https://files.pythonhosted.org/packages/7f/20/261753394be38d089d873ac101ac91ae0c44dce21dc92e1135dd175fda42/passagemath_categories-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:9142e62e87da9b3e1ab37c86ec70140eee1486a1cdeb29cb2771c0197c52d5a6", size = 47309434, upload-time = "2026-04-20T14:36:11.564Z" },
-    { url = "https://files.pythonhosted.org/packages/07/31/16a451e2f44a0fd3a832f254b036c79ef9c50d4788f1d1d993862e295dc5/passagemath_categories-10.8.4-cp311-cp311-win_amd64.whl", hash = "sha256:d3dcc9e8110d035c2127e71eb62c5f3a6fb4d1dc04c2c71b26bf4a53be8ee56e", size = 10379648, upload-time = "2026-04-19T22:49:29.663Z" },
-    { url = "https://files.pythonhosted.org/packages/da/17/3e6dc05394f2e7fbef1c887363822e3cf52235f318da55e0c0f7dca5a4b5/passagemath_categories-10.8.4-cp311-cp311-win_arm64.whl", hash = "sha256:7b793104448b2cfe66bf58af0a557cf0f1d837dbedc6040a84257d26b1a5cdd2", size = 9578169, upload-time = "2026-04-19T22:49:31.966Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/e5/1a453dba8c091ead7c1bf6648a6f2ba8de90d0d7706cdbd8d1e5460f3edd/passagemath_categories-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:9b1cf80927e37c85d2299dd6cacdc74c74cfeb5c4980e6c4850d77bd5d1cff26", size = 9699619, upload-time = "2026-04-20T14:34:44.652Z" },
-    { url = "https://files.pythonhosted.org/packages/a6/2f/be3058642554c131a6d0dd7b1a90f6150597a6c44a571414f5efa698c568/passagemath_categories-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:c7eaba94ee0ee60639112f91e8d29858675704264c96792ad965a90d4f7ed9d3", size = 10479396, upload-time = "2026-04-20T14:34:58.07Z" },
-    { url = "https://files.pythonhosted.org/packages/1e/78/d37915af0b4da6ef6ee61ea74b9eb49a7cf332f9aa573c1c19874ff7daa4/passagemath_categories-10.8.4-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4d327e0521cea81d26980d4598d87d8a07dcdfa16ddd131e8fbe1f5d177a8c9a", size = 45277437, upload-time = "2026-04-20T14:37:55.417Z" },
-    { url = "https://files.pythonhosted.org/packages/48/5b/0f7f6e15707d0542ba1951f2a0d7e38400b0d6cd6ca742de97264114cf3f/passagemath_categories-10.8.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ed743bac839aa0d58e6ce617b9859dbd4b4e6c842d988ba15001fb1e9dda0a82", size = 46011471, upload-time = "2026-04-20T14:38:01.961Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/b9/490d3e1fa000b0ca21f379654e7b9f36d7108002a07ff7806ceeefb2762e/passagemath_categories-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:103d967bf80176f3f7d601ab2130d5386237dc66b6883d6f28b394ed4e0b3bc0", size = 45137233, upload-time = "2026-04-20T14:36:11.01Z" },
-    { url = "https://files.pythonhosted.org/packages/22/c0/a4af2ddacc09c97e49ddcf3bf5bd39bd9ccf43cce43afb1bb9681208768c/passagemath_categories-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:dfb2460cd8a33f2621fa19b20cb7f05adab4b3a5ea3d2f323c321fa167f14175", size = 46563569, upload-time = "2026-04-20T14:36:16.27Z" },
-    { url = "https://files.pythonhosted.org/packages/31/e5/a0e650320c0a9cc24ba799e3f6086a570fb7b591ea9c8cb8beece6ff80be/passagemath_categories-10.8.4-cp312-cp312-win_amd64.whl", hash = "sha256:38108f833dc54a8c134880cb610440876ae102f0575594e44207635dff596b2d", size = 10336914, upload-time = "2026-04-19T22:49:34.191Z" },
-    { url = "https://files.pythonhosted.org/packages/37/d4/c6cdfa63262eb37999100eb9e7823790cbc92178aeb505f36afa8a591146/passagemath_categories-10.8.4-cp312-cp312-win_arm64.whl", hash = "sha256:d801d913c91722e84faf30af7ffc9bb797bfbc18533fc976082e688fc7ca800c", size = 9522918, upload-time = "2026-04-19T22:49:36.63Z" },
-    { url = "https://files.pythonhosted.org/packages/b9/10/5a70e6372e46e8489208bbbc6abb58be7755e1ca6039d55ccfd59deef420/passagemath_categories-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:41145042d34e3922834abeafae9d1f1192305c8d33308afe1d634c1b15a3506a", size = 9672948, upload-time = "2026-04-20T14:34:46.762Z" },
-    { url = "https://files.pythonhosted.org/packages/27/90/8477f7126c6511fe60c017edb4819f725f53bf4887edc3ef7ed81a0067ed/passagemath_categories-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:91dc46e0f90ceebf0c11fcfa1a129eb95fc509df9bd3133831aa25879140fb2d", size = 10458211, upload-time = "2026-04-20T14:35:00.27Z" },
-    { url = "https://files.pythonhosted.org/packages/4d/f3/72813a26a1d219b063fa6c8b4f0208aa0d28deb34b222f1455e380ac19bd/passagemath_categories-10.8.4-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0e2bb1818c275b3bf1c121bf610b557e6b7385ccdb21d73fbe3e7fe271dd8cf1", size = 44939155, upload-time = "2026-04-20T14:37:59.843Z" },
-    { url = "https://files.pythonhosted.org/packages/74/f0/b4ee89e3a41cb4230ce0fec7981f7aec7ef71a7d2414181dd0e10f9fad00/passagemath_categories-10.8.4-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7c86a60d01d99895ccfc08c1d2a0743a3399ce5963b9e3009786d7b3fe9f6385", size = 45672975, upload-time = "2026-04-20T14:38:07.139Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/d4/04fd9ca716dc41a57c619137b9580179a855fa4d6abdee06ef2e8b13ce26/passagemath_categories-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:fe0448c3b47805db52574e260727ead7e8d0d37bdc08db4d54e1166f51984a60", size = 44863112, upload-time = "2026-04-20T14:36:14.876Z" },
-    { url = "https://files.pythonhosted.org/packages/53/b7/8afa12d00236c233e6d7add069f0450afb4c3f267acd1dd0dfa3ac222a28/passagemath_categories-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:a95bcf9b284a1e373c7b09758d7bb6baa36c7d1280e54c1e971086fe407e1d60", size = 46242185, upload-time = "2026-04-20T14:36:19.781Z" },
-    { url = "https://files.pythonhosted.org/packages/4f/9c/89122596e3e32df487eac6e492be9dc2fc8902a166384fbeec059ad0cb24/passagemath_categories-10.8.4-cp313-cp313-win_amd64.whl", hash = "sha256:6891b87c2118e5b21cd7c8bc77063d71861579b20079fd6a5e1da9d6e3a121e1", size = 10326745, upload-time = "2026-04-19T22:49:38.772Z" },
-    { url = "https://files.pythonhosted.org/packages/19/c3/bc4fb971fe04b379eb13317e5cd4c8ab0a2a06b836054bcc961637d27f64/passagemath_categories-10.8.4-cp313-cp313-win_arm64.whl", hash = "sha256:ad28ac4958e13e4a617afc3d5a580ee953a2ec962f99fcf0211557fc6e1990c5", size = 9492899, upload-time = "2026-04-19T22:49:41.057Z" },
-    { url = "https://files.pythonhosted.org/packages/56/62/dd61312280f627f68dae71e94594f78f1c57b5c31f7743cd071b6292cdb4/passagemath_categories-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:0462f0ba362500c897d18f15c40d9a630f849c818f88aadfbf965821c84d9cde", size = 9712715, upload-time = "2026-04-20T14:34:49.087Z" },
-    { url = "https://files.pythonhosted.org/packages/77/ff/b00edbed915ece387ac52725de71142c7766e8995d07c1e4a303fc94c268/passagemath_categories-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:1c6ef27386ea86570ab774c17c1458e22212fb2258ea3bec71a323498bba4bc2", size = 10457273, upload-time = "2026-04-20T14:35:02.38Z" },
-    { url = "https://files.pythonhosted.org/packages/c0/98/44a47c2e1164e23cfc01ed57b001149dc0cb38c706e77ae6c919732e7d0a/passagemath_categories-10.8.4-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d43b4e3306d9a69543ec1f0778f90fbe9838b3c202d42840da2c809468ee8975", size = 44824963, upload-time = "2026-04-20T14:38:04.405Z" },
-    { url = "https://files.pythonhosted.org/packages/00/07/443966eed8f8406b1edea4706b17c09910d7e711c8e5bd79680370fd314e/passagemath_categories-10.8.4-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d6282f1eb9c8fc47e89550b2204f1a0b9ce121c2ec19f07c825397911078e764", size = 45120073, upload-time = "2026-04-20T14:38:12.513Z" },
-    { url = "https://files.pythonhosted.org/packages/61/78/075c0ccf264d3d452d7b5b2654e87dcaecdb6a554cf24c202a8d63e68dcc/passagemath_categories-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:7cc1ff1c6f25cafc5bac31d42a4278ff226857ac6f79a643415dad06d3883722", size = 44857876, upload-time = "2026-04-20T14:36:18.77Z" },
-    { url = "https://files.pythonhosted.org/packages/b4/4e/31b830ce36a9180bc246b24bd8751a317abd13811b213a7922f9ff61fea6/passagemath_categories-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:2147c89b72f2f591c9953d8128cdfc849a1788f9868596a372bd4f889eadd240", size = 45785191, upload-time = "2026-04-20T14:36:24.234Z" },
-    { url = "https://files.pythonhosted.org/packages/18/06/cd5553d8616e8ed62ef5b856a3c56e87c514a84262b9543c7e3c00301f03/passagemath_categories-10.8.4-cp314-cp314-win_amd64.whl", hash = "sha256:6305061eeffe86b0ae430d19d0a6a97e68358b698b542e05d4b032005bfdae1d", size = 10449978, upload-time = "2026-04-19T22:49:43.667Z" },
-    { url = "https://files.pythonhosted.org/packages/28/96/38d1add6417792950aaf99b20d3528fa4d9214f320948801e08af8a847e5/passagemath_categories-10.8.4-cp314-cp314-win_arm64.whl", hash = "sha256:af942cbea8a0ae29a1c1048d27679d4956e6c5d267ffb7f92159753d3a5052ba", size = 9709618, upload-time = "2026-04-19T22:49:45.996Z" },
-    { url = "https://files.pythonhosted.org/packages/74/67/5fe2f9d48605ae09fd9b7ac22d9e513623d04834c79f02747497514e06df/passagemath_categories-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:7f7f11bf7f136feda3acf85586c8e05f75ceb12ea714c7b82f941cddf0c2a91b", size = 10315165, upload-time = "2026-04-20T14:34:52.289Z" },
-    { url = "https://files.pythonhosted.org/packages/59/a3/751510f562129b230f97b91cf70ec44eb274e5ba947c96ab88978b3a7cea/passagemath_categories-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:d9ff099cdd37413ba5d83b4e6743cd31a73ba70fc13a1513211517f16883483c", size = 10881978, upload-time = "2026-04-20T14:35:04.551Z" },
-    { url = "https://files.pythonhosted.org/packages/26/33/27db22f575be20235319fd6c48fc547bcd9dd933b902a1cb1ecb6096c48b/passagemath_categories-10.8.4-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:eccaa724a786f3dd0cd72bc4c2e896a1390cc8604fe993f7cca3f765548bff2f", size = 49983153, upload-time = "2026-04-20T14:38:09.23Z" },
-    { url = "https://files.pythonhosted.org/packages/22/7d/44633a5fc77c38264972b656c13b4efb6239c9d804af0b782bcb1452adc5/passagemath_categories-10.8.4-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:159ab3c2b4e8378b3a0b2c0037a8c563990c5b440af382e9ebe70498a79aa05c", size = 48898371, upload-time = "2026-04-20T14:38:17.552Z" },
-    { url = "https://files.pythonhosted.org/packages/1e/e0/30c4996e678a20c5fd290363b884ed7fda167b35cf6c100d714d7b51e9e8/passagemath_categories-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:5b8693c2a8ce55d3edb13f0a78f3feee0418403f9a4f14b87947d057750af3d9", size = 48875200, upload-time = "2026-04-20T14:36:22.94Z" },
-    { url = "https://files.pythonhosted.org/packages/76/67/ccdc4806a6430873c65edb353886f57a7335b9b3f2382fd1c7bcc8538479/passagemath_categories-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:b88cc776e0737b7d2857887cb80fb1b7b3283d0222b82c9eea3c327430d1c9a9", size = 49187931, upload-time = "2026-04-20T14:36:27.812Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/52/046603ce2cc836f32d010ccbc2cefc35058d7634df5598c115bc8204a91f/passagemath_categories-10.8.4-cp314-cp314t-win_amd64.whl", hash = "sha256:15c3bb39b3397c4f016b5563e993c00450fbf6ab72a65b478541014c718ebf59", size = 11683323, upload-time = "2026-04-19T22:49:48.242Z" },
-    { url = "https://files.pythonhosted.org/packages/90/13/200d85c961673bd1a89d8e96836ba85587745bcc8d63b9b00f41ef3a5b98/passagemath_categories-10.8.4-cp314-cp314t-win_arm64.whl", hash = "sha256:c3c0f89b123295e2b9e91f281d0e371dadb7643e3da9f57667ffc416ee3b6718", size = 10122698, upload-time = "2026-04-19T22:49:50.581Z" },
 ]
 
 [[package]]
@@ -2348,15 +2286,20 @@ name = "passagemath-combinat"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "gmpy2", marker = "python_full_version == '3.10.*'" },
-    { name = "memory-allocator", marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "gmpy2", marker = "python_full_version >= '3.10'" },
+    { name = "memory-allocator", marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/74/70/40e28eb8c11102bcdeafcdb4f623ef042239849b74c2799f5ec33dd7e65a/passagemath_combinat-10.6.48.tar.gz", hash = "sha256:59406279cb1b9dd96a8ba1cda02527e8dac2c99722ec1b0deb82fbde8edbebd3", size = 2434106, upload-time = "2026-02-02T18:10:50.342Z" }
 wheels = [
@@ -2411,68 +2354,6 @@ wheels = [
 ]
 
 [[package]]
-name = "passagemath-combinat"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "gmpy2", marker = "python_full_version >= '3.11'" },
-    { name = "memory-allocator", marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-environment", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c3/ad/1f94ec35a26ba91725620c1553e7ada21dda874728a8478dc15251d55e4e/passagemath_combinat-10.8.4.tar.gz", hash = "sha256:e6a12fe30ae47f6b2c16bfa9db70f01625e6c8ecdad2dedf747106073b531b5f", size = 2442008, upload-time = "2026-04-23T01:26:19.543Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/a3/9ea937f939ea38107a7ced09fb821739a816ce360cb75da3e4bfc1b36329/passagemath_combinat-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:adf3c36d95703ae243de1d855e292235e646dd29580dc87889282a98e81378d9", size = 6795751, upload-time = "2026-04-20T14:35:05.885Z" },
-    { url = "https://files.pythonhosted.org/packages/42/a3/0ba8b82cbb4fbb86bd245318b0caeb044864a25c10fc430c66c42fed9529/passagemath_combinat-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:aa179f87efdbab088a648f39d49f792e9e53e1c022c6bd9c1daa986fe4271b3b", size = 7652975, upload-time = "2026-04-20T14:35:16.425Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/c4/1d4075f8149c0174971ecc57824dfaf6f87240156159a1f5a936d6d0153d/passagemath_combinat-10.8.4-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c57451d7b160ef5bde63b050e339315400ea0cb870ec6aad395aaac734b329ad", size = 19904196, upload-time = "2026-04-20T14:38:31.611Z" },
-    { url = "https://files.pythonhosted.org/packages/47/92/8831f13046fc814f690db5ebd62e117ae11ef6436d90689f8c701f96cfb9/passagemath_combinat-10.8.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:28a77abba3545db9c239b8e80e148bb889b91eee6774fd8fc16ec26b8be6f88b", size = 20679123, upload-time = "2026-04-20T14:38:40.228Z" },
-    { url = "https://files.pythonhosted.org/packages/a8/58/9ec18b2bb6a5766c7ab16f81b57446ab6f403b080abd402752946ac6f622/passagemath_combinat-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:084688df9518b886f1923ad5a5cc23878e44418ccc74e23ab59a722bdef98ea5", size = 19749503, upload-time = "2026-04-20T14:36:43.244Z" },
-    { url = "https://files.pythonhosted.org/packages/8a/4c/97c518743a2330c61eb6edd4e4f234b2bdf78ad6394cf360951daeb8813c/passagemath_combinat-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:b0868d149ab22ab0d64e3371d8ad9d971afc0f450c1d3622b82b074f8f9c7f3b", size = 20572022, upload-time = "2026-04-20T14:36:48.147Z" },
-    { url = "https://files.pythonhosted.org/packages/a6/93/21e9b9a854c60bfa74ad79910e725b80aa70fc53330b410edb8e47d720a6/passagemath_combinat-10.8.4-cp311-cp311-win_amd64.whl", hash = "sha256:58a814da1bb2989341e12562483876c631642ac2185a27fe2635620784001039", size = 14937525, upload-time = "2026-04-19T22:50:20.523Z" },
-    { url = "https://files.pythonhosted.org/packages/0b/d5/22a6bb81de4a31b15e7f792e5089bef4c9e486a2b4d9da9975a79889a174/passagemath_combinat-10.8.4-cp311-cp311-win_arm64.whl", hash = "sha256:3133280f119ea82f8368368a4c986184e8e4d3ad13fe29849d856aadeddaeb6d", size = 9959133, upload-time = "2026-04-19T22:50:22.921Z" },
-    { url = "https://files.pythonhosted.org/packages/1c/ac/f7bb58792bda09362a65a32c9803ee3914e40095366303d458267979b5d6/passagemath_combinat-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:e333826d22b170695f0dae8a4f5e3ac0c4a0694e30b8d35862a9347e3c378dae", size = 6787397, upload-time = "2026-04-20T14:35:07.512Z" },
-    { url = "https://files.pythonhosted.org/packages/50/d8/52edf982c91bdcf05fa61765bd8059aaab671a1411b5da91a7dc096bc327/passagemath_combinat-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:f63960dcb138695fb83994c4978c6274d160fb0f81d92be03a45de3115757fd7", size = 7667747, upload-time = "2026-04-20T14:35:18.358Z" },
-    { url = "https://files.pythonhosted.org/packages/ff/bd/38fa5475fb8dac5bb57e72e625e9f222e5b79ea1e796b7d5c00c104e2d39/passagemath_combinat-10.8.4-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:38f0ed020eac7879627086841e00d4546c7ab0610a58e4e18dc2a9bbd2efeff6", size = 19913189, upload-time = "2026-04-20T14:38:34.725Z" },
-    { url = "https://files.pythonhosted.org/packages/7d/b6/a387d305ece1e4a36a1abf6a4b48d768a8a91c788c3797e4054456f11c16/passagemath_combinat-10.8.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:47fd0ec7d192c579498c5685571a2713d66685d756c56b9a7c4517ef0066c9a9", size = 20728896, upload-time = "2026-04-20T14:38:44.317Z" },
-    { url = "https://files.pythonhosted.org/packages/dd/d6/d29fcaca5805f0a4e306b432a55ad4eaeccb9548ae6cd91f8766eb82be9f/passagemath_combinat-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:d89a3dd6ea8721580301c8841ccda829d964c270454f1fb570de2c94e901ee9d", size = 19700394, upload-time = "2026-04-20T14:36:46.155Z" },
-    { url = "https://files.pythonhosted.org/packages/33/ae/6bad5a6486be1931d45f898295c1a6bcae220db17ede13fcc8ce5230c6df/passagemath_combinat-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:f9883df9578e98e98c8d49ffb0dce403f1a69270d75a3604fb154b17a6ca8507", size = 20567736, upload-time = "2026-04-20T14:36:50.515Z" },
-    { url = "https://files.pythonhosted.org/packages/66/82/a5ac70af2b22cc5ccdd65369735d5f1dbca69b669ce28903bfef63b18213/passagemath_combinat-10.8.4-cp312-cp312-win_amd64.whl", hash = "sha256:3060b8e5ffd78016ca036e9ea0c9016c973cb3b540d8236e6567e3421279c5b4", size = 14937538, upload-time = "2026-04-19T22:50:25.19Z" },
-    { url = "https://files.pythonhosted.org/packages/1c/f6/c1d6381b498d143fb951515fbd8b69a5a7f09ef305eba54bdc2ced78b0b1/passagemath_combinat-10.8.4-cp312-cp312-win_arm64.whl", hash = "sha256:088ceac42d50da580196880b53254423056c54a2115157cc690829aca2f32f98", size = 9949101, upload-time = "2026-04-19T22:50:27.38Z" },
-    { url = "https://files.pythonhosted.org/packages/7e/eb/5628ebc065148e9b573ccc165380927314f61ca8dd21da7c7e189ddbd395/passagemath_combinat-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:51f788596e86e300a4c6f45506267b3704782774a1fc5e3aaacff92df2a733e1", size = 6779923, upload-time = "2026-04-20T14:35:09.69Z" },
-    { url = "https://files.pythonhosted.org/packages/56/68/fb21ba64ecaaf3981e29551b690d8664d9a8c67f41936f4051e3d4d6e3c8/passagemath_combinat-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:2caa44d18de5cfc816396fc1838afaa8fccf4cddb7d5e645f8f5cdde49ebdc3e", size = 7661455, upload-time = "2026-04-20T14:35:20.483Z" },
-    { url = "https://files.pythonhosted.org/packages/01/a5/b6ace94663686286b8fc6e14ad28ff966be40979d3aff65565598e3b6525/passagemath_combinat-10.8.4-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:56713dff65515bb2116530fb978039ec0062f7fc9e9a0cee401777eaa8710bfc", size = 19827866, upload-time = "2026-04-20T14:38:37.636Z" },
-    { url = "https://files.pythonhosted.org/packages/3c/d0/58ef950bbff151fb09c370f6bb1fe0fbee5996900e4fc29c1186868abbbf/passagemath_combinat-10.8.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5d7625ccfaa94a689536139f32cdb7a31286437c9abb7d0de90cf70cf04806d0", size = 20639270, upload-time = "2026-04-20T14:38:47.74Z" },
-    { url = "https://files.pythonhosted.org/packages/01/b2/4bc782ab6d0e92ab13588ef48a4ecb8d2664adebb20fb22a309e680f0a77/passagemath_combinat-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:174d17d807d58a1a5a2b8c4b53b62e347b6dfb889c8e5e8d0df0c55cb891ecd0", size = 19611199, upload-time = "2026-04-20T14:36:48.675Z" },
-    { url = "https://files.pythonhosted.org/packages/d3/f7/f66e7aff0cfa906220f1136a686dd124c87650b3a825d816faa44925aec3/passagemath_combinat-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:b00fa0497bb25cb92488dc6f91da0d92cc5c72961fa42aa6c2b743ce1534c2f1", size = 20476816, upload-time = "2026-04-20T14:36:54.711Z" },
-    { url = "https://files.pythonhosted.org/packages/b1/91/c9e4b68d4516588641da86e98b39c13e4d0acb19037cbfae3f9c4fb9451d/passagemath_combinat-10.8.4-cp313-cp313-win_amd64.whl", hash = "sha256:0b973935b04b5125703b371475008c78b23c14e512f73cdce5792b9d50d95659", size = 14930648, upload-time = "2026-04-19T22:50:29.265Z" },
-    { url = "https://files.pythonhosted.org/packages/ea/4d/b93bb822aa7632205582930857cbf1cdafdcce23d9e8e7a410559626be2b/passagemath_combinat-10.8.4-cp313-cp313-win_arm64.whl", hash = "sha256:a94d0a41428759c7e6f613a45812d9915b2ba06bae612201d0817ea6649eaf1c", size = 9943688, upload-time = "2026-04-19T22:50:31.126Z" },
-    { url = "https://files.pythonhosted.org/packages/8c/73/7da8d71371f2c492e4cf53b36dea64a920692c8b8271111a11a702f3ce83/passagemath_combinat-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:706752d210c0282526f128bf65107ad9154b2fcb4de31d4dd924d5cf965c147b", size = 6787423, upload-time = "2026-04-20T14:35:11.371Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/ab/3a6858f08acee4d162d2d3ccafb7245785298e954fe992afd126b245d13b/passagemath_combinat-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:caf4b2b1fea6c49b7269c9c850abd6f479e2e5b069a52b4041741d8863587440", size = 7659929, upload-time = "2026-04-20T14:35:22.656Z" },
-    { url = "https://files.pythonhosted.org/packages/5b/26/eeba717f45a0811f74915daea2d967e52631f8bab09dfd18eb6e3c2e04eb/passagemath_combinat-10.8.4-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0b50316728569ca78f6415c8d6f9fd6a86ca103bffc8b0b177ed48108adceb0c", size = 19823758, upload-time = "2026-04-20T14:38:40.566Z" },
-    { url = "https://files.pythonhosted.org/packages/16/9f/80df775455c263012f886050a3ed9b9f8db587be41203d6fb5ecc23a7d61/passagemath_combinat-10.8.4-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cfca4696056c2eccaf210fed3e170034f93701ce62bfacda21e2503650e42d93", size = 20577757, upload-time = "2026-04-20T14:38:51.287Z" },
-    { url = "https://files.pythonhosted.org/packages/56/1f/4cf1a3797541a53643162c30a034556abeaecac2215ffcc4e51759b026bf/passagemath_combinat-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:56c405c326cb4f8db68b1d078be22ce606f9d262d00affa9fe7e5db7915e9ac0", size = 19624619, upload-time = "2026-04-20T14:36:53.459Z" },
-    { url = "https://files.pythonhosted.org/packages/dd/c9/3635142d985c20c4fb8098ff8635b2b2058d8c82543659220213b91a83a5/passagemath_combinat-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:b369fe24eb1f704e268a665e304fea3a3e0cbbc8107cdb1441296043c0259008", size = 20427711, upload-time = "2026-04-20T14:36:58.314Z" },
-    { url = "https://files.pythonhosted.org/packages/01/6f/cfe5e247bce8c2d7646421b7a08feefa7d30395128e7281aaa5977265cae/passagemath_combinat-10.8.4-cp314-cp314-win_amd64.whl", hash = "sha256:e9ca1a3f2fce1693f1adbedfa9b44b325ba2b5b7abed9c8594629ffb80b1330c", size = 15255036, upload-time = "2026-04-19T22:50:33.168Z" },
-    { url = "https://files.pythonhosted.org/packages/5b/63/26c6a86f66c2bf1fbc1077eba08e61dc7ee8c1c15b91c5cc3a55753cb6e0/passagemath_combinat-10.8.4-cp314-cp314-win_arm64.whl", hash = "sha256:15846ca2b550c10fd2b5968305777b7d9a1c5249c0d906faf4c824eae9bfa2d5", size = 10077192, upload-time = "2026-04-19T22:50:35.179Z" },
-    { url = "https://files.pythonhosted.org/packages/fb/8c/fbd95b084269637586f68d2f0b4f54d10a0753ba40764b6e8bd9492605f8/passagemath_combinat-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:e153a0ee29b05b4fb663bd7cfe672da2382fce87734c8b0d4c98cf2675980205", size = 6893356, upload-time = "2026-04-20T14:35:12.954Z" },
-    { url = "https://files.pythonhosted.org/packages/98/52/1e89ca1a1478af1a808c9327fe173df74b01e1d186f84b886e679d3f4d00/passagemath_combinat-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:1d2e56b8e122f68270d47d3b6830c246f20761d9281aedec6fd3e50dcf7accc8", size = 7735510, upload-time = "2026-04-20T14:35:24.529Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/04/0aa1c494ceda88963134289f11e89ed76423154b8101a0101a5231837a82/passagemath_combinat-10.8.4-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0e8490a7812b6d3a5d25aabecb89b30f557846f795c474bef7c560a1c91dad26", size = 20818574, upload-time = "2026-04-20T14:38:45.953Z" },
-    { url = "https://files.pythonhosted.org/packages/b0/cd/34da0a321bdc25bd2320eece570b8b185f405fb0c4af0539503264022eea/passagemath_combinat-10.8.4-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fd434405e86537ab7f063c708aea6e687ea54fba1ba251559ddaa48d9d56297a", size = 21312626, upload-time = "2026-04-20T14:38:55.626Z" },
-    { url = "https://files.pythonhosted.org/packages/8d/0a/8b28cbc6c5d286d6f3b8b498a1055b3a81853d64ea57aab1c5b23bc8ca72/passagemath_combinat-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:6369e748fe297bd8f8464ba13cd4a738d96b5b574657944a92e6c9df42938393", size = 20404361, upload-time = "2026-04-20T14:36:56.9Z" },
-    { url = "https://files.pythonhosted.org/packages/89/4e/5fd47fce10dbc9d929a0f18829af8f4ace4a0537a350544c0f8411e2ed7d/passagemath_combinat-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:c945e1477bcc64af9c4f6a29f47115056c0140696bfdfbc414a6802ab1aff503", size = 21097206, upload-time = "2026-04-20T14:37:02.829Z" },
-    { url = "https://files.pythonhosted.org/packages/12/4f/08415940bc60117e6ae58c098956507758bd6e5f32ad8b2c9f92e9196df9/passagemath_combinat-10.8.4-cp314-cp314t-win_amd64.whl", hash = "sha256:52d89cf8560ac923964d179326636e53b74d3653036aa316fa2e5793ca226eb3", size = 15473390, upload-time = "2026-04-19T22:50:37.073Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/95/38c03de09c31309b7eb56a5f58bec1be83c163f9eebe1b654247197c75b6/passagemath_combinat-10.8.4-cp314-cp314t-win_arm64.whl", hash = "sha256:b4b1f160830a1aa9fce40f6266985401e6a842aa84e1830fab68db135374901e", size = 10146112, upload-time = "2026-04-19T22:50:39.341Z" },
-]
-
-[[package]]
 name = "passagemath-ecl"
 version = "10.5.49"
 source = { registry = "https://pypi.org/simple" }
@@ -2523,13 +2404,18 @@ name = "passagemath-ecl"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d3/42/ee539d08ba61f7ebc751b4f89e778e03b6bbfb8c2f4fc5ea2d0f4fa65a41/passagemath_ecl-10.6.48.tar.gz", hash = "sha256:d21b3699740c2468b5b0bd33745f47cb02f78b8c48125ba46382d8f62ee45259", size = 21207, upload-time = "2026-02-02T18:11:10.304Z" }
 wheels = [
@@ -2588,35 +2474,20 @@ name = "passagemath-environment"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version == '3.10.*' and sys_platform == 'win32'",
-    "python_full_version == '3.10.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "packaging", marker = "python_full_version == '3.10.*'" },
-    { name = "platformdirs", version = "4.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/ac/4e08983a615c771b39bcaa7be38b0f413b261080f11287549ea6f425d758/passagemath_environment-10.6.48.tar.gz", hash = "sha256:a4da126ee6ab68e148cbbf57eab82942ecb914d178a503bdd788c6328ac9c8b3", size = 127638, upload-time = "2026-02-02T18:11:12.262Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/a8/cccbffc3262815743a74fcccd67fb777a3b18bad5e1f9c072e45201e7d08/passagemath_environment-10.6.48-py3-none-any.whl", hash = "sha256:1ddc4a6b40d22a6169fcc981d0ee56858d8b3a196b32494cce38d73a5b9567d7", size = 136871, upload-time = "2026-02-02T12:31:34.912Z" },
-]
-
-[[package]]
-name = "passagemath-environment"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and sys_platform != 'win32'",
     "python_full_version == '3.11.*' and sys_platform == 'win32'",
     "python_full_version == '3.11.*' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*' and sys_platform == 'win32'",
+    "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "packaging", marker = "python_full_version >= '3.11'" },
-    { name = "platformdirs", version = "4.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "packaging", marker = "python_full_version >= '3.10'" },
+    { name = "platformdirs", version = "4.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/17/05/4063014f62125c6bd437d7ad3e7c808204dcf6219daa8be7a57a29eaeecc/passagemath_environment-10.8.4.tar.gz", hash = "sha256:ff7484e49da38a581ca456fe69f304ad551cbc374daa37e9ba0417a14e2f3c37", size = 129137, upload-time = "2026-04-23T01:26:44.082Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/ac/4e08983a615c771b39bcaa7be38b0f413b261080f11287549ea6f425d758/passagemath_environment-10.6.48.tar.gz", hash = "sha256:a4da126ee6ab68e148cbbf57eab82942ecb914d178a503bdd788c6328ac9c8b3", size = 127638, upload-time = "2026-02-02T18:11:12.262Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dc/20/de9e8500bb3ceaddd7647b61ac526e9f31fa562a4131e726efa9cbd91881/passagemath_environment-10.8.4-py3-none-any.whl", hash = "sha256:8372c45d82dd7f4c78d64dd032ea526580f46829d64c3f3eb08f934eb279eed8", size = 139917, upload-time = "2026-04-20T14:34:29.221Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/a8/cccbffc3262815743a74fcccd67fb777a3b18bad5e1f9c072e45201e7d08/passagemath_environment-10.6.48-py3-none-any.whl", hash = "sha256:1ddc4a6b40d22a6169fcc981d0ee56858d8b3a196b32494cce38d73a5b9567d7", size = 136871, upload-time = "2026-02-02T12:31:34.912Z" },
 ]
 
 [[package]]
@@ -2670,13 +2541,19 @@ name = "passagemath-flint"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-ntl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-ntl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4d/8c/29f1fb8b18c19bcbd72d2ed694fcee3e1760c2d0885969f1a93fb34d1184/passagemath_flint-10.6.48.tar.gz", hash = "sha256:ddd839c52169d5381dbf1eed552e765bdd3b8b6bf53567463dcf035f948d0246", size = 1036515, upload-time = "2026-02-02T18:11:13.37Z" }
 wheels = [
@@ -2716,109 +2593,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/df/bc/557b72ef619b547689f63cc9ce8e5cefd8dcbeba25dadcc2ec0246dc8e31/passagemath_flint-10.6.48-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e5ce844b24b7b38bde3ab60de8427acfff6b88df5fe9823f0d2f1aaddfe51bf4", size = 46981642, upload-time = "2026-02-02T12:45:15.824Z" },
     { url = "https://files.pythonhosted.org/packages/ce/30/83589d3919ab70671b59add3ac34d6cdfcc9ecdd939373d38acd3fe150a1/passagemath_flint-10.6.48-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:8c3335ff435bda7155941fcfcfd96075ff8554823b972287943fc0425d186138", size = 43643290, upload-time = "2026-02-02T12:43:20.985Z" },
     { url = "https://files.pythonhosted.org/packages/e3/9b/861ba997d0b47fe5e323f6a5d2d2b9f2f361dc28abf74504c38a23ca269d/passagemath_flint-10.6.48-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:8b0fce3ad631b847e8f8d9b06bef2f3a3c7626a988cb87d2be07429208e1079d", size = 48137842, upload-time = "2026-02-02T12:45:06.79Z" },
-]
-
-[[package]]
-name = "passagemath-flint"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-ntl", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/67/ad/cf73cf40d4edcb2849027f62e4d0244273fd06c360a939e9f81fcd65c5d9/passagemath_flint-10.8.4.tar.gz", hash = "sha256:a444e61be9c23374c16fc741e48da5acc2fb20d0a855d9fb0bbb455d263f1aba", size = 1052370, upload-time = "2026-04-23T01:26:45.778Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/d6/d25cd7a62f6c6f68d8fad7ec2cb3538287024d88a81c335fc6f21ec840f7/passagemath_flint-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:280f09a8ef528d331f2799422318def681c0d0ea9bd94f3edf61a91fdd2ba6cd", size = 23369398, upload-time = "2026-04-20T14:35:46.003Z" },
-    { url = "https://files.pythonhosted.org/packages/62/e3/51d48b817c75c1f57d6e9186e10fe7a2f6624540cf06de09aa2fc8bc4779/passagemath_flint-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:c8e74e0ce2ad5a297a5170777aded1c2417e4b3baabda4fd2fcc156541a31717", size = 26341826, upload-time = "2026-04-20T14:36:01.671Z" },
-    { url = "https://files.pythonhosted.org/packages/e2/1f/80bc82dc8f982aa9a0adef4f71ea070c4579d280b4371a6c46945e990c15/passagemath_flint-10.8.4-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:65333b4758c3c4f187b41f3668b21490caaeb714553094f44be22da596f5c0b8", size = 44399761, upload-time = "2026-04-20T14:39:42.527Z" },
-    { url = "https://files.pythonhosted.org/packages/02/4b/0bcdd8a5df279f75b3e2a56b5c459568f63d95315a4e64c79d011f67511f/passagemath_flint-10.8.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7bfa5e0ceedbc36a8e2a80d97bd7159d7d9ef028e2a3fd179576e90c6e2fb03d", size = 48702345, upload-time = "2026-04-20T14:39:57.098Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/7c/455977c8bad170126e2ddf2d715ec4f4d4c1ccb097bf1376cdb62ceecd22/passagemath_flint-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:5393e48e2c940c23fccb24de42372981e98bb6b218537dd3b479f1b7f826e814", size = 45303263, upload-time = "2026-04-20T14:37:47.671Z" },
-    { url = "https://files.pythonhosted.org/packages/42/6e/5f32629f426bfdc1e144cafd1d28b990ce4a02ed533e15dca6656df41598/passagemath_flint-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:66433e53f9a0b024e7627a9444aca178bae820acfe953813bf24c5c82cc47ec9", size = 50226902, upload-time = "2026-04-20T14:37:51.661Z" },
-    { url = "https://files.pythonhosted.org/packages/b2/05/5461ffd76c5c69fa0f9871199d198d5ec7193e855986014c49e7801ff1c8/passagemath_flint-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:73ba8dbd3485c625458891a56b39ca8f0b94994213dcf91d6b48acf4645f133a", size = 23323897, upload-time = "2026-04-20T14:35:48.667Z" },
-    { url = "https://files.pythonhosted.org/packages/3c/63/72f059f29def978a23b28d7bafe96486df7c329f59054c43250d3ef4e299/passagemath_flint-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:8c6074f4dbf9cb468fdc6b03312007cea652544c571edebe6528a19760333dbd", size = 26339199, upload-time = "2026-04-20T14:36:04.917Z" },
-    { url = "https://files.pythonhosted.org/packages/dc/a7/eebbd48f43db0f28ff9b538e9bd01d2afecc16731653fc7ad63d66c9f0c1/passagemath_flint-10.8.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:347a31bb32ccc54e1f852c6902eb007e195ea0d7ac81f7e2da1265d68e3bc457", size = 43826240, upload-time = "2026-04-20T14:39:46.652Z" },
-    { url = "https://files.pythonhosted.org/packages/27/71/abadedac988e9e4fe5e6d9647166ee3da92173ec1ce233a9592bc4c31921/passagemath_flint-10.8.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:10b06aaae786db43132b7a284a19efadcb2fb3b59773c4f134736a2bf69378b5", size = 48396060, upload-time = "2026-04-20T14:40:02.063Z" },
-    { url = "https://files.pythonhosted.org/packages/62/0e/7c180b2bbd8bdab70245687254f3f65233c0915bb1bf7abe8398d06ae382/passagemath_flint-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:7a0b781d3cf8c44a49f67587a28527feedc5e49afaf950515afbed85015c06d7", size = 44485931, upload-time = "2026-04-20T14:37:51.271Z" },
-    { url = "https://files.pythonhosted.org/packages/53/3d/829b3a15778cf97324e92f695eabc0746bd5aaf4641180e85bab5a13c365/passagemath_flint-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:b5b3191ffb07562e1d22d3811a14bd49ac0db4a9ad78b6f975c389c9079e187a", size = 49688039, upload-time = "2026-04-20T14:37:56.296Z" },
-    { url = "https://files.pythonhosted.org/packages/7b/8b/033234882c51f3bc219ae3a65480c199e2fd3ee3376f67d234c8712fb15a/passagemath_flint-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:b378f673fff183be382dc858e138a1f2a54f7ffa679814102c0d1a5e38b60fff", size = 23306791, upload-time = "2026-04-20T14:35:51.391Z" },
-    { url = "https://files.pythonhosted.org/packages/77/a0/10bab03b94f3b02cbba6aab4e17c2b1310b1a276e9f27d7c71eb047437e2/passagemath_flint-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:53d1ec806c6a314294797f1f0a3b5dae8816eaa712273d22b253fad7e60749a0", size = 26323074, upload-time = "2026-04-20T14:36:09.105Z" },
-    { url = "https://files.pythonhosted.org/packages/44/32/887393dc9cfccc2d8b7afd9d3adb9d83649bd44b98072961ae29b33b0745/passagemath_flint-10.8.4-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:8336954ee139c9016ba17d032c6c1d847a2952c44fe83e356b02690e25eb14d1", size = 43575478, upload-time = "2026-04-20T14:39:50.7Z" },
-    { url = "https://files.pythonhosted.org/packages/84/d1/ac1fa625e7343d22a5288f53304826c7ef89f3b208f9c4abde99e31c5803/passagemath_flint-10.8.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:498dbf27241ddf630de6035e77812e0025a6290422267e76e1d6a8cf954245d7", size = 48197130, upload-time = "2026-04-20T14:40:08.364Z" },
-    { url = "https://files.pythonhosted.org/packages/5f/c5/e0a213461115727251d4c6eed2e5e36979e5df30bd5cfca76bf1dde59c74/passagemath_flint-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:ec2d8dc939bd913269418348c38b531cb6d747c60bda8c53ff97100b0a2adc01", size = 44262543, upload-time = "2026-04-20T14:37:54.547Z" },
-    { url = "https://files.pythonhosted.org/packages/93/4a/0fd617fc50c60896d2f27487f36ca7a064a454c52dd04eb0390d302b145c/passagemath_flint-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:d3f1969d0ab2f2db4f5745340150f165f01cfd1b69cc11076173cfb912b9b7a9", size = 49482443, upload-time = "2026-04-20T14:37:59.845Z" },
-    { url = "https://files.pythonhosted.org/packages/5e/c9/9481b218f93c6281e07c2d3a958da1a034015766a9699bae8dbf3ee48c0a/passagemath_flint-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:73394f7b77430acdba103e23187431227b573bad6b99d5678a9cc0e9c0ac1c40", size = 23321269, upload-time = "2026-04-20T14:35:54.098Z" },
-    { url = "https://files.pythonhosted.org/packages/aa/aa/f6325b15edfb3859d3031687ba019c462317e61e475f96d47dd5619891ba/passagemath_flint-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:f5ae29fda4bf384ab3dcd497dff67c1ac477a959733b2dfe368b2d76c7aef27f", size = 26315426, upload-time = "2026-04-20T14:36:12.502Z" },
-    { url = "https://files.pythonhosted.org/packages/9b/23/795aabe759ff8a30b448f5de6a2dacbc512af0ce3870a1e032ce71257b44/passagemath_flint-10.8.4-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:16e3e748469cbee46a2e9b1659e932285ef366f004a95077344d5821b77addf6", size = 43511693, upload-time = "2026-04-20T14:39:54.896Z" },
-    { url = "https://files.pythonhosted.org/packages/03/c5/baa67430c6ed78df740a57877a9272b373aa5573c0a8049ee46c0acb5c95/passagemath_flint-10.8.4-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:532c7c4ccaffdbc8763396a7eed8692b5457af229126d45d21e1a98b9be434d8", size = 47859266, upload-time = "2026-04-20T14:40:13.352Z" },
-    { url = "https://files.pythonhosted.org/packages/61/ed/d2a15c6a46659a23eb48d799c910bc63f7a01e60bae9314975cff4aa02f1/passagemath_flint-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:ab04bbed294826090302a243b47c65508b8529f582ede0fa531369e382de638a", size = 44253945, upload-time = "2026-04-20T14:37:58.537Z" },
-    { url = "https://files.pythonhosted.org/packages/d3/9d/44b741932fd12e028bfc96ba6206a0c3b544a1f71aa61ac0a1ce91b76f52/passagemath_flint-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:5c0ce86fe97141fc8b1771b589260eaba34eed657a5c9693533576974c78aa7a", size = 49225371, upload-time = "2026-04-20T14:38:04.42Z" },
-    { url = "https://files.pythonhosted.org/packages/17/ed/c3278b1d960e2187fb57dcdeb520ee1d1e7a98274f0e259acc4af6b79489/passagemath_flint-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:bb3bde8f2755d9ad032261d6643e9c90001100fa7c9387f7875aff73e5b33067", size = 23656886, upload-time = "2026-04-20T14:35:56.62Z" },
-    { url = "https://files.pythonhosted.org/packages/b4/b7/9da07f1bd95a6633c2b118bcce6f4e226f09e4a0ffafc04f409a03b9878c/passagemath_flint-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:98df6a596e33495d92d9a001289c94837de9aa387a98ff81e8dedd6698d89acb", size = 26541903, upload-time = "2026-04-20T14:36:15.81Z" },
-    { url = "https://files.pythonhosted.org/packages/f6/03/36e7153cc201fd6fc67c9d8a6c7e3712b811aa33c8664ad65fda4918a1d1/passagemath_flint-10.8.4-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:6b1a2f35f620086b0e0eb11972ae922aee794b31415fccbdf26106efce7ad95a", size = 46447470, upload-time = "2026-04-20T14:39:59.98Z" },
-    { url = "https://files.pythonhosted.org/packages/c2/49/cb9d993627e2a4fc4c9e67f0d6e51ec8b839d5cc768727b6385af0aea464/passagemath_flint-10.8.4-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fe37720ad2c88c390633108e36c5b60b635b82c448c935778f497183606ce60b", size = 49849395, upload-time = "2026-04-20T14:40:18.263Z" },
-    { url = "https://files.pythonhosted.org/packages/89/7e/4961c60575395ecb2234740fc804378631c9599f9c6b935f5468bf330273/passagemath_flint-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:5d836f9ca00c1af2f945e6134ec9629e1def2600768387d4d5ec9106c58f19b9", size = 46578643, upload-time = "2026-04-20T14:38:02.817Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/72/dd61fc73d979b9bfd1375ca6bf98e8a3e985a58e33b1c5e8dddd52fdeb53/passagemath_flint-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:121873250c707cd06c9af00c3f09915a98f2e1333fab288b927f862b60fcbc10", size = 50966280, upload-time = "2026-04-20T14:38:08.793Z" },
-]
-
-[[package]]
-name = "passagemath-gsl"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "memory-allocator", marker = "python_full_version >= '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-environment", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-modules", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/37/62/2a8655fd8499270ec5dd3a910491db32d8e1e23a9abbcbec225dcdb519b1/passagemath_gsl-10.8.4.tar.gz", hash = "sha256:4be2bbc4c3cd0ae47ed87f13b5afe42119f41b2d227ca43201a0e35348031c61", size = 54513, upload-time = "2026-04-23T01:27:20.473Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/25/14a5bde397945f9587f989384b7e8d467dc36da46b83d6ebf51b80d85dcf/passagemath_gsl-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:fac59ddbbf50dc5c8be49d6c8ca0b95f9e270e056b8230738444ca849da2a3ab", size = 12532304, upload-time = "2026-04-20T14:38:00.997Z" },
-    { url = "https://files.pythonhosted.org/packages/cd/dc/f467d020003b959d433dbc3757c4f1bd8847df19a08cf6664585293f77a0/passagemath_gsl-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:81a70888bd09769610a3962dcd9e9a82fb85ec6741d94e14d473eb1ea1fc4b9c", size = 14413390, upload-time = "2026-04-20T14:38:52.398Z" },
-    { url = "https://files.pythonhosted.org/packages/0e/44/63e47d011ba1bf5842a3f70f47490353f8e77a6ae101ba68e9c81921f24a/passagemath_gsl-10.8.4-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:49f2fd69c75138861383cb76d59693e8033861973d9256953e12365eee154cad", size = 12445328, upload-time = "2026-04-20T14:43:52.985Z" },
-    { url = "https://files.pythonhosted.org/packages/be/0f/75c17d055386cde775ca0569a6dbacbc6b6c3120fb109dbbdf39d13ba2cb/passagemath_gsl-10.8.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:57749ecc5146f2727d01d5c9df8cc6d69ff3fe1a1128737691b9e4d1babc4b25", size = 16333525, upload-time = "2026-04-20T14:44:34.456Z" },
-    { url = "https://files.pythonhosted.org/packages/20/bd/7e0acef165ffaf3a1edb260ff3f3fff3dec2956370a1cb70e9ea42059377/passagemath_gsl-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:12c543c789cc1174269d122f5f42973e1d5c3feef6ac54b4554a5923246547d2", size = 12718701, upload-time = "2026-04-20T14:40:56.666Z" },
-    { url = "https://files.pythonhosted.org/packages/a4/bd/4a569cdff82e64014e3e1af65b00f26bcf6edb982044935a1feb7cc7bdbd/passagemath_gsl-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:a7a7295b279858e317a4ef3eeb06635a81fd2f89d1ab6c79f8785baae9fc07b4", size = 16966890, upload-time = "2026-04-20T14:40:36.023Z" },
-    { url = "https://files.pythonhosted.org/packages/20/5e/ca0a021886511258f922dd8699923a73995860eaacad063dce4472dbce10/passagemath_gsl-10.8.4-cp311-cp311-win_amd64.whl", hash = "sha256:bd24ea960981285da097a466178f8a583b8c30b93bdcb181874764c24b8aaed0", size = 5427595, upload-time = "2026-04-19T22:51:14.761Z" },
-    { url = "https://files.pythonhosted.org/packages/04/ef/566d019089ec606d2ebef92cffda64540f9e5a4537b19b5bbf9ff55cbb56/passagemath_gsl-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:a1658c4b76cf5a72fa563440f71bcd4312e619fecea63d9366917fddfb935b35", size = 12526408, upload-time = "2026-04-20T14:38:03.409Z" },
-    { url = "https://files.pythonhosted.org/packages/2e/19/e23bd3c73e9b0f140544d334255d8386994d8d09fa21a7e24a8ded20c77e/passagemath_gsl-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:22b99f224931a23964346f44053bc6ee6ddd9349bbcc03b5b1022e9a96ace690", size = 14408328, upload-time = "2026-04-20T14:38:54.779Z" },
-    { url = "https://files.pythonhosted.org/packages/54/4a/db84d301ba778a959451b4e64531f49daf7919d6b852a212ef0de25865fb/passagemath_gsl-10.8.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fc6b37121da2f3a2ebd7cf4ad502dda38fab337cb933b5e56692bdd08d160141", size = 12476759, upload-time = "2026-04-20T14:43:55.428Z" },
-    { url = "https://files.pythonhosted.org/packages/32/37/5d330824e7c99691e34ff9c9d83a3a607b7733f38cd9386aa175803c068c/passagemath_gsl-10.8.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4963c058582cefc52f42400bc4c5691daa79f967e8b330848c15393dc9dfc992", size = 16382468, upload-time = "2026-04-20T14:44:37.432Z" },
-    { url = "https://files.pythonhosted.org/packages/69/2a/2ff74378f0376e01286c5f3e5ce389f0f0393f035ad87bccbac60489aacf/passagemath_gsl-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:526619808cabad50092136629572c1d2d9122694b92b4c1fa61590a7c7bf26b2", size = 12728734, upload-time = "2026-04-20T14:40:58.797Z" },
-    { url = "https://files.pythonhosted.org/packages/c5/00/eaf999fa948d455f7df5f37627b50e242fa299b2d2bd37c932686c182666/passagemath_gsl-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:476fb90e747c61fd92a8e6427071ddfdcd3d27e45b6e800a89c54b2f4da219c6", size = 17004570, upload-time = "2026-04-20T14:40:38.813Z" },
-    { url = "https://files.pythonhosted.org/packages/b4/97/463fa45dbf1ccaf12059dc50df7f4fa3bfadf22b2e4f75ee74e917b9e338/passagemath_gsl-10.8.4-cp312-cp312-win_amd64.whl", hash = "sha256:753c722beed4401bfc4f19323f9125e7aba7151bf66065e648a9758838134cf7", size = 5419020, upload-time = "2026-04-19T22:51:16.526Z" },
-    { url = "https://files.pythonhosted.org/packages/ae/d5/71aeebf5d0d227ef70542239242fc4824d5da405fb90f828085df0bba23c/passagemath_gsl-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:03ac539c6142dc2c52970593e6199144c9e7e63b2ce29accec7e3d5d262f72e0", size = 12524607, upload-time = "2026-04-20T14:38:05.39Z" },
-    { url = "https://files.pythonhosted.org/packages/20/aa/9b1ad36f42c66cce2707864eddef21bd5b3fe7a4a98a0bf14409bca93a9a/passagemath_gsl-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:447e7694fe6d3660d69e5496a722431ac8d035191a482dfb8c88a1d58e449380", size = 14406871, upload-time = "2026-04-20T14:38:57.567Z" },
-    { url = "https://files.pythonhosted.org/packages/07/08/e508213540f81ae2fed04aef8fb4d33bab121c858a1162cd5606b2e922d6/passagemath_gsl-10.8.4-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:8da5144c427ba80fea592bfe203fe34f5e9818838307bdf737254703b97808d2", size = 12445718, upload-time = "2026-04-20T14:43:57.79Z" },
-    { url = "https://files.pythonhosted.org/packages/6a/b9/10714c6d864ecbd5734c9f8d7026589a92d5d5d3280754aa2e27e1b94980/passagemath_gsl-10.8.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c5f2f68e327642d08ce8a2ca6fa5e331ff968a8b02f7f08d1ae28f0d47e6c79e", size = 16360330, upload-time = "2026-04-20T14:44:40.631Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/71/78ba517de1c479c3329c7d7d530fa300b1b252dc5896208f66a2c7e53f7f/passagemath_gsl-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:a714bb9bbee5cb1b3dbeff396f32f47e0d48d46fd670f18d41db669b24500b2a", size = 12703807, upload-time = "2026-04-20T14:41:01.256Z" },
-    { url = "https://files.pythonhosted.org/packages/0c/13/e26c22852757dde525045a906a4d556f9dec15fc657e1d652b4b4a12c039/passagemath_gsl-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:32df336fdaa76abcd0073d08f1a18046e1560a793441d10ffb9c598361073306", size = 16980677, upload-time = "2026-04-20T14:40:40.928Z" },
-    { url = "https://files.pythonhosted.org/packages/02/61/381dd8c471593f50bc531d48479072176d374e858bfb02866c72236f37db/passagemath_gsl-10.8.4-cp313-cp313-win_amd64.whl", hash = "sha256:569694595120824c0249a160dcf70a89af346be353956c38733a1b1ab4581d07", size = 5418248, upload-time = "2026-04-19T22:51:18.33Z" },
-    { url = "https://files.pythonhosted.org/packages/4b/a7/646e5d90dbfb42f0bdaebc094af6243b8b30ab850e1e09c7a7a5deb66705/passagemath_gsl-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:ce797e4844b157e534753d47e293aa750d8c9a5d0711014943bf4bfa93a34ecc", size = 12525714, upload-time = "2026-04-20T14:38:07.674Z" },
-    { url = "https://files.pythonhosted.org/packages/e8/7d/a443a009b79f485e2b208fc4a9fdd8f7218fb966b0f7efcdd69f7c0a473b/passagemath_gsl-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:38b43f6c8135a450e95493b3c5d4d073187f3f84f423e8204bbb082fa440e38b", size = 14405087, upload-time = "2026-04-20T14:39:00.372Z" },
-    { url = "https://files.pythonhosted.org/packages/b7/d5/cea19302d7697854bb45d7ff49b9b7f338a25e5fb88db210d6ef5025c2ee/passagemath_gsl-10.8.4-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:58738942e48d7589a7d90f532705e14867293eef76d39ecbeab9c7c6fd4493b4", size = 12437357, upload-time = "2026-04-20T14:44:00.532Z" },
-    { url = "https://files.pythonhosted.org/packages/fe/79/a36ffdc9bdf6fdcded53bcce81ccc4397dd84e2471462a2c2835c5870153/passagemath_gsl-10.8.4-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d2f6a716976d19bd8f6b1cb7ce116d012106a2ddbf3ce77dcfd4b429b9486232", size = 16322990, upload-time = "2026-04-20T14:44:44.212Z" },
-    { url = "https://files.pythonhosted.org/packages/67/44/df6746cd1ec6fb527055cca64ce7a022e60e35b74c547f9b49af00934c8a/passagemath_gsl-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:2f2fa180fc3ec18238b49a22a9a811e091cb23f135ace2b46fb0660b3070d45b", size = 12696423, upload-time = "2026-04-20T14:41:03.754Z" },
-    { url = "https://files.pythonhosted.org/packages/5e/c9/13e5bd6cb04cc501e3c1080a839bd3bc147df2e84891e4c13e76bee61f8a/passagemath_gsl-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:293e9d9aa5d5a7a10a7bfba6de84ee975660c33147ec5609a05b84a1425a6f28", size = 16950188, upload-time = "2026-04-20T14:40:43.498Z" },
-    { url = "https://files.pythonhosted.org/packages/19/17/152936d3148883184058597cc9e17eaff63aa810db266d171fb1d97e317c/passagemath_gsl-10.8.4-cp314-cp314-win_amd64.whl", hash = "sha256:0bcf66f2d31fc2918243c79c42a7cbcf5c37c9e4d5f1f1bc8830ec7e76884db3", size = 5571589, upload-time = "2026-04-19T22:51:19.979Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/10/9e7675e15171247372c1e6f3a4f6a5a9f65fd555d00969f154787f9ff071/passagemath_gsl-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:a15f36d1e4f74cb6e6aa6852eb94c409239d8f574ff646f0d11745a05cdf5817", size = 12563346, upload-time = "2026-04-20T14:38:09.633Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/93/e2023586a6ca41a838dca1fe7712f5d5a89b17a910607d454bab6050a5a5/passagemath_gsl-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:44f199a99f81ec2945700182427b4780032438c58f8efa4f4aba74b319168301", size = 14436457, upload-time = "2026-04-20T14:39:03.278Z" },
-    { url = "https://files.pythonhosted.org/packages/21/58/c4e323d7e798260c423072b59b69bfda13f66ff9ff53d67baffcb6a666e9/passagemath_gsl-10.8.4-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bbb3512f6defbe7ee110f5ee00a69ca1b5cf176dad9bf3adbafb1a0a2f98f51b", size = 12658274, upload-time = "2026-04-20T14:44:03.191Z" },
-    { url = "https://files.pythonhosted.org/packages/e3/7f/8fe667061ac39eb47f387c9801ade644a3a4866b708d54ece1c8241fbbae/passagemath_gsl-10.8.4-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:43ede51c16126c57527d2b49cc79d18f88cae3f3a4bc1c19a0514d4b12a4ca7b", size = 16466688, upload-time = "2026-04-20T14:44:47.327Z" },
-    { url = "https://files.pythonhosted.org/packages/50/64/2c8d214c1531c9f9b04cada5ad0a1a60de3ee89dee8ca575419ace56468f/passagemath_gsl-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:52b0088310fda7d3969a37013c51638f38f9777187a68eeff693403a08d9ec72", size = 12878294, upload-time = "2026-04-20T14:41:05.986Z" },
-    { url = "https://files.pythonhosted.org/packages/c3/22/3216a0d13809cf290b6b4f2d87a68444450a3659ebfc1d9be84f5ce86242/passagemath_gsl-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:b84c2a32eb5a3e2c5eac2a1d06930432554fed1a6e35c83aec977d52d902adac", size = 17077518, upload-time = "2026-04-20T14:40:45.602Z" },
-    { url = "https://files.pythonhosted.org/packages/09/57/5dbebccca937b8d0138e0fe9a7de5ccbb8ef9c1cc7c277445bf4f1f803ea/passagemath_gsl-10.8.4-cp314-cp314t-win_amd64.whl", hash = "sha256:68a7e3a216491651c905bf34ffc7bd01a60ceb5ac9e8f6be2d0a3a772f2d87f6", size = 5639955, upload-time = "2026-04-19T22:51:21.475Z" },
 ]
 
 [[package]]
@@ -2915,12 +2689,16 @@ name = "passagemath-maxima"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "passagemath-ecl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "passagemath-ecl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5b/80/516fb0bac33b77b7de38f277c75f02834a7103b9bdd0fb19fda307295e88/passagemath_maxima-10.6.48.tar.gz", hash = "sha256:025ab592220ac02569b21e868bb53f5ba2684a3a01f0ffee4a4a9a7d658910cf", size = 47313, upload-time = "2026-02-02T18:11:53.79Z" }
 wheels = [
@@ -3016,16 +2794,21 @@ name = "passagemath-modules"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "gmpy2", marker = "python_full_version == '3.10.*'" },
-    { name = "memory-allocator", marker = "python_full_version == '3.10.*'" },
-    { name = "mpmath", marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "gmpy2", marker = "python_full_version >= '3.10'" },
+    { name = "memory-allocator", marker = "python_full_version >= '3.10'" },
+    { name = "mpmath", marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3b/c7/e404a8e9a1c2749515b732280495e6c456b144ea08aad37fb47201c3d59f/passagemath_modules-10.6.48.tar.gz", hash = "sha256:8530bf11a3f47533d6d5f7bf2dd196ed1aca4ae64a530af6ab8cd947cdd059f5", size = 3185681, upload-time = "2026-02-02T18:11:57.052Z" }
 wheels = [
@@ -3071,69 +2854,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/cd/46/111a174f00ccf291aac651e0fa30f986fefae0c1903c8e929a6529c829c9/passagemath_modules-10.6.48-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:063877c00974215e20a861df125c3e5157193c27b067c54a14997484b9c6ead6", size = 73454045, upload-time = "2026-02-02T13:05:10.086Z" },
     { url = "https://files.pythonhosted.org/packages/1d/93/f868af71a21f94f6ddecf9d759b0fe1d33a2b8a945a7f6ab319b567eaa43/passagemath_modules-10.6.48-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:de1aab6ade0c387662cb6949abe29a315e9fa67cc3651ed97c7054e5a244050e", size = 78338537, upload-time = "2026-02-02T18:13:16.235Z" },
     { url = "https://files.pythonhosted.org/packages/d0/b1/e25a76eb48c436bc4070aaa406147d011ed0e25f0f992cac84b1fb47152d/passagemath_modules-10.6.48-cp314-cp314t-win_amd64.whl", hash = "sha256:9296da03b4efaeda2482ae39192003fff0659a7f0f864278746bdaba69672d54", size = 20484952, upload-time = "2026-02-02T23:27:30.314Z" },
-]
-
-[[package]]
-name = "passagemath-modules"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "gmpy2", marker = "python_full_version >= '3.11'" },
-    { name = "memory-allocator", marker = "python_full_version >= '3.11'" },
-    { name = "mpmath", marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-environment", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/65/05350d6219d71ec84b0cdd9eac182849647d46cb9915f9517dd87b9024b1/passagemath_modules-10.8.4.tar.gz", hash = "sha256:99ff942d373485334cf7dd51e44c276dc22187b8f31e357dd20e518ed3dde1ce", size = 3238368, upload-time = "2026-04-23T01:27:38.95Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2f/d9/c1720a8803c948a624ae874320805cc2aab82da81c261a4cd8f2da6267d3/passagemath_modules-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:3690c1ea55f05b2f7d6f5abaaa53960c84446d725b74e36b08f1383113716761", size = 24865148, upload-time = "2026-04-20T14:40:14.612Z" },
-    { url = "https://files.pythonhosted.org/packages/37/16/587cbb574757ecf55f8d878b39e399d4386a6521e3f8679f026e8e7eb9ef/passagemath_modules-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:20419f9a1d6513f2863b477020e0fa647858e3dfbd743d1c8b63152abe1bf46f", size = 27747615, upload-time = "2026-04-20T14:41:41.755Z" },
-    { url = "https://files.pythonhosted.org/packages/4f/57/0a7ca0fa86b82c2060657af02bfcfb1d0c0784a4b9aa21ce679abfdb48ac/passagemath_modules-10.8.4-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:516b0e33f38a91e13f6bfcc2a9189dc12d53b32be2728a2827a01fd22bea4e53", size = 75102982, upload-time = "2026-04-20T14:46:55.811Z" },
-    { url = "https://files.pythonhosted.org/packages/98/ff/9a0660fc6eec3376dc97db3e2678af349b91faed24c3fafaa5dbd72b6299/passagemath_modules-10.8.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5edf3235ee33d786881dd37ff3eeb5c42e52fc28a6f931cd7cdff51299beef44", size = 79638754, upload-time = "2026-04-20T14:47:56.569Z" },
-    { url = "https://files.pythonhosted.org/packages/1e/23/d14e77bebbb1a78bd0edddd5ae6b164e26d4be1d07e954330e1ab1cfecec/passagemath_modules-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:d18e24f0df8c1f2e8ef3b32de15dd4a97463035057bce29663a6f5aa055b7a46", size = 74403015, upload-time = "2026-04-20T14:43:47.902Z" },
-    { url = "https://files.pythonhosted.org/packages/80/f8/3cba8e4ff7b62590b3160f140c23167c06996462f4279c7c53f3c27e904b/passagemath_modules-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:48c8af980abace1ab576991b757543748cf9577b0885d41f93e95737e5f4f894", size = 80209989, upload-time = "2026-04-20T14:42:56.441Z" },
-    { url = "https://files.pythonhosted.org/packages/bc/b1/9a5361b3b03ea6033bfeca5bda2a01332dfe875947fa3c08e7a4d7dcf952/passagemath_modules-10.8.4-cp311-cp311-win_amd64.whl", hash = "sha256:eb70507a4fdb2ef035a18d01934c1ab9fab6f80c3ad66a5a997009d3141f8aeb", size = 19411201, upload-time = "2026-04-19T22:52:02.882Z" },
-    { url = "https://files.pythonhosted.org/packages/e8/ba/71dff2879a41c470def85a1307cf05cf13266e16a6faf92abf357ca91a08/passagemath_modules-10.8.4-cp311-cp311-win_arm64.whl", hash = "sha256:f52956ad7aa06c41e37f74e6a7cb519a1dc28c45049c16d69f3a9f2cf8e4456c", size = 16368546, upload-time = "2026-04-19T22:52:05.177Z" },
-    { url = "https://files.pythonhosted.org/packages/54/e1/85c72e7d4e21ee66cd6d45876c10ca199b41babf83750ac1c3c323007f6f/passagemath_modules-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:677e9ea1362e8ee94f611c56035e218a7a5a4e0d1fc28c0fc99c3547cd3666cb", size = 24729073, upload-time = "2026-04-20T14:40:17.543Z" },
-    { url = "https://files.pythonhosted.org/packages/ef/d2/6876b12ebc6702c40352334575dd33d6464ed56a37d916355035435d1399/passagemath_modules-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:ba707b06d6e3e63f68a416d25099337573f2ac372e467f1e091e266df9c4ac77", size = 27789663, upload-time = "2026-04-20T14:41:45.261Z" },
-    { url = "https://files.pythonhosted.org/packages/03/4a/cbf2c453b2ed97deac000b29e58897922af9044edbe8ba70a5ca5e467ba0/passagemath_modules-10.8.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:295e4f7d273342bc5cc9bc0f1af77f47d8ecaea3ee02282111c7add90c915bc9", size = 73979383, upload-time = "2026-04-20T14:47:01.615Z" },
-    { url = "https://files.pythonhosted.org/packages/94/2f/36815649a978ee26cbc9a6946c5de9eb8bd06fb8efa2cd71eea0215b47b1/passagemath_modules-10.8.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bad00ee8c3716dd67a8178810309edc4aa873747872f0048a2529d796012ff4a", size = 79212116, upload-time = "2026-04-20T14:48:03.004Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/45/ee103969067821d7b982643c232d3ad07a4de940b48b767add497bdaae6f/passagemath_modules-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:00bd71d316b8f2b0c421c58d93723ecd460647fc810ff24b01c915379e14d9a0", size = 72621613, upload-time = "2026-04-20T14:43:52.182Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/36/c1ad2821523efbf976f25f799662742281a98d449875aa10e43ddfaa46ab/passagemath_modules-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:03a08b7168f0962143947e54909d09a49b1276f5a4830ad6efb41e6e7315ff95", size = 79112663, upload-time = "2026-04-20T14:43:00.02Z" },
-    { url = "https://files.pythonhosted.org/packages/1b/12/d2b1799d51175fc0d431f148f52c60c204756dd6896e68537f64c874bd00/passagemath_modules-10.8.4-cp312-cp312-win_amd64.whl", hash = "sha256:9e59bd3e4f63f8775eb2a9f19377e530090685c3c949f2d85c40db2b6decf0e1", size = 19303563, upload-time = "2026-04-19T22:52:07.748Z" },
-    { url = "https://files.pythonhosted.org/packages/31/30/f97159b4d5514a8da355ee4511700f499b585b91177582a78a77d2546498/passagemath_modules-10.8.4-cp312-cp312-win_arm64.whl", hash = "sha256:fbe65162005d779168329a05bea63eada60a37b601c565b13866d51e2bf080f1", size = 16284282, upload-time = "2026-04-19T22:52:10.309Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/66/25d7805d87d1f0e44f0d444479a83a3856f40967a27ca00fcf37112fcf88/passagemath_modules-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:908d80af756bc6495c55b65685aff11c45e14a33d88e7d587310342652fc3243", size = 24684960, upload-time = "2026-04-20T14:40:20.527Z" },
-    { url = "https://files.pythonhosted.org/packages/e9/e1/dc77cd19a75d5b36c1b2920991b615444367fca7bc8a88be9e9d73eb7d10/passagemath_modules-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:b9dc04049fbc2b6c18d53f6c48438a1868c89631f76250f25a6911f28dd7f50f", size = 27750855, upload-time = "2026-04-20T14:41:48.97Z" },
-    { url = "https://files.pythonhosted.org/packages/42/b3/5081238c77bb1725e0d14f5de634b7010281504eb15d14c9d271d09be03c/passagemath_modules-10.8.4-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:735576bf47f2e743dafba9953480b3a3b2da93db4e04b7bafc19269167cf0612", size = 73426652, upload-time = "2026-04-20T14:47:07.574Z" },
-    { url = "https://files.pythonhosted.org/packages/36/31/63dd65a2bd6e5f0caae7a2bb298f7c9274588d5695c3dd54cbc05cc19855/passagemath_modules-10.8.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3858f5ce7fc4533c761059d0374d8838438e1090323b2f7984e25a65c4bc58a4", size = 78654368, upload-time = "2026-04-20T14:48:08.871Z" },
-    { url = "https://files.pythonhosted.org/packages/02/03/f759a2faf6a252de8e1cb09ce7a4146ad89713f7a5da9a7c13c708213c96/passagemath_modules-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:11b1ab4d579c504678ccb2504471f7406a641ef43944a31d34d69b58390c0906", size = 72172735, upload-time = "2026-04-20T14:43:56.313Z" },
-    { url = "https://files.pythonhosted.org/packages/c7/b4/e1996a75e40218b5e35da808ed46c2c38f714dd7d03b971a0696d93def53/passagemath_modules-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:301697eb00618a1642f33de1715d9b95be0359189ed490efd8f6f6918a0f5209", size = 78593449, upload-time = "2026-04-20T14:43:03.726Z" },
-    { url = "https://files.pythonhosted.org/packages/40/72/34ad645c9c47fa9dd5c4fcecffe0c6d9d43e8e387fbb657ef2ff6943570e/passagemath_modules-10.8.4-cp313-cp313-win_amd64.whl", hash = "sha256:e59940af8b26c0179f279e960dbbdf78e94b140c99071e8b333d08a03100644d", size = 19276356, upload-time = "2026-04-19T22:52:13.016Z" },
-    { url = "https://files.pythonhosted.org/packages/77/3f/14f5089cd03dd4dabb7929e5787dc47de0d736ada3de1dc6533d97fa95ff/passagemath_modules-10.8.4-cp313-cp313-win_arm64.whl", hash = "sha256:364faf1c87be94931baf923fe52eb30e245f6b9227e5aebda016fe161fbcff99", size = 16229110, upload-time = "2026-04-19T22:52:15.442Z" },
-    { url = "https://files.pythonhosted.org/packages/34/18/5324f848ba61a2e3e8015d70247e3058bd5a8714dc019bae3a686765efc7/passagemath_modules-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:dbd1d552d7b0d5d9e9f7192e1c92a0ab8c3367823367e24355193692bf6a1253", size = 24740439, upload-time = "2026-04-20T14:40:23.916Z" },
-    { url = "https://files.pythonhosted.org/packages/7e/57/bfb91ecb066cf616cd96bae3a2760e105d8b22fd35a0edc42e3153b32c71/passagemath_modules-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:8f49dc8fedc9151f45715b4e07b7745acf12d07d316dbfb471acc16b9796ccd6", size = 27727112, upload-time = "2026-04-20T14:41:53.948Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/d5/2a8bf57364e1980466b40515ff2eee71f267a6ac859d5c4d14d5b8cf2220/passagemath_modules-10.8.4-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d49e3741b974599b57c72061ca5dfbf0be05107ca96519b395a104c5c93358cc", size = 73336784, upload-time = "2026-04-20T14:47:13.783Z" },
-    { url = "https://files.pythonhosted.org/packages/d9/36/8544304377f68b6c14a631946c64f87fdbd72230427ebadfe1a5435f42cf/passagemath_modules-10.8.4-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:778311c0e5eda1ca5c16716c069ff3da08cce8458193250a7d7080846cd41337", size = 77891114, upload-time = "2026-04-20T14:48:14.843Z" },
-    { url = "https://files.pythonhosted.org/packages/c3/4e/139e1df4583565226cfc4f38f4c2f127593638f67b7fff6180f833fb8202/passagemath_modules-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:4e90d6326de0bfc9457e067e187297138b58896ebbb344c45322d1a741859423", size = 72206696, upload-time = "2026-04-20T14:44:00.253Z" },
-    { url = "https://files.pythonhosted.org/packages/34/7c/f1f34de4a12154bd43e7c391126bf780974bcedf2b890f7f6796cef73560/passagemath_modules-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:c7b00381dd3c707f4ed2914979eaebd938847f7676f06060a6881b7f652d05f1", size = 78005048, upload-time = "2026-04-20T14:43:08.681Z" },
-    { url = "https://files.pythonhosted.org/packages/c0/c3/1e234f1de8fbf6a743455e4df949181b7a24c8ac41d43245e8988a20e155/passagemath_modules-10.8.4-cp314-cp314-win_amd64.whl", hash = "sha256:f7ecf813e0a157e3de6ade894a657de8845516792679205249dd1685019de9df", size = 19646423, upload-time = "2026-04-19T22:52:17.948Z" },
-    { url = "https://files.pythonhosted.org/packages/03/d5/f65ccfeefe0bde16686cea93d7e3dafe3f1012a58beaccb048f701ed01e8/passagemath_modules-10.8.4-cp314-cp314-win_arm64.whl", hash = "sha256:7dae2e61c6549d3dbf29ba73d0490285b9d135ae5a49cd6d48419e3ab5c29488", size = 16593294, upload-time = "2026-04-19T22:52:20.282Z" },
-    { url = "https://files.pythonhosted.org/packages/a0/2b/a2dd22109da5c09e69125b961a95dc68dcb15ab4fa8fa65e57183e8fcb1b/passagemath_modules-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:ea0109df6883b72d0647c5ec419f1659c009e59cdd91bdd9122ec7ed08528f33", size = 25626606, upload-time = "2026-04-20T14:40:26.729Z" },
-    { url = "https://files.pythonhosted.org/packages/17/57/0e0f0336cd69a1c978ce57a7df2ec45a435d15901869289c57a5fd9a244a/passagemath_modules-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:90a91472d8183bbb2455f6e1a621c87d5e9735c6b1d531d3bfdb46b4281896de", size = 28391474, upload-time = "2026-04-20T14:41:57.369Z" },
-    { url = "https://files.pythonhosted.org/packages/bc/cc/32aa6140628aa042d75016dc19eb2b9844083ce39a4529f6a0c42e2f86fb/passagemath_modules-10.8.4-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4ab7692d7946a78f631c73395f087eae4ebe772df29d1a085ea6dd7e9a2a7185", size = 79415294, upload-time = "2026-04-20T14:47:19.322Z" },
-    { url = "https://files.pythonhosted.org/packages/7e/dc/e8f1df12d05ff993672874c1a2582df60872a917ab72bda156fe71c5cd9f/passagemath_modules-10.8.4-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6b456141a823288c9ed2df51054017c9c24c31f25371bcf3a99c6615387860e2", size = 81886655, upload-time = "2026-04-20T14:48:21.196Z" },
-    { url = "https://files.pythonhosted.org/packages/83/3d/3e0349de73c5703dd95af0d00a1280efc9cf424484d80cbad4244eb7c113/passagemath_modules-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:7d3baf4e477172111e4997a75b83a36693020ffd3a9a7fcfa81399cef6ad716b", size = 76722870, upload-time = "2026-04-20T14:44:04.553Z" },
-    { url = "https://files.pythonhosted.org/packages/60/a9/2e13620c236ef4f613ce504eb645fb4e6c86ba1487a265dd71d10cd06242/passagemath_modules-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:9af502180e2d1a56df0c1f2ce0ba58a8c6aecea583a09a3e3e972df04062fe5d", size = 81393685, upload-time = "2026-04-20T14:43:12.757Z" },
-    { url = "https://files.pythonhosted.org/packages/b5/33/cded53658c0a31f37588c3b86a59c2a2204a6db76345e2194d1499af8b01/passagemath_modules-10.8.4-cp314-cp314t-win_amd64.whl", hash = "sha256:f6b40054f08bb5fffbad425291f2f58f18dc670db2be23219668493454436b5e", size = 21403513, upload-time = "2026-04-19T22:52:22.765Z" },
-    { url = "https://files.pythonhosted.org/packages/a2/73/9626fadcb642dc66ddb87c01d4a2c3d8d7ab030019f2891cce07e41c4ffc/passagemath_modules-10.8.4-cp314-cp314t-win_arm64.whl", hash = "sha256:98ddb418270e581e407af0285ab5abc5207aeab7251c431291e8f72d6bd07d75", size = 17148992, upload-time = "2026-04-19T22:52:25.359Z" },
 ]
 
 [[package]]
@@ -3188,14 +2908,19 @@ name = "passagemath-ntl"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "memory-allocator", marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "memory-allocator", marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d2/d3/b7e049ec87a78904a7a513262a268cf14a3b077b1072a584b90ab2d2ac5f/passagemath_ntl-10.6.48.tar.gz", hash = "sha256:7ea12cf92dc07f35c383c87945287f422c3be2d2e2aed85dd4bda4d072da0b80", size = 355432, upload-time = "2026-02-02T18:12:00.197Z" }
 wheels = [
@@ -3235,57 +2960,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e4/9f/f55a1e88e7ae90625a89743baea052140e97d3de9a0246e5af64484b8ab2/passagemath_ntl-10.6.48-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e419a6e420a0236fec0aed0472b322f27ab676f8ddc54412f9973f1f81d58720", size = 16483788, upload-time = "2026-02-02T18:15:58.688Z" },
     { url = "https://files.pythonhosted.org/packages/30/a2/00f91395fd00f82272664db251696ea1fcaf9c29b438a9bf3093c9d61e40/passagemath_ntl-10.6.48-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:3d3c508c441d8535a9a5e866964d8dc7070e499fae375f1f8a6ebf572cb69e8c", size = 16923433, upload-time = "2026-02-02T13:06:37.904Z" },
     { url = "https://files.pythonhosted.org/packages/f7/d3/24145ddddea04e1fa05b9b47f7eb10f2d98d7320a4eac5deb6b88048da50/passagemath_ntl-10.6.48-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:2e21331d24af68f1d9582c68b5ca6cee45b85b5c5fa3ad6bd07f0f72c7d59f8c", size = 17200009, upload-time = "2026-02-02T18:14:52.204Z" },
-]
-
-[[package]]
-name = "passagemath-ntl"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "memory-allocator", marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-environment", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/26/f7/3175ec6e8021f9962ed912067556e9dc0e4fd2be9d75f2457920acac1c5f/passagemath_ntl-10.8.4.tar.gz", hash = "sha256:c5ea2bcc97b8d2eb5c29d7306cb50259d7ae5c8265b7c99689775fb17aa4cdb2", size = 357469, upload-time = "2026-04-23T01:27:42.054Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/a6/7d1fcf11841ff6239c10384c6af106692e9330168f38d65da612abd63199/passagemath_ntl-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:201cd429050c315fe2f4874d6b92ab40a6dd930d848b405dfbf0cff97fb7a5b5", size = 3783598, upload-time = "2026-04-20T14:40:39.137Z" },
-    { url = "https://files.pythonhosted.org/packages/fa/e3/c2a80ee120a11b50eda5fb21830b7a27d0070df55d7b828c7c6050c737e1/passagemath_ntl-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:079c9df760aa3df532456a3673ce6d280e7d99856d43e341c68ede21295fb995", size = 4129406, upload-time = "2026-04-20T14:42:12.889Z" },
-    { url = "https://files.pythonhosted.org/packages/77/7b/30bd36225d7bcdc7dc2c2908782efdfacf0a419887b40246a933b0642034/passagemath_ntl-10.8.4-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:58574b45b0c11dfa4589646a309f662f43c6b53cdcfcdccc875999261a0c88a8", size = 16952048, upload-time = "2026-04-21T23:41:53.076Z" },
-    { url = "https://files.pythonhosted.org/packages/f5/af/ce3a0763701a6bf584fba4151f45e55560bdae675b6f4b2cff697b39585b/passagemath_ntl-10.8.4-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:630200457779cf2076b5408f7b30d79e81dc1c4b5f6ed9a3c5b948386b1d8390", size = 17147754, upload-time = "2026-04-21T23:41:54.147Z" },
-    { url = "https://files.pythonhosted.org/packages/ba/a7/37aee68d0628f7c4705e8017654ae6fdaf614f62289577ab4a9dd7421584/passagemath_ntl-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:469c0c34f48f3893b427406058eee6104b8bca5e1860b63a061038c10db8c99d", size = 17614666, upload-time = "2026-04-21T23:41:20.127Z" },
-    { url = "https://files.pythonhosted.org/packages/1d/bb/91476c47edef30582a0be86fd4acacc79f4d134aae92f4ed5bde95d48f1a/passagemath_ntl-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:fef69b12a0c7eabd225c2be5f36677c8688efc4f38dcd2be597532f59260ac6d", size = 17981324, upload-time = "2026-04-21T23:41:12.029Z" },
-    { url = "https://files.pythonhosted.org/packages/93/75/941d8a6cfc858c15a13dcfc134f825f31d0bbc5322d2a21776585ace4f8c/passagemath_ntl-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:f325b02ab28eb8e3efc057ebb150f33940381c914bb0fdc8a0191a2a8067b071", size = 3772592, upload-time = "2026-04-20T14:40:40.637Z" },
-    { url = "https://files.pythonhosted.org/packages/f3/ad/11c10d5f377d487b2b6dad03ce54c2bae8e64ab536a238e907ad69eb700a/passagemath_ntl-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:829d3e195b2fdeea8d9683f594207a86e33d28c1c8600f31ec0618363974dab1", size = 4141413, upload-time = "2026-04-20T14:42:14.626Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/3f/ea097b883dfbf07eba1742c686bf04c2c446f0684f21d5c7433e3b50c5f9/passagemath_ntl-10.8.4-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a5fee50c5ef2e6c7a64ac0a5fbd4082e462036727d58a70cc90cf9f2f6141cbc", size = 16946298, upload-time = "2026-04-21T23:41:55.905Z" },
-    { url = "https://files.pythonhosted.org/packages/97/7a/321825cb8e2c7283107f8fa53c29abfaf0219d214b5cc515a168e084a3d9/passagemath_ntl-10.8.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:aa560076a29132b151d01ef1edc7deaa94baaeb7c2457125a1a302e65ae7847a", size = 17306305, upload-time = "2026-04-21T23:41:57.425Z" },
-    { url = "https://files.pythonhosted.org/packages/bd/1e/ce5cd9d2c450088cf270f0431693108c8a512b70d2149938e7adde25ba05/passagemath_ntl-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:90f4652c00b33369a7378af9951f5b157ab3cd5fa878791c3e4e4d13cf11b291", size = 17527557, upload-time = "2026-04-21T23:41:24.507Z" },
-    { url = "https://files.pythonhosted.org/packages/59/c1/61921d1c13db1c15bca16e61e00170ca14ed3551995dab0f2d2369117407/passagemath_ntl-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:cc9af52fc84099e40777fb1bacd31d6e5810484b231217c26a40c44576544604", size = 18059436, upload-time = "2026-04-21T23:41:14.805Z" },
-    { url = "https://files.pythonhosted.org/packages/d7/d2/34a43f44c92bdb4d47421cc99d1736dc1fe3de6ac9039e6d2aa94d2ec2f2/passagemath_ntl-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:bfb93864d534c6292feb3d0e55a1a328b8169093374cfaeadb1b5b6c5feff98c", size = 3763250, upload-time = "2026-04-20T14:40:43.021Z" },
-    { url = "https://files.pythonhosted.org/packages/b3/f0/c300bdfaca300aface4887c122fa1deee505335491baf6873eae0cf90642/passagemath_ntl-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:142343d3d855b50a671a789f08bbd18a2c0278acdbaaf4b0c94fc149df268814", size = 4133066, upload-time = "2026-04-20T14:42:16.29Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/7e/2e1b4ac604f6dc72805964da0608c9a019e60ba06f50fd2cee3948cee234/passagemath_ntl-10.8.4-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:eea1539907f16ffc44d62f0b2d42a72fe2803e31e9777a6e1eba66c020987af3", size = 16765458, upload-time = "2026-04-21T23:41:59.431Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/74/2f9d640cfd81e5da6827a5f27d12ae876d8a9cacddeacb5d30fd3af259be/passagemath_ntl-10.8.4-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cc2fef6c40499b65995766d17c2b08304922dd148f727c267c1ebc179c8a98ce", size = 17143322, upload-time = "2026-04-21T23:42:00.986Z" },
-    { url = "https://files.pythonhosted.org/packages/92/c6/2c473df654d76343e47496b22a9da472c29ff555ee6495a30470c684fb5e/passagemath_ntl-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:2aa21e9685f1f8727d8186ebeca03b2edd6c8fcd0006f5a54ec4029ccd547920", size = 17368269, upload-time = "2026-04-21T23:41:27.828Z" },
-    { url = "https://files.pythonhosted.org/packages/2f/ec/25636094deed4c19d573592c122b142d68375f5c50dec306985b464aea3c/passagemath_ntl-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:225a1eda70bd191b6e2b0ca15efbb55193691982829735be735e77852d5e76aa", size = 17895917, upload-time = "2026-04-21T23:41:17.106Z" },
-    { url = "https://files.pythonhosted.org/packages/b2/71/3343b463862b76a3b735b772427967cb9074ecd4e57cf2af29d807a80ffe/passagemath_ntl-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:27883c0dd4025d4cdcf56ba0b124f50bc7b154df268017122043df9ea827fa79", size = 3770292, upload-time = "2026-04-20T14:40:44.789Z" },
-    { url = "https://files.pythonhosted.org/packages/b6/3a/f13878bc9b0864d44b3937e54c3f6d96385a57fd69de23bc3a4f2b2a2af0/passagemath_ntl-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:e4b952694dba50c81b707951ad78a10ed9a48e27138c036e187867d251271ae1", size = 4131837, upload-time = "2026-04-20T14:42:18.4Z" },
-    { url = "https://files.pythonhosted.org/packages/79/32/5e24235a4f0d523eff162093f726db45f3dce53a7c4053bc43e40ae867a8/passagemath_ntl-10.8.4-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2e5eb28adae24dc17b42775c6a52cdd38120ad47d8442e87ad5b048485446878", size = 16749908, upload-time = "2026-04-21T23:42:02.985Z" },
-    { url = "https://files.pythonhosted.org/packages/07/8b/062d6db85fc5d44d1d9487ffb01bc9b40f1eea77441ee988a4a1c7c17cdc/passagemath_ntl-10.8.4-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:776d956aa72ee5a3dfb8a83eb56bdcb8ac6b93e4ca793e1ba935e25684a33f91", size = 17009770, upload-time = "2026-04-21T23:42:04.612Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/fb/c718544b7666ae878d058efb835c79f5fedbe17c3901862d3998676bd1a8/passagemath_ntl-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:0bfca196dc953da74f269917b624a9b4fa45d55f5ceee3cd6869dc58be1803d9", size = 17367782, upload-time = "2026-04-21T23:41:30.843Z" },
-    { url = "https://files.pythonhosted.org/packages/73/da/5b34922c4ddf1703f44464b1b7084a5875ee950d81af367ddeaf121ac281/passagemath_ntl-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:4b28cc64536653e5802c0e0fbd9b4bce0569b1bc36e08d1835ba996daa196ddb", size = 17803406, upload-time = "2026-04-21T23:41:19.793Z" },
-    { url = "https://files.pythonhosted.org/packages/a4/61/e6df21a710673f2d0352027d678cb5a9c0cb057a3a9ff7292e683ad625f4/passagemath_ntl-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:f0d27920466acbcbb4557785eb3d5a805caf450d78fd0bb11915ba118f910adc", size = 3942710, upload-time = "2026-04-20T14:40:46.184Z" },
-    { url = "https://files.pythonhosted.org/packages/36/88/c24866b448d91f9383e1167170f2943f21349c316f8e8daa8fb36c751475/passagemath_ntl-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:afd9409463e8adca447ac60b7fed3e9b92d86624ecba1123d4ab3ff3d194d544", size = 4247591, upload-time = "2026-04-20T14:42:20.205Z" },
-    { url = "https://files.pythonhosted.org/packages/82/ed/09188df87dbdd6fd142d9245571365df526919868a11f3926aeb390f91ef/passagemath_ntl-10.8.4-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5d07f7558207df15f109800428210de7b877468a97f01e8cf46644f1f9815b25", size = 18180332, upload-time = "2026-04-21T23:42:09.268Z" },
-    { url = "https://files.pythonhosted.org/packages/49/f2/0636dcb4781324c23a8d85c1b066e42b3b74af50f067da1bdad83dc157a6/passagemath_ntl-10.8.4-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:df1acdb8df61dcdf731638d847ddb3fc8d9b16c41d2b20c78175126b4088d1f1", size = 18047384, upload-time = "2026-04-21T23:42:10.623Z" },
-    { url = "https://files.pythonhosted.org/packages/39/6c/4603994ba2568c4f32529823272bb103a031d6b768987af894c12a7c7e08/passagemath_ntl-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:76946d49b35fce6d2f11f8d46d9d188307e22df7e79ba8e12a8957c5cc5d97df", size = 18541069, upload-time = "2026-04-21T23:41:34.148Z" },
-    { url = "https://files.pythonhosted.org/packages/1d/57/d0b44ca2eb588cde4c3d4bf22750776b87d769b1c53733591b03a2d4cd3d/passagemath_ntl-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:46d4df4bb05ff9ef9dce0bf7633d9581054d73ca7af724e62f6e71006a3d47d9", size = 18733726, upload-time = "2026-04-21T23:41:22.31Z" },
 ]
 
 [[package]]
@@ -3338,13 +3012,18 @@ name = "passagemath-objects"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "gmpy2", marker = "python_full_version == '3.10.*'" },
-    { name = "typing-extensions", marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "gmpy2", marker = "python_full_version >= '3.10'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.10' and python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/38/24/c1abaeb3ca1323499e2fd97531be14328f264f48715e8563341ac361d645/passagemath_objects-10.6.48.tar.gz", hash = "sha256:45c7240ce5563c7606bc9b4d32245a461aced6a982ca619fe8b9907b93515547", size = 691167, upload-time = "2026-02-02T18:12:01.24Z" }
 wheels = [
@@ -3396,66 +3075,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3d/96/4d871f250682649ca74fa3dcda3e2bbb63e7780ed5db0aa66f335e8b5661/passagemath_objects-10.6.48-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:cfa5eb7586a288ef5fa397cfc436cec31dabe90a4d56a3a71feae95e84673639", size = 18147738, upload-time = "2026-02-02T18:15:38.419Z" },
     { url = "https://files.pythonhosted.org/packages/ca/51/d33d712db9ecddb4b4df8f85ad10809c0e954471b371dcda1cc522b00c97/passagemath_objects-10.6.48-cp314-cp314t-win_amd64.whl", hash = "sha256:64701335a62497890ee7e70391fb408e817195de85796c142d6fbbd47eb241c5", size = 4719797, upload-time = "2026-02-02T23:27:41.122Z" },
     { url = "https://files.pythonhosted.org/packages/ae/f7/7a3e0e608e548da4c42835a901ef667ebf2e4da936bed05ab1bcb5fcdcba/passagemath_objects-10.6.48-cp314-cp314t-win_arm64.whl", hash = "sha256:0a47ee2715451f08fb431c52c5fd4bb15c846ec016e1dec9fdbe1e9e0aa18528", size = 3901081, upload-time = "2026-02-02T01:37:09.373Z" },
-]
-
-[[package]]
-name = "passagemath-objects"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "gmpy2", marker = "python_full_version >= '3.11'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.11' and python_full_version < '3.13'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/76/b9/6bf3d083c78b02b9951afd7e3efc900b187fb68cf7dd0095360646ced545/passagemath_objects-10.8.4.tar.gz", hash = "sha256:faf9528e3f654493ae03f2f1d06bf08531f3bda75f18c264ec2fc9ca3ee40d2d", size = 692231, upload-time = "2026-04-23T01:27:43.313Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/35/2f491b93a43cdbf39c5a10f629ce07218cd537361b13e52cac765ad95d04/passagemath_objects-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:65a2ae82b13ace30f3b6251c7fd56d4cc3136cf4b66e049ff5c22718ea09be5e", size = 3788562, upload-time = "2026-04-20T14:40:48.011Z" },
-    { url = "https://files.pythonhosted.org/packages/dd/ad/30004ff611494c4aa6efa1ce60c3ea014e6e1b4046887438a0b42f6be861/passagemath_objects-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:d960821a70a3503737fdc2c06bca811815783435cac3e1caef8d36330e02b8d3", size = 3981248, upload-time = "2026-04-20T14:42:21.841Z" },
-    { url = "https://files.pythonhosted.org/packages/d9/c7/250b5de60ee3d49dc0444f89e765274cacdd34ebb0816e5d1f9214159a79/passagemath_objects-10.8.4-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:088adefab10dcd5e755e48b63357222c5b026cd86d89b310984037ad0920062c", size = 17923770, upload-time = "2026-04-21T23:42:12.786Z" },
-    { url = "https://files.pythonhosted.org/packages/4c/8b/146618b98d5f70201f03ac25c1e68920fb9ad30928e13078477af6acee19/passagemath_objects-10.8.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b855cecdfb3239d9b93d263ba53f166f715eb581ade78dd583ff1316b41f2c48", size = 17953112, upload-time = "2026-04-21T23:42:14.322Z" },
-    { url = "https://files.pythonhosted.org/packages/8a/bc/9a82e072f57b9a6b55748d425a19847e9edc81480cb452f59fcd69c2e0a1/passagemath_objects-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:3b27de34f0d7ff6eaa28fa922e326204d1ca7aad19e751b940ba2282e08a4be7", size = 17638936, upload-time = "2026-04-21T23:41:37.264Z" },
-    { url = "https://files.pythonhosted.org/packages/bb/ba/f84391b661857a8717f702cc4b3e06d066336ceb8a3b28c123794593327f/passagemath_objects-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:f117514ea35debde89f0f6bb37d971c9447b0a71ac2c74ec4dafda4571dc0708", size = 17914529, upload-time = "2026-04-21T23:41:25.761Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/02/3978bcfcbeadd41b11654495eaef2b4b1e36dc027cc9c21035b599a0a1a6/passagemath_objects-10.8.4-cp311-cp311-win_amd64.whl", hash = "sha256:02b2f73ec010ae8e3d7e74a916796237f56683252c6192a8ef010af4eb59aead", size = 4470365, upload-time = "2026-04-19T22:52:27.615Z" },
-    { url = "https://files.pythonhosted.org/packages/2b/d0/017e6847891193603befc4fde39491845b9f167912794a46114840b82ae5/passagemath_objects-10.8.4-cp311-cp311-win_arm64.whl", hash = "sha256:e3352f2fbafe75367547f825b3a57a566cb00cb40f08633b8b5ee3562ca35dc8", size = 3953251, upload-time = "2026-04-19T22:52:28.896Z" },
-    { url = "https://files.pythonhosted.org/packages/28/24/0eb12823116b97816c313aee90a4109271b082859e122af9549509afa6a6/passagemath_objects-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:593af79b7cadc99217bafbd04c154fdf61239df7a03c039f935770f0a4c5b81e", size = 3767612, upload-time = "2026-04-20T14:40:49.419Z" },
-    { url = "https://files.pythonhosted.org/packages/ae/d1/98a15149e102609513b3cbe596eb9065b4f28864d6a1cfc8189edf1b1634/passagemath_objects-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:3a06d076f06180fa098cfb4bcceb13f96573859dd490c6e382f555d17ee924a1", size = 4008972, upload-time = "2026-04-20T14:42:23.752Z" },
-    { url = "https://files.pythonhosted.org/packages/4b/c1/752dce6de3f44668d317df54df911b98f9f72f7ecf98bed690fde5486ca8/passagemath_objects-10.8.4-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9a1f2fe35b1b2710dc3e747801082b35ee88a9d77577161a0a586b6e798a2367", size = 18180548, upload-time = "2026-04-21T23:42:16.147Z" },
-    { url = "https://files.pythonhosted.org/packages/6f/a3/bc624d3b59e4d0b7a822971169d98730a9f24fc30e1dbd9831d889c324ad/passagemath_objects-10.8.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:70e4eb72df64f7dd4a30858a270dae0c3925c8d98fc8a38da1bd4ddd45d27332", size = 18356763, upload-time = "2026-04-21T23:42:17.449Z" },
-    { url = "https://files.pythonhosted.org/packages/06/67/3865dfbe01377b66dae910429ffb564e00c3a33b97d15ac66fb5412b0768/passagemath_objects-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:b5c891a5fa25016b9da9714477e39fd7eeea70e68eb0f6b97ee1e6f7e2b3f214", size = 17724004, upload-time = "2026-04-21T23:41:40.365Z" },
-    { url = "https://files.pythonhosted.org/packages/83/03/ac96196258d52e9628b1abef7457eb90d8edcc2706b7a11ff318f1c34a56/passagemath_objects-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:5c7caac3d9fb9e074dc84af3442f2aca67ad8e7ad57ae027818926c98914ffcb", size = 18154966, upload-time = "2026-04-21T23:41:28.531Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/ec/78fdb22659974fdf2a8fb8199e26d3779e4d697e3a15c3fcceff64324db1/passagemath_objects-10.8.4-cp312-cp312-win_amd64.whl", hash = "sha256:b18d39fc255ea9d71e93a481189a974c154d507b784d1f54da2e19de96423f77", size = 4463520, upload-time = "2026-04-19T22:52:30.592Z" },
-    { url = "https://files.pythonhosted.org/packages/71/b6/1d401fc3390d1c91fc05eb9d442fbfeec04690e546f6266e9e9b977e078c/passagemath_objects-10.8.4-cp312-cp312-win_arm64.whl", hash = "sha256:8ca8b2c5c0544b9254010e2eba1b79bc366e85ddc916f0582383c92bb05b022b", size = 3931897, upload-time = "2026-04-19T22:52:31.889Z" },
-    { url = "https://files.pythonhosted.org/packages/b1/28/f374262c98f4993cb3312d668867ec8baf3d1fe82e4651e768409c9ea297/passagemath_objects-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:799d901d7e3f8a0d5d53a980a04dc6c5f65ad10cb94630fe8d47e804cec36d65", size = 3746484, upload-time = "2026-04-20T14:40:51.139Z" },
-    { url = "https://files.pythonhosted.org/packages/40/c7/0bd1b3803ee8b5d576e513ceb63bbcfef7b3529ef64af667f6456c31ac4c/passagemath_objects-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:f582b6bf1c1014eaeba1bdb6455a3b9368274ec9d0da798937c16db1d824a094", size = 3991056, upload-time = "2026-04-20T14:42:25.401Z" },
-    { url = "https://files.pythonhosted.org/packages/16/fd/de34779804d55a72310a9140f0dc5217f390ce9ed942da0e332cebb4a360/passagemath_objects-10.8.4-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:86fcc86915cbd0dec8d34350f7dbdc583667660436be93e8532207a32940fe31", size = 17870662, upload-time = "2026-04-21T23:42:19.265Z" },
-    { url = "https://files.pythonhosted.org/packages/86/8b/1857d28ff8277c406426ccb7aa39e7bd4810d4f6d3a38069abd9f214e9a1/passagemath_objects-10.8.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cfd9ba77aeabc646fb09473857cbbf7578db1ce34ce07c4087331d7abacc59bf", size = 18073042, upload-time = "2026-04-21T23:42:20.961Z" },
-    { url = "https://files.pythonhosted.org/packages/bd/2b/f52d380a7a62064fe527134c179679d9c0fe8094f1447de2c02f17f00f7d/passagemath_objects-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:67765d5631b4a732ad5ae34e31c21ae212e486bac955b78fbc55acb193f65c8b", size = 17444837, upload-time = "2026-04-21T23:41:43.495Z" },
-    { url = "https://files.pythonhosted.org/packages/9d/52/ddef1542d8022ac75bee353dfca36199c0cd45c40fbc77e3eda0ab8cc458/passagemath_objects-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:3f3be56cb1a76dce0d7daaa5e9864ec929e71d9be4d926cb9539e20c4480822f", size = 17889388, upload-time = "2026-04-21T23:41:30.795Z" },
-    { url = "https://files.pythonhosted.org/packages/21/a7/0b4235f7fc1b34e9bc45756b99d1098984a71125c6f687b0bdcb1168e22d/passagemath_objects-10.8.4-cp313-cp313-win_amd64.whl", hash = "sha256:8b3c2f59cfd07d0150e5778de53e325d594c40a95665d916287ecac5ff7a2ad4", size = 4450249, upload-time = "2026-04-19T22:52:33.195Z" },
-    { url = "https://files.pythonhosted.org/packages/b2/8b/1ce76488a4be5bff82cb6e80bdc857abc4b468d54d7caa965a799ee3bdfb/passagemath_objects-10.8.4-cp313-cp313-win_arm64.whl", hash = "sha256:536b634634b0ae04c3dc463a274c9c6a5549af1489cb8192d6ad2320256017d5", size = 3912400, upload-time = "2026-04-19T22:52:35.113Z" },
-    { url = "https://files.pythonhosted.org/packages/4a/84/3a0ad03a2dde4ece902cc90544f0cad5fe6034d884af33b34d97d4e89d44/passagemath_objects-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:75d53cdf3726f326fa89b227c9c9a11561b3c6bc22da9f9bb921b150042b0e0f", size = 3761318, upload-time = "2026-04-20T14:40:52.835Z" },
-    { url = "https://files.pythonhosted.org/packages/66/56/7f4b612e55b6b9bff4da7849782dcdeeb5b8020dcd0aa6bb66a104ef24b4/passagemath_objects-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:2e6f4720b047c97b4e6f7725cbd9f31b97fdea052eb6c69869b23cab07c8d770", size = 3990505, upload-time = "2026-04-20T14:42:27.06Z" },
-    { url = "https://files.pythonhosted.org/packages/5a/48/c5d729b1d491be5b3e54c3993ec0f47051bf700aac748c57df2c90b610c9/passagemath_objects-10.8.4-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2988064cc5cfee5668748dda95e34b01a4f23530c77c535d1f08b2da7d68e599", size = 17800532, upload-time = "2026-04-21T23:42:23.513Z" },
-    { url = "https://files.pythonhosted.org/packages/ec/34/83cfb188b55e37ffe585a994bb7967c35be9a461ae82d4c0f337498512b4/passagemath_objects-10.8.4-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b2582c30b29bf095a3b1ed272cc028642e887168dc0280db067c78a89dd1367a", size = 17840849, upload-time = "2026-04-21T23:42:24.831Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/fe/92af808da94d4953565957a53f51b6562a78d179f766ac1dc9b5840961df/passagemath_objects-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:f80b3305d873add614be89e3ddfdae2684bed9f16b4150745e7324b7ad222bab", size = 17397592, upload-time = "2026-04-21T23:41:46.303Z" },
-    { url = "https://files.pythonhosted.org/packages/04/67/2dbb2cb4e4217d5f2530cbc42fc75331db1cd4293c46ab985dd75413f473/passagemath_objects-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:bd4abdaace01e3c1409dbd2f76645a87604a1cfbc864ea1e46d4a556b3b767d4", size = 17693505, upload-time = "2026-04-21T23:41:33.191Z" },
-    { url = "https://files.pythonhosted.org/packages/aa/91/3353d69a8f5a396f6299292fbc2959cf33144435be987647ee6658bcf964/passagemath_objects-10.8.4-cp314-cp314-win_amd64.whl", hash = "sha256:29cdb327585679f3fdbfe7e665f4fde4aefc3669ca53136a176b8135c47e521b", size = 4522581, upload-time = "2026-04-19T22:52:36.916Z" },
-    { url = "https://files.pythonhosted.org/packages/4a/90/2df943f516fe624f3517e8338833985c4c1c8884244cb61778f6a18e6ccd/passagemath_objects-10.8.4-cp314-cp314-win_arm64.whl", hash = "sha256:c142b50bac7dddafa9c4c0e9ed2e60412a937a8973e74680178ae4e6247eeb10", size = 4009035, upload-time = "2026-04-19T22:52:38.581Z" },
-    { url = "https://files.pythonhosted.org/packages/38/71/8e2f3b4a86b21daa9f64886455d9ce37792795a48cc12360dad62d597b30/passagemath_objects-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:fc9505330b74a20631af86a061453ab93e74415a85c7e8f49b0cef9e41187d60", size = 4039318, upload-time = "2026-04-20T14:40:54.834Z" },
-    { url = "https://files.pythonhosted.org/packages/86/cb/05e43f2469db7073a2cf927191de5fac498c28135c6bed793dbe767621f2/passagemath_objects-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:ca44100d467c4f733c292accca6eb29111514e354c79b317ad55ab0c8634ecf5", size = 4188285, upload-time = "2026-04-20T14:42:28.585Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/1d/11805a1f76958a7be0d6dadafd95819d08189cb499f04c05669220283e93/passagemath_objects-10.8.4-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7b5f448c117febcfa3f1286efbbe7bd9882bb10c6b3a30cd895c454d86b50f37", size = 20441373, upload-time = "2026-04-21T23:42:27.109Z" },
-    { url = "https://files.pythonhosted.org/packages/0d/48/919eb5b682e40eb233149e372a27e0ecbe2b8abb0458ec1b5e2faf1c68c6/passagemath_objects-10.8.4-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0cef3778578a363458ade00aa867d4b1a68e6657fdc30c02a3c41d88ffe4a503", size = 19909086, upload-time = "2026-04-21T23:42:28.498Z" },
-    { url = "https://files.pythonhosted.org/packages/73/80/56fe9e45a0a187086d9854a656b2d94d58eb5b65d5bea54b8ec20ed6f764/passagemath_objects-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:5b85edf4d60483ec622182183fb8359cb1f35030609f94dd5ea65d64adebb3fc", size = 19588630, upload-time = "2026-04-21T23:41:49.955Z" },
-    { url = "https://files.pythonhosted.org/packages/61/82/a4cb5c9e864bc9c3479b7c76b25beabc17cd613f4ceafdcce3349a63521e/passagemath_objects-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:bfbfb4e1cebf540f5d5279d2bd0faaaf2b40917f8b60159055759fd6b3deaa84", size = 19622740, upload-time = "2026-04-21T23:41:35.682Z" },
-    { url = "https://files.pythonhosted.org/packages/53/bd/b528b215cd702a716a7931ddc89a6f7e0fd7e3cd30345fb23a3d9e97bddb/passagemath_objects-10.8.4-cp314-cp314t-win_amd64.whl", hash = "sha256:1cd2305f6b3f88177f129c8c79f206699d362235fccb464b82419e4acd8b213e", size = 5079026, upload-time = "2026-04-19T22:52:40.057Z" },
-    { url = "https://files.pythonhosted.org/packages/e9/3f/48f891463a2d0cfbd2a334f365feaa7d68c94d7ed6ecd5fb50298c176d42/passagemath_objects-10.8.4-cp314-cp314t-win_arm64.whl", hash = "sha256:710d8d7ec60049adc7cb4f5a99093034e69d1d10db34895cf913a7b07b2baac9", size = 4197513, upload-time = "2026-04-19T22:52:41.323Z" },
 ]
 
 [[package]]
@@ -3511,15 +3130,20 @@ name = "passagemath-pari"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "conway-polynomials", marker = "python_full_version == '3.10.*'" },
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "memory-allocator", marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "conway-polynomials", marker = "python_full_version >= '3.10'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "memory-allocator", marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2f/61/2efb134f2a47a94783b9faec19611bc3e68eaffbd7b1a75b4487f7189ff9/passagemath_pari-10.6.48.tar.gz", hash = "sha256:764f2c26a3d2ea1d3092bd463fcd2c86033051996013583b44d140e37d96bf7b", size = 827581, upload-time = "2026-02-02T18:12:03.596Z" }
 wheels = [
@@ -3619,20 +3243,30 @@ name = "passagemath-plot"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "gmpy2", marker = "python_full_version == '3.10.*'" },
-    { name = "jupyter-threejs-sage", marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "gmpy2", marker = "python_full_version >= '3.10'" },
+    { name = "jupyter-threejs-sage", marker = "python_full_version >= '3.10'" },
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "memory-allocator", marker = "python_full_version == '3.10.*'" },
+    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "memory-allocator", marker = "python_full_version >= '3.10'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "pillow", version = "12.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "pillow", version = "12.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cb/72/54b0e20b494926aac4267cde0158a88ec281e8c9e7118e03cbb41ba54b7e/passagemath_plot-10.6.48.tar.gz", hash = "sha256:3c59b9fd4f3ed09024d8a520c6e278e9d0ec7c6f2b177ce0d971d520376320ac", size = 369935, upload-time = "2026-02-02T18:12:13.917Z" }
 wheels = [
@@ -3681,75 +3315,6 @@ wheels = [
 ]
 
 [[package]]
-name = "passagemath-plot"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "gmpy2", marker = "python_full_version >= '3.11'" },
-    { name = "jupyter-threejs-sage", marker = "python_full_version >= '3.11'" },
-    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "memory-allocator", marker = "python_full_version >= '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-modules", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "pillow", version = "12.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/54/70/d9463a724999c7402110f4612bd212b1345fd2d44f25802fa83477a7678d/passagemath_plot-10.8.4.tar.gz", hash = "sha256:7320fc736450812f257e7cafb272cce40c364c4349b72c93faa5f124f2dd1a0f", size = 371958, upload-time = "2026-04-23T01:27:56.833Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d1/07/3c47c4c84cd3186d8d3c01b0e50c8d20c6772d889fb7827ec72210afd0ce/passagemath_plot-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:bde31853844063d1fe936a832b3b70ba2a2fb5219c0eeb73449ab9273c3a7fe0", size = 13234572, upload-time = "2026-04-20T14:41:26.673Z" },
-    { url = "https://files.pythonhosted.org/packages/79/53/4cfc702c803fef8b1011bfc5020e29c7e22c50edc1bc1ddf5cec4501d2cc/passagemath_plot-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:8c2a6c67f740c74737af946759f1ab2fd9a4ae09988c7ecac2d9292320ece87a", size = 15157345, upload-time = "2026-04-20T14:43:05.159Z" },
-    { url = "https://files.pythonhosted.org/packages/67/fa/1b305ee319bc77148ef6e300e6832266af5c4995a94c192caa28d367204e/passagemath_plot-10.8.4-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1072f4e878ec36a43a2e0c21a93005404c964dee76bef7f31dd07a28a60a87a6", size = 15530288, upload-time = "2026-04-21T23:43:18.269Z" },
-    { url = "https://files.pythonhosted.org/packages/13/81/f134d9e31042e5efc25ff1059e42c37e062208699f58aef00af2b72eca3a/passagemath_plot-10.8.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fee98d8d354e4730294fa9fb859679359da00d094d5ecf0fe1aa99597485c9db", size = 19480225, upload-time = "2026-04-21T23:43:23.903Z" },
-    { url = "https://files.pythonhosted.org/packages/e7/82/7b78f2b991ea32b536c707389087346349d0bf3e9cd40961306fbf226121/passagemath_plot-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:ebc1d419ab8679602c542a0acab22bb3657cc9aeed838ce0fac8a1655c6d88b9", size = 5667400, upload-time = "2026-04-21T23:42:44.044Z" },
-    { url = "https://files.pythonhosted.org/packages/fd/73/7b0b24a360e64977dc42f9f6f86224923c0c04da04cbd05f15965609bdc5/passagemath_plot-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:b4e8e194125dae9d73332b3dc22a252e096174d3d78a9405ba7cd467c6d6f842", size = 5849481, upload-time = "2026-04-21T23:42:14.434Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/25/6a378ca0cf20adddfdf4212349a000114f96aa6e952f7d5ee15562fc9cdb/passagemath_plot-10.8.4-cp311-cp311-win_amd64.whl", hash = "sha256:6265f8fd3f2d40fac70ad74f395c81b5e3c73e42b211acdfa6584d6a17914c15", size = 1128579, upload-time = "2026-04-19T22:52:49.842Z" },
-    { url = "https://files.pythonhosted.org/packages/00/3e/2f5e95a60ece621fea087b528211e2f39479bb8a44514dff9f6984e647c1/passagemath_plot-10.8.4-cp311-cp311-win_arm64.whl", hash = "sha256:9c966b7ca74a0761022450440d2f818f6a951607ebc174c8a2e9e88eecb40470", size = 993437, upload-time = "2026-04-19T22:52:51.372Z" },
-    { url = "https://files.pythonhosted.org/packages/25/16/3cfc7339249cab8f9b5516ac02367affb6ad5f14f1ba2c6dc60d5a4dfa33/passagemath_plot-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:efa3609c61fe1f17130a90682143fc372d3500732b84427ff58884cf3ac5a92b", size = 13222776, upload-time = "2026-04-20T14:41:29.368Z" },
-    { url = "https://files.pythonhosted.org/packages/07/5d/34d4745d904caae44cb7f5418a898bd8ac5840f8d9659a7bbaf4c9282d88/passagemath_plot-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:25eef6cbd3046fa9ecf203ad47c1ca2c5fb5ad088d67910f10629f2ec7ffa334", size = 15167257, upload-time = "2026-04-20T14:43:09.123Z" },
-    { url = "https://files.pythonhosted.org/packages/f7/bf/9cd2b6a3b7486ab7fbf718ed4edf4d9ffbf1b380bec148fbae8d6d31817d/passagemath_plot-10.8.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:73d7ba0cc75cbad14dd16275225c6a12418fe0c33658ab0a79a7ed5b6b9a357c", size = 15482349, upload-time = "2026-04-21T23:43:21.155Z" },
-    { url = "https://files.pythonhosted.org/packages/7e/4e/32fa271cf3227bfd780a9d1e7a1c8a4e3ffe28bf5789f4f22d41692d8af2/passagemath_plot-10.8.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b4a72248eaaf538870aeae2ecb94313c75ed74b63788c1524b2b936eb27f9a27", size = 19465009, upload-time = "2026-04-21T23:43:28.444Z" },
-    { url = "https://files.pythonhosted.org/packages/f1/98/ade385dd5eb5e53d832fc74c680cbbcd909c7182db51bd8bc98e4f15f492/passagemath_plot-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:bdd6b59303712ccfca4e64812ac7fb6484e626afa9eccd629977e84a9b0e12c9", size = 5564522, upload-time = "2026-04-21T23:42:46.159Z" },
-    { url = "https://files.pythonhosted.org/packages/f3/d0/5b10dbdf8ead52eb8b6c1f5d5f4004725e78a6fa67006a6398ab96cfc0ed/passagemath_plot-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:4833c3629e5754871be7f47b63c0f67d1e5311f96acf2088c419087c3efa8566", size = 5779981, upload-time = "2026-04-21T23:42:15.823Z" },
-    { url = "https://files.pythonhosted.org/packages/67/78/c0d74097bd541d0bfd39fde9f8281023690bc0016f43878d422221327696/passagemath_plot-10.8.4-cp312-cp312-win_amd64.whl", hash = "sha256:9c4e1569f6fd0c030b0db1745a8382204ba6f7f471074f9f832da75b5a056df4", size = 1110651, upload-time = "2026-04-19T22:52:53.006Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/61/137b960eed8195890ab84e991d88ae2a56e30b87c107669a9d7503fad589/passagemath_plot-10.8.4-cp312-cp312-win_arm64.whl", hash = "sha256:63481415343848b18d9b3449b509f6f8948b822952eec51d06113f8103d5e384", size = 986016, upload-time = "2026-04-19T22:52:54.129Z" },
-    { url = "https://files.pythonhosted.org/packages/cb/ac/53045a1f63ed297ab249365ba37a0e03c0db9faa4d1fe3f9df8bb42f1410/passagemath_plot-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:1bfe6be29db391b86915455616705eab13b4c9301bb7cdf3451375d849907cc9", size = 13220191, upload-time = "2026-04-20T14:41:31.519Z" },
-    { url = "https://files.pythonhosted.org/packages/ce/c4/b2ef0b0e266aaa6085e4b677d5027e5e7c4467b730f988914049bd29300f/passagemath_plot-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:80fdded54d6376756c497ad53a19f20491959b3e0b87b7a2c1fe8b7abec4b451", size = 15165364, upload-time = "2026-04-20T14:43:12.3Z" },
-    { url = "https://files.pythonhosted.org/packages/24/d3/d86aa64242d2e49a8b5c90fb04edb49dc70e470ab9cd291ba1c7542faee9/passagemath_plot-10.8.4-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5cec797c33719080b33874975971db0ee4993d91d5b335fd91ca6989d92c451f", size = 15442521, upload-time = "2026-04-21T23:43:23.766Z" },
-    { url = "https://files.pythonhosted.org/packages/8b/ad/36a8c844e3ff92324bf8858455fe85ae9d9b20da2c0d455516e5ae297360/passagemath_plot-10.8.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d0d3faedfe54c923bff9ac9fa93bf33cadbd4f2ec8031bb36f046ab68c35b546", size = 19432755, upload-time = "2026-04-21T23:43:31.63Z" },
-    { url = "https://files.pythonhosted.org/packages/4f/e9/f06239c55d888933ff97b2113099f97350d8bcbab9b7be504150a55fd651/passagemath_plot-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:bad2cfe335f98490765370ff4a991f18ecda036efc5b476384f7e213762490a6", size = 5520420, upload-time = "2026-04-21T23:42:48.158Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/5b/5d3a5f2a4778a7dccdf74181456cfd5757a8f4e284c3a302ec9875da264e/passagemath_plot-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:e7827b2bce7fef8cd66fe7ca6bf08c8725040a11a41590ad496446a05482bd65", size = 5745737, upload-time = "2026-04-21T23:42:17.353Z" },
-    { url = "https://files.pythonhosted.org/packages/eb/e6/c0498ad34a54acbe55214054f6730fa99ff8957e58f300acf0ac15e23665/passagemath_plot-10.8.4-cp313-cp313-win_amd64.whl", hash = "sha256:d13ba094383cd7a5577e5a917b2bc327523b2d9cb10b423a768a7f1536fa491b", size = 1111124, upload-time = "2026-04-19T22:52:55.183Z" },
-    { url = "https://files.pythonhosted.org/packages/0a/98/33763fe6164d07a773920b10d960ef07c6affb0fa6d4f76bbd03cb6331fc/passagemath_plot-10.8.4-cp313-cp313-win_arm64.whl", hash = "sha256:c598108a6c7878588b185a91302515bba9d09ed5fb819e92e4b4d9d586dabdec", size = 984369, upload-time = "2026-04-19T22:52:56.38Z" },
-    { url = "https://files.pythonhosted.org/packages/94/ed/9b0d5656e2cc3ec0a4af4050eec3664d441165432668ef1b78fea90f2ea7/passagemath_plot-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:6891565cf293d9b1bbd07f28cea8ca9e2f593f8869c6c2b0312f9e9eb5367da7", size = 13225669, upload-time = "2026-04-20T14:41:33.571Z" },
-    { url = "https://files.pythonhosted.org/packages/17/dd/d22aabf1e9b761d7767dfc6ebfe2d90a33845fb1b359a8ee8482e54b2f63/passagemath_plot-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:30fa83a7b70bcce21b614521f3f9d36ad24f930f9571353405a47b9a85419f41", size = 15164069, upload-time = "2026-04-20T14:43:15.335Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/9e/10eee97df8998d1b312beeb5579582a1a38f580d99d4c3f8f16f9d5763c5/passagemath_plot-10.8.4-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7770e064d19c8e7e3de2f4327988b9a24dbfff8372b1932d37d69d7e3e2ec0a8", size = 15423355, upload-time = "2026-04-21T23:43:26.82Z" },
-    { url = "https://files.pythonhosted.org/packages/0b/e2/87336fc83a44278f3d51ed710dce7cf9beac52c3ad0279c0f2152b7f6899/passagemath_plot-10.8.4-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9ae5c3e642d3e9d19df6c25a05e3545b230e533048b400b53bf0557334ea88a4", size = 19356893, upload-time = "2026-04-21T23:43:35.256Z" },
-    { url = "https://files.pythonhosted.org/packages/57/8c/f7db241ce97d054a45a41f215f20abf74089b0a4530a69e3e2016fe4bddc/passagemath_plot-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:87f3830613dc028ef23c6d914cab255fd9adbdcd343496608a7fdc216ef7318b", size = 5518805, upload-time = "2026-04-21T23:42:49.98Z" },
-    { url = "https://files.pythonhosted.org/packages/9c/30/861920cd9dca5069d6566fb45c5d84a2bbf8bca71b8d614ef42d292765ae/passagemath_plot-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:df7454e7eb4227bd90f4bb063ab2daf892b970883f86a1b526af351e3dbfb107", size = 5682490, upload-time = "2026-04-21T23:42:18.888Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/7b/07b008d15a0ceded7b022e02822c1e526af6b8359013cb44ec43ba45d9d6/passagemath_plot-10.8.4-cp314-cp314-win_amd64.whl", hash = "sha256:37ade27bdb22a45a1edb5c3524627165504d900924c9859431c040b0b3ab5945", size = 1126323, upload-time = "2026-04-19T22:52:57.6Z" },
-    { url = "https://files.pythonhosted.org/packages/96/fb/8b3bf2d64d66d05a544979fdf36a48e72a634db74bf6589eebb4dfc278e7/passagemath_plot-10.8.4-cp314-cp314-win_arm64.whl", hash = "sha256:4bf0f1f7e98e5c7e4f71b0784d247e7754e3ee1ea4b3a2aec30533189b364900", size = 1007229, upload-time = "2026-04-19T22:52:58.946Z" },
-    { url = "https://files.pythonhosted.org/packages/a8/b0/7f56e9d08c610e1094fb0383c3bb62bc57f903ca4d8010e124a5346b3271/passagemath_plot-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:6a8617aefe3f4165ea31c0d933304e0f45d5228b87dbc8500e8e4e2263edbe70", size = 13302664, upload-time = "2026-04-20T14:41:35.953Z" },
-    { url = "https://files.pythonhosted.org/packages/f0/5e/0cc099fa8174afd8e8f816f149b0b2172791eea85e562e93c521b291a500/passagemath_plot-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:6c86f0d6c92f73de4c2e7c53721829d8fec5ca6bddbaa2db103aff1e49c792ce", size = 15225085, upload-time = "2026-04-20T14:43:18.548Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/36/51811b761b57fed8cc88996e0557f109db6e083beeba3330ece1a3d20abd/passagemath_plot-10.8.4-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5743394765f24abbd2604583378289ccfa99b825a96e47c33a43e56f74e61aee", size = 15800655, upload-time = "2026-04-21T23:43:30.181Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/5a/c0c88ebaa459579973ec772a125a5a1cb02b9f3dc1e571f6c921e40abd70/passagemath_plot-10.8.4-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:538a19b629ca6aee832b4f699236d0190d9cb32a52c87745af35bcc2223d1a49", size = 19575169, upload-time = "2026-04-21T23:43:37.908Z" },
-    { url = "https://files.pythonhosted.org/packages/01/bc/b59d5e44c6024598eb7a616f64c875993b081dfbc7849dcdbee0d924afcf/passagemath_plot-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:51fa87d0eee3697d622a04a5b4e7354cfb072eacbc15dfaf6dc27243bd517561", size = 5784384, upload-time = "2026-04-21T23:42:51.745Z" },
-    { url = "https://files.pythonhosted.org/packages/3a/fb/8debb7a4ef6c3f77d30fadb05eff43bd0f73a4551af80a73eeac85a8835c/passagemath_plot-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:58a47368605609156756ab024efade62415b3460ac56ee2d59dfea2a10e3a8d0", size = 5863383, upload-time = "2026-04-21T23:42:20.759Z" },
-    { url = "https://files.pythonhosted.org/packages/53/af/56530dba294f48d44fb3f7cd0ffb5eb10f8c48f4829bc1769d1272ec6156/passagemath_plot-10.8.4-cp314-cp314t-win_amd64.whl", hash = "sha256:4a4cdca7e88891537b6d3c7f13990474ed11db3afd9672628b1d99a6e782202f", size = 1266956, upload-time = "2026-04-19T22:53:00.057Z" },
-    { url = "https://files.pythonhosted.org/packages/93/4c/3736a4f654d09ae92b5610c4f1bcd452d2ff3e00a82f52be2007dd0023e8/passagemath_plot-10.8.4-cp314-cp314t-win_arm64.whl", hash = "sha256:b2e9573b2fc0fc47d3a958088a7ba3e5c6cc27cdf7319af7e8d9e14318d5cd3c", size = 1048926, upload-time = "2026-04-19T22:53:01.599Z" },
-]
-
-[[package]]
 name = "passagemath-repl"
 version = "10.5.49"
 source = { registry = "https://pypi.org/simple" }
@@ -3775,45 +3340,26 @@ name = "passagemath-repl"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version == '3.10.*' and sys_platform == 'win32'",
-    "python_full_version == '3.10.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "ipykernel", version = "7.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "ipython", version = "8.39.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "ipywidgets", marker = "python_full_version == '3.10.*'" },
-    { name = "jupyter-client", version = "8.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-objects", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "typing-extensions", marker = "python_full_version == '3.10.*'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0b/d4/5c193d2bd75631a202a0276e88b9c1310438625898ae0f6eeeda941c49ff/passagemath_repl-10.6.48.tar.gz", hash = "sha256:3141d538bea50237b5f914e59db8456e95f889301bb4046fc2a90c33f062e982", size = 509089, upload-time = "2026-02-02T18:12:18.702Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/cf/4e09f1b136a2e105d5a0478c424d01f3bcee9cde58d4dbe0a133b5e9c8e1/passagemath_repl-10.6.48-py3-none-any.whl", hash = "sha256:467a398223f32b1a246c36a65ace56368514a383fc8ba180e7874d6eab1e5774", size = 620037, upload-time = "2026-02-02T12:33:16.758Z" },
-]
-
-[[package]]
-name = "passagemath-repl"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and sys_platform != 'win32'",
     "python_full_version == '3.11.*' and sys_platform == 'win32'",
     "python_full_version == '3.11.*' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*' and sys_platform == 'win32'",
+    "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "ipykernel", version = "7.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "ipykernel", version = "7.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "ipython", version = "8.39.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "ipython", version = "9.14.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "ipywidgets", marker = "python_full_version >= '3.11'" },
-    { name = "jupyter-client", version = "8.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-environment", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-objects", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.11' and python_full_version < '3.13'" },
+    { name = "ipywidgets", marker = "python_full_version >= '3.10'" },
+    { name = "jupyter-client", version = "8.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-objects", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.10' and python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/09/10da8a29425515dca6afe6685db6d225592013ad7776e9424ff55803ff96/passagemath_repl-10.8.4.tar.gz", hash = "sha256:cdaec52e2969c7e98661e376d0b4d5c0f2af7efb1a2a1aa618cf04ac85a6b473", size = 513172, upload-time = "2026-04-23T01:28:03.149Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/d4/5c193d2bd75631a202a0276e88b9c1310438625898ae0f6eeeda941c49ff/passagemath_repl-10.6.48.tar.gz", hash = "sha256:3141d538bea50237b5f914e59db8456e95f889301bb4046fc2a90c33f062e982", size = 509089, upload-time = "2026-02-02T18:12:18.702Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/3b/9fdfcda3e57b77dd1c45a34df9a628fc6e29be593b933be684fbf6ef7a03/passagemath_repl-10.8.4-py3-none-any.whl", hash = "sha256:eff8b6fb5a69526b27e1fe2bbd0abf8d7cd0839546edd1205799787343660628", size = 624671, upload-time = "2026-04-20T14:36:14.492Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/cf/4e09f1b136a2e105d5a0478c424d01f3bcee9cde58d4dbe0a133b5e9c8e1/passagemath_repl-10.6.48-py3-none-any.whl", hash = "sha256:467a398223f32b1a246c36a65ace56368514a383fc8ba180e7874d6eab1e5774", size = 620037, upload-time = "2026-02-02T12:33:16.758Z" },
 ]
 
 [[package]]
@@ -3873,18 +3419,23 @@ name = "passagemath-singular"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "memory-allocator", marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-flint", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-pari", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "pexpect", marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "memory-allocator", marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-flint", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-pari", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "pexpect", marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2b/92/2f55b792b105aed2561f9d0f6ea57d7fee7566afc6f157365fe9743fb239/passagemath_singular-10.6.48.tar.gz", hash = "sha256:c2e0e3720e09c7630a0974b58d1b025d8cd90607f5480dc2a2cde2cdb5d7f1c4", size = 769054, upload-time = "2026-02-02T18:12:25.035Z" }
 wheels = [
@@ -3986,22 +3537,29 @@ name = "passagemath-symbolics"
 version = "10.6.48"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "gmpy2", marker = "python_full_version == '3.10.*'" },
+    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.12'" },
+    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "gmpy2", marker = "python_full_version >= '3.10'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-ecl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-flint", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-maxima", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-ntl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "passagemath-singular", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "sympy", marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-ecl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-flint", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-maxima", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-modules", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-ntl", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "passagemath-singular", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "sympy", marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f3/f7/4e752ac13214f772c0025b880b92bee7b6b93a80d80b5ed8f1f7b16d360d/passagemath_symbolics-10.6.48.tar.gz", hash = "sha256:60794f31490c3ea132ad9a62b21a4cde384d866b44ceae4be448bbc14ee0fdb4", size = 1185580, upload-time = "2026-02-02T18:12:42.467Z" }
 wheels = [
@@ -4044,69 +3602,11 @@ wheels = [
 ]
 
 [[package]]
-name = "passagemath-symbolics"
-version = "10.8.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "cysignals", version = "1.12.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "gmpy2", marker = "python_full_version >= '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "passagemath-categories", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-environment", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-flint", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-gsl", marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-modules", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "passagemath-ntl", version = "10.8.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sympy", marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/36/d7/127b14b2668a05e3c6b4f87b75756f615044cb10317c717531586d86991b/passagemath_symbolics-10.8.4.tar.gz", hash = "sha256:4ab763796def06990a8166a30399dfb4f349708de1b5def35af312b40a409ba5", size = 1619269, upload-time = "2026-04-23T01:28:16.975Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6d/97/768124e7ff90cff150317cd5404c5ba22133d92eb19e40bbb8b6bf3de054/passagemath_symbolics-10.8.4-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:cf4b0e549baaa6194951ad8501c83378c7d8382899868f8f51f92b238381a82f", size = 21810942, upload-time = "2026-04-20T14:42:38.502Z" },
-    { url = "https://files.pythonhosted.org/packages/76/46/0c34ddafed2292dee5d940fbf5e1898b01148261b2fdbb605a2ad00e3772/passagemath_symbolics-10.8.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:618b77e88524c1a3e2cfe3d58c45d9557b8972352152a8a1d98dbecf3002c9a4", size = 24515940, upload-time = "2026-04-20T14:44:24.938Z" },
-    { url = "https://files.pythonhosted.org/packages/9c/98/2146d6dfbb83157602cca2611189d89e175ed534b0bbfd3547700b8be28d/passagemath_symbolics-10.8.4-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:21c848c20ca1771d02450cf9767b582c536de5adc5de7853696b8bfc424c2569", size = 39359452, upload-time = "2026-04-22T06:18:02.322Z" },
-    { url = "https://files.pythonhosted.org/packages/b4/99/734af6083c2c54add5039bea08674aab3c04a5127ffd0c17487c73a92df5/passagemath_symbolics-10.8.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f5736c9adf793dee18c16141b34d8741091d918b02f1a9eddd361233dd0a4a3e", size = 44043526, upload-time = "2026-04-22T06:19:47.968Z" },
-    { url = "https://files.pythonhosted.org/packages/80/37/90f19ea2c4d736e09221aea225dd383e74c05cc48bcd26e69726cd19927c/passagemath_symbolics-10.8.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:90b2067070361d5ed853770e0c8209322f99bc951f98427c42b8ded4217b3cc8", size = 40305916, upload-time = "2026-04-21T23:44:06.139Z" },
-    { url = "https://files.pythonhosted.org/packages/9f/5e/a68db0e9c3708734d74162e5c581bde10917fa77161c753340b6fa6f0fb7/passagemath_symbolics-10.8.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:7abc0fd3de4ec7db1f364d53e57c58febfd53a7e4c08738944b492638796ce00", size = 45344823, upload-time = "2026-04-21T23:43:25.352Z" },
-    { url = "https://files.pythonhosted.org/packages/81/9a/bc1da4f5c858840322621fc8d1ac796de108d82939839da30e5cfc2cf673/passagemath_symbolics-10.8.4-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:211d4f1fd170bb05251d1dce5105475ec683e2fe89ee2b4c19995e1b8665ae72", size = 21797510, upload-time = "2026-04-20T14:42:41.449Z" },
-    { url = "https://files.pythonhosted.org/packages/fd/03/b5f29d970b3d9aac84d3e8024516e4de359afb5a6d39d20bf91459c34496/passagemath_symbolics-10.8.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:856a91a98d00fb37dbd09d100f34b4ff228e34966a2a5b44430a191f2d623a98", size = 24520697, upload-time = "2026-04-20T14:44:28.005Z" },
-    { url = "https://files.pythonhosted.org/packages/f0/35/ecfae39f7924d77d00989afc46219d3d4ee2faba9c0e912e09b0b70a49cb/passagemath_symbolics-10.8.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:36be0fdfdd8db7f880021d69fc6296419783fa452810d138e30dd89f9a0730d7", size = 39100621, upload-time = "2026-04-22T06:18:04.954Z" },
-    { url = "https://files.pythonhosted.org/packages/60/14/c2586cebffe700539ae73b91a6d9b377a802c81b346c0a595da3459943f5/passagemath_symbolics-10.8.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:03c47164f4319c4236afa8a00423439f7458929bd2c99a0b5cb47c39e3ddfae6", size = 43884426, upload-time = "2026-04-22T06:19:52.117Z" },
-    { url = "https://files.pythonhosted.org/packages/1e/6d/f6fc7d7c8cdb87516e511efe47cb1783ef530c14c54dcda8638995cabb7d/passagemath_symbolics-10.8.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:81d24ed5edb598db96052437683ca365c2b1a6c520a164b8e35c69e3899abcf4", size = 39975128, upload-time = "2026-04-21T23:44:09.952Z" },
-    { url = "https://files.pythonhosted.org/packages/da/28/5fdd0d5efdbafff1f787ce1af2b420df3a7ae78b30bfb121078ecf086ed1/passagemath_symbolics-10.8.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:bc70fee9763eddbba481fd94854ed6e4f35c7aa98aef1fd5262a881b70b58ac0", size = 45103537, upload-time = "2026-04-21T23:43:28.672Z" },
-    { url = "https://files.pythonhosted.org/packages/96/13/e9ce644b86f29e5ff4f77bed9de68d5b96087a7afdfc07b5b42a5a3db91f/passagemath_symbolics-10.8.4-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:b21224df2343f90fc4096219a1ce9d18bda34ac99ff3513bd7487a8f890efae2", size = 21795541, upload-time = "2026-04-20T14:42:44.725Z" },
-    { url = "https://files.pythonhosted.org/packages/ed/7c/bb4003bdd43365076d57820a38c2cf10b8e0545ad0427ed5e6be978dbdd0/passagemath_symbolics-10.8.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:956c69b982ee6fcde77f167e83b7ef5473b8346901852a2cac8b1cc87017281d", size = 24519404, upload-time = "2026-04-20T14:44:31.161Z" },
-    { url = "https://files.pythonhosted.org/packages/ca/99/684594480325e1fee79601660e63244047d0748df2ba48ff6d1c7449febe/passagemath_symbolics-10.8.4-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:51176d1666ac5bd9b2e87923587ba95a647209ecd5b17cbb85a8348fa5a4fabc", size = 39080920, upload-time = "2026-04-22T06:18:07.924Z" },
-    { url = "https://files.pythonhosted.org/packages/4a/c4/34fef82e8a0b3c0df7cb955c0e80ebd2d02b5d539fad1b9d516befdb6bbd/passagemath_symbolics-10.8.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8235f42f4223f55d239e49dc1ec07d20621c74a997699e9e33192968360ea896", size = 43818976, upload-time = "2026-04-22T06:19:56.277Z" },
-    { url = "https://files.pythonhosted.org/packages/bc/9a/29caa67f37214d8a393942066100f51f8920c147892395823676c405085e/passagemath_symbolics-10.8.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:4756fa8bd0f27c430097666fefa0adeeeca50004ac9999b87495c7a53cf72e4f", size = 39969138, upload-time = "2026-04-21T23:44:13.835Z" },
-    { url = "https://files.pythonhosted.org/packages/5f/4f/69e32235eb7dff7f9b04471b340dcf9e2ca9de2437d24a6417724643ac67/passagemath_symbolics-10.8.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:783990b347528980f5106c992e73215a2ceb17a377673813a0a95cff0582245e", size = 45047324, upload-time = "2026-04-21T23:43:32.015Z" },
-    { url = "https://files.pythonhosted.org/packages/c4/2c/80a84a031b26822de8b3fc36cd3f7fc3d9d87f993f1b7ebd6a1acb800275/passagemath_symbolics-10.8.4-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:4fe89e270c58491115533530fbf439f12ccde9c3fd83c3089b4940f61ab7a6e0", size = 21802894, upload-time = "2026-04-20T14:42:47.529Z" },
-    { url = "https://files.pythonhosted.org/packages/c9/c7/3a774cb0381eb5de3372f11f4c9b6f4fb52c23470004aa23cb1736303b3e/passagemath_symbolics-10.8.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:a884a9c9e9d1cb2c44f7a13e2611c356cfb0b28316569d239836590ce87c98cf", size = 24519499, upload-time = "2026-04-20T14:44:34.812Z" },
-    { url = "https://files.pythonhosted.org/packages/eb/70/17e1e79e198d1b8728713143b7e877c19a01153baf0fb9fa9bdc85f5d580/passagemath_symbolics-10.8.4-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d136891ce1fb2778914a49f0b8ad4f39f3341b89b7e8f9bd0949d09927c8a814", size = 39080319, upload-time = "2026-04-22T06:18:10.64Z" },
-    { url = "https://files.pythonhosted.org/packages/b5/38/e799aa99a9cc6e52ca2796d9ff525ffc7ee58cf440701991f621dbcdac09/passagemath_symbolics-10.8.4-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d0067142bc92b82be7f6c6a7b71b31a0413cd93765e25c221d04873231e5ecb7", size = 43753163, upload-time = "2026-04-22T06:20:00.69Z" },
-    { url = "https://files.pythonhosted.org/packages/da/d8/5f60e799703fa09a128c139aef7a68d791c42e0e7d921d8e8216bf8ae87f/passagemath_symbolics-10.8.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:5b47d2e15932c39b550e8a630f995855d7af501ac273a9677d48d7f2b7e56514", size = 39985596, upload-time = "2026-04-21T23:44:17.208Z" },
-    { url = "https://files.pythonhosted.org/packages/65/03/c0c61f02420e1a26c0f23dd013ca7ed1eb81814adaeb9773eb43b3c3b5ad/passagemath_symbolics-10.8.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:9cc97e48fea43e4a374f2cde765bcbc136afc79a79ccf4510413a4441db2b7f8", size = 45007692, upload-time = "2026-04-21T23:43:35.02Z" },
-    { url = "https://files.pythonhosted.org/packages/6c/80/7fcad8941b83b7c02d753e43c83dbe313b4a9b0aa3301001b30d6b8a1543/passagemath_symbolics-10.8.4-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:4df9884a595970d3bc0fd29a1812247903a9b09ba05df20e88835fd9a0fd0453", size = 21885639, upload-time = "2026-04-20T14:42:50.042Z" },
-    { url = "https://files.pythonhosted.org/packages/8e/62/e85b9659c893d90b567cf32ca8c3ef50cf90f952aeeda3a34bf7b56710ac/passagemath_symbolics-10.8.4-cp314-cp314t-macosx_13_0_x86_64.whl", hash = "sha256:f85e01ddd09b95d7eeb07a5943befae8cb15e4895e93091a792b3217259afc4b", size = 24566438, upload-time = "2026-04-20T14:44:38.066Z" },
-    { url = "https://files.pythonhosted.org/packages/1e/91/c35f27dc761bfac49cf838da3bec5b65a29a922a974977060bb3e5fe39f9/passagemath_symbolics-10.8.4-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7842d8ddf471c71660dea15aebb655e052e60441aa2803d7b73bb2da84197fc0", size = 39798801, upload-time = "2026-04-22T06:18:13.47Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/14/15f1b769f7247cdfe8d7581eda3cacba47e33e91c5a17da19738525eb7e7/passagemath_symbolics-10.8.4-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:219be26646e4bfcc7d114e4b0a29dd75f0e9f5ead0056421bea57739d68dd6a6", size = 44295520, upload-time = "2026-04-22T06:20:04.959Z" },
-    { url = "https://files.pythonhosted.org/packages/94/f4/47ccf3fd78ce27dc1cf06ae356a0844f50ac5c2c97c1efd0790e3baeeb8d/passagemath_symbolics-10.8.4-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:b0094e74c00ae80059bb87b07fc91e5841e5bfdb1c7b202299c5a285b983dafa", size = 40516057, upload-time = "2026-04-21T23:44:20.622Z" },
-    { url = "https://files.pythonhosted.org/packages/55/3f/a79f04f61cb3563134098289d4d90cef80e58e9e06af964470ba10c205cd/passagemath_symbolics-10.8.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:435c8b971943da8f0aff8337d28fa3d046922d0500b03670e86551e30e77d5c7", size = 45468104, upload-time = "2026-04-21T23:43:38.122Z" },
-]
-
-[[package]]
 name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess", marker = "python_full_version < '3.11' or sys_platform != 'win32'" },
+    { name = "ptyprocess" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
