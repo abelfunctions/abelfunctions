@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 """Setup script for abelfunctions
 
-To install Abelfunctions for your user account run:
+To install Abelfunctions run:
 
-    $ sage setup.py install --user
+    $ sage --pip install --no-build-isolation --editable .
 
 To build Abelfunctions in-place (used in running the test suite) run:
 
     $ sage setup.py build_ext --inplace
-
-To install in a custom directory <dir> use:
-
-    $ sage setup.py install --prefix=<dir>
 
 Developers: to clean the directory of any extraneous files, such as compiled
 Python .pyc and Cython .o/.so output and run:
@@ -90,8 +86,6 @@ for mod in ext_modules:
     mod.extra_compile_args.append("-w")
     mod.extra_compile_args.append("-std=c99")
 
-packages = ["abelfunctions", "abelfunctions.riemann_theta", "abelfunctions.utilities"]
-
 
 class clean(Command):
     """Cleans files so you should get the same copy as in git."""
@@ -164,47 +158,10 @@ class clean(Command):
         os.chdir(curr_dir)
 
 
-# configure setup
-exec(open("abelfunctions/version.py").read())
-
 with cython_namespace_package_support():
     ext_modules = cythonize(ext_modules, compiler_directives={"language_level": "3"})
 
 setup(
-    name="abelfunctions",
-    version=__version__,  # noqa: F821
-    description="A library for computing with Abelian functions, Riemann "
-    "surfaces, and algebraic curves.",
-    author="Chris Swierczewski",
-    author_email="cswiercz@gmail.com",
-    url="https://github.com/cswiercz/abelfunctions",
-    license="MIT",
-    packages=packages,
-    python_requires=">=3.8",
-    install_requires=[
-        "numpy",
-        "scipy>=1.10.0",
-    ],
     ext_modules=ext_modules,
-    platforms=["all"],
     cmdclass={"clean": clean},
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Science/Research",
-        "Topic :: Scientific/Engineering :: Mathematics",
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3 :: Only",
-    ],
-    extras_require={
-        "passagemath": [
-            "passagemath-combinat",
-            "passagemath-flint",
-            "passagemath-modules",
-            "passagemath-plot",
-            "passagemath-repl",
-            "passagemath-symbolics",
-            "networkx",
-            "sympy",
-        ],
-    },
 )

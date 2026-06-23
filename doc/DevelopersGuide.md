@@ -27,7 +27,7 @@ improvements, follow the instructions at
 [GitHub - Fork a Repo](https://help.github.com/articles/fork-a-repo/) to create
 a personal "fork" of Abelfunctions on GitHub. You only need to do this once.
 
-Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and linting. It's recommented to configure this to run on save in your editor of choice. You can also install [pre-commit](https://pre-commit.com/#installation) to automatically run `ruff` when you commit your changes.
+Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and linting. It's recommented to configure this to run on save in your editor of choice. You can also install [pre-commit](https://pre-commit.com/#installation) to automatically run `ruff` when you commit your changes. Python dependencies used for development and CI are pinned in `uv.lock`.
 
 1. **Create a new branch:**
 
@@ -50,7 +50,11 @@ Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and lin
    propagating issues that may have cropped up.
 
    ```
-   sage setup.py build_ext --inplace
+   python -m pip install uv==0.11.23
+   SAGE_PYTHON="$(sage -c 'import sys; print(sys.executable)')"
+   uv export --frozen --group build --group test --no-emit-project --output-file /tmp/abelfunctions-dev-requirements.txt
+   uv pip install --python "$SAGE_PYTHON" --require-hashes --strict -r /tmp/abelfunctions-dev-requirements.txt
+   uv pip install --python "$SAGE_PYTHON" --editable . --no-build-isolation --no-deps
    sage runtests.py
    ```
 
@@ -95,7 +99,8 @@ abelfunctions/
   notebooks/        # Demonstration notebooks
   .travis.yml       # TravisCI test configuration
   runtests.py       # Script for running Ablfunctions tests
-  setup.py          # Installation script
+  pyproject.toml    # Project metadata and dependency declarations
+  setup.py          # Sage-specific extension build hooks
 ```
 
 The core functionality of Abelfunctions can be partitioned into two halves: the
@@ -230,3 +235,10 @@ begins with `test_` and lives in a `test/` directory. When creating a new
 Every remote branch and pull request will create a new
 [TravisCI instance](https://travis-ci.org/abelfunctions/abelfunctions) so that
 you'll be notified if your contribution passes tests.
+
+If you change Python dependencies or dependency groups, regenerate `uv.lock` by
+running:
+
+```
+uv lock
+```

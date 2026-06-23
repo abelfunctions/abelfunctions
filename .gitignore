@@ -46,3 +46,4 @@ doc/_build
 *.profile
 .vscode/settings.json
 /abelfunctions.egg-info
+.venv/
