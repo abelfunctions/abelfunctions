@@ -1,0 +1,1 @@
+recursive-include abelfunctions *.pyx *.pxd *.pxi *.c
