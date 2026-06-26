@@ -10,6 +10,9 @@ on:
   workflow_dispatch:
     # Allow to run manually
 
+permissions:
+  contents: read
+
 jobs:
   static-analysis:
     runs-on: ubuntu-24.04
