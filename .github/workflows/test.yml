@@ -69,6 +69,10 @@ jobs:
       - name: Install locked Python dependencies
         run: uv sync --frozen --group test --no-install-project
       - run: uv pip freeze --python "$SAGE_PYTHON"
+      - name: Sage version
+        run: micromamba run -n sage sage --version
+      - name: Python version
+        run: micromamba run -n sage sage -c 'import sys; print(sys.version)'
       - name: NumPy version
         run: micromamba run -n sage sage -c 'import numpy; print(numpy.__version__)'
       - name: Cython version
