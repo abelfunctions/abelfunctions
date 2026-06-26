@@ -52,10 +52,6 @@ build = [
     { name = "cython" },
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "passagemath-categories", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-categories", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "passagemath-environment", version = "10.5.49", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "passagemath-environment", version = "10.6.48", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pythran" },
     { name = "setuptools" },
 ]
@@ -86,8 +82,6 @@ provides-extras = ["passagemath"]
 build = [
     { name = "cython" },
     { name = "numpy", specifier = "<2.4" },
-    { name = "passagemath-categories", specifier = "<10.8" },
-    { name = "passagemath-environment", specifier = "<10.8" },
     { name = "pythran", specifier = ">=0.13.1" },
     { name = "setuptools", specifier = ">=61.0,<82" },
 ]

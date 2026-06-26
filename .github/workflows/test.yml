@@ -26,7 +26,7 @@ jobs:
       - name: Install uv
         run: python -m pip install uv==0.11.23
       - name: Install locked lint dependencies
-        run: uv sync --frozen --only-group lint --no-install-project
+        run: uv sync --locked --only-group lint --no-install-project
       - name: Check code with ruff
         run: |
           uv run --no-sync ruff check --output-format=github
@@ -71,7 +71,7 @@ jobs:
           echo "UV_PROJECT_ENVIRONMENT=$(micromamba run -n sage sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
         run: |
-          uv export --frozen --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
           uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
       - run: uv pip freeze --python "$SAGE_PYTHON"
       - name: Sage version
@@ -107,7 +107,7 @@ jobs:
           echo "UV_PROJECT_ENVIRONMENT=$(micromamba run -n sage sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
         run: |
-          uv export --frozen --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
           uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
       - name: Build abelfunctions wheel with uv
         run: uv build
@@ -138,7 +138,7 @@ jobs:
         run: uv build
       - name: Install locked Python dependencies
         run: |
-          uv export --frozen --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
           uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt 
       - name: Install wheel
         run: micromamba run -n sage sage --pip install --no-build-isolation .
@@ -157,7 +157,7 @@ jobs:
       - name: Install uv
         run: python -m pip install uv==0.11.23
       - name: Install project
-        run: uv sync --frozen --group test --extra passagemath
+        run: uv sync --locked --group test --extra passagemath
       # - name: Run tests
       #   run: tox
       - name: Run tests
