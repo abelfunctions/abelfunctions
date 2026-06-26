@@ -51,12 +51,14 @@ def singular_points_finite(f):
     # singularities may occur. todo: reuse RiemannSurface.discriminant_points()
     R = f.parent()
     x, y = R.gens()
+    Ry = QQbar["y"]
+    ybar = Ry.gen()
     res = f.resultant(f.derivative(y), y).univariate_polynomial()
     xroots = res.roots(ring=QQbar, multiplicities=True)
     for xk, deg in xroots:
         if deg > 1:
             # compute the y-roots above x=xk
-            fxk = f(xk, y).univariate_polynomial()
+            fxk = Ry(f(x=xk, y=ybar))
             yroots = fxk.roots(ring=QQbar, multiplicities=True)
 
             # for each y-root ykj above xk, record a singular point if the
