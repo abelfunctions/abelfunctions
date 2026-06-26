@@ -58,8 +58,6 @@ build = [
     "cython",
     "numpy<2.4",
     "pythran>=0.13.1",
-    "passagemath-categories<10.8",
-    "passagemath-environment<10.8",
 ]
 lint = [
     "ruff==0.15.1",
