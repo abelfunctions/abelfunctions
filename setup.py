@@ -5,10 +5,6 @@ To install Abelfunctions run:
 
     $ sage --pip install --no-build-isolation --editable .
 
-To build Abelfunctions in-place (used in running the test suite) run:
-
-    $ sage setup.py build_ext --inplace
-
 Developers: to clean the directory of any extraneous files, such as compiled
 Python .pyc and Cython .o/.so output and run:
 
