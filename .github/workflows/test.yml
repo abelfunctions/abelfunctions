@@ -65,9 +65,10 @@ jobs:
       - name: Resolve Sage Python
         run: |
           echo "SAGE_PYTHON=$(micromamba run -n sage sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
-          echo "UV_PROJECT_ENVIRONMENT=$(micromamba run -n sage sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
-        run: uv sync --frozen --group test --no-install-project
+        run: |
+          uv export --frozen --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
       - run: uv pip freeze --python "$SAGE_PYTHON"
       - name: NumPy version
         run: micromamba run -n sage sage -c 'import numpy; print(numpy.__version__)'
@@ -95,9 +96,10 @@ jobs:
       - name: Resolve Sage Python
         run: |
           echo "SAGE_PYTHON=$(micromamba run -n sage sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
-          echo "UV_PROJECT_ENVIRONMENT=$(micromamba run -n sage sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
-        run: uv sync --frozen --group test --no-install-project
+        run: |
+          uv export --frozen --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
       - name: Install Abelfunctions with setup.py
         run: micromamba run -n sage sage setup.py build_ext --inplace
       - name: Run tests
