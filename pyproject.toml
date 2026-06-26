@@ -79,3 +79,6 @@ exclude = ["presentation.py", "examples/*"]
 
 [tool.ruff.lint]
 ignore = ["E741"]
+
+[tool.uv]
+exclude-newer = "P7D"
