@@ -50,7 +50,7 @@ Abelfunctions uses [`ruff`](https://docs.astral.sh/ruff/) for formatting and lin
    propagating issues that may have cropped up.
 
    ```
-   python -m pip install uv==0.11.23
+   python -m pip install uv==0.11.23 --no-deps
    SAGE_PYTHON="$(sage -c 'import sys; print(sys.executable)')"
    uv export --frozen --group build --group test --no-emit-project | uv pip install --python "$SAGE_PYTHON" --require-hashes --strict -r -
    uv pip install --python "$SAGE_PYTHON" --editable . --no-build-isolation --no-deps
