@@ -3,7 +3,7 @@
 [![Gitter](https://badges.gitter.im/abelfunctions/abelfunctions.svg)](https://gitter.im/abelfunctions/abelfunctions?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 ![Build Status](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
 
-A [Sage](http://www.sagemath.org) library for computing with Abelian functions, Riemann surfaces, and algebraic curves. Abelfunctions is the Ph.D. thesis work of [Chris Swierczewski](http://www.cswiercz.info). (GitHub: [cswiercz](https://github.com/cswiercz)).  Abelfunctions requires Sage 9.5 or later and a [supported version of Python](https://devguide.python.org/versions/).
+A [Sage](http://www.sagemath.org) library for computing with Abelian functions, Riemann surfaces, and algebraic curves. Abelfunctions is the Ph.D. thesis work of [Chris Swierczewski](http://www.cswiercz.info). (GitHub: [cswiercz](https://github.com/cswiercz)).  Abelfunctions requires Sage 10.5 or later and a [supported version of Python](https://devguide.python.org/versions/).
 
 ```python
 sage: from abelfunctions import *
