@@ -2,7 +2,7 @@
 # Need so install with --no-build-isolation for https://github.com/abelfunctions/abelfunctions/issues/264
 # but pip does not currently install these dependencies in this case
 requires = [
-    "setuptools>=61.0",
+    "setuptools>=61.0,<82",
     "cython",
     "numpy<2.4",
     "pythran>=0.13.1",
@@ -54,7 +54,7 @@ Repository = "https://github.com/cswiercz/abelfunctions"
 
 [dependency-groups]
 build = [
-    "setuptools>=61.0",
+    "setuptools>=61.0,<82",
     "cython",
     "numpy<2.4",
     "pythran>=0.13.1",
