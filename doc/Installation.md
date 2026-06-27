@@ -1,6 +1,6 @@
 # Installation
 
-Abelfunctions requires [Sage (SageMath)](http://www.sagemath.org) 9.2 or later.
+Abelfunctions requires [Sage (SageMath)](http://www.sagemath.org) 10.6 or later and a [supported version of Python](https://devguide.python.org/versions/).
 Sage makes it relatively easy to build and run the code.
 
 > **Note:** Depending on your system one of the below installation methods
@@ -20,7 +20,7 @@ sage --pip install --no-build-isolation git+https://github.com/abelfunctions/abe
 1. Download Abelfunctions using [Git](https://git-scm.com) or by clicking
    on the *"Download Zip"* button on the right-hand side of the
    [repository page](https://github.com/abelfunctions/abelfunctions).
-2. Enter the top-level directory, the one containing `setup.py` and run
+2. Enter the top-level directory, the one containing `pyproject.toml`, and run
 
    ```bash
    sage --pip install --no-build-isolation --editable .
@@ -30,3 +30,15 @@ sage --pip install --no-build-isolation git+https://github.com/abelfunctions/abe
    the directory will take immediate effect after restarting the Sage
    session. If you make changes to Cython sources, repeat the above
    command so that the modules are recompiled.
+
+## Using the locked development dependencies
+
+The repository now pins its Python dependency graph in `uv.lock`. To install the
+same Python dependencies used in CI into a Sage environment, run:
+
+```bash
+python -m pip install uv==0.11.23 --no-deps
+SAGE_PYTHON="$(sage -c 'import sys; print(sys.executable)')"
+uv export --frozen --group build --group test --no-emit-project | uv pip install --python "$SAGE_PYTHON" --require-hashes --strict -r -
+uv pip install --python "$SAGE_PYTHON" --editable . --no-build-isolation --no-deps
+```

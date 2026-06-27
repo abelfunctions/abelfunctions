@@ -41,8 +41,6 @@ Contents
 import numpy
 import sympy
 
-from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
-
 from sage.arith.misc import XGCD as xgcd
 
 try:
@@ -59,6 +57,8 @@ from sage.rings.laurent_series_ring import LaurentSeriesRing
 from sage.rings.qqbar import QQbar, AlgebraicNumber
 from sage.rings.rational_field import QQ
 from sympy import Point, Segment
+
+from abelfunctions.puiseux_series_ring import PuiseuxSeriesRing
 
 
 def newton_polygon_exceptional(H):

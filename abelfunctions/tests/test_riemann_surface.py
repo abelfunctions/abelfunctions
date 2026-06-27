@@ -1,4 +1,4 @@
-from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
+from .test_abelfunctions import AbelfunctionsTestCase
 
 from abelfunctions import RiemannSurface
 

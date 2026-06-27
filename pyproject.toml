@@ -2,14 +2,77 @@
 # Need so install with --no-build-isolation for https://github.com/abelfunctions/abelfunctions/issues/264
 # but pip does not currently install these dependencies in this case
 requires = [
-    "setuptools>=61.0",
+    "setuptools>=61.0,<82",
     "cython",
-    "numpy",
+    "numpy>1,<2.4",
     "pythran>=0.13.1",
-    "passagemath-categories",
-    "passagemath-environment",
+    "passagemath-categories<10.8",
+    "passagemath-environment<10.8",
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "abelfunctions"
+dynamic = ["version"]
+description = "A library for computing with Abelian functions, Riemann surfaces, and algebraic curves."
+readme = "README.md"
+# Locked PassageMath build dependencies published on PyPI require Python 3.9+.
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Chris Swierczewski", email = "cswiercz@gmail.com" },
+]
+dependencies = [
+    "numpy>1,<2.4",
+    "scipy>=1.10.0",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.optional-dependencies]
+passagemath = [
+    "passagemath-combinat<10.8",
+    "passagemath-flint<10.8",
+    "passagemath-modules<10.8",
+    "passagemath-plot<10.8",
+    "passagemath-repl<10.8",
+    "passagemath-symbolics<10.8",
+    "networkx",
+    "sympy",
+]
+
+[project.urls]
+Documentation = "https://github.com/abelfunctions/abelfunctions/blob/master/doc/README.md"
+Homepage = "https://github.com/cswiercz/abelfunctions"
+Issues = "https://github.com/cswiercz/abelfunctions/issues"
+Repository = "https://github.com/cswiercz/abelfunctions"
+
+[dependency-groups]
+build = [
+    "setuptools>=61.0,<82",
+    "cython",
+    "numpy>1,<2.4",
+    "pythran>=0.13.1",
+]
+lint = [
+    "ruff==0.15.1",
+]
+test = [
+    "pytest==7.4.4",
+    "pytest-xdist==3.5.0",
+]
+
+[tool.setuptools]
+packages = ["abelfunctions", "abelfunctions.riemann_theta", "abelfunctions.utilities"]
+platforms = ["all"]
+
+[tool.setuptools.dynamic]
+version = { attr = "abelfunctions.version.__version__" }
 
 [tool.ruff]
 exclude = ["presentation.py", "examples/*"]
@@ -17,3 +80,5 @@ exclude = ["presentation.py", "examples/*"]
 [tool.ruff.lint]
 ignore = ["E741"]
 
+[tool.uv]
+exclude-newer = "P7D"

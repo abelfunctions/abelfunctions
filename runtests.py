@@ -2,14 +2,11 @@ import getopt
 import sys
 import warnings
 
-from abelfunctions import __version__
-
 
 def usage():
-    s = (
-        """
+    s = """
 ------------------------------------------------------------
- Abelfunctions Version %s Test Suite
+ Abelfunctions Test Suite
 ------------------------------------------------------------
 
 Usage:
@@ -24,8 +21,6 @@ Optional arguments:
     -p <arg>      -- run tests in parallel using <arg> number of processes (requires pytest-xdist)
     
 """
-        % __version__
-    )
     print(s)
 
 
@@ -64,7 +59,13 @@ def runtests(argv):
 
     # determine list of search patterns for tests
     patterns = " ".join(args)
-    pytest_args = ["-W error", "-k", patterns, "--ignore=examples"]
+    pytest_args = [
+        "-W error",
+        "-W default::UserWarning",
+        "-k",
+        patterns,
+        "--ignore=examples",
+    ]
     if processes > 1:
         pytest_args += ["-n", str(processes)]
 

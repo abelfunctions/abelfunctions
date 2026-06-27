@@ -10,7 +10,7 @@ from abelfunctions.puiseux import (
     puiseux_rational,
     transform_newton_polynomial,
 )
-from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
+from .test_abelfunctions import AbelfunctionsTestCase
 
 from sage.calculus.functional import taylor
 from sage.calculus.var import var

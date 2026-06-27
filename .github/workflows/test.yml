@@ -10,6 +10,9 @@ on:
   workflow_dispatch:
     # Allow to run manually
 
+permissions:
+  contents: read
+
 jobs:
   static-analysis:
     runs-on: ubuntu-24.04
@@ -20,78 +23,113 @@ jobs:
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: 3.14
-      - name: Install ruff
-        run: pip3 install ruff==0.15.1
+      - name: Install uv
+        run: python3 -m pip install uv==0.11.23 --no-deps
+      - name: Install locked lint dependencies
+        run: uv sync --locked --only-group lint --no-install-project
       - name: Check code with ruff
         run: |
-          ruff check --output-format=github
-          ruff format --check
+          uv run --no-sync ruff check --output-format=github
+          uv run --no-sync ruff format --check
 
   test:
     runs-on: ubuntu-24.04
+    container:
+      image: sagemath/sagemath:${{ matrix.sage-version }}
+      options: --user root
     needs: static-analysis
     strategy:
       fail-fast: false
       matrix:
         sage-version:
-          - '9.2'
-          - '9.3'
-          - '9.4'
-          - '9.5'
-          - '9.6'
-          - '9.7'
-          - '9.8'
-          - '10.0'
-          - '10.1'
-          - '10.2'
-          - '10.3'
-          - '10.4'
-          - '10.5'
           - '10.6'
           - '10.7'
     steps:
-      - name: Install sage
-        uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # v2
-        with:
-          environment-name: sage
-          create-args: >-
-            sage=${{ matrix.sage-version }}
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-      - name: Install Python test dependencies
-        run: micromamba run -n sage sage -pip install -r test-requirements.txt
-      - name: Install build dependencies
-        run: micromamba run -n sage sage -pip install -r build-requirements.txt
-      - run: micromamba run -n sage sage -pip freeze
+      - name: Install uv
+        run: sage -pip install uv==0.11.23 --no-deps
+      - name: Resolve Sage Python
+        run: |
+          echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+          echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
+      - name: Install locked Python dependencies
+        run: |
+          sage -python -m uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          sage -python -m uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
+      - run: sage -python -m uv pip freeze --python "$SAGE_PYTHON"
+      - name: Sage version
+        run: sage --version
+      - name: Python version
+        run: sage -c 'import sys; print(sys.version)'
       - name: NumPy version
-        run: micromamba run -n sage sage -c 'import numpy; print(numpy.__version__)'
+        run: sage -c 'import numpy; print(numpy.__version__)'
       - name: Cython version
-        run: micromamba run -n sage sage -c 'import cython; print(cython.__version__)'
-      - name: Install Abelfunctions with pip
-        run: micromamba run -n sage sage -pip install -e . --no-build-isolation
+        run: sage -c 'import cython; print(cython.__version__)'
+      - name: Install Abelfunctions with uv
+        run: sage -python -m uv pip install --python "$SAGE_PYTHON" --editable . --no-build-isolation --no-deps
       - name: Run tests
-        run: micromamba run -n sage sage runtests.py
+        run: sage runtests.py
 
-  test-setuppy-install:
+  test-wheel:
     runs-on: ubuntu-24.04
+    container:
+      image: sagemath/sagemath:10.7
+      options: --user root
     needs: static-analysis
     steps:
-      - name: Install sage
-        uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # v2
-        with:
-          environment-name: sage
-          create-args: >-
-            sage=9.8
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-      - name: Install Python test dependencies
-        run: micromamba run -n sage sage -pip install -r test-requirements.txt
-      - name: Install build dependencies # since pip with --no-build-isolation doesn't install them
-        run: micromamba run -n sage sage -pip install -r build-requirements.txt
-      - name: Install Abelfunctions with setup.py
-        run: micromamba run -n sage sage setup.py build_ext --inplace
+      - name: Install uv
+        run: sage -pip install uv==0.11.23 --no-deps
+      - name: Resolve Sage Python
+        run: |
+          echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+          echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
+      - name: Install locked Python dependencies
+        run: |
+          sage -python -m uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          sage -python -m uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
+      - name: Build abelfunctions wheel with uv
+        run: sage -python -m uv build
+      - name: Install wheel
+        run: sage -pip install dist/*.whl
       - name: Run tests
-        run: micromamba run -n sage sage runtests.py
+        run: |
+          rm -rf /tmp/abelfunctions_tests
+          cp -R abelfunctions/tests /tmp/abelfunctions_tests
+          cd /tmp
+          sage -python -m pytest /tmp/abelfunctions_tests -W error -W default::UserWarning --durations=5
+
+  test-pip:
+    runs-on: ubuntu-24.04
+    container:
+      image: sagemath/sagemath:10.7
+      options: --user root
+    needs: static-analysis
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - name: Install uv
+        run: sage -pip install uv==0.11.23 --no-deps
+      - name: Resolve Sage Python
+        run: |
+          echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+          echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
+      - name: Build abelfunctions wheel with uv
+        run: sage -python -m uv build
+      - name: Install locked Python dependencies
+        run: |
+          sage -python -m uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          sage -python -m uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
+      - name: Install wheel
+        run: sage --pip install --no-build-isolation .
+      - name: Run tests
+        run: |
+          rm -rf /tmp/abelfunctions_tests
+          cp -R abelfunctions/tests /tmp/abelfunctions_tests
+          cd /tmp
+          sage -python -m pytest /tmp/abelfunctions_tests -W error -W default::UserWarning --durations=5
 
   test-passagemath:
     runs-on: ubuntu-24.04
@@ -102,9 +140,11 @@ jobs:
       - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: "3.14"
-      - name: Install tox
-        run: |
-          pip install tox
-      - name: Run tests with tox
-        run: |
-          tox
+      - name: Install uv
+        run: python3 -m pip install uv==0.11.23 --no-deps
+      - name: Install project
+        run: uv sync --locked --group test --extra passagemath
+      # - name: Run tests
+      #   run: tox
+      - name: Run tests
+        run: uv run --no-sync python -m pytest --ignore=examples
