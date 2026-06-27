@@ -7,7 +7,7 @@ from abelfunctions.differentials import (
     Differential,
 )
 from abelfunctions.riemann_surface import RiemannSurface
-from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
+from .test_abelfunctions import AbelfunctionsTestCase
 
 from sage.rings.rational_field import Q as QQ
 

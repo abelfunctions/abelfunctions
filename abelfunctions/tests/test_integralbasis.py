@@ -1,5 +1,5 @@
 from abelfunctions.integralbasis import integral_basis
-from abelfunctions.tests.test_abelfunctions import AbelfunctionsTestCase
+from .test_abelfunctions import AbelfunctionsTestCase
 
 from sage.rings.rational_field import QQ
 

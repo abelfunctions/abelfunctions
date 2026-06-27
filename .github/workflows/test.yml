@@ -95,10 +95,7 @@ jobs:
       - name: Install wheel
         run: sage -pip install dist/*.whl
       - name: Run tests
-        run: |
-          cp -R abelfunctions/tests /tmp/abelfunctions-tests
-          cd /tmp
-          sage -python -m pytest /tmp/abelfunctions-tests --ignore=/tmp/abelfunctions-tests/examples -W error -W default::UserWarning --durations=5
+        run: sage -python -m pytest abelfunctions/tests -W error -W default::UserWarning --durations=5
 
   test-pip:
     runs-on: ubuntu-24.04
@@ -124,10 +121,7 @@ jobs:
       - name: Install wheel
         run: sage --pip install --no-build-isolation .
       - name: Run tests
-        run: |
-          cp -R abelfunctions/tests /tmp/abelfunctions-tests
-          cd /tmp
-          sage -python -m pytest /tmp/abelfunctions-tests --ignore=/tmp/abelfunctions-tests/examples -W error -W default::UserWarning --durations=5
+        run: sage -python -m pytest abelfunctions/tests -W error -W default::UserWarning --durations=5
 
   test-passagemath:
     runs-on: ubuntu-24.04
