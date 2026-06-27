@@ -56,9 +56,9 @@ jobs:
           echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
         run: |
-          uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
-          uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
-      - run: uv pip freeze --python "$SAGE_PYTHON"
+          sage -python -m uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          sage -python -m uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
+      - run: sage -python -m uv pip freeze --python "$SAGE_PYTHON"
       - name: Sage version
         run: sage --version
       - name: Python version
@@ -68,7 +68,7 @@ jobs:
       - name: Cython version
         run: sage -c 'import cython; print(cython.__version__)'
       - name: Install Abelfunctions with uv
-        run: uv pip install --python "$SAGE_PYTHON" --editable . --no-build-isolation --no-deps
+        run: sage -python -m uv pip install --python "$SAGE_PYTHON" --editable . --no-build-isolation --no-deps
       - name: Run tests
         run: sage runtests.py
 
@@ -89,10 +89,10 @@ jobs:
           echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
         run: |
-          uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
-          uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
+          sage -python -m uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          sage -python -m uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
       - name: Build abelfunctions wheel with uv
-        run: uv build
+        run: sage -python -m uv build
       - name: Install wheel
         run: sage -pip install dist/*.whl
       - name: Run tests
@@ -114,11 +114,11 @@ jobs:
           echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
           echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Build abelfunctions wheel with uv
-        run: uv build
+        run: sage -python -m uv build
       - name: Install locked Python dependencies
         run: |
-          uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
-          uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt 
+          sage -python -m uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
+          sage -python -m uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
       - name: Install wheel
         run: sage --pip install --no-build-isolation .
       - name: Run tests
