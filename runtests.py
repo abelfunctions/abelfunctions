@@ -2,14 +2,11 @@ import getopt
 import sys
 import warnings
 
-from abelfunctions import __version__
-
 
 def usage():
-    s = (
-        """
+    s = """
 ------------------------------------------------------------
- Abelfunctions Version %s Test Suite
+ Abelfunctions Test Suite
 ------------------------------------------------------------
 
 Usage:
@@ -24,8 +21,6 @@ Optional arguments:
     -p <arg>      -- run tests in parallel using <arg> number of processes (requires pytest-xdist)
     
 """
-        % __version__
-    )
     print(s)
 
 
