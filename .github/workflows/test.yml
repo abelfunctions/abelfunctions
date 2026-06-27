@@ -36,6 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: sagemath/sagemath:${{ matrix.sage-version }}
+      options: --user root
     needs: static-analysis
     strategy:
       fail-fast: false
@@ -75,6 +76,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: sagemath/sagemath:10.7
+      options: --user root
     needs: static-analysis
     steps:
       - name: Checkout
@@ -100,6 +102,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: sagemath/sagemath:10.7
+      options: --user root
     needs: static-analysis
     steps:
       - name: Checkout
