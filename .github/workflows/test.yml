@@ -49,7 +49,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Install uv
-        run: python3 -m pip install uv==0.11.23 --no-deps
+        run: sage -pip install uv==0.11.23 --no-deps
       - name: Resolve Sage Python
         run: |
           echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
@@ -62,13 +62,7 @@ jobs:
       - name: Sage version
         run: sage --version
       - name: Python version
-        run: |
-          sage -c 'import sys; print(sys.version)'
-          python3 --version
-      - name: Which Python
-        run: |
-          sage -c 'import sys; print(sys.executable)'
-          which python3
+        run: sage -c 'import sys; print(sys.version)'
       - name: NumPy version
         run: sage -c 'import numpy; print(numpy.__version__)'
       - name: Cython version
@@ -88,7 +82,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Install uv
-        run: python3 -m pip install uv==0.11.23 --no-deps
+        run: sage -pip install uv==0.11.23 --no-deps
       - name: Resolve Sage Python
         run: |
           echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
@@ -114,7 +108,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Install uv
-        run: python3 -m pip install uv==0.11.23 --no-deps
+        run: sage -pip install uv==0.11.23 --no-deps
       - name: Resolve Sage Python
         run: |
           echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
