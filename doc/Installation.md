@@ -1,6 +1,6 @@
 # Installation
 
-Abelfunctions requires [Sage (SageMath)](http://www.sagemath.org) 10.5 or later and a [supported version of Python](https://devguide.python.org/versions/).
+Abelfunctions requires [Sage (SageMath)](http://www.sagemath.org) 10.6 or later and a [supported version of Python](https://devguide.python.org/versions/).
 Sage makes it relatively easy to build and run the code.
 
 > **Note:** Depending on your system one of the below installation methods
