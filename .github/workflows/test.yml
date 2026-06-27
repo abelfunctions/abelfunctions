@@ -34,6 +34,8 @@ jobs:
 
   test:
     runs-on: ubuntu-24.04
+    container:
+      image: sagemath/sagemath:${{ matrix.sage-version }}
     needs: static-analysis
     strategy:
       fail-fast: false
@@ -43,56 +45,46 @@ jobs:
           - '10.6'
           - '10.7'
     steps:
-      - name: Install sage
-        uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # v2
-        with:
-          environment-name: sage
-          create-args: >-
-            sage=${{ matrix.sage-version }}
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Install uv
         run: python -m pip install uv==0.11.23 --no-deps
       - name: Resolve Sage Python
         run: |
-          echo "SAGE_PYTHON=$(micromamba run -n sage sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
-          echo "UV_PROJECT_ENVIRONMENT=$(micromamba run -n sage sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
+          echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+          echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
         run: |
           uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
           uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt
       - run: uv pip freeze --python "$SAGE_PYTHON"
       - name: Sage version
-        run: micromamba run -n sage sage --version
+        run: sage --version
       - name: Python version
-        run: micromamba run -n sage sage -c 'import sys; print(sys.version)'
+        run: sage -c 'import sys; print(sys.version)'
       - name: NumPy version
-        run: micromamba run -n sage sage -c 'import numpy; print(numpy.__version__)'
+        run: sage -c 'import numpy; print(numpy.__version__)'
       - name: Cython version
-        run: micromamba run -n sage sage -c 'import cython; print(cython.__version__)'
+        run: sage -c 'import cython; print(cython.__version__)'
       - name: Install Abelfunctions with uv
         run: uv pip install --python "$SAGE_PYTHON" --editable . --no-build-isolation --no-deps
       - name: Run tests
-        run: micromamba run -n sage sage runtests.py
+        run: sage runtests.py
 
   test-wheel:
     runs-on: ubuntu-24.04
+    container:
+      image: sagemath/sagemath:10.7
     needs: static-analysis
     steps:
-      - name: Install sage
-        uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # v2
-        with:
-          environment-name: sage
-          create-args: >-
-            sage=10.7
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Install uv
         run: python -m pip install uv==0.11.23 --no-deps
       - name: Resolve Sage Python
         run: |
-          echo "SAGE_PYTHON=$(micromamba run -n sage sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
-          echo "UV_PROJECT_ENVIRONMENT=$(micromamba run -n sage sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
+          echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+          echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Install locked Python dependencies
         run: |
           uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
@@ -100,28 +92,24 @@ jobs:
       - name: Build abelfunctions wheel with uv
         run: uv build
       - name: Install wheel
-        run: micromamba run -n sage sage -pip install dist/*.whl
+        run: sage -pip install dist/*.whl
       - name: Run tests
-        run: micromamba run -n sage sage runtests.py
+        run: sage runtests.py
 
   test-pip:
     runs-on: ubuntu-24.04
+    container:
+      image: sagemath/sagemath:10.7
     needs: static-analysis
     steps:
-      - name: Install sage
-        uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # v2
-        with:
-          environment-name: sage
-          create-args: >-
-            sage=10.7
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Install uv
         run: python -m pip install uv==0.11.23 --no-deps
       - name: Resolve Sage Python
         run: |
-          echo "SAGE_PYTHON=$(micromamba run -n sage sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
-          echo "UV_PROJECT_ENVIRONMENT=$(micromamba run -n sage sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
+          echo "SAGE_PYTHON=$(sage -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+          echo "UV_PROJECT_ENVIRONMENT=$(sage -c 'import sys; print(sys.prefix)')" >> "$GITHUB_ENV"
       - name: Build abelfunctions wheel with uv
         run: uv build
       - name: Install locked Python dependencies
@@ -129,9 +117,9 @@ jobs:
           uv export --locked --group build --group test --no-emit-project --output-file /tmp/requirements-test.txt
           uv pip install --python "$SAGE_PYTHON" --system -r /tmp/requirements-test.txt 
       - name: Install wheel
-        run: micromamba run -n sage sage --pip install --no-build-isolation .
+        run: sage --pip install --no-build-isolation .
       - name: Run tests
-        run: micromamba run -n sage sage runtests.py
+        run: sage runtests.py
 
   test-passagemath:
     runs-on: ubuntu-24.04
